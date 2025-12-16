@@ -1,0 +1,12 @@
+# Core Django framework
+Django>=4.2,<5.0
+
+# Django REST Framework for building APIs
+djangorestframework>=3.14,<4.0
+
+# Optional: for scraping (if you plan to add scraping tasks later)
+requests>=2.31,<3.0
+beautifulsoup4>=4.12,<5.0
+
+# Optional: environment variables management
+python-dotenv>=1.0,<2.0
