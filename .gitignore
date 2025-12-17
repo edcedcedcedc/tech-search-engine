@@ -33,7 +33,7 @@ media/
 
 # Node modules
 frontend/node_modules/
-backend/node_modules/
+
 
 # Build / production
 frontend/build/
