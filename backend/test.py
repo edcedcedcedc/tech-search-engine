@@ -42,7 +42,7 @@ while True:
 
 
 
-def fetch_products(category_url, valid_categories=None, max_pages=10):
+def fetch_products(category_url, valid_categories=None, max_pages=1):
     all_items = []
 
     for page in range(1, max_pages + 1):
@@ -92,8 +92,8 @@ DARWIN_CATEGORIES = {
 
 # Example: fetch monitors
 monitors = fetch_products(DARWIN_CATEGORIES["monitoare"], valid_categories=["Monitoare", "Monitoare gaming"])
-print(len(monitors), "monitors found")
+print(len(monitors), "monitors found", monitors)
 
 # Example: fetch laptops
 laptops = fetch_products(DARWIN_CATEGORIES["laptopuri"])
-print(len(laptops), "laptops found")
+print(len(laptops), "laptops found", laptops)

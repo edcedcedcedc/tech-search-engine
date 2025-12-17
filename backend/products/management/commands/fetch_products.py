@@ -8,7 +8,7 @@ from products.models import Product
 DARWIN_CATEGORIES = {
     "monitoare": "https://darwin.md/monitoare",
     "laptopuri": "https://darwin.md/laptopuri",
-    "telefoane": "https://darwin.md/telefoane",
+    #"telefoane": "https://darwin.md/telefoane",
     "calculatoare": "https://darwin.md/calculatoare"
 }
 
@@ -37,6 +37,7 @@ def fetch_products(category_url, valid_categories=None, max_pages=10):
                 "category": (re.search(r'"item_category":"(.*?)"', decoded) or [None, None])[1],
                 "variant": (re.search(r'"item_variant":"(.*?)"', decoded) or ["", ""])[1].replace("\\", "").strip(),
                 "url": link.get("href"),
+                "shop": "Darwin",
             }
 
             # Filter by valid categories if provided
