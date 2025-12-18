@@ -21,6 +21,8 @@ def main():
 
     if cmd == "migrate":
         run("migrate")
+    elif cmd == "makemigrations":
+        run("makemigrations")    
     elif cmd == "runserver":
         run("runserver")
     elif cmd == "createsuperuser":
