@@ -1,35 +1,33 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { ThemeProvider, CssBaseline, Container, Box } from "@mui/material";
+import { BrowserRouter } from "react-router-dom";
+import theme from "./theme/theme";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import AppRoutes from "./routes/Routes"; // your routes
+import HeroSearch from "./components/HeroSearch"; // hero search bar
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <BrowserRouter>
+        <Header />
+
+        {/* Hero search section */}
+        <HeroSearch />
+
+        {/* Main content (renders pages via routes) */}
+        <Box component="main" sx={{ flex: 1, py: 4 }}>
+          <Container className="container">
+            <AppRoutes />
+          </Container>
+        </Box>
+
+        <Footer />
+      </BrowserRouter>
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;
