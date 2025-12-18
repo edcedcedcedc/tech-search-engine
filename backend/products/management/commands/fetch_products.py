@@ -3,14 +3,19 @@ import re
 import requests
 from bs4 import BeautifulSoup
 from django.core.management.base import BaseCommand
-from products.models import Product 
+from products.models import Product
+
+
+# python manage.py fetch_products --category telefoane --pages 2
+
 
 DARWIN_CATEGORIES = {
     "monitoare": "https://darwin.md/monitoare",
     "laptopuri": "https://darwin.md/laptopuri",
-    #"telefoane": "https://darwin.md/telefoane",
-    "calculatoare": "https://darwin.md/calculatoare"
+    # "telefoane": "https://darwin.md/telefoane",
+    "calculatoare": "https://darwin.md/calculatoare",
 }
+
 
 def fetch_products(category_url, valid_categories=None, max_pages=10):
     all_items = []
@@ -30,12 +35,22 @@ def fetch_products(category_url, valid_categories=None, max_pages=10):
             decoded = html.unescape(raw)
 
             item_data = {
-                "external_id": (re.search(r'"item_id":"(.*?)"', decoded) or [None, None])[1],
+                "external_id": (
+                    re.search(r'"item_id":"(.*?)"', decoded) or [None, None]
+                )[1],
                 "name": (re.search(r'"item_name":"(.*?)"', decoded) or [None, None])[1],
                 "price": int((re.search(r'"price":(\d+)', decoded) or [0, 0])[1]),
-                "brand": (re.search(r'"item_brand":"(.*?)"', decoded) or [None, None])[1],
-                "category": (re.search(r'"item_category":"(.*?)"', decoded) or [None, None])[1],
-                "variant": (re.search(r'"item_variant":"(.*?)"', decoded) or ["", ""])[1].replace("\\", "").strip(),
+                "brand": (re.search(r'"item_brand":"(.*?)"', decoded) or [None, None])[
+                    1
+                ],
+                "category": (
+                    re.search(r'"item_category":"(.*?)"', decoded) or [None, None]
+                )[1],
+                "variant": (re.search(r'"item_variant":"(.*?)"', decoded) or ["", ""])[
+                    1
+                ]
+                .replace("\\", "")
+                .strip(),
                 "url": link.get("href"),
                 "shop": "Darwin",
             }
@@ -53,8 +68,6 @@ def fetch_products(category_url, valid_categories=None, max_pages=10):
     return all_items
 
 
-
-
 class Command(BaseCommand):
     help = "Fetch products from Darwin.md and save to database"
 
@@ -63,13 +76,11 @@ class Command(BaseCommand):
             "--category",
             type=str,
             help="Category to fetch (monitoare, laptopuri, etc.)",
-            default="monitoare"
+            default="monitoare",
         )
         parser.add_argument(
-            "--pages",
-            type=int,
-            help="Number of pages to fetch",
-            default=1)
+            "--pages", type=int, help="Number of pages to fetch", default=1
+        )
 
     def handle(self, *args, **options):
         category = options["category"]
@@ -87,10 +98,8 @@ class Command(BaseCommand):
 
         for item_data in items:
             Product.objects.update_or_create(
-                external_id=item_data["external_id"],
-                defaults=item_data
+                external_id=item_data["external_id"], defaults=item_data
             )
             self.stdout.write(f"Saved: {item_data['name']}")
-            
 
         self.stdout.write(self.style.SUCCESS("Done fetching products!"))
