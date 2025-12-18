@@ -73,8 +73,8 @@ Reduce friction for consumers when searching for tech products by:
 
 ### Frontend
 
-* React (Next.js)
-* Server-side rendering for SEO
+* React (Vite)
+* Server-side rendering for SEO (maybe)
 * Responsive UI (desktop-first MVP)
 
 ### Infrastructure
