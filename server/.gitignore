@@ -27,37 +27,6 @@ db.sqlite3
 # Media / uploads
 media/
 
-# ==============================
-# Node / Frontend
-# ==============================
-
-# Node modules
-frontend/node_modules/
-
-
-# Build / production
-frontend/build/
-frontend/.next/
-frontend/out/
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Env files
-*.env.local
-*.env.development.local
-*.env.test.local
-*.env.production.local
-
-# ==============================
-# IDEs / Editors
-# ==============================
-
-# VSCode
-.vscode/
-
 # JetBrains / PyCharm
 .idea/
 
