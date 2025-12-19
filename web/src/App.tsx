@@ -1,35 +1,80 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Box, Container } from "@mui/material";
+import { BrowserRouter } from "react-router-dom";
+
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import AppRoutes from "./routes/Routes";
+import HeroSearch from "./components/HeroSearch";
+import { useState } from "react";
 
 function App() {
-  const [count, setCount] = useState(0)
-
+  const [query, setQuery] = useState("");
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <BrowserRouter>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100vh", // full viewport height
+        }}
+      >
+        {/* HEADER + HERO */}
+        <Box sx={{ flexShrink: 0 }}>
+          <Header />
+          <HeroSearch query={query} setQuery={setQuery} />
+        </Box>
+
+        <Box
+          component="main"
+          sx={{
+            flex: 1,
+            overflowY: "scroll", // use scroll instead of overlay for consistency
+            pb: "100px", // padding for footer
+            position: "relative",
+
+            // Custom scrollbar
+            "&::-webkit-scrollbar": {
+              width: "8px",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: "rgba(0,0,0,0.3)",
+              borderRadius: "4px",
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+              backgroundColor: "rgba(0,0,0,0.5)",
+            },
+            "&::-webkit-scrollbar-track": {
+              background: "transparent",
+            },
+            scrollbarWidth: "thin",
+          }}
+        >
+          <Container
+            sx={{
+              py: 4,
+              maxWidth: "800px",
+              mx: "auto", // horizontally center
+            }}
+          >
+            <AppRoutes query={query} />
+          </Container>
+        </Box>
+
+        {/* FIXED FOOTER */}
+        <Box
+          sx={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            width: "100%",
+            zIndex: 1000,
+          }}
+        >
+          <Footer />
+        </Box>
+      </Box>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
