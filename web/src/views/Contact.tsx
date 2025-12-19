@@ -8,7 +8,7 @@ export default function Contact() {
         Contact
       </Typography>
 
-      <Typography variant="body1" paragraph>
+      <Typography variant="body1">
         Dacă aveți întrebări, sugestii sau observații legate de platformă, ne
         puteți contacta folosind informațiile de mai jos.
       </Typography>

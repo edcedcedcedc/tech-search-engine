@@ -5,8 +5,10 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import AppRoutes from "./routes/Routes";
 import HeroSearch from "./components/HeroSearch";
+import { useState } from "react";
 
 function App() {
+  const [query, setQuery] = useState("");
   return (
     <BrowserRouter>
       <Box
@@ -19,21 +21,42 @@ function App() {
         {/* HEADER + HERO */}
         <Box sx={{ flexShrink: 0 }}>
           <Header />
-          <HeroSearch />
+          <HeroSearch query={query} setQuery={setQuery} />
         </Box>
 
-        {/* SCROLLABLE MAIN CONTENT */}
         <Box
           component="main"
-          className="scrollable"
           sx={{
             flex: 1,
-            overflowY: "auto", // only this box scrolls
-            pb: "80px", // padding bottom so content doesn't hide under footer
+            overflowY: "scroll", // use scroll instead of overlay for consistency
+            pb: "100px", // padding for footer
+            position: "relative",
+
+            // Custom scrollbar
+            "&::-webkit-scrollbar": {
+              width: "8px",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: "rgba(0,0,0,0.3)",
+              borderRadius: "4px",
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+              backgroundColor: "rgba(0,0,0,0.5)",
+            },
+            "&::-webkit-scrollbar-track": {
+              background: "transparent",
+            },
+            scrollbarWidth: "thin",
           }}
         >
-          <Container sx={{ py: 4 }}>
-            <AppRoutes />
+          <Container
+            sx={{
+              py: 4,
+              maxWidth: "800px",
+              mx: "auto", // horizontally center
+            }}
+          >
+            <AppRoutes query={query} />
           </Container>
         </Box>
 

@@ -1,7 +1,15 @@
 // src/views/Home.tsx
 import { Box, Typography } from "@mui/material";
+import ProductGrid from "../components/ProductGrid";
+import { mockProducts } from "../mocks/product";
+interface HeroSearchProps {
+  query: string;
+}
 
-export default function Home() {
+export default function Home({ query }: HeroSearchProps) {
+  const filteredProducts = mockProducts.filter((p) =>
+    p.name.toLowerCase().includes(query.toLowerCase())
+  );
   return (
     <Box
       sx={{
@@ -22,6 +30,7 @@ export default function Home() {
       <Typography variant="body2" color="text.secondary">
         Aplicația este în stadiu MVP.
       </Typography>
+      <ProductGrid products={filteredProducts} />
     </Box>
   );
 }

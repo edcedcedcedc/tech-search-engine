@@ -6,12 +6,17 @@ import {
   TextField,
   InputAdornment,
   IconButton,
+  useTheme,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
-const HeroSearch: React.FC = () => {
-  const [query, setQuery] = useState("");
+interface HeroSearchProps {
+  query: string;
+  setQuery: React.Dispatch<React.SetStateAction<string>>;
+}
 
+const HeroSearch: React.FC<HeroSearchProps> = ({ query, setQuery }) => {
+  const theme = useTheme();
   const handleSearch = () => {
     console.log("Searching for:", query);
     // TODO: integrate live search / navigate to results page
@@ -22,14 +27,14 @@ const HeroSearch: React.FC = () => {
       sx={{
         py: 4,
         textAlign: "center",
-        backgroundColor: "#f5f5f5",
+        backgroundColor: theme.palette.background.default,
         px: { xs: 2, sm: 3, md: 4 },
       }}
     >
       <Typography variant="h3" component="h1" gutterBottom>
         Compară prețurile în Moldova
       </Typography>
-      <Typography variant="h6" color="textSecondary" gutterBottom>
+      <Typography variant="h6" color="text.secondary" gutterBottom>
         Găsește cel mai bun preț pentru produsele tale preferate
       </Typography>
 

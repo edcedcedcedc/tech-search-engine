@@ -1,9 +1,10 @@
 // src/components/Footer.tsx
 import React from "react";
-import { Box, Typography, Link } from "@mui/material";
+import { Box, Typography, Link, useTheme } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 
 const Footer: React.FC = () => {
+  const theme = useTheme();
   return (
     <Box
       component="footer"
@@ -11,7 +12,7 @@ const Footer: React.FC = () => {
         //mt: 8,
         py: 4,
         px: 2,
-        backgroundColor: "#f5f5f5",
+        backgroundColor: theme.palette.background.default, // use theme
         textAlign: "center",
       }}
     >

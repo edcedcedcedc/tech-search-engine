@@ -1,9 +1,16 @@
-.scrollable {
-  overflow-y: scroll;
-  scrollbar-width: thin; /* for Firefox */
-  scrollbar-color: transparent transparent; /* optional */
+.scrollable::-webkit-scrollbar {
+  width: 6px;
 }
 
-.scrollable::-webkit-scrollbar {
-  width: 0px; /* hide scrollbar for Chrome/Safari/Edge */
+.scrollable::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 3px;
+}
+
+.scrollable::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.4);
+}
+
+.scrollable::-webkit-scrollbar-track {
+  background: transparent;
 }
