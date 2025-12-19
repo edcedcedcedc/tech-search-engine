@@ -1,13 +1,14 @@
-import { Container, Typography, Box, Link } from "@mui/material";
+// src/views/Contact.tsx
+import { Box, Typography, Link } from "@mui/material";
 
 export default function Contact() {
   return (
-    <Container maxWidth="md" sx={{ py: 6 }}>
+    <Box sx={{ maxWidth: 800, mx: "auto" }}>
       <Typography variant="h4" gutterBottom>
         Contact
       </Typography>
 
-      <Typography variant="body1">
+      <Typography variant="body1" paragraph>
         Dacă aveți întrebări, sugestii sau observații legate de platformă, ne
         puteți contacta folosind informațiile de mai jos.
       </Typography>
@@ -29,6 +30,6 @@ export default function Contact() {
         Nu oferim suport pentru comenzi sau livrări. Pentru achiziții, vă rugăm
         să contactați magazinul de unde doriți să cumpărați produsul.
       </Typography>
-    </Container>
+    </Box>
   );
 }

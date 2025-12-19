@@ -7,9 +7,11 @@ const Header: React.FC = () => {
   return (
     <AppBar position="static" color="default" elevation={1}>
       <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-        <Typography variant="h5" color="primary">
-          9999
-        </Typography>
+        <Button component={RouterLink} to="/" color="inherit">
+          <Typography variant="h5" color="primary">
+            9999
+          </Typography>
+        </Button>
         <Box>
           <Button component={RouterLink} to="/" color="inherit">
             Acasă

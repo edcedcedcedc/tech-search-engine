@@ -1,32 +1,56 @@
-import { ThemeProvider, CssBaseline, Container, Box } from "@mui/material";
+import { Box, Container } from "@mui/material";
 import { BrowserRouter } from "react-router-dom";
-import theme from "./theme/theme";
+
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import AppRoutes from "./routes/Routes"; // your routes
-import HeroSearch from "./components/HeroSearch"; // hero search bar
-import "./App.css";
+import AppRoutes from "./routes/Routes";
+import HeroSearch from "./components/HeroSearch";
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <BrowserRouter>
-        <Header />
+    <BrowserRouter>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100vh", // full viewport height
+        }}
+      >
+        {/* HEADER + HERO */}
+        <Box sx={{ flexShrink: 0 }}>
+          <Header />
+          <HeroSearch />
+        </Box>
 
-        {/* Hero search section */}
-        <HeroSearch />
-
-        {/* Main content (renders pages via routes) */}
-        <Box component="main" sx={{ flex: 1, py: 4 }}>
-          <Container className="container">
+        {/* SCROLLABLE MAIN CONTENT */}
+        <Box
+          component="main"
+          className="scrollable"
+          sx={{
+            flex: 1,
+            overflowY: "auto", // only this box scrolls
+            pb: "80px", // padding bottom so content doesn't hide under footer
+          }}
+        >
+          <Container sx={{ py: 4 }}>
             <AppRoutes />
           </Container>
         </Box>
 
-        <Footer />
-      </BrowserRouter>
-    </ThemeProvider>
+        {/* FIXED FOOTER */}
+        <Box
+          sx={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            width: "100%",
+            zIndex: 1000,
+          }}
+        >
+          <Footer />
+        </Box>
+      </Box>
+    </BrowserRouter>
   );
 }
 

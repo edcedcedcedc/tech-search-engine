@@ -1,31 +1,36 @@
-import { Container, Typography, Box } from "@mui/material";
+// src/views/TermsOfUse.tsx
+import { Box, Typography } from "@mui/material";
 
-export default function Terms() {
+export default function TermsOfUse() {
   return (
-    <Container maxWidth="md" sx={{ py: 6 }}>
-      <Box>
-        <Typography variant="h4" gutterBottom>
-          Termeni și condiții
-        </Typography>
+    <Box sx={{ maxWidth: 800, mx: "auto" }}>
+      <Typography variant="h4" gutterBottom>
+        Termeni și condiții
+      </Typography>
 
-        <Typography variant="body1" paragraph>
-          Prin utilizarea acestui site, sunteți de acord cu următoarele:
-        </Typography>
+      <Typography variant="body1">
+        Prin utilizarea acestui site, sunteți de acord cu următoarele:
+      </Typography>
 
-        <Typography variant="body1" component="ul" sx={{ pl: 3 }}>
-          <li>Platforma este oferită „așa cum este”, fără garanții.</li>
-          <li>
-            Nu suntem responsabili pentru erori de preț, disponibilitate sau
-            conținut.
-          </li>
-          <li>Nu vindem produse și nu procesăm comenzi.</li>
-          <li>Utilizarea datelor este permisă doar în scop informativ.</li>
-          <li>
-            Ne rezervăm dreptul de a modifica sau suspenda serviciul fără
-            notificare.
-          </li>
+      <Box component="ul" sx={{ pl: 3 }}>
+        <Typography component="li" variant="body1">
+          Platforma este oferită „așa cum este”, fără garanții.
+        </Typography>
+        <Typography component="li" variant="body1">
+          Nu suntem responsabili pentru erori de preț, disponibilitate sau
+          conținut.
+        </Typography>
+        <Typography component="li" variant="body1">
+          Nu vindem produse și nu procesăm comenzi.
+        </Typography>
+        <Typography component="li" variant="body1">
+          Utilizarea datelor este permisă doar în scop informativ.
+        </Typography>
+        <Typography component="li" variant="body1">
+          Ne rezervăm dreptul de a modifica sau suspenda serviciul fără
+          notificare.
         </Typography>
       </Box>
-    </Container>
+    </Box>
   );
 }

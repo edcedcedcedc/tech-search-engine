@@ -20,9 +20,10 @@ const HeroSearch: React.FC = () => {
   return (
     <Box
       sx={{
-        py: 8,
+        py: 4,
         textAlign: "center",
         backgroundColor: "#f5f5f5",
+        px: { xs: 2, sm: 3, md: 4 },
       }}
     >
       <Typography variant="h3" component="h1" gutterBottom>

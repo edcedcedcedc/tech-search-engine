@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
     <Box
       component="footer"
       sx={{
-        mt: 8,
+        //mt: 8,
         py: 4,
         px: 2,
         backgroundColor: "#f5f5f5",
@@ -16,8 +16,7 @@ const Footer: React.FC = () => {
       }}
     >
       <Typography variant="body2" color="textSecondary">
-        © {new Date().getFullYear()} Numele Companiei. Toate drepturile
-        rezervate.
+        © {new Date().getFullYear()} 9999. Toate drepturile rezervate.
       </Typography>
 
       <Box sx={{ mt: 1 }}>
