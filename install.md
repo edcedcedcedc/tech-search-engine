@@ -15,14 +15,12 @@ npm run dev
 
 ## Server (Django)
 
+* There are lots of not project related packs in requirements.txt but, that doesn't bother me, might be fixed later
 ```bash
 cd server
-pip install -r requirements.txt
-python manage.py runserver
+pip install -r requirements.txt 
+python manage.py migrate
 ```
-
-* Runs backend on [http://localhost:8000](http://localhost:8000)
-* Your local DB is `db.sqlite3` by default
 
 ---
 
@@ -31,7 +29,6 @@ python manage.py runserver
 Create a `.env` file in `server/` with:
 
 ```
-DEBUG=True
 SECRET_KEY=your-dev-secret-key
 DATABASE_URL=sqlite:///db.sqlite3
 API_URL=http://localhost:8000/api
@@ -50,6 +47,8 @@ python -c "from django.core.management.utils import get_random_secret_key; print
 ```bash
 python manage.py runserver
 ```
+* Runs backend on [http://localhost:8000](http://localhost:8000)
+* Your local DB is `db.sqlite3` by default
 ---
 
 ## Working with models / migrations
