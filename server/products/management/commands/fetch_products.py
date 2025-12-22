@@ -163,7 +163,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--shop", type=str, help="Please select a shop to fetch", default=None
+            "--shop", type=str, help="Select a shop to fetch", default=None
         )
         parser.add_argument(
             "--category",
