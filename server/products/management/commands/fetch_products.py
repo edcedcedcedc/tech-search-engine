@@ -23,16 +23,16 @@ def fetch_enter_products(category_url, valid_categories=None, max_pages=1):
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, "lxml")
 
-        links = soup.select("div.product-item[data-gtm]")
+        nodes = soup.select("div.product-item[data-gtm]")
 
-        if not links:
-            raise Exception("No links in darwin products")
+        if not nodes:
+            raise Exception("No nodes in darwin products")
 
-        for link in links:
-            raw = link.get("data-gtm")
-            title_tag = link.select_one(".product-title")
+        for node in nodes:
+            raw = node.get("data-gtm")
+            title_tag = node.select_one(".product-title")
             title = title_tag.get_text(strip=True) if title_tag else None
-            variant_tag = link.select_one(".product-desc")
+            variant_tag = node.select_one(".product-desc")
             variant = variant_tag.get_text(strip=True) if variant_tag else None
             if not raw:
                 continue
@@ -52,7 +52,7 @@ def fetch_enter_products(category_url, valid_categories=None, max_pages=1):
                     re.search(r'"item_category":"(.*?)"', decoded) or [None, None]
                 )[1],
                 "variant": f"{variant}",
-                "url": link.select_one(".stretched-link")["href"],
+                "url": node.select_one(".stretched-link")["href"],
                 "shop": "Enter",
             }
             # TODO: availability / stock status
@@ -73,13 +73,13 @@ def fetch_darwin_products(category_url, valid_categories=None, max_pages=1):
         resp = requests.get(url, timeout=15)
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, "lxml")
-        links = soup.select("a[data-ga4]")
+        nodes = soup.select("a[data-ga4]")
 
-        if not links:
+        if not nodes:
             break
 
-        for link in links:
-            raw = link.get("data-ga4")
+        for node in nodes:
+            raw = node.get("data-ga4")
             decoded = html.unescape(raw)
 
             item_data = {
@@ -99,7 +99,7 @@ def fetch_darwin_products(category_url, valid_categories=None, max_pages=1):
                 ]
                 .replace("\\", "")
                 .strip(),
-                "url": link.get("href"),
+                "url": node.get("href"),
                 "shop": "Darwin",
             }
 
