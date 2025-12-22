@@ -18,8 +18,18 @@ npm run dev
 * There are lots of not project related packs in requirements.txt but, that doesn't bother me, might be fixed later
 ```bash
 cd server
-pip install -r requirements.txt 
+python -m venv venv
 python manage.py migrate
+```
+* Run your venv 
+
+```bash
+pip install -r requirements.txt 
+```
+* You can optionally **use** `run.py`, it should use your **venv**
+```bash
+python run.py runserver
+python run.py migrate
 ```
 
 ---
