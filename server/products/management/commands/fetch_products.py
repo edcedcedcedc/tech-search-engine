@@ -65,7 +65,7 @@ def fetch_enter_products(category_url, valid_categories=None, max_pages=1):
     return all_items
 
 
-def fetch_darwin_products(category_url, valid_categories=None, max_pages=10):
+def fetch_darwin_products(category_url, valid_categories=None, max_pages=1):
     all_items = []
 
     for page in range(1, max_pages + 1):
