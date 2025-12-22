@@ -23,6 +23,11 @@ environ.Env.read_env(os.path.join(BASE_DIR, env_file))
 DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY")
 
+if not SECRET_KEY:
+    raise RuntimeError(
+        f"SECRET_KEY not set in environment, generate and set it to '.env'"
+    )
+
 # Database from env
 DATABASES = {"default": env.db()}
 
