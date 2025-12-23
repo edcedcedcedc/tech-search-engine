@@ -49,7 +49,7 @@ Reduce friction for consumers when searching for tech products by:
 
 ### Backend
 
-* Python + FastAPI
+* Python, Django, 
 * Async scraping / fetching
 * REST API for frontend
 * Background jobs (cron / scheduler)
@@ -59,7 +59,7 @@ Reduce friction for consumers when searching for tech products by:
 * Hybrid approach
 
   * Official APIs if available
-  * Web scraping (requests + BeautifulSoup / Playwright)
+  * Web scraping (requests + )BeautifulSoup / Playwright
 * Rate-limited, cached, source-respecting
 
 ### Database
@@ -67,14 +67,13 @@ Reduce friction for consumers when searching for tech products by:
 * PostgreSQL
 
   * Products
-  * Offers / Prices
+  * Prices
   * Sources
   * (Optional) Price history
 
 ### Frontend
 
-* React (Next.js)
-* Server-side rendering for SEO
+* React (Vite)
 * Responsive UI (desktop-first MVP)
 
 ### Infrastructure
@@ -86,29 +85,24 @@ Reduce friction for consumers when searching for tech products by:
 
 ---
 
-## 6. Core Data Model (Unified Schema)
+## 6. Core Data Model (as 12/20/2025)
 
 ```json
-Product {
-  id
-  name
-  brand
-  category
-  image_url
-}
-
-Offer {
-  product_id
-  store_name
-  price
-  currency
-  availability
-  product_url
-  last_updated
+export interface Product {
+  id: string;
+  external_id: string;
+  name: string;
+  price: number;
+  brand: string;
+  category: string;
+  variant?: string;
+  url: string;
+  image?: string;
+  created_at: string;
+  updated_at: string;
+  shop: string;
 }
 ```
-
-This structure allows **multiple offers per product**, enabling direct comparison across stores.
 
 ---
 
@@ -142,7 +136,6 @@ This structure allows **multiple offers per product**, enabling direct compariso
 
 * `/products`
 * `/products/{id}`
-* `/offers`
 * `/search`
 
 ### 5. Frontend UI
@@ -150,7 +143,6 @@ This structure allows **multiple offers per product**, enabling direct compariso
 * Product listing page
 * Product comparison page
 * Filters and sorting
-
 ---
 
 ## 8. MVP Features (Board-Level)
@@ -161,7 +153,6 @@ This structure allows **multiple offers per product**, enabling direct compariso
 * Multiple store prices per product
 * Sort by lowest price
 * Filters:
-
   * Store
   * Price range
   * Brand
@@ -175,7 +166,7 @@ This structure allows **multiple offers per product**, enabling direct compariso
 
 ---
 
-## 9. Monetization Strategy
+## 9. Monetization Strategy(not MVP, maybe post MVP)
 
 ### Initial Monetization
 
@@ -183,7 +174,6 @@ This structure allows **multiple offers per product**, enabling direct compariso
 
 * Support the project button
 * Webhook triggers:
-
   * Store supporter events
   * Unlock supporter-only perks
 
