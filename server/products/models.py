@@ -1,7 +1,8 @@
 from django.db import models
 
+
 class Product(models.Model):
-    external_id = models.CharField(max_length=50, unique=True)
+    external_id = models.CharField(max_length=50)
     name = models.CharField(max_length=255)
     price = models.IntegerField()
     brand = models.CharField(max_length=100)
@@ -13,7 +14,10 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    shop = models.CharField(max_length=50, default="Darwin")
+    shop = models.CharField(max_length=50, default="")
 
     def __str__(self):
         return f"{self.name} ({self.brand})"
+
+    class Meta:
+        unique_together = ("shop", "external_id")
