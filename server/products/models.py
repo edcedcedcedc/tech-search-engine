@@ -16,6 +16,10 @@ class Product(models.Model):
 
     shop = models.CharField(max_length=50, default="")
 
+    # aggregation fields
+    in_stock = models.BooleanField(default=True)
+    last_seen_at = models.DateTimeField(null=True, blank=True)
+
     def __str__(self):
         return f"{self.name} ({self.brand})"
 
