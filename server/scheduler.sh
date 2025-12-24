@@ -17,12 +17,12 @@ export LC_ALL=C.UTF-8
 export LANG=C.UTF-8
 
 function handle_interrupt() {
-    echo "Received interrupt signal, stopping scheduler..." >> "$LOGFILE"
+    echo "Received interrupt signal, stopping scheduler...">> "$LOGFILE"
+    echo "=== Aggregation run gracefully stoped at $(date) ===" >> "$LOGFILE"
     STOP_SCHEDULER=true
 }
 
 trap handle_interrupt SIGINT SIGTERM
-
 
 mkdir -p ./logs
 
@@ -49,6 +49,9 @@ while [ "$STOP_SCHEDULER" = false ]; do
             done
         done
 
+        if [ "$STOP_SCHEDULER" = true ]; then
+            break 2
+        fi
         echo "=== Aggregation run complete at $(date) ==="
         echo "Sleeping $SLEEP_INTERVAL seconds..."
         echo ""
@@ -59,5 +62,3 @@ while [ "$STOP_SCHEDULER" = false ]; do
     sleep $SLEEP_INTERVAL & 
     wait $! 
 done
-
-echo "Scheduler stopped." >> "$LOGFILE"
