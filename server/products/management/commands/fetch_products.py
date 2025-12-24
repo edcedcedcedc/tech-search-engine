@@ -177,29 +177,10 @@ class Command(BaseCommand):
         parser.add_argument(
             "--auto_stdout",
             action="store_true",
-            help="Disable spinner and use binary stdout (for cron/logs)",
+            help="Disable spinner(for cron/logs)",
         )
 
     def handle(self, *args, **options):
-
-        def write(msg, *, auto=False):
-
-            stream = auto_stdout_utf8 if auto else stdout_utf8
-            try:
-                stream.write(str(msg) + "\n")
-                stream.flush()
-            except Exception:
-                safe = str(msg).encode("ascii", "ignore").decode("ascii")
-                stream.write(safe + "\n")
-                stream.flush()
-
-        auto_stdout_utf8 = io.TextIOWrapper(
-            sys.stdout.buffer, encoding="utf-8", errors="replace"
-        )
-        stdout_utf8 = io.TextIOWrapper(
-            sys.stdout.buffer, encoding="utf-8", errors="replace"
-        )
-
         category = options["category"]
         shop = options["shop"]
         pages = options["pages"]
@@ -208,19 +189,29 @@ class Command(BaseCommand):
         shop_cfg = CATEGORIES.get(shop)
         url = shop_cfg.get(category) if shop_cfg else None
         fetch_fn = shop_cfg.get("function") if shop_cfg else None
+        stream = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+
+        def write(msg):
+            try:
+                stream.write(str(msg) + "\n")
+                stream.flush()
+            except Exception:
+                safe = str(msg).encode("ascii", "ignore").decode("ascii")
+                stream.write(safe + "\n")
+                stream.flush()
 
         if not url or not fetch_fn:
             msg = f"Unknown category/shop/pages: {category} / {shop} / {pages}"
             if auto_stdout:
-                write(msg, auto=True)
+                write(msg)
             else:
                 write(self.style.ERROR(msg))
             return
 
         if auto_stdout:
-            write(f"Fetching products from {url}", auto=True)
+            write(f"Fetching products from {url}")
             items = fetch_fn(url, pages)
-            write(f"Found {len(items)} products", auto=True)
+            write(f"Found {len(items)} products")
         else:
             spinner = self.Spinner(f"Fetching products from {url}")
             spinner.start()
@@ -252,24 +243,19 @@ class Command(BaseCommand):
                 obj.save()
 
                 action = "CREATED" if created else "UPDATED"
-
-                if auto_stdout:
-                    write(f"{action}: {item_data['name']}", auto=True)
-                else:
-                    annotation = "CREATED: " if created else "UPDATED: "
-                    write(f"{annotation} {item_data['name'][:70]}")
+                write(f"{action}: {item_data['name']}")
 
             except Exception as e:
                 msg = f"ERROR saving {item_data.get('name', 'Unknown')}: {e}"
                 if auto_stdout:
-                    write(msg, auto=True)
+                    write(msg)
                 else:
                     write(self.style.ERROR(msg))
 
         if auto_stdout:
-            write(f"SUMMARY: {saved_count} created, {updated_count} updated", auto=True)
-            write(f"COMPLETED: {category} products from {shop}", auto=True)
-            write("=" * 60, auto=True)
+            write(f"SUMMARY: {saved_count} created, {updated_count} updated")
+            write(f"COMPLETED: {category} products from {shop}")
+            write("=" * 60)
         else:
             write(
                 self.style.SUCCESS(

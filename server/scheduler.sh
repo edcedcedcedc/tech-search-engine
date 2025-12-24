@@ -41,7 +41,7 @@ while [ "$STOP_SCHEDULER" = false ]; do
                 echo ""
                 cd "$PROJECT_PATH" || exit 1
 
-                $PYTHON_PATH -u manage.py fetch_products --shop $SHOP --category $CATEGORY --pages $MAX_PAGES --auto_stdout
+                $PYTHON_PATH manage.py fetch_products --shop $SHOP --category $CATEGORY --pages $MAX_PAGES --auto_stdout
                 
                 echo ""
                 echo "---"
