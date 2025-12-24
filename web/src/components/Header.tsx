@@ -44,7 +44,14 @@ const Header: React.FC = () => {
             9999
           </Typography>
         </Button>
-        <div className="flex justify-center items-center gap-4">
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
           <Select
             labelId="language-selector"
             id="language-selector"
@@ -74,7 +81,7 @@ const Header: React.FC = () => {
               </Button>
             ))}
           </Box>
-        </div>
+        </Box>
       </Toolbar>
     </AppBar>
   );
