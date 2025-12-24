@@ -1,4 +1,5 @@
 import html
+import io
 import re
 import requests
 from bs4 import BeautifulSoup
@@ -8,13 +9,13 @@ import itertools
 import sys
 import threading
 import time
-
+from django.utils import timezone
 
 # How to use it for now
 # python manage.py fetch_products --shop darwin --category pc --pages 2
 
 
-def fetch_enter_products(category_url, valid_categories=None, max_pages=1):
+def fetch_enter_products(category_url, max_pages=1):
     all_items = []
 
     for page in range(1, max_pages + 1):
@@ -65,7 +66,7 @@ def fetch_enter_products(category_url, valid_categories=None, max_pages=1):
     return all_items
 
 
-def fetch_darwin_products(category_url, valid_categories=None, max_pages=1):
+def fetch_darwin_products(category_url, max_pages=1):
     all_items = []
 
     for page in range(1, max_pages + 1):
@@ -158,8 +159,7 @@ class Command(BaseCommand):
             self.running = False
             self.thread.join()
             sys.stdout.write("\r" + " " * (len(self.message) + 2) + "\r")
-
-        sys.stdout.flush()
+            sys.stdout.flush()
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -174,11 +174,25 @@ class Command(BaseCommand):
         parser.add_argument(
             "--pages", type=int, help="Number of pages to fetch", default=1
         )
+        parser.add_argument(
+            "--auto_stdout",
+            action="store_true",
+            help="Disable spinner and use binary stdout (for cron/logs)",
+        )
 
     def handle(self, *args, **options):
+
+        if sys.platform == "win32":
+            sys.stdout.reconfigure(encoding="utf-8")
+        else:
+            sys.stdout = io.TextIOWrapper(
+                sys.stdout.buffer, encoding="utf-8", line_buffering=True
+            )
+
         category = options["category"]
         shop = options["shop"]
         pages = options["pages"]
+        auto_stdout = options["auto_stdout"]
         url = CATEGORIES.get(shop).get(category)
 
         if not url:
@@ -187,20 +201,107 @@ class Command(BaseCommand):
             )
             return
 
-        spinner = self.Spinner(f"Fetching products from {url}")
-        spinner.start()
-        items = CATEGORIES.get(shop).get("function")(url, pages)
-        spinner.stop()
-        self.stdout.write(self.style.SUCCESS(f"Found {len(items)} products"))
+        if auto_stdout:
+            try:
+                print(f"Fetching products from {url}", flush=True)
+                print("", flush=True)
+            except UnicodeEncodeError:
+                sys.stdout.buffer.write(f"Fetching products from {url}\n\n")
+                sys.stdout.buffer.flush()
+
+            items = CATEGORIES.get(shop).get("function")(url, pages)
+
+            try:
+                print(f"Found {len(items)} products", flush=True)
+                print("", flush=True)
+            except UnicodeEncodeError:
+                sys.stdout.buffer.write(f"Found {len(items)} products\n\n")
+                sys.stdout.buffer.flush()
+        else:
+            spinner = self.Spinner(f"Fetching products from {url}")
+            spinner.start()
+            items = CATEGORIES.get(shop).get("function")(url, pages)
+            spinner.stop()
+            self.stdout.write(self.style.SUCCESS(f"Found {len(items)} products"))
+
+        saved_count = 0
+        updated_count = 0
 
         for item_data in items:
-            Product.objects.update_or_create(
-                # External id makes sure no duplicates are stored in the db
-                external_id=item_data["external_id"],
-                defaults=item_data,
-            )
-            self.stdout.write(f"Saved: {item_data['name']}")
+            try:
+                obj, created = Product.objects.get_or_create(
+                    shop=item_data["shop"],
+                    external_id=item_data["external_id"],
+                    defaults=item_data,
+                )
 
-        self.stdout.write(
-            self.style.SUCCESS(f"Done fetching {category} products from {shop}!")
-        )
+                if not created:
+                    # update mutable fields
+                    obj.name = item_data["name"]
+                    obj.price = item_data["price"]
+                    obj.url = item_data["url"]
+                    obj.variant = item_data["variant"]
+                    obj.image = item_data.get("image", obj.image)
+                    obj.in_stock = True
+                    obj.updated_at = timezone.now()
+                    updated_count += 1
+                else:
+                    saved_count += 1
+
+                obj.save()
+
+                if auto_stdout:
+
+                    action = "CREATED" if created else "UPDATED"
+                    try:
+                        print(f"{action}: {item_data['name']}", flush=True)
+                    except UnicodeEncodeError:
+
+                        output = f"{action}: {item_data['name']}\n"
+                        sys.stdout.buffer.write(output)
+                        sys.stdout.buffer.flush()
+                else:
+                    action = "✓" if created else "↻"
+                    try:
+                        self.stdout.write(f"{action} {item_data['name'][:50]}...")
+                    except UnicodeEncodeError:
+
+                        safe_name = (
+                            item_data["name"][:50]
+                            .encode("ascii", "ignore")
+                            .decode("ascii")
+                        )
+                        self.stdout.write(f"{action} {safe_name}...")
+
+            except Exception as e:
+                error_msg = f"ERROR: Failed to save {item_data.get('name', 'Unknown')}: {str(e)}"
+                if auto_stdout:
+                    try:
+                        print(error_msg, flush=True)
+                    except UnicodeEncodeError:
+                        sys.stdout.buffer.write(f"{error_msg}\n")
+                        sys.stdout.buffer.flush()
+                else:
+                    self.stdout.write(self.style.ERROR(error_msg))
+
+        if auto_stdout:
+            try:
+                print("", flush=True)
+                print(
+                    f"SUMMARY: {saved_count} created, {updated_count} updated",
+                    flush=True,
+                )
+                print(f"COMPLETED: {category} products from {shop}", flush=True)
+                print("=" * 60, flush=True)
+            except UnicodeEncodeError:
+                summary = f"\nSUMMARY: {saved_count} created, {updated_count} updated\n"
+                summary += f"COMPLETED: {category} products from {shop}\n"
+                summary += "=" * 60 + "\n"
+                sys.stdout.buffer.write(summary)
+                sys.stdout.buffer.flush()
+        else:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"\nDone! {saved_count} created, {updated_count} updated"
+                )
+            )
