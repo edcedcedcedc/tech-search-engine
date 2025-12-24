@@ -2,7 +2,7 @@
 
 PYTHON_PATH="./venv/Scripts/python"
 PROJECT_PATH="./"
-MAX_PAGES=5
+MAX_PAGES=1
 SLEEP_INTERVAL=30
 LOGFILE="./logs/fetch.log"
 STOP_SCHEDULER=false
@@ -13,7 +13,6 @@ SHOPS_CATEGORIES=(
     ["darwin"]="monitor laptop pc"
 )
 
-# Set locale for UTF-8 support
 export LC_ALL=C.UTF-8
 export LANG=C.UTF-8
 
@@ -24,7 +23,7 @@ function handle_interrupt() {
 
 trap handle_interrupt SIGINT SIGTERM
 
-# Create logs directory if it doesn't exist
+
 mkdir -p ./logs
 
 while [ "$STOP_SCHEDULER" = false ]; do
@@ -42,8 +41,7 @@ while [ "$STOP_SCHEDULER" = false ]; do
                 echo ""
                 cd "$PROJECT_PATH" || exit 1
 
-                # Set Python UTF-8 encoding
-                PYTHONIOENCODING=utf-8 $PYTHON_PATH -u manage.py fetch_products --shop $SHOP --category $CATEGORY --pages $MAX_PAGES --auto_stdout
+                $PYTHON_PATH -u manage.py fetch_products --shop $SHOP --category $CATEGORY --pages $MAX_PAGES --auto_stdout
                 
                 echo ""
                 echo "---"
