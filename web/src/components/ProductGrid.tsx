@@ -9,6 +9,7 @@ import {
   Button,
 } from "@mui/material";
 import type { Product } from "../types/Product";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   products: Product[];
@@ -29,6 +30,8 @@ const bull = (
 );
 
 const ProductGrid: React.FC<Props> = ({ products }) => {
+  const { t } = useTranslation();
+
   return (
     <Box
       sx={{
@@ -81,7 +84,7 @@ const ProductGrid: React.FC<Props> = ({ products }) => {
               target="_blank"
               rel="noopener"
             >
-              Vezi produs
+              {t("See_product")}
             </Button>
           </CardActions>
         </Card>

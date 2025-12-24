@@ -1,36 +1,34 @@
 // src/views/Disclaimer.tsx
 import { Box, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 export default function Disclaimer() {
+  const { t } = useTranslation();
+
   return (
     <Box sx={{ maxWidth: 800, mx: "auto" }}>
       <Typography variant="h4" gutterBottom>
-        Declarație de responsabilitate
+        {t("Disclaimer_Title")}
       </Typography>
 
       <Typography variant="body1" gutterBottom>
-        Informațiile afișate pe acest site, inclusiv prețurile produselor, sunt
-        oferite exclusiv în scop informativ.
+        {t("Disclaimer_Intro")}
       </Typography>
 
       <Typography variant="body1" gutterBottom>
-        Nu garantăm acuratețea, completitudinea sau actualitatea informațiilor
-        prezentate. Prețurile și disponibilitatea produselor pot fi modificate
-        în orice moment de către magazinele sursă.
+        {t("Disclaimer_Accuracy")}
       </Typography>
 
       <Typography variant="body1" gutterBottom>
-        Acest site nu vinde produse și nu este afiliat, asociat sau susținut de
-        niciunul dintre comercianții enumerați.
+        {t("Disclaimer_Affiliation")}
       </Typography>
 
       <Typography variant="body1" gutterBottom color="text.secondary">
-        Toate mărcile comerciale, siglele și denumirile de produse aparțin
-        proprietarilor lor respectivi.
+        {t("Disclaimer_Trademarks")}
       </Typography>
 
       <Typography variant="body1" gutterBottom>
-        Utilizarea acestui site se face pe propria răspundere.
+        {t("Disclaimer_Risk")}
       </Typography>
     </Box>
   );

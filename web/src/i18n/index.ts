@@ -9,10 +9,10 @@ i18n
   .init({
     debug: true,
     fallbackLng: "en-US",
+    supportedLngs: ["en-US", "ro-MD"],
     resources: {
-      "en-US": LANGAUGES["en-US"].file,
-      "ro-MD": LANGAUGES["ro-MD"].file,
-      "ro-RO": LANGAUGES["ro-RO"].file,
+      "en-US": { translation: LANGAUGES["en-US"].file },
+      "ro-MD": { translation: LANGAUGES["ro-MD"].file },
     },
     interpolation: {
       escapeValue: false,

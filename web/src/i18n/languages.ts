@@ -1,6 +1,5 @@
-import enUS from "./locales/en-US.json";
-import roMD from "./locales/ro-MD.json";
-import roRO from "./locales/ro-RO.json";
+import enUS from "./locales/en-US";
+import roMD from "./locales/ro-MD";
 
 export interface I18nLanguage {
   label: string;
@@ -8,20 +7,17 @@ export interface I18nLanguage {
   file: Record<string, string | object>;
 }
 
-export const LANGAUGES: Record<string, I18nLanguage> = {
+export type LanguagesCodes = "en-US" | "ro-MD";
+
+export const LANGAUGES: Record<LanguagesCodes, I18nLanguage> = {
   "en-US": {
     label: "English (United States)",
     value: "en-US",
     file: enUS,
   },
   "ro-MD": {
-    label: "Romamnian (Moldova)",
+    label: "Romamanian (Moldova)",
     value: "ro-MD",
     file: roMD,
-  },
-  "ro-RO": {
-    label: "Romamnian",
-    value: "ro-RO",
-    file: roRO,
   },
 };

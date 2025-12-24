@@ -2,9 +2,11 @@
 import React from "react";
 import { Box, Typography, Link, useTheme } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const Footer: React.FC = () => {
   const theme = useTheme();
+  const { t } = useTranslation();
   return (
     <Box
       component="footer"
@@ -17,27 +19,30 @@ const Footer: React.FC = () => {
       }}
     >
       <Typography variant="body2" color="textSecondary">
-        © {new Date().getFullYear()} 9999. Toate drepturile rezervate.
+        © {new Date().getFullYear()} 9999. {t("All_rights_reserved")}
       </Typography>
 
       <Box sx={{ mt: 1 }}>
         <Link component={RouterLink} to="/disclaimer" sx={{ mx: 1 }}>
-          Declarație de responsabilitate
+          {t("Responsibility_Statement")}
         </Link>
         <Link component={RouterLink} to="/terms-of-use" sx={{ mx: 1 }}>
-          Termeni și condiții
+          {t("Terms_and_conditions")}
         </Link>
         <Link component={RouterLink} to="/privacy-policy" sx={{ mx: 1 }}>
-          Politica de confidențialitate
+          {t("Privacy_Policy")}
         </Link>
+
         <Link component={RouterLink} to="/about" sx={{ mx: 1 }}>
-          Despre noi
+          {t("About_Us")}
         </Link>
+
         <Link component={RouterLink} to="/contact" sx={{ mx: 1 }}>
-          Contact
+          {t("Contact")}
         </Link>
+
         <Link component={RouterLink} to="/source" sx={{ mx: 1 }}>
-          Surse
+          {t("Sources")}
         </Link>
       </Box>
     </Box>

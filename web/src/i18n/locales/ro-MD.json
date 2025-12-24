@@ -1,8 +1,0 @@
-{
-  "app": {
-    "test": "Test(ro-MD)"
-  },
-  "auth": {
-    "login": "login from ro-md"
-  }
-}
