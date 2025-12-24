@@ -10,6 +10,7 @@ import sys
 import threading
 import time
 from django.utils import timezone
+import traceback
 
 # How to use it for now
 # python manage.py fetch_products --shop darwin --category pc --pages 2
@@ -53,7 +54,7 @@ def fetch_enter_products(category_url, max_pages=1):
                     re.search(r'"item_category":"(.*?)"', decoded) or [None, None]
                 )[1],
                 "variant": f"{variant}",
-                "url": node.select_one(".stretched-link")["href"],
+                "url": node.select_one(".stretched-link")["href"] or None,
                 "shop": "Enter",
             }
             # TODO: availability / stock status
@@ -100,7 +101,7 @@ def fetch_darwin_products(category_url, max_pages=1):
                 ]
                 .replace("\\", "")
                 .strip(),
-                "url": node.get("href"),
+                "url": node.get("href") or None,
                 "shop": "Darwin",
             }
 
@@ -181,84 +182,87 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        category = options["category"]
-        shop = options["shop"]
-        pages = options["pages"]
-        auto_stdout = options["auto_stdout"]
 
-        shop_cfg = CATEGORIES.get(shop)
-        url = shop_cfg.get(category) if shop_cfg else None
-        fetch_fn = shop_cfg.get("function") if shop_cfg else None
-        stream = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+        try:
+            category = options["category"]
+            shop = options["shop"]
+            pages = options["pages"]
+            auto_stdout = options["auto_stdout"]
 
-        def write(msg):
-            try:
-                stream.write(str(msg) + "\n")
-                stream.flush()
-            except Exception:
-                safe = str(msg).encode("ascii", "ignore").decode("ascii")
-                stream.write(safe + "\n")
-                stream.flush()
+            shop_cfg = CATEGORIES.get(shop)
+            url = shop_cfg.get(category) if shop_cfg else None
+            fetch_fn = shop_cfg.get("function") if shop_cfg else None
+            stream = io.TextIOWrapper(
+                sys.stdout.buffer, encoding="utf-8", errors="replace"
+            )
 
-        if not url or not fetch_fn:
-            msg = f"Unknown category/shop/pages: {category} / {shop} / {pages}"
-            if auto_stdout:
-                write(msg)
-            else:
-                write(self.style.ERROR(msg))
-            return
+            def write(msg):
+                try:
+                    stream.write(str(msg) + "\n")
+                    stream.flush()
+                except Exception:
+                    safe = str(msg).encode("ascii", "ignore").decode("ascii")
+                    stream.write(safe + "\n")
+                    stream.flush()
 
-        if auto_stdout:
-            write(f"Fetching products from {url}")
-            items = fetch_fn(url, pages)
-            write(f"Found {len(items)} products")
-        else:
-            spinner = self.Spinner(f"Fetching products from {url}")
-            spinner.start()
-            items = fetch_fn(url, pages)
-            spinner.stop()
-            write(self.style.SUCCESS(f"Found {len(items)} products"))
-
-        saved_count = 0
-        updated_count = 0
-
-        for item_data in items:
-            try:
-                obj, created = Product.objects.update_or_create(
-                    shop=item_data["shop"],
-                    external_id=item_data["external_id"],
-                    defaults=item_data,
-                )
-
-                if not created:
-                    obj.name = item_data["name"]
-                    obj.price = item_data["price"]
-                    obj.url = item_data["url"]
-                    obj.variant = item_data["variant"]
-                    obj.updated_at = timezone.now()
-                    updated_count += 1
-                else:
-                    saved_count += 1
-
-                obj.save()
-
-                action = "CREATED" if created else "UPDATED"
-                write(f"{action}: {item_data['name']}")
-
-            except Exception as e:
-                msg = f"ERROR saving {item_data.get('name', 'Unknown')}: {e}"
+            if not url or not fetch_fn:
+                msg = f"Unknown category/shop/pages: {category} / {shop} / {pages}"
                 if auto_stdout:
                     write(msg)
                 else:
                     write(self.style.ERROR(msg))
+                return
 
-        if auto_stdout:
-            write(f"SUMMARY: {saved_count} created, {updated_count} updated")
-            write(f"COMPLETED: {category} products from {shop}")
-            write("=" * 60)
-        else:
-            write(
-                self.style.SUCCESS(
-                    f"\nDone! {saved_count} created, {updated_count} updated"
+            if auto_stdout:
+                write(f"Fetching products from {url}")
+                items = fetch_fn(url, pages)
+                write(f"Found {len(items)} products")
+            else:
+                spinner = self.Spinner(f"Fetching products from {url}")
+                spinner.start()
+                items = fetch_fn(url, pages)
+                spinner.stop()
+                write(self.style.SUCCESS(f"Found {len(items)} products"))
+
+            saved_count = 0
+            updated_count = 0
+
+            for item_data in items:
+                try:
+                    _, created = Product.objects.update_or_create(
+                        shop=item_data["shop"],
+                        external_id=item_data["external_id"],
+                        defaults=item_data,
+                    )
+
+                    if not created:
+                        updated_count += 1
+                    else:
+                        saved_count += 1
+
+                    action = "CREATED" if created else "UPDATED"
+                    write(f"{action}: {item_data['name']}")
+
+                except Exception as e:
+                    msg = f"ERROR saving {item_data.get('name', 'Unknown')}: {e}"
+                    if auto_stdout:
+                        write(msg)
+                    else:
+                        write(self.style.ERROR(msg))
+
+            if auto_stdout:
+                write(f"SUMMARY: {saved_count} created, {updated_count} updated")
+                write(f"COMPLETED: {category} products from {shop}")
+                write("=" * 60)
+            else:
+                write(
+                    self.style.SUCCESS(
+                        f"\nDone! {saved_count} created, {updated_count} updated"
+                    )
                 )
-            )
+        except KeyboardInterrupt:
+            write("Process interrupted by user, exiting gracefully...")
+            return
+        except Exception as e:
+            write(f"Unexpected error: {e}", is_error=True)
+            write(traceback.format_exc())
