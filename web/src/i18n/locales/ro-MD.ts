@@ -97,6 +97,13 @@ Toate datele sunt preluate din surse publice și pot fi modificate de magazine f
 
   //   Test
   test: "Test (ro-MD)",
+
+  // Cookie
+  Cookie_Statement: "Acest site web i.e. aplicație folosește cookie-uri pentru a obține experiența utilizatorului.",
+
+  Cookie_Accept_Button: "Acceptă",
+
+  Cookie_Reject_Button: "Respinge"
 };
 
 export default roMD;

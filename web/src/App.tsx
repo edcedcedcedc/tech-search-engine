@@ -6,11 +6,13 @@ import Footer from "./components/Footer";
 import AppRoutes from "./router/Router";
 import HeroSearch from "./components/HeroSearch";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import CookieConsent from "react-cookie-consent";
 import ResetCookieButton from "./components/TestResetCookieButton";
 
 function App() {
   const [query, setQuery] = useState("");
+  const { t } = useTranslation();
 
   return (
     <BrowserRouter>
@@ -77,8 +79,7 @@ function App() {
               <Typography
                 sx={{ flex: 1, mr: 2, color: "primary.contrastText" }}
               >
-                Acest web site i.e. aplicație folosește cookie-uri pentru a
-                îmbunătăți experiența utilizatorului.
+                {t("Cookie_Statement")}
               </Typography>
 
               <Box sx={{ display: "flex", gap: 1 }}>
@@ -95,7 +96,7 @@ function App() {
                     window.location.reload();
                   }}
                 >
-                  Resping
+                  {t("Cookie_Reject_Button")}
                 </Button>
                 <Button
                   variant="contained"
@@ -110,7 +111,7 @@ function App() {
                     window.location.reload();
                   }}
                 >
-                  Accept
+                  {t("Cookie_Accept_Button")}
                 </Button>
               </Box>
             </Box>
