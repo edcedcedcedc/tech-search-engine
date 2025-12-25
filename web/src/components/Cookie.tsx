@@ -50,7 +50,7 @@ export function Cookie() {
               backgroundColor: "secondary.main",
               color: "secondary.contrastText",
             }}
-            onClick={(e) => {
+            onClick={() => {
               document.cookie =
                 "myAppCookieConsent=true; path=/; max-age=12960000";
               window.location.reload();

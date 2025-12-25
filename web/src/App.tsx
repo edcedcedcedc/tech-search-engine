@@ -1,4 +1,4 @@
-import { Box, Button, Container, Typography } from "@mui/material";
+import { Box, Container } from "@mui/material";
 import { BrowserRouter } from "react-router-dom";
 
 import Header from "./components/Header";
