@@ -33,7 +33,7 @@ export function Cookie() {
             color="secondary"
             sx={{
               borderColor: "secondary.main",
-              color: "secondary.main",
+              color: "secondary.contrastText",
             }}
             onClick={() => {
               document.cookie =

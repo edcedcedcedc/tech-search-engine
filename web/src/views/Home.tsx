@@ -12,7 +12,9 @@ export default function Home({ query }: HeroSearchProps) {
   const filteredProducts = mockProducts.filter((p) =>
     p.name.toLowerCase().includes(query.toLowerCase())
   );
-
+  //TODO: Dynamically change the keywords for relevant products
+  // const productKeywords = products.map(p => p.name).join(", ");
+  // <Meta keywords={productKeywords} />
   return (
     <Box
       sx={{

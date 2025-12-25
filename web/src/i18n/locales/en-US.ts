@@ -101,7 +101,7 @@ All data is taken from public sources and may be modified by stores without noti
 
   // Cookie 
   Cookie_Statement: "This website i.e. application uses cookies to improve user experience.",
-
+  
   Cookie_Accept_Button: "Accept",
 
   Cookie_Reject_Button: "Reject"
