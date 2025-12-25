@@ -1,24 +1,22 @@
 // src/views/Source.tsx
 import { Box, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 export default function Source() {
+  const { t } = useTranslation();
+
   return (
     <Box sx={{ maxWidth: 800, mx: "auto" }}>
       <Typography variant="h4" gutterBottom>
-        Surse de date
+        {t("Source_Title")}
       </Typography>
 
-      <Typography variant="body1">
-        Datele despre produse sunt colectate automat din surse publice ale
-        magazinelor online, inclusiv (dar fără a se limita la):
-      </Typography>
+      <Typography variant="body1">{t("Source_Intro")}</Typography>
 
-      <Typography variant="body1">– Darwin.md</Typography>
+      <Typography variant="body1">{t("Source_Example")}</Typography>
 
       <Typography variant="body1" color="text.secondary">
-        Mărcile comerciale, logo-urile și denumirile produselor aparțin
-        proprietarilor respectivi. Platforma noastră nu este afiliată cu aceste
-        magazine.
+        {t("Source_Disclaimer")}
       </Typography>
     </Box>
   );
