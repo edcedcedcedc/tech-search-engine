@@ -16,13 +16,7 @@ export default function Home({ query }: HeroSearchProps) {
   // const productKeywords = products.map(p => p.name).join(", ");
   // <Meta keywords={productKeywords} />
   return (
-    <Box
-      sx={{
-        maxWidth: 800,
-        mx: "auto",
-        //textAlign: "center",
-      }}
-    >
+    <Box>
       <Typography variant="h4" gutterBottom>
         9999
       </Typography>

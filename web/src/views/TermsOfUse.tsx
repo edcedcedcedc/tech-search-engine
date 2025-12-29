@@ -6,7 +6,7 @@ export default function TermsOfUse() {
   const { t } = useTranslation();
 
   return (
-    <Box sx={{ maxWidth: 800, mx: "auto" }}>
+    <Box>
       <Typography variant="h4" gutterBottom>
         {t("Terms_Title")}
       </Typography>

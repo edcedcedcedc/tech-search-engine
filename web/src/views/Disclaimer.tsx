@@ -6,7 +6,7 @@ export default function Disclaimer() {
   const { t } = useTranslation();
 
   return (
-    <Box sx={{ maxWidth: 800, mx: "auto" }}>
+    <Box>
       <Typography variant="h4" gutterBottom>
         {t("Disclaimer_Title")}
       </Typography>

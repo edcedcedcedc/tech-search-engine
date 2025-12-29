@@ -32,7 +32,7 @@ export function Cookie() {
             variant="outlined"
             color="secondary"
             sx={{
-              borderColor: "secondary.main",
+              borderColor: "secondary.contrastText",
               color: "secondary.contrastText",
             }}
             onClick={() => {

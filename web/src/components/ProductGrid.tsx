@@ -42,7 +42,7 @@ const ProductGrid: React.FC<Props> = ({ products }) => {
       }}
     >
       {products.map((product) => (
-        <Card key={product.id} sx={{ minWidth: 275 }}>
+        <Card key={product.id}>
           <CardContent>
             {/* Shop name - small text */}
             <Typography
