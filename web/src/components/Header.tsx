@@ -23,12 +23,16 @@ import ContactMailIcon from "@mui/icons-material/ContactMail";
 import { Link as RouterLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { LANGAUGES, type LanguagesCodes } from "../i18n/languages";
+import { useStore } from "../store/store";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import LightModeIcon from "@mui/icons-material/LightMode";
 
 const Header: React.FC = () => {
   const theme = useTheme();
+  const mode = useStore((s) => s.mode);
+  const toggleMode = useStore((s) => s.toggleMode);
   const { t, i18n } = useTranslation();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [langMenuAnchor, setLangMenuAnchor] =
     React.useState<null | HTMLElement>(null);
@@ -73,6 +77,9 @@ const Header: React.FC = () => {
         {/* Desktop navigation */}
         {!isMobile && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <IconButton onClick={toggleMode}>
+              {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
+            </IconButton>
             {/* About & Contact Icons */}
             <IconButton component={RouterLink} to="/about">
               <InfoIcon />
@@ -108,6 +115,9 @@ const Header: React.FC = () => {
         {/* Mobile hamburger */}
         {isMobile && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <IconButton onClick={toggleMode}>
+              {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
+            </IconButton>
             {/* Language */}
             <IconButton onClick={handleLangMenuOpen} color="default">
               <LanguageIcon />
