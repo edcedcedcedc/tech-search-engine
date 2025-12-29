@@ -70,9 +70,7 @@ const Header: React.FC = () => {
         }}
       >
         {/* Logo */}
-        <Typography variant="h5" color="textPrimary">
-          9999
-        </Typography>
+        <Typography variant="h5">9999</Typography>
 
         {/* Desktop navigation */}
         {!isMobile && (
