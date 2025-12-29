@@ -1,13 +1,15 @@
 // src/Routes.tsx
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
-import Disclaimer from "../views/Disclaimer";
-import Home from "../views/Home";
-import PrivacyPolicy from "../views/PrivacyPolicy";
-import Contact from "../views/Contact";
-import About from "../views/About";
-import Source from "../views/Source";
-import TermsOfUse from "../views/TermsOfUse";
+import { Box, CircularProgress } from "@mui/material";
+
+const Home = lazy(() => import("../views/Home"));
+const Disclaimer = lazy(() => import("../views/Disclaimer"));
+const PrivacyPolicy = lazy(() => import("../views/PrivacyPolicy"));
+const Contact = lazy(() => import("../views/Contact"));
+const About = lazy(() => import("../views/About"));
+const Source = lazy(() => import("../views/Source"));
+const TermsOfUse = lazy(() => import("../views/TermsOfUse"));
 
 interface HeroSearchProps {
   query: string;
@@ -15,15 +17,30 @@ interface HeroSearchProps {
 
 const AppRoutes: React.FC<HeroSearchProps> = ({ query }) => {
   return (
-    <Routes>
-      <Route path="/*" element={<Home query={query} />} />
-      <Route path="/disclaimer" element={<Disclaimer />} />
-      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-      <Route path="/contact" element={<Contact />} />
-      <Route path="/about" element={<About />} />
-      <Route path="/source" element={<Source />} />
-      <Route path="/terms-of-use" element={<TermsOfUse />} />
-    </Routes>
+    <Suspense
+      fallback={
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "40vh",
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      }
+    >
+      <Routes>
+        <Route path="/*" element={<Home query={query} />} />
+        <Route path="/disclaimer" element={<Disclaimer />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/source" element={<Source />} />
+        <Route path="/terms-of-use" element={<TermsOfUse />} />
+      </Routes>
+    </Suspense>
   );
 };
 

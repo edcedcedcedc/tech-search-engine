@@ -97,6 +97,20 @@ Toate datele sunt preluate din surse publice și pot fi modificate de magazine f
 
   //   Test
   test: "Test (ro-MD)",
+
+  // Cookie
+  Cookie_Statement: "Acest site web i.e. aplicație folosește cookie-uri pentru a obține experiența utilizatorului.",
+
+  Cookie_Accept_Button: "Acceptă",
+
+  Cookie_Reject_Button: "Respinge",
+
+  //Meta 
+  Meta_Title: "Compară prețuri la electronice în Moldova",
+
+  Meta_Description: "Găsește cele mai bune oferte din magazinele din Moldova și compară prețurile rapid.",
+
+  Meta_Keywords: "electronice, compara preturi, Moldova, laptop, telefon",
 };
 
 export default roMD;
