@@ -1,6 +1,6 @@
 import { StrictMode, useMemo } from "react";
 import { createRoot } from "react-dom/client";
-import { ThemeProvider, CssBaseline, Box } from "@mui/material";
+import { ThemeProvider, CssBaseline } from "@mui/material";
 
 import getTheme from "./theme/theme";
 import { useStore } from "./store/store";
@@ -15,17 +15,6 @@ const Root = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box
-        sx={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100vh",
-          bgcolor: "background.default",
-          zIndex: -1,
-        }}
-      />
       <App />
     </ThemeProvider>
   );

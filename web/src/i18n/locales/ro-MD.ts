@@ -22,14 +22,13 @@ const roMD = {
   Sources: "Surse",
 
   // About us description
-  About_Us_description: `Această platformă este un agregator de prețuri care permite compararea ofertelor din mai multe magazine online din Republica Moldova. Nu vindem produse și nu garantăm disponibilitatea sau exactitatea prețurilor.
-Toate datele sunt preluate din surse publice și pot fi modificate de magazine fără notificare.`,
+  About_Us_description: `Această platformă este un agregator de prețuri care permite compararea ofertelor din mai multe magazine online din Republica Moldova. Nu vindem produse și nu garantăm disponibilitatea sau exactitatea prețurilor.`,
   About_Us_description_secondary: `Toate datele sunt preluate din surse publice și pot fi modificate de magazine fără notificare.`,
 
   // Contact Page
   Contact_Title: "Contact",
   Contact_Intro:
-    "Dacă aveți întrebări, sugestii sau observații legate de platformă, ne puteți contacta folosind informațiile de mai jos.",
+    "Pentru întrebări, sugestii, feedback sau pentru informații privind posibilitatea de a plasa publicitate pe platformă, vă rugăm să ne contactați folosind datele de mai jos.",
   Contact_Email_Label: "Email:",
   Contact_Platform_Info: "Platforma: agregator de prețuri (informativ)",
   Contact_Disclaimer:

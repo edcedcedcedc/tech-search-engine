@@ -22,14 +22,13 @@ const enUS = {
   Sources: "Sources",
 
   // About us description
-  About_Us_description: `This platform is a price aggregator that allows you to compare offers from multiple online stores in the Republic of Moldova. We do not sell products and do not guarantee the availability or accuracy of prices.
-All data is taken from public sources and may be modified by stores without notice.`,
+  About_Us_description: `This platform is a price aggregator that allows you to compare offers from multiple online stores in the Republic of Moldova. We do not sell products and do not guarantee the availability or accuracy of prices.`,
   About_Us_description_secondary: `All data is taken from public sources and may be modified by stores without notice.`,
 
   // Contact page
   Contact_Title: "Contact",
   Contact_Intro:
-    "If you have questions, suggestions, or feedback related to the platform, you can contact us using the information below.",
+    "If you have questions, suggestions, feedback, or are interested in placing an advertisement on the platform, you can contact us using the information below.",
   Contact_Email_Label: "Email:",
   Contact_Platform_Info: "Platform: price aggregator (informational)",
   Contact_Disclaimer:

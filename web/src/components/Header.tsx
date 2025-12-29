@@ -66,7 +66,7 @@ const Header: React.FC = () => {
         sx={{
           display: "flex",
           justifyContent: "space-between",
-          backgroundColor: theme.palette.primary.light, // KEEP COLORS
+          backgroundColor: theme.palette.background.default, // KEEP COLORS
         }}
       >
         {/* Logo */}

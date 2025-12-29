@@ -11,7 +11,7 @@ import { Meta } from "./components/Meta";
 
 function App() {
   const [query, setQuery] = useState("");
-  const theme = useTheme(); // <-- access spacing, breakpoints, typography
+  const theme = useTheme();
 
   return (
     <>
@@ -23,7 +23,8 @@ function App() {
             flexDirection: "column",
             height: "100vh",
             fontFamily: theme.typography.fontFamily,
-            fontSize: theme.typography.body1.fontSize, // default app font
+            fontSize: theme.typography.body1.fontSize,
+            bgcolor: "background.default",
           }}
         >
           {/* HEADER + HERO */}
