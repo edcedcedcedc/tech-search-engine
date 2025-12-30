@@ -7,7 +7,9 @@ import {
   CardActions,
   Typography,
   Button,
+  useTheme,
 } from "@mui/material";
+import * as MUIIcons from "@mui/icons-material";
 import type { Product } from "../types/Product";
 import { useTranslation } from "react-i18next";
 
@@ -31,6 +33,7 @@ const bull = (
 
 const ProductGrid: React.FC<Props> = ({ products }) => {
   const { t } = useTranslation();
+  const theme = useTheme();
 
   return (
     <Box
@@ -42,7 +45,12 @@ const ProductGrid: React.FC<Props> = ({ products }) => {
       }}
     >
       {products.map((product) => (
-        <Card key={product.id}>
+        <Card
+          key={product.id}
+          sx={{
+            backgroundColor: theme.palette.background.card,
+          }}
+        >
           <CardContent>
             {/* Shop name - small text */}
             <Typography
@@ -83,8 +91,27 @@ const ProductGrid: React.FC<Props> = ({ products }) => {
               href={product.url}
               target="_blank"
               rel="noopener"
+              variant="outlined"
+              sx={{
+                width: "100%",
+                gap: 1,
+                display: "flex",
+                alignItems: "center",
+
+                "& .icon": {
+                  opacity: 0,
+                  transform: "translateX(-4px)",
+                  transition: "opacity 0.2s ease, transform 0.2s ease",
+                },
+
+                "&:hover .icon": {
+                  opacity: 1,
+                  transform: "translateX(0)",
+                },
+              }}
             >
               {t("See_product")}
+              <MUIIcons.East className="icon" fontSize="small" />
             </Button>
           </CardActions>
         </Card>

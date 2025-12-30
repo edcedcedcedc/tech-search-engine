@@ -1,22 +1,23 @@
 import { createTheme, responsiveFontSizes } from "@mui/material/styles";
 
 const getTheme = (mode: "light" | "dark") => {
-  let theme = createTheme({
+  const isDark = mode === "dark";
+  const theme = createTheme({
     palette: {
       mode,
 
       primary: {
-        light: "#6aa9ff",
-        main: "#3b82f6",
-        dark: "#1e40af",
-        contrastText: "#ffffff",
+        light: "#E5E5E5",
+        main: "#FFFFFF",
+        dark: "#A1A1AA",
+        contrastText: "#000000",
       },
 
       secondary: {
-        light: "#34d399",
-        main: "#10b981",
-        dark: "#047857",
-        contrastText: "#ffffff",
+        light: "#71717A",
+        main: "#52525B",
+        dark: "#3F3F46",
+        contrastText: "#FFFFFF",
       },
 
       error: {
@@ -48,20 +49,29 @@ const getTheme = (mode: "light" | "dark") => {
       },
 
       background: {
-        default: mode === "dark" ? "#0f172a" : "#fafafa",
-        paper: mode === "dark" ? "#111827" : "#ffffff",
+        default: isDark ? "#09090B" : "#f8f8f8", // app root
+        muted: isDark ? "#0D0D10" : "#ffffff", // header / footer
+        paper: isDark ? "#111113" : "#ffffff", // modals / drawers
       },
 
       text: {
-        primary: mode === "dark" ? "#e5e7eb" : "rgba(0,0,0,0.87)",
-        secondary: mode === "dark" ? "#9ca3af" : "rgba(0,0,0,0.65)",
-        disabled: mode === "dark" ? "#6b7280" : "rgba(0,0,0,0.38)",
+        primary: isDark ? "#e5e7eb" : "rgba(0,0,0,0.87)",
+        secondary: isDark ? "#9ca3af" : "rgba(0,0,0,0.65)",
+        disabled: isDark ? "#6b7280" : "rgba(0,0,0,0.38)",
       },
 
-      divider:
-        mode === "dark"
-          ? "rgba(255,255,255,0.08)"
-          : "rgba(0,0,0,0.08)",
+      card: {
+        background: isDark ? "#0F0F11" : "#ffffff",
+      },
+
+      states: {
+        hover: {
+          border: isDark ? "#343434" : "#b0b0b0",
+          background: isDark ? "#ffffff0a" : "#f8f8f8",
+        },
+      },
+
+      divider: isDark ? "#232325" : "rgba(0,0,0,0.08)",
 
       contrastThreshold: 4.5,
       tonalOffset: 0.2,
@@ -151,11 +161,46 @@ const getTheme = (mode: "light" | "dark") => {
       },
 
       MuiButton: {
-        defaultProps: { disableRipple: false, size: "medium" },
-        styleOverrides: { root: { minHeight: 40 } },
+        defaultProps: {
+          disableRipple: false,
+          size: "medium",
+        },
+        styleOverrides: {
+          root: ({ theme }) => ({
+            minHeight: 36,
+            textTransform: "none",
+            borderRadius: theme.shape.borderRadius,
+            fontWeight: 500,
+          }),
+        },
+        variants: [
+          {
+            props: { variant: "outlined", size: "small" },
+            style: ({ theme }) => ({
+              color: theme.palette.text.primary,
+              borderColor: theme.palette.divider,
+              backgroundColor: "transparent",
+
+              "&:hover": {
+                borderColor: theme.palette.states.hover.border,
+                backgroundColor: theme.palette.states.hover.background,
+              },
+            }),
+          },
+        ],
       },
 
-      MuiCard: { defaultProps: { elevation: 1 } },
+      MuiCard: {
+        defaultProps: { elevation: 1 },
+        styleOverrides: {
+          root: ({ theme }) => ({
+            backgroundColor: theme.palette.card.background,
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: theme.shape.borderRadius,
+            backgroundImage: "none",
+          }),
+        },
+      },
       MuiPaper: { defaultProps: { elevation: 1 } },
 
       MuiContainer: {

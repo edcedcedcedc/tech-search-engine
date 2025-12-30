@@ -61,12 +61,13 @@ const Header: React.FC = () => {
   };
 
   return (
-    <AppBar position="static" elevation={1}>
+    <AppBar position="static" elevation={1} color="transparent">
       <Toolbar
         sx={{
           display: "flex",
           justifyContent: "space-between",
-          backgroundColor: theme.palette.background.default, // KEEP COLORS
+          backgroundColor: theme.palette.background.muted, // KEEP COLORS
+          borderBottom: `1px solid ${theme.palette.divider}`,
         }}
       >
         {/* Logo */}
