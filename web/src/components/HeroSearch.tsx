@@ -9,20 +9,40 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { useTranslation } from "react-i18next";
+import { useEffect, useState } from "react";
+import { useProducts } from "../hooks/useProducts";
+import { useProductContext } from "../mocks/useProductContextHook";
+import SortBy from "./SortBy";
 
-interface HeroSearchProps {
-  query: string;
-  setQuery: React.Dispatch<React.SetStateAction<string>>;
-}
-
-const HeroSearch: React.FC<HeroSearchProps> = ({ query, setQuery }) => {
+const HeroSearch = () => {
   const theme = useTheme();
   const { t } = useTranslation();
 
+  // todo remove in future
+  const { setProducts, filters, setLoading } = useProductContext();
+
+  // in future use query to live search
+  const [input, setInput] = useState<string>("");
+  const [query, setQuery] = useState<string>("");
+
+  // const filters = store.getFilters()
+  const { products, loading } = useProducts({ search: query, filters });
+
   const handleSearch = () => {
     console.log("Searching for:", query);
+    setQuery(input);
     // TODO: integrate live search / navigate to results page
   };
+
+  useEffect(() => {
+    console.log("loading:", loading);
+    console.log("products:", products);
+    setLoading(loading);
+  }, [loading, products, setLoading]);
+
+  useEffect(() => {
+    setProducts(products);
+  }, [products, setProducts]);
 
   return (
     <Box
@@ -40,13 +60,15 @@ const HeroSearch: React.FC<HeroSearchProps> = ({ query, setQuery }) => {
         {t("Find_the_best_price_for_your_favorite_products")}
       </Typography>
 
-      <Box sx={{ mt: 4, maxWidth: 600, mx: "auto" }}>
+      <Box sx={{ mt: 4, maxWidth: 600, mx: "auto", display: "flex", gap: 8 }}>
         <TextField
           fullWidth
           variant="outlined"
           placeholder={`${t("Search_product")}...`}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          value={input}
+          // for live search, needs debounced call
+          // onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           InputProps={{
             endAdornment: (
@@ -58,6 +80,7 @@ const HeroSearch: React.FC<HeroSearchProps> = ({ query, setQuery }) => {
             ),
           }}
         />
+        <SortBy />
       </Box>
     </Box>
   );

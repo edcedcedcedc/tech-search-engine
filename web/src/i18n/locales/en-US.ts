@@ -89,6 +89,8 @@ All data is taken from public sources and may be modified by stores without noti
 
   // Product
   See_product: "See product",
+  Price_Low_To_High: "Price Low To High",
+  Price_High_To_Low: "Price High To Low",
 
   // search
   Search_product: "Search product",
@@ -99,12 +101,13 @@ All data is taken from public sources and may be modified by stores without noti
   //   Test
   test: "Test",
 
-  // Cookie 
-  Cookie_Statement: "This website i.e. application uses cookies to improve user experience.",
-  
+  // Cookie
+  Cookie_Statement:
+    "This website i.e. application uses cookies to improve user experience.",
+
   Cookie_Accept_Button: "Accept",
 
-  Cookie_Reject_Button: "Reject"
+  Cookie_Reject_Button: "Reject",
 };
 
 export default enUS;

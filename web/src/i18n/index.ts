@@ -9,7 +9,8 @@ i18n
   .init({
     debug: true,
     fallbackLng: "en-US",
-    supportedLngs: ["en-US", "ro-MD"],
+    supportedLngs: ["en", "ro"],
+    nonExplicitSupportedLngs: true,
     resources: {
       "en-US": { translation: LANGAUGES["en-US"].file },
       "ro-MD": { translation: LANGAUGES["ro-MD"].file },
