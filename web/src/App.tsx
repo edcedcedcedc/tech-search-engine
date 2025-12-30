@@ -9,6 +9,9 @@ import { useState } from "react";
 import type { Product } from "./types/Product";
 import { ProductContext } from "./mocks/ProductContext";
 import type { ProductFilters } from "./types/ProductFilters";
+import ResetCookieButton from "./tests/components/ResetCookieButton";
+import { Cookie } from "./components/Cookie";
+import { Meta } from "./components/Meta";
 
 function App() {
   // todo: remove in future and move logic to store
@@ -22,82 +25,90 @@ function App() {
   const [loading, setLoading] = useState<boolean>(false);
 
   return (
-    <BrowserRouter>
-      {/* todo: remove in future */}
-      <ProductContext
-        value={{
-          products,
-          setProducts,
-          filters,
-          setFilters,
-          loading,
-          setLoading,
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            height: "100vh", // full viewport height
+    <>
+      <Meta />
+      <BrowserRouter>
+        {/* todo: remove in future */}
+        <ProductContext
+          value={{
+            products,
+            setProducts,
+            filters,
+            setFilters,
+            loading,
+            setLoading,
           }}
         >
-          {/* HEADER + HERO */}
-          <Box sx={{ flexShrink: 0 }}>
-            <Header />
-            <HeroSearch />
-          </Box>
-
           <Box
-            component="main"
             sx={{
-              flex: 1,
-              overflowY: "scroll", // use scroll instead of overlay for consistency
-              pb: "100px", // padding for footer
-              position: "relative",
-
-              // Custom scrollbar
-              "&::-webkit-scrollbar": {
-                width: "8px",
-              },
-              "&::-webkit-scrollbar-thumb": {
-                backgroundColor: "rgba(0,0,0,0.3)",
-                borderRadius: "4px",
-              },
-              "&::-webkit-scrollbar-thumb:hover": {
-                backgroundColor: "rgba(0,0,0,0.5)",
-              },
-              "&::-webkit-scrollbar-track": {
-                background: "transparent",
-              },
-              scrollbarWidth: "thin",
+              display: "flex",
+              flexDirection: "column",
+              height: "100vh", // full viewport height
             }}
           >
-            <Container
+            {/* HEADER + HERO */}
+            <Box sx={{ flexShrink: 0 }}>
+              <Header />
+              <HeroSearch />
+            </Box>
+
+            {/* MAIN CONTENT */}
+            <Box
+              component="main"
               sx={{
-                py: 4,
-                maxWidth: "800px",
-                mx: "auto", // horizontally center
+                flex: 1,
+
+                // Custom scrollbar
+                "&::-webkit-scrollbar": {
+                  width: "8px",
+                },
+                overflowY: "scroll",
+                pb: "100px",
+                position: "relative",
+                "&::-webkit-scrollbar-thumb": {
+                  backgroundColor: "rgba(0,0,0,0.3)",
+                  borderRadius: "4px",
+                },
+                "&::-webkit-scrollbar-thumb:hover": {
+                  backgroundColor: "rgba(0,0,0,0.5)",
+                },
+                "&::-webkit-scrollbar-track": {
+                  background: "transparent",
+                },
+                scrollbarWidth: "thin",
               }}
             >
-              <AppRoutes />
-            </Container>
-          </Box>
+              <Container
+                sx={{
+                  py: 4,
+                  maxWidth: "800px",
+                  mx: "auto", // horizontally center
+                }}
+              >
+                <AppRoutes />
+              </Container>
+            </Box>
 
-          {/* FIXED FOOTER */}
-          <Box
-            sx={{
-              position: "fixed",
-              bottom: 0,
-              left: 0,
-              width: "100%",
-              zIndex: 1000,
-            }}
-          >
-            <Footer />
+            {/* FOOTER + COOKIE CONSENT */}
+            <Box
+              sx={{
+                position: "fixed",
+                bottom: 0,
+                left: 0,
+                width: "100%",
+                zIndex: 1000,
+              }}
+            >
+              {/*COOKIE*/}
+              <Cookie />
+              {/* RESET COOKIE */}
+              <ResetCookieButton />
+              <Footer />
+            </Box>
           </Box>
-        </Box>
-      </ProductContext>
-    </BrowserRouter>
+        </ProductContext>
+      </BrowserRouter>
+    </>
   );
 }
 
