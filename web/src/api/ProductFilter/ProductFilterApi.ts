@@ -1,4 +1,3 @@
-// src/api/graphqlClient.ts
 import axios from "axios";
 
 export const ProductFilterApi = axios.create({

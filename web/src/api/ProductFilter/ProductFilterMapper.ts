@@ -1,4 +1,3 @@
-// src/graphql/mappers/productFilterMapper.ts
 import { type ProductFilters } from "../../types/ProductFilters";
 
 export const buildProductFilter = (filters: ProductFilters) => {
