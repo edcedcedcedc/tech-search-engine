@@ -8,11 +8,9 @@ import {
   Typography,
   Button,
 } from "@mui/material";
-import type { Product } from "../types/Product";
-
-interface Props {
-  products: Product[];
-}
+import { useTranslation } from "react-i18next";
+// import { useProducts } from "../hooks/useProducts";
+import { useProductContext } from "../mocks/useProductContextHook";
 
 const bull = (
   <Box
@@ -28,7 +26,16 @@ const bull = (
   </Box>
 );
 
-const ProductGrid: React.FC<Props> = ({ products }) => {
+const ProductGrid = () => {
+  const { t } = useTranslation();
+  // fetch filters and search from store
+  // const filters = getFiltersFromStore();
+  // const search = getSearchFromStore();
+  // const { products, loading, setPage } = useProducts({ filters, search });
+
+  // const products = mockProducts;
+  const { products } = useProductContext();
+
   return (
     <Box
       sx={{
@@ -81,7 +88,7 @@ const ProductGrid: React.FC<Props> = ({ products }) => {
               target="_blank"
               rel="noopener"
             >
-              Vezi produs
+              {t("See_product")}
             </Button>
           </CardActions>
         </Card>

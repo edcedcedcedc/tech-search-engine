@@ -1,5 +1,4 @@
 // src/components/HeroSearch.tsx
-import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -9,18 +8,39 @@ import {
   useTheme,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import { useTranslation } from "react-i18next";
+import { useEffect, useState } from "react";
+import { useProducts } from "../hooks/useProducts";
+import { useProductContext } from "../mocks/useProductContextHook";
 
-interface HeroSearchProps {
-  query: string;
-  setQuery: React.Dispatch<React.SetStateAction<string>>;
-}
-
-const HeroSearch: React.FC<HeroSearchProps> = ({ query, setQuery }) => {
+const HeroSearch = () => {
   const theme = useTheme();
+  const { t } = useTranslation();
+
+  // todo remove in future
+  const { setProducts, filters } = useProductContext();
+
+  // in future use query to live search
+  const [input, setInput] = useState<string>("");
+  const [query, setQuery] = useState<string>("");
+
+  // const filters = store.getFilters()
+  const { products, loading } = useProducts({ search: query, filters });
+
   const handleSearch = () => {
     console.log("Searching for:", query);
+    setQuery(input);
     // TODO: integrate live search / navigate to results page
   };
+
+  useEffect(() => {
+    console.log("loading:", loading);
+    console.log("products:", products);
+  }, [loading, products]);
+
+  useEffect(() => {
+    setProducts(products);
+  }, [products, setProducts]);
 
   return (
     <Box
@@ -32,19 +52,21 @@ const HeroSearch: React.FC<HeroSearchProps> = ({ query, setQuery }) => {
       }}
     >
       <Typography variant="h3" component="h1" gutterBottom>
-        Compară prețurile în Moldova
+        {t("Compare_prices_in_Moldova")}
       </Typography>
       <Typography variant="h6" color="text.secondary" gutterBottom>
-        Găsește cel mai bun preț pentru produsele tale preferate
+        {t("Find_the_best_price_for_your_favorite_products")}
       </Typography>
 
       <Box sx={{ mt: 4, maxWidth: 600, mx: "auto" }}>
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Caută produs..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          placeholder={`${t("Search_product")}...`}
+          value={input}
+          // for live search, needs debounced call
+          // onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           InputProps={{
             endAdornment: (

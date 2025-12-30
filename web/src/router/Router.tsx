@@ -9,14 +9,10 @@ import About from "../views/About";
 import Source from "../views/Source";
 import TermsOfUse from "../views/TermsOfUse";
 
-interface HeroSearchProps {
-  query: string;
-}
-
-const AppRoutes: React.FC<HeroSearchProps> = ({ query }) => {
+const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/*" element={<Home query={query} />} />
+      <Route path="/*" element={<Home />} />
       <Route path="/disclaimer" element={<Disclaimer />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/contact" element={<Contact />} />
