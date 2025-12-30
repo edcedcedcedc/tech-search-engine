@@ -9,6 +9,7 @@ export const buildProductFilter = (filters: ProductFilters) => {
   if (filters.priceMin !== undefined) filter.priceMin = filters.priceMin;
   if (filters.priceMax !== undefined) filter.priceMax = filters.priceMax;
   if (filters.shop) filter.shop = filters.shop;
+  if (filters.sortBy) filter.sortBy = filters.sortBy;
 
   return filter;
 };

@@ -12,13 +12,14 @@ import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { useProducts } from "../hooks/useProducts";
 import { useProductContext } from "../mocks/useProductContextHook";
+import SortBy from "./SortBy";
 
 const HeroSearch = () => {
   const theme = useTheme();
   const { t } = useTranslation();
 
   // todo remove in future
-  const { setProducts, filters } = useProductContext();
+  const { setProducts, filters, setLoading } = useProductContext();
 
   // in future use query to live search
   const [input, setInput] = useState<string>("");
@@ -36,7 +37,8 @@ const HeroSearch = () => {
   useEffect(() => {
     console.log("loading:", loading);
     console.log("products:", products);
-  }, [loading, products]);
+    setLoading(loading);
+  }, [loading, products, setLoading]);
 
   useEffect(() => {
     setProducts(products);
@@ -58,7 +60,7 @@ const HeroSearch = () => {
         {t("Find_the_best_price_for_your_favorite_products")}
       </Typography>
 
-      <Box sx={{ mt: 4, maxWidth: 600, mx: "auto" }}>
+      <Box sx={{ mt: 4, maxWidth: 600, mx: "auto", display: "flex", gap: 8 }}>
         <TextField
           fullWidth
           variant="outlined"
@@ -78,6 +80,7 @@ const HeroSearch = () => {
             ),
           }}
         />
+        <SortBy />
       </Box>
     </Box>
   );

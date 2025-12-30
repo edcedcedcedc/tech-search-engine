@@ -91,6 +91,8 @@ Toate datele sunt preluate din surse publice și pot fi modificate de magazine f
 
   // search
   Search_product: "Caută produs",
+  Price_Low_To_High: "Preț mic spre mare",
+  Price_High_To_Low: "Preț de la mare la mic",
 
   //   auth
   Login: "Login",

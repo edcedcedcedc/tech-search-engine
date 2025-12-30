@@ -8,6 +8,8 @@ export interface ProductContextValue {
   setProducts: Dispatch<SetStateAction<Product[]>>;
   filters: ProductFilters;
   setFilters: Dispatch<SetStateAction<ProductFilters>>;
+  loading: boolean;
+  setLoading: Dispatch<SetStateAction<boolean>>;
 }
 
 export const ProductContext = createContext<ProductContextValue | undefined>(

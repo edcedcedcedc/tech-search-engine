@@ -87,7 +87,19 @@ export const fetchProductsMock = async ({
   if (filters.priceMax !== undefined) {
     result = result.filter((p) => p.price <= filters.priceMax!);
   }
-
+  if (filters.sortBy !== undefined) {
+    let sortedResult;
+    switch (filters.sortBy) {
+      case "PRICE_HIGH_TO_LOW":
+        sortedResult = result.sort((a, b) => b.price - a.price);
+        break;
+      case "PRICE_LOW_TO_HIGH":
+      default:
+        sortedResult = result.sort((a, b) => a.price - b.price);
+        break;
+    }
+    result = sortedResult;
+  }
   const start = (page - 1) * limit;
   const end = start + limit;
 

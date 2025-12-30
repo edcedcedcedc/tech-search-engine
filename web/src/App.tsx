@@ -13,14 +13,27 @@ import type { ProductFilters } from "./types/ProductFilters";
 function App() {
   // todo: remove in future and move logic to store
   const [products, setProducts] = useState<Product[]>([]);
+  // const [filters, setFilters] = useState<ProductFilters>({
+  //   brands: ["AOC", "Philips"],
+  // });
   const [filters, setFilters] = useState<ProductFilters>({
-    brands: ["AOC", "Philips"],
+    sortBy: "PRICE_LOW_TO_HIGH",
   });
+  const [loading, setLoading] = useState<boolean>(false);
 
   return (
     <BrowserRouter>
       {/* todo: remove in future */}
-      <ProductContext value={{ products, setProducts, filters, setFilters }}>
+      <ProductContext
+        value={{
+          products,
+          setProducts,
+          filters,
+          setFilters,
+          loading,
+          setLoading,
+        }}
+      >
         <Box
           sx={{
             display: "flex",
