@@ -22,14 +22,13 @@ const enUS = {
   Sources: "Sources",
 
   // About us description
-  About_Us_description: `This platform is a price aggregator that allows you to compare offers from multiple online stores in the Republic of Moldova. We do not sell products and do not guarantee the availability or accuracy of prices.
-All data is taken from public sources and may be modified by stores without notice.`,
+  About_Us_description: `This platform is a price aggregator that allows you to compare offers from multiple online stores in the Republic of Moldova. We do not sell products and do not guarantee the availability or accuracy of prices.`,
   About_Us_description_secondary: `All data is taken from public sources and may be modified by stores without notice.`,
 
   // Contact page
   Contact_Title: "Contact",
   Contact_Intro:
-    "If you have questions, suggestions, or feedback related to the platform, you can contact us using the information below.",
+    "If you have questions, suggestions, feedback, or are interested in placing an advertisement on the platform, you can contact us using the information below.",
   Contact_Email_Label: "Email:",
   Contact_Platform_Info: "Platform: price aggregator (informational)",
   Contact_Disclaimer:
@@ -42,7 +41,7 @@ All data is taken from public sources and may be modified by stores without noti
   Disclaimer_Accuracy:
     "We do not guarantee the accuracy, completeness, or timeliness of the information presented. Prices and product availability may be changed at any time by the source stores.",
   Disclaimer_Affiliation:
-    "This site does not sell products and is not affiliated with, associated with, or endorsed by any of the listed merchants.",
+    "This site does not sell products, and is not currently affiliated, associated, or endorsed, by any of the merchants listed.",
   Disclaimer_Trademarks:
     "All trademarks, logos, and product names belong to their respective owners.",
   Disclaimer_Risk: "Use of this site is at your own risk.",
@@ -55,7 +54,8 @@ All data is taken from public sources and may be modified by stores without noti
   Terms_NoLiability:
     "We are not responsible for pricing errors, availability, or content.",
   Terms_NoSales: "We do not sell products and do not process orders.",
-  Terms_DataUsage: "Data usage is permitted for informational purposes only.",
+  Terms_IntellectualProperty: "The platform name, logo, icon, and all slogans/taglines are the intellectual property of the operator and may not be copied, redistributed, or used for commercial purposes without the operator's written consent.",
+  Terms_DataUsage: "The data displayed comes from third-party merchants and is provided for informational purposes only. The use of prices and offers for personal, educational, or non-commercial purposes is allowed, with proper attribution. Copying, reproducing, or redistributing the structure, organization, or aggregation of the data to create or operate a similar or competing service, as well as automated use of this data, is prohibited without the written consent of the platform administrator.",
   Terms_Modifications:
     "We reserve the right to modify or suspend the service without prior notice.",
 

@@ -6,7 +6,7 @@ export default function TermsOfUse() {
   const { t } = useTranslation();
 
   return (
-    <Box sx={{ maxWidth: 800, mx: "auto" }}>
+    <Box>
       <Typography variant="h4" gutterBottom>
         {t("Terms_Title")}
       </Typography>
@@ -22,6 +22,9 @@ export default function TermsOfUse() {
         </Typography>
         <Typography component="li" variant="body1">
           {t("Terms_NoSales")}
+        </Typography>
+        <Typography component="li" variant="body1">
+          {t("Terms_IntellectualProperty")}
         </Typography>
         <Typography component="li" variant="body1">
           {t("Terms_DataUsage")}

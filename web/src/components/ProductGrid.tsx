@@ -1,4 +1,3 @@
-// src/components/ProductGrid.tsx
 import React from "react";
 import {
   Box,
@@ -7,6 +6,8 @@ import {
   CardActions,
   Typography,
   Button,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import type { Product } from "../types/Product";
 import { useTranslation } from "react-i18next";
@@ -31,28 +32,47 @@ const bull = (
 
 const ProductGrid: React.FC<Props> = ({ products }) => {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const isVerySmall = useMediaQuery("(max-width:320px)");
 
   return (
     <Box
       sx={{
         mt: 4,
         display: "grid",
-        gap: 3,
+        gap: isVerySmall ? "1rem" : 3, // even smaller vertical gap for 320px
         gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
       }}
     >
       {products.map((product) => (
-        <Card key={product.id} sx={{ minWidth: 275 }}>
+        <Card
+          key={product.id}
+          sx={{
+            ...(isVerySmall && {
+              "& .MuiCardContent-root": {
+                padding: "8px 10px",
+              },
+              "& .MuiCardActions-root": {
+                padding: "6px 10px",
+              },
+              "& .MuiTypography-root": {
+                fontSize: "0.7rem",
+                lineHeight: 1.15,
+                mb: 0.4,
+              },
+              "& .MuiButton-root": {
+                minHeight: 30,
+                fontSize: "0.7rem",
+                padding: "3px 8px",
+              },
+            }),
+          }}
+        >
           <CardContent>
-            {/* Shop name - small text */}
-            <Typography
-              gutterBottom
-              sx={{ color: "text.secondary", fontSize: 14 }}
-            >
+            <Typography gutterBottom sx={{ color: "text.secondary" }}>
               {product.shop}
             </Typography>
 
-            {/* Product name with bulls between words */}
             <Typography
               variant="h5"
               component="div"
@@ -66,12 +86,10 @@ const ProductGrid: React.FC<Props> = ({ products }) => {
               ))}
             </Typography>
 
-            {/* Brand / Variant */}
-            <Typography sx={{ color: "text.secondary", mb: 1.5 }}>
+            <Typography sx={{ color: "text.secondary" }}>
               {product.brand} {product.variant ? `— ${product.variant}` : ""}
             </Typography>
 
-            {/* Price */}
             <Typography variant="body2" sx={{ color: "text.primary" }}>
               {product.price.toLocaleString()} MDL
             </Typography>

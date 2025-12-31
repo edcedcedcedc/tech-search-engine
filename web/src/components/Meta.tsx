@@ -21,10 +21,9 @@ export function Meta({
   itemProp,
 }: MetaProps) {
   const { t } = useTranslation();
-  const metaTitle = title ?? t("Meta_Title", { lng: "ro-MD" });
-  const metaDescription =
-    description ?? t("Meta_Description", { lng: "ro-MD" });
-  const metaKeywords = keywords ?? t("Meta_Keywords", { lng: "ro-MD" });
+  const metaTitle = title ?? t("Meta_Title", { lng: "ro" });
+  const metaDescription = description ?? t("Meta_Description", { lng: "ro" });
+  const metaKeywords = keywords ?? t("Meta_Keywords", { lng: "ro" });
   return (
     <>
       {metaTitle && <title>{metaTitle}</title>}

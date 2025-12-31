@@ -22,14 +22,13 @@ const roMD = {
   Sources: "Surse",
 
   // About us description
-  About_Us_description: `Această platformă este un agregator de prețuri care permite compararea ofertelor din mai multe magazine online din Republica Moldova. Nu vindem produse și nu garantăm disponibilitatea sau exactitatea prețurilor.
-Toate datele sunt preluate din surse publice și pot fi modificate de magazine fără notificare.`,
+  About_Us_description: `Această platformă este un agregator de prețuri care permite compararea ofertelor din mai multe magazine online din Republica Moldova. Nu vindem produse și nu garantăm disponibilitatea sau exactitatea prețurilor.`,
   About_Us_description_secondary: `Toate datele sunt preluate din surse publice și pot fi modificate de magazine fără notificare.`,
 
   // Contact Page
   Contact_Title: "Contact",
   Contact_Intro:
-    "Dacă aveți întrebări, sugestii sau observații legate de platformă, ne puteți contacta folosind informațiile de mai jos.",
+    "Pentru întrebări, sugestii, feedback sau pentru informații privind posibilitatea de a plasa publicitate pe platformă, vă rugăm să ne contactați folosind datele de mai jos.",
   Contact_Email_Label: "Email:",
   Contact_Platform_Info: "Platforma: agregator de prețuri (informativ)",
   Contact_Disclaimer:
@@ -42,7 +41,7 @@ Toate datele sunt preluate din surse publice și pot fi modificate de magazine f
   Disclaimer_Accuracy:
     "Nu garantăm acuratețea, completitudinea sau actualitatea informațiilor prezentate. Prețurile și disponibilitatea produselor pot fi modificate în orice moment de către magazinele sursă.",
   Disclaimer_Affiliation:
-    "Acest site nu vinde produse și nu este afiliat, asociat sau susținut de niciunul dintre comercianții enumerați.",
+    "Acest site nu vinde produse, și la moment nu este afiliat, asociat, sau susținut, de niciunul dintre comercianții enumerați.",
   Disclaimer_Trademarks:
     "Toate mărcile comerciale, siglele și denumirile de produse aparțin proprietarilor lor respectivi.",
   Disclaimer_Risk: "Utilizarea acestui site se face pe propria răspundere.",
@@ -54,7 +53,8 @@ Toate datele sunt preluate din surse publice și pot fi modificate de magazine f
   Terms_NoLiability:
     "Nu suntem responsabili pentru erori de preț, disponibilitate sau conținut.",
   Terms_NoSales: "Nu vindem produse și nu procesăm comenzi.",
-  Terms_DataUsage: "Utilizarea datelor este permisă doar în scop informativ.",
+  Terms_IntellectualProperty: "Numele platformei, logoul, pictograma și toate sloganurile/tagline-urile sunt proprietatea intelectuală a operatorului și nu pot fi copiate, redistribuite sau utilizate în scopuri comerciale fără acordul scris al acestuia.",
+  Terms_DataUsage: "Datele afișate provin de la comercianți terți și sunt prezentate exclusiv în scop informativ. Utilizarea prețurilor și ofertelor în scop personal, educațional sau necomercial este permisă, cu menționarea sursei. Copierea, reproducerea sau redistribuirea structurii, organizării sau agregării datelor pentru crearea sau operarea unui serviciu similar ori concurent, precum și utilizarea automatizată a acestora, este interzisă fără acordul scris al administratorului platformei.",
   Terms_Modifications:
     "Ne rezervăm dreptul de a modifica sau suspenda serviciul fără notificare.",
 
@@ -62,7 +62,7 @@ Toate datele sunt preluate din surse publice și pot fi modificate de magazine f
   Source_Title: "Surse de date",
   Source_Intro:
     "Datele despre produse sunt colectate automat din surse publice ale magazinelor online, inclusiv (dar fără a se limita la):",
-  Source_Example: "– Darwin.md",
+  Source_Example: "– Darwin.md,– Enter.online",
   Source_Disclaimer:
     "Mărcile comerciale, logo-urile și denumirile produselor aparțin proprietarilor respectivi. Platforma noastră nu este afiliată cu aceste magazine.",
 
