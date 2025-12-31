@@ -6,7 +6,6 @@ function ResetCookieButton() {
       variant="outlined"
       color="error"
       size="small"
-      sx={{ position: "fixed", bottom: 16, right: 16, zIndex: 100 }}
       onClick={() => {
         document.cookie = "myAppCookieConsent=; path=/; max-age=0";
         window.location.reload();

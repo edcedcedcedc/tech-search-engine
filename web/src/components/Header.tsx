@@ -15,6 +15,7 @@ import {
   ListItemText,
   useTheme,
   useMediaQuery,
+  Divider,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import LanguageIcon from "@mui/icons-material/Language";
@@ -61,12 +62,23 @@ const Header: React.FC = () => {
   };
 
   return (
-    <AppBar position="static" elevation={1}>
+    <AppBar
+      position="static"
+      elevation={0}
+      sx={{
+        width: "100%",
+        bgcolor: theme.palette.background.paper,
+      }}
+    >
       <Toolbar
         sx={{
           display: "flex",
           justifyContent: "space-between",
-          backgroundColor: theme.palette.background.default, // KEEP COLORS
+          bgcolor: theme.palette.background.paper,
+          width: "100%",
+          borderBottom: 1,
+          borderColor: "divider",
+          px: { xs: 2, sm: 3, md: 4 }, // padding inside toolbar
         }}
       >
         {/* Logo */}

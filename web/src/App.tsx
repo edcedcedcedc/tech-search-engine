@@ -1,13 +1,16 @@
-import { Box, Container, useTheme } from "@mui/material";
+import { Box, Button, Container, useTheme } from "@mui/material";
 import { BrowserRouter } from "react-router-dom";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import AppRoutes from "./router/Router";
+import { useStore } from "./store/store";
 import HeroSearch from "./components/HeroSearch";
 import { useState } from "react";
 import { Cookie } from "./components/Cookie";
 import { Meta } from "./components/Meta";
+
+import ResetCookieButton from "./tests/components/ResetCookieButton";
 
 function App() {
   const [query, setQuery] = useState("");
@@ -41,21 +44,25 @@ function App() {
               overflowY: "scroll",
               pb: theme.spacing(12.5), // 100px equivalent
               position: "relative",
+
+              // Scrollbar styles
               "&::-webkit-scrollbar": { width: theme.spacing(1) },
               "&::-webkit-scrollbar-thumb": {
-                backgroundColor: "rgba(0,0,0,0.3)",
+                backgroundColor: theme.palette.background.default, // dark thumb for light mode
                 borderRadius: theme.shape.borderRadius,
               },
               "&::-webkit-scrollbar-thumb:hover": {
-                backgroundColor: "rgba(0,0,0,0.5)",
+                backgroundColor: theme.palette.background.default,
               },
               "&::-webkit-scrollbar-track": { background: "transparent" },
-              scrollbarWidth: "thin",
+              scrollbarWidth: "thin", // Firefox
+              scrollbarColor:
+                theme.palette.mode === "dark"
+                  ? "rgba(255,255,255,0.2) transparent"
+                  : "rgba(0,0,0,0.3) transparent",
             }}
           >
-            <Container
-              sx={{ py: theme.spacing(4), maxWidth: "800px", mx: "auto" }}
-            >
+            <Container sx={{ maxWidth: "800px", mx: "auto" }}>
               <AppRoutes query={query} />
             </Container>
           </Box>
@@ -71,6 +78,12 @@ function App() {
             }}
           >
             <Cookie />
+            <Button
+              onClick={() => console.log(useStore.getState().cookie.consent)}
+            >
+              Get
+            </Button>
+            <ResetCookieButton />
             <Footer />
           </Box>
         </Box>

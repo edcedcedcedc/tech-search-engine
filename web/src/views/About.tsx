@@ -6,7 +6,7 @@ export default function About() {
   const { t } = useTranslation();
 
   return (
-    <Box sx={{ maxWidth: 800, mx: "auto" }}>
+    <Box>
       <Typography variant="h4" gutterBottom>
         {t("About_Us")}
       </Typography>

@@ -8,11 +8,11 @@ i18n
   .use(initReactI18next)
   .init({
     debug: true,
-    fallbackLng: "en-US",
-    supportedLngs: ["en-US", "ro-MD"],
+    fallbackLng: "en",
+    supportedLngs: ["en", "ro"],
     resources: {
-      "en-US": { translation: LANGAUGES["en-US"].file },
-      "ro-MD": { translation: LANGAUGES["ro-MD"].file },
+      "en": { translation: LANGAUGES["en"].file },
+      "ro": { translation: LANGAUGES["ro"].file },
     },
     interpolation: {
       escapeValue: false,

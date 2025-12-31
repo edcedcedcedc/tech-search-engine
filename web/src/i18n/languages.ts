@@ -7,15 +7,15 @@ export interface I18nLanguage {
   file: Record<string, string | object>;
 }
 
-export type LanguagesCodes = "en-US" | "ro-MD";
+export type LanguagesCodes = "en" | "ro";
 
 export const LANGAUGES: Record<LanguagesCodes, I18nLanguage> = {
-  "en-US": {
+  "en": {
     label: "English (United States)",
     value: "en-US",
     file: enUS,
   },
-  "ro-MD": {
+  "ro": {
     label: "Romanian (Moldova)",
     value: "ro-MD",
     file: roMD,

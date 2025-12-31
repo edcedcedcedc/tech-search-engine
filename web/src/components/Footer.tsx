@@ -41,7 +41,7 @@ const Footer: React.FC = () => {
         }}
       >
         {navLinks.map((link) => (
-          <Link
+          <Box
             key={link.path}
             component={RouterLink}
             to={link.path}
@@ -56,23 +56,22 @@ const Footer: React.FC = () => {
             }}
           >
             {link.label}
-          </Link>
+          </Box>
         ))}
       </Box>
 
       {/* All rights reserved */}
-      <Typography
-        variant="body2"
-        color="textSecondary"
+      <Box
         sx={{
           fontSize,
           lineHeight: 1.2,
           fontWeight: 400,
-          mt: 0.5,
+          textDecoration: "none",
+          color: theme.palette.text.primary,
         }}
       >
         © {new Date().getFullYear()} 9999. {t("All_rights_reserved")}
-      </Typography>
+      </Box>
     </Box>
   );
 };

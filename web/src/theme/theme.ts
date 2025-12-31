@@ -6,14 +6,14 @@ const getTheme = (mode: "light" | "dark") => {
       mode,
 
       primary: {
-        light: "#6aa9ff",
-        main: "#3b82f6",
-        dark: "#1e40af",
+        light: "#287bf7ff",
+        main: "#2574ebff",
+        dark: "#1a3a8a",
         contrastText: "#ffffff",
       },
 
       secondary: {
-        light: "#34d399",
+        light: "#2fae7f",
         main: "#10b981",
         dark: "#047857",
         contrastText: "#ffffff",
@@ -34,7 +34,7 @@ const getTheme = (mode: "light" | "dark") => {
       },
 
       info: {
-        light: "#7dd3fc",
+        light: "#65c7f8",
         main: "#38bdf8",
         dark: "#0369a1",
         contrastText: "#ffffff",
@@ -48,20 +48,19 @@ const getTheme = (mode: "light" | "dark") => {
       },
 
       background: {
-        default: mode === "dark" ? "#0f172a" : "#fafafa",
-        paper: mode === "dark" ? "#111827" : "#ffffff",
+        default: mode === "dark" ? "#0d1117" : "#fafafa",
+        paper: mode === "dark" ? "#161b22" : "#ffffff",
       },
 
       text: {
-        primary: mode === "dark" ? "#e5e7eb" : "rgba(0,0,0,0.87)",
-        secondary: mode === "dark" ? "#9ca3af" : "rgba(0,0,0,0.65)",
-        disabled: mode === "dark" ? "#6b7280" : "rgba(0,0,0,0.38)",
+        primary: mode === "dark" ? "#c9d1d9" : "rgba(0,0,0,0.87)",
+        secondary: mode === "dark" ? "#8b949e" : "rgba(0,0,0,0.65)",
+        disabled: mode === "dark" ? "#6e7681" : "rgba(0,0,0,0.38)",
       },
 
-      divider:
-        mode === "dark"
-          ? "rgba(255,255,255,0.08)"
-          : "rgba(0,0,0,0.08)",
+      divider: mode === "dark"
+      ? "rgba(255, 255, 255, 0.02)" // soft white on dark background
+      : "rgba(0, 0, 0, 0.11)",      // subtle black on light background
 
       contrastThreshold: 4.5,
       tonalOffset: 0.2,
@@ -69,71 +68,19 @@ const getTheme = (mode: "light" | "dark") => {
 
     typography: {
       fontFamily: "Inter, Arial, sans-serif",
-
-      h1: {
-        fontSize: "2rem",
-        "@media (min-width:600px)": { fontSize: "2.5rem" },
-        "@media (min-width:900px)": { fontSize: "3rem" },
-        fontWeight: 700,
-      },
-      h2: {
-        fontSize: "1.75rem",
-        "@media (min-width:600px)": { fontSize: "2rem" },
-        "@media (min-width:900px)": { fontSize: "2.5rem" },
-        fontWeight: 700,
-      },
-      h3: {
-        fontSize: "1.5rem",
-        "@media (min-width:600px)": { fontSize: "1.75rem" },
-        "@media (min-width:900px)": { fontSize: "2rem" },
-        fontWeight: 700,
-      },
-      h4: {
-        fontSize: "1.25rem",
-        "@media (min-width:600px)": { fontSize: "1.5rem" },
-        "@media (min-width:900px)": { fontSize: "1.75rem" },
-        fontWeight: 700,
-      },
-      h5: {
-        fontSize: "1.1rem",
-        "@media (min-width:600px)": { fontSize: "1.25rem" },
-        "@media (min-width:900px)": { fontSize: "1.5rem" },
-        fontWeight: 700,
-      },
-      h6: {
-        fontSize: "1rem",
-        "@media (min-width:600px)": { fontSize: "1.1rem" },
-        "@media (min-width:900px)": { fontSize: "1.25rem" },
-        fontWeight: 700,
-      },
-
-      body1: {
-        fontSize: "0.875rem",
-        "@media (min-width:600px)": { fontSize: "0.95rem" },
-        "@media (min-width:900px)": { fontSize: "1rem" },
-      },
-      body2: {
-        fontSize: "0.75rem",
-        "@media (min-width:600px)": { fontSize: "0.875rem" },
-        "@media (min-width:900px)": { fontSize: "0.9rem" },
-      },
-
-      button: {
-        fontSize: "0.875rem",
-        textTransform: "none",
-        "@media (min-width:600px)": { fontSize: "0.95rem" },
-        "@media (min-width:900px)": { fontSize: "1rem" },
-      },
+      h1: { fontSize: "2rem", "@media (min-width:600px)": { fontSize: "2.5rem" }, "@media (min-width:900px)": { fontSize: "3rem" }, fontWeight: 700 },
+      h2: { fontSize: "1.75rem", "@media (min-width:600px)": { fontSize: "2rem" }, "@media (min-width:900px)": { fontSize: "2.5rem" }, fontWeight: 700 },
+      h3: { fontSize: "1.5rem", "@media (min-width:600px)": { fontSize: "1.75rem" }, "@media (min-width:900px)": { fontSize: "2rem" }, fontWeight: 700 },
+      h4: { fontSize: "1.25rem", "@media (min-width:600px)": { fontSize: "1.5rem" }, "@media (min-width:900px)": { fontSize: "1.75rem" }, fontWeight: 700 },
+      h5: { fontSize: "1.1rem", "@media (min-width:600px)": { fontSize: "1.25rem" }, "@media (min-width:900px)": { fontSize: "1.5rem" }, fontWeight: 700 },
+      h6: { fontSize: "1rem", "@media (min-width:600px)": { fontSize: "1.1rem" }, "@media (min-width:900px)": { fontSize: "1.25rem" }, fontWeight: 700 },
+      body1: { fontSize: "0.875rem", "@media (min-width:600px)": { fontSize: "0.95rem" }, "@media (min-width:900px)": { fontSize: "1rem" } },
+      body2: { fontSize: "0.75rem", "@media (min-width:600px)": { fontSize: "0.875rem" }, "@media (min-width:900px)": { fontSize: "0.9rem" } },
+      button: { fontSize: "0.875rem", textTransform: "none", "@media (min-width:600px)": { fontSize: "0.95rem" }, "@media (min-width:900px)": { fontSize: "1rem" } },
     },
 
     breakpoints: {
-      values: {
-        xs: 0,
-        sm: 600,
-        md: 768,
-        lg: 900,
-        xl: 1200,
-      },
+      values: { xs: 0, sm: 600, md: 768, lg: 900, xl: 1200 }
     },
 
     spacing: 8,
@@ -160,17 +107,10 @@ const getTheme = (mode: "light" | "dark") => {
 
       MuiContainer: {
         defaultProps: { maxWidth: "md", disableGutters: false },
-        styleOverrides: {
-          root: {
-            paddingLeft: 16,
-            paddingRight: 16,
-          },
-        },
+        styleOverrides: { root: { paddingLeft: 16, paddingRight: 16 } },
       },
 
-      MuiTypography: {
-        defaultProps: { color: "text.primary" },
-      },
+      MuiTypography: { defaultProps: { color: "text.primary" } },
     },
   });
 
