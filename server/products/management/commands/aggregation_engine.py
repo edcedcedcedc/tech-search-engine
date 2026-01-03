@@ -16,6 +16,21 @@ import traceback
 # python manage.py fetch_products --shop darwin --category pc --pages 2
 
 
+def normalize(name: str) -> str:
+    """
+    Normalize a product name or variant:
+    - Remove slashes and backslashes: \ / //
+    - Remove extra spaces
+    - Keep text intact for fuzzy matching
+    """
+    if not name:
+        return ""
+
+    cleaned = re.sub(r"[\\/]+", " ", name)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned
+
+
 def fetch_enter_products(category_url, max_pages=1):
     all_items = []
 
@@ -45,7 +60,7 @@ def fetch_enter_products(category_url, max_pages=1):
                 "external_id": (
                     re.search(r'"item_id":"(.*?)"', decoded) or [None, None]
                 )[1],
-                "name": f"{title}",
+                "name": normalize(f"{title}"),
                 "price": int((re.search(r'"price":(\d+)', decoded) or [0, 0])[1]),
                 "brand": (re.search(r'"item_brand":"(.*?)"', decoded) or [None, None])[
                     1
@@ -53,7 +68,7 @@ def fetch_enter_products(category_url, max_pages=1):
                 "category": (
                     re.search(r'"item_category":"(.*?)"', decoded) or [None, None]
                 )[1],
-                "variant": f"{variant}",
+                "variant": normalize(f"{variant}"),
                 "url": node.select_one(".stretched-link")["href"] or None,
                 "shop": "Enter",
             }
@@ -88,7 +103,9 @@ def fetch_darwin_products(category_url, max_pages=1):
                 "external_id": (
                     re.search(r'"item_id":"(.*?)"', decoded) or [None, None]
                 )[1],
-                "name": (re.search(r'"item_name":"(.*?)"', decoded) or [None, None])[1],
+                "name": normalize(
+                    (re.search(r'"item_name":"(.*?)"', decoded) or [None, None])[1]
+                ),
                 "price": int((re.search(r'"price":(\d+)', decoded) or [0, 0])[1]),
                 "brand": (re.search(r'"item_brand":"(.*?)"', decoded) or [None, None])[
                     1
@@ -96,11 +113,9 @@ def fetch_darwin_products(category_url, max_pages=1):
                 "category": (
                     re.search(r'"item_category":"(.*?)"', decoded) or [None, None]
                 )[1],
-                "variant": (re.search(r'"item_variant":"(.*?)"', decoded) or ["", ""])[
-                    1
-                ]
-                .replace("\\", "")
-                .strip(),
+                "variant": normalize(
+                    (re.search(r'"item_variant":"(.*?)"', decoded) or ["", ""])[1]
+                ),
                 "url": node.get("href") or None,
                 "shop": "Darwin",
             }
