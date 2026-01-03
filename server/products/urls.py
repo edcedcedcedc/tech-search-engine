@@ -1,6 +1,6 @@
 # products/urls.py
 from django.urls import path
-from .views import SearchAPIView, ProductOffersAPIView
+from products.views.search_engine import SearchAPIView, ProductOffersAPIView
 
 urlpatterns = [
     path("search/", SearchAPIView.as_view(), name="search"),

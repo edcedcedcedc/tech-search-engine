@@ -22,4 +22,5 @@ class AggregatedProductSerializer(serializers.Serializer):
     variant = serializers.CharField(allow_blank=True)
     offers = OfferSerializer(many=True)
     lowest_price = serializers.IntegerField()
+    relevance = serializers.IntegerField()
     image = serializers.URLField(allow_blank=True, required=False)
