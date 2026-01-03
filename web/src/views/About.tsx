@@ -1,22 +1,20 @@
 // src/views/About.tsx
 import { Box, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 export default function About() {
+  const { t } = useTranslation();
+
   return (
-    <Box sx={{ maxWidth: 800, mx: "auto" }}>
+    <Box>
       <Typography variant="h4" gutterBottom>
-        Despre noi
+        {t("About_Us")}
       </Typography>
 
-      <Typography variant="body1">
-        Această platformă este un agregator de prețuri care permite compararea
-        ofertelor din mai multe magazine online din Republica Moldova. Nu vindem
-        produse și nu garantăm disponibilitatea sau exactitatea prețurilor.
-      </Typography>
+      <Typography variant="body1">{t("About_Us_description")}</Typography>
 
       <Typography variant="body1" color="text.secondary">
-        Toate datele sunt preluate din surse publice și pot fi modificate de
-        magazine fără notificare.
+        {t("About_Us_description_secondary")}
       </Typography>
     </Box>
   );

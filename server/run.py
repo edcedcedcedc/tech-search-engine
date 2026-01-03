@@ -22,7 +22,7 @@ def main():
     if cmd == "migrate":
         run("migrate")
     elif cmd == "makemigrations":
-        run("makemigrations")    
+        run("makemigrations")
     elif cmd == "runserver":
         run("runserver")
     elif cmd == "createsuperuser":
@@ -37,7 +37,9 @@ def main():
         else:
             print("No database found.")
     elif cmd == "install":
-        subprocess.run([VENV_PYTHON, "-m", "pip", "install", "-r", "requirements.txt"], check=True)
+        subprocess.run(
+            [VENV_PYTHON, "-m", "pip", "install", "-r", "requirements.txt"], check=True
+        )
     else:
         print(f"Unknown command: {cmd}")
 

@@ -1,14 +1,27 @@
-import { StrictMode } from "react";
+import { StrictMode, useMemo } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider, CssBaseline } from "@mui/material";
-import theme from "./theme/theme";
-import "./index.css";
-import App from "./App.tsx";
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
+
+import getTheme from "./theme/theme";
+import { useStore } from "./store/store";
+
+import App from "./App";
+import "./i18n";
+
+const Root = () => {
+  const mode = useStore((state) => state.mode);
+  const theme = useMemo(() => getTheme(mode), [mode]);
+
+  return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <App />
     </ThemeProvider>
+  );
+};
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <Root />
   </StrictMode>
 );

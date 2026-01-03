@@ -1,60 +1,48 @@
 // src/views/PrivacyPolicy.tsx
 import { Box, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 export default function PrivacyPolicy() {
+  const { t } = useTranslation();
+
   return (
-    <Box sx={{ maxWidth: 800, mx: "auto" }}>
+    <Box>
       <Typography variant="h4" gutterBottom>
-        Politica de confidențialitate
+        {t("Privacy_Title")}
       </Typography>
 
+      <Typography variant="body1">{t("Privacy_Intro")}</Typography>
+
+      <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+        {t("Privacy_DataCollection_Title")}
+      </Typography>
       <Typography variant="body1">
-        Această aplicație este un agregator de prețuri care afișează informații
-        publice preluate din magazine online terțe.
+        {t("Privacy_DataCollection_Body")}
       </Typography>
 
       <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-        Colectarea datelor
+        {t("Privacy_Cookies_Title")}
       </Typography>
-      <Typography variant="body1">
-        Nu colectăm date personale identificabile ale utilizatorilor. Aplicația
-        nu necesită cont, autentificare sau furnizarea de informații personale.
-      </Typography>
+      <Typography variant="body1">{t("Privacy_Cookies_Body")}</Typography>
 
       <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-        Cookie-uri
-      </Typography>
-      <Typography variant="body1">
-        În prezent, aplicația nu utilizează cookie-uri pentru urmărirea
-        utilizatorilor. În viitor, pot fi utilizate cookie-uri strict necesare
-        pentru funcționarea serviciului sau pentru statistici anonime.
-      </Typography>
-
-      <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-        Surse externe
+        {t("Privacy_ExternalSources_Title")}
       </Typography>
       <Typography variant="body1" paragraph>
-        Prețurile, imaginile și descrierile produselor aparțin magazinelor
-        sursă. Nu ne asumăm responsabilitatea pentru acuratețea informațiilor
-        afișate.
+        {t("Privacy_ExternalSources_Body")}
       </Typography>
 
       <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-        Publicitate
+        {t("Privacy_Advertising_Title")}
       </Typography>
       <Typography variant="body1" paragraph>
-        Aplicația poate afișa reclame prin intermediul serviciilor Google.
-        Aceste servicii pot utiliza tehnologii proprii conform politicilor lor
-        de confidențialitate.
+        {t("Privacy_Advertising_Body")}
       </Typography>
 
       <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-        Contact
+        {t("Privacy_Contact_Title")}
       </Typography>
-      <Typography variant="body1">
-        Pentru întrebări legate de confidențialitate, ne poți contacta prin
-        pagina de contact.
-      </Typography>
+      <Typography variant="body1">{t("Privacy_Contact_Body")}</Typography>
     </Box>
   );
 }

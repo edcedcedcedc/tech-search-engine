@@ -1,34 +1,32 @@
 // src/views/Contact.tsx
 import { Box, Typography, Link } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 export default function Contact() {
+  const { t } = useTranslation();
   return (
-    <Box sx={{ maxWidth: 800, mx: "auto" }}>
+    <Box>
       <Typography variant="h4" gutterBottom>
-        Contact
+        {t("Contact_Title")}
       </Typography>
 
-      <Typography variant="body1">
-        Dacă aveți întrebări, sugestii sau observații legate de platformă, ne
-        puteți contacta folosind informațiile de mai jos.
-      </Typography>
+      <Typography variant="body1">{t("Contact_Intro")}</Typography>
 
       <Box sx={{ mt: 3 }}>
         <Typography variant="body1">
-          Email:{" "}
+          {t("Contact_Email_Label")}{" "}
           <Link href="mailto:contact@price-aggregator.md">
             contact@price-aggregator.md
           </Link>
         </Typography>
 
         <Typography variant="body1" sx={{ mt: 1 }}>
-          Platforma: agregator de prețuri (informativ)
+          {t("Contact_Platform_Info")}
         </Typography>
       </Box>
 
       <Typography variant="body2" color="text.secondary" sx={{ mt: 4 }}>
-        Nu oferim suport pentru comenzi sau livrări. Pentru achiziții, vă rugăm
-        să contactați magazinul de unde doriți să cumpărați produsul.
+        {t("Contact_Disclaimer")}
       </Typography>
     </Box>
   );
