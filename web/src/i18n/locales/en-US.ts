@@ -6,7 +6,7 @@ const enUS = {
   Select_Language: "Select Language",
 
   // landing
-  Compare_prices_in_Moldova: "Compare prices in Moldova",
+  Compare_prices_in_Moldova: "Compare tech prices in Moldova",
   Find_the_best_price_for_your_favorite_products:
     "Find the best price for your favorite products",
   Compare_product_prices_from_multiple_online_stores_in_the_Republic_of_Moldova_in_one_place:

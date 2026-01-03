@@ -6,7 +6,7 @@ const roMD = {
   Select_Language: "Selectați limba",
 
   // landing
-  Compare_prices_in_Moldova: "Compară prețurile în Moldova",
+  Compare_prices_in_Moldova: "Compară prețurile tech în Moldova",
   Find_the_best_price_for_your_favorite_products:
     "Găsește cel mai bun preț pentru produsele tale preferate",
   Compare_product_prices_from_multiple_online_stores_in_the_Republic_of_Moldova_in_one_place:
