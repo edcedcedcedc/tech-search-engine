@@ -1,8 +1,13 @@
 from django.shortcuts import render
+from requests import request
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from products.models import Product
 from rapidfuzz import fuzz
+
+
+from rest_framework.throttling import ScopedRateThrottle
+from products.throttles import Layer1Throttle, Layer2PreviewThrottle, Layer2FullThrottle
 
 FUZZY_THRESHOLD = 85
 
@@ -14,8 +19,7 @@ LAYER3_LIMIT = 10
 
 # ---------------- Layer 1: Search / Product Frames ----------------
 class SearchAPIView(APIView):
-    # Class-level cache for aggregated products
-    aggregated_cache = None
+    throttle_classes = [Layer1Throttle]
 
     def get(self, request):
         raw_query = request.GET.get("q", "").strip()
@@ -23,7 +27,7 @@ class SearchAPIView(APIView):
         cursor = request.GET.get("cursor")
 
         if not raw_query:
-            SearchAPIView.aggregated_cache = None
+            request.session["aggregated_cache"] = None
             return Response({"products": [], "next_cursor": None})
 
         tokens = self.tokenize_query(raw_query)
@@ -37,8 +41,8 @@ class SearchAPIView(APIView):
         if cursor:
             aggregated = self.apply_cursor(aggregated, cursor)
 
-        # store in class variable for Layer2 access
-        SearchAPIView.aggregated_cache = aggregated
+        # Cache the session
+        request.session["aggregated_cache"] = aggregated
 
         probabilistic_clusters = [
             {
@@ -167,13 +171,20 @@ class ProductOffersAPIView(SearchAPIView):
 
     def get(self, request, product_id):
         full = request.GET.get("full", "false").lower() == "true"
+
+        if full:
+            self.throttle_classes = [Layer2FullThrottle]
+        else:
+            self.throttle_classes = [Layer2PreviewThrottle]
+
         limit = int(
             request.GET.get("limit", LAYER2_LIMIT if not full else LAYER3_LIMIT)
         )
+
         cursor = request.GET.get("cursor")
 
         # access Layer1 aggregated cache
-        aggregated = SearchAPIView.aggregated_cache
+        aggregated = request.session.get("aggregated_cache")
         if not aggregated:
             return Response({"offers": [], "has_more": False, "next_cursor": None})
 

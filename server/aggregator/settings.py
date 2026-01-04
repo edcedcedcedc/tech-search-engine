@@ -58,6 +58,16 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+REST_FRAMEWORK = {
+    "DEFAULT_THROTTLE_CLASSES": [],
+    "DEFAULT_THROTTLE_RATES": {
+        "layer1": "10 /min",  # Layer1 clusters
+        "layer2_preview": "12/min",  # Layer2 full=false
+        "layer2_full": "20/min",  # Layer2 full=true
+    },
+}
+
+
 ROOT_URLCONF = "aggregator.urls"
 
 TEMPLATES = [
@@ -97,3 +107,10 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+
+# Optional: session expires when browser closes (or set your own)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 3600  # 1 hour, in seconds
