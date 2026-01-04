@@ -51,6 +51,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "products.middleware.IPBlockMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -59,11 +60,13 @@ MIDDLEWARE = [
 ]
 
 REST_FRAMEWORK = {
-    "DEFAULT_THROTTLE_CLASSES": [],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "products.throttles.Layer1Throttle",
+    ],
     "DEFAULT_THROTTLE_RATES": {
-        "layer1": "10 /min",  # Layer1 clusters
-        "layer2_preview": "12/min",  # Layer2 full=false
-        "layer2_full": "20/min",  # Layer2 full=true
+        "layer1": "10/min",  # Layer1 clusters
+        "layer2_preview": "15/min",  # Layer2 full=false
+        "layer2_full": "10/min",  # Layer2 full=true
     },
 }
 

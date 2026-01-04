@@ -1,10 +1,7 @@
 # products/middleware.py
 from django.core.cache import cache
 from django.http import JsonResponse
-from datetime import datetime, timedelta
-
-BLOCK_BASE_TIME = 15 * 60
-MAX_OFFENSES = 3
+from django.utils import timezone
 
 
 class IPBlockMiddleware:
@@ -17,7 +14,7 @@ class IPBlockMiddleware:
 
         if data:
             block_until = data.get("block_until")
-            if block_until and datetime.now(datetime.timezone.utc) < block_until:
+            if block_until and timezone.now() < block_until:
                 return JsonResponse(
                     {"detail": "Too many requests. IP temporarily blocked."}, status=429
                 )

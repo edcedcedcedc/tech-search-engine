@@ -185,8 +185,9 @@ class ProductOffersAPIView(SearchAPIView):
 
         # access Layer1 aggregated cache
         aggregated = request.session.get("aggregated_cache")
-        if not aggregated:
-            return Response({"offers": [], "has_more": False, "next_cursor": None})
+
+        if not aggregated or not request.session.session_key:
+            return Response({"error": "invalid session"}, status=403)
 
         product = next((p for p in aggregated if p["id"] == product_id), None)
         if not product:
