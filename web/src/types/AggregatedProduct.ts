@@ -12,7 +12,7 @@ export interface AggregatedProduct {
     brand: any;
     variant:any;
     external_id: string;
-    stock?: boolean;       //  for later availability tracking
+    in_stock?: boolean;       //  for later availability tracking
   }[];
   lowest_price?: number;
   maximum_price?: number;

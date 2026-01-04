@@ -11,7 +11,7 @@ class OfferSerializer(serializers.Serializer):
     name = serializers.CharField()
     brand = serializers.CharField()
     variant = serializers.CharField(allow_blank=True)
-    stock = serializers.BooleanField(default=True)
+    in_stock = serializers.BooleanField(default=True)
 
 
 class AggregatedProductSerializer(serializers.Serializer):

@@ -99,7 +99,7 @@ class SearchAPIView(APIView):
                     "variant": o.variant,
                     "url": o.url,
                     "external_id": o.external_id,
-                    "stock": True,
+                    "in_stock": True,
                 }
                 for o in offers
             ],
