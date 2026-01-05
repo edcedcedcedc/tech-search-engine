@@ -8,6 +8,7 @@ from django.db.models import Q
 
 from rest_framework.throttling import ScopedRateThrottle
 from products.throttles import Layer1Throttle, Layer2PreviewThrottle, Layer2FullThrottle
+import hashlib
 
 FUZZY_THRESHOLD = 85
 
@@ -15,6 +16,12 @@ FUZZY_THRESHOLD = 85
 LAYER1_LIMIT = 20
 LAYER2_LIMIT = 5
 LAYER3_LIMIT = 10
+
+
+def generate_cluster_id(name, variant, brand, category):
+    """Generate a stable unique ID for a product cluster."""
+    s = f"{name}|{variant}|{brand}|{category}"
+    return hashlib.md5(s.encode("utf-8")).hexdigest()
 
 
 # ---------------- Layer 1: Search / Product Frames ----------------
@@ -55,6 +62,8 @@ class SearchAPIView(APIView):
                 "offers": len(p["offers"]),  # lightweight preview
                 "relevance": p["relevance"],
                 "image": p["image"],
+                "t_name": p.get("t_name", {}),
+                "t_variant": p.get("t_variant", {}),
             }
             for p in aggregated[:limit]
         ]
@@ -83,27 +92,33 @@ class SearchAPIView(APIView):
     def aggregate_products(self, qs):
         product_dict = {}
         for p in qs:
-            product_dict.setdefault(p.external_id, []).append(p)
+            cluster_key = generate_cluster_id(p.name, p.variant, p.brand, p.category)
+            product_dict.setdefault(cluster_key, []).append(p)
         return [
-            self.build_aggregated_product(ext_id, offers)
-            for ext_id, offers in product_dict.items()
+            self.build_aggregated_product(cluster_id, offers)
+            for cluster_id, offers in product_dict.items()
         ]
 
-    def build_aggregated_product(self, external_id, offers):
+    def build_aggregated_product(self, cluster_id, offers):
         rep = offers[0]
         return {
-            "id": external_id,
+            "id": cluster_id,
             "name": rep.name,
+            "variant": rep.variant,
+            "t_name": rep.t_name or {},
+            "t_variant": rep.t_variant or {},
             "brand": rep.brand,
             "category": rep.category,
-            "variant": rep.variant,
             "offers": [
                 {
+                    "id": o.id,
+                    "name": o.name,
+                    "variant": o.variant,
+                    "t_name": o.t_name or {},
+                    "t_variant": o.t_variant or {},
                     "shop": o.shop,
                     "price": o.price,
-                    "name": o.name,
                     "brand": o.brand,
-                    "variant": o.variant,
                     "url": o.url,
                     "external_id": o.external_id,
                     "in_stock": True,

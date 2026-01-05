@@ -15,23 +15,39 @@ import traceback
 
 """ 
 Usage:
-python manage.py fetch_products --shop darwin --category pc --pages 2
+python manage.py aggregation_engine --shop darwin --category pc --pages 1
  """
 
 
 def normalize(name: str) -> str:
-    """
-    Normalize a product name or variant:
-    - Remove slashes and backslashes: \ / //
-    - Remove extra spaces
-    - Keep text intact for fuzzy matching
-    """
     if not name:
         return ""
 
-    cleaned = re.sub(r"[\\/]+", " ", name)
-    cleaned = re.sub(r"\s+", " ", cleaned).strip()
-    return cleaned
+    # Remove literal backslashes \
+    name = name.replace("\\", "")
+
+    # Replace double slashes // with single /
+    name = name.replace("//", "/")
+
+    # Remove single quotes ' and backticks `
+    name = name.replace("'", "").replace("`", "")
+
+    # Normalize quotes: curly quotes → straight quotes
+    name = name.replace("“", '"').replace("”", '"')
+
+    # Remove spaces before/after slashes
+    name = re.sub(r"\s*/\s*", "/", name)
+
+    # Remove extra space in decimal numbers (e.g., 23. 8 → 23.8)
+    name = re.sub(r"(\d)\.\s+(\d)", r"\1.\2", name)
+
+    # Normalize multiple spaces into a single space
+    name = re.sub(r"\s+", " ", name)
+
+    # Strip leading/trailing spaces
+    name = name.strip()
+
+    return name
 
 
 def fetch_enter_products(category_url, max_pages=1):
@@ -162,7 +178,7 @@ CATEGORIES = {
         "function": fetch_enter_products,
         "monitor": "https://enter.online/for-gamers/monitoare-gaming",
         "laptop": "https://enter.online/laptopuri",
-        "telefoane": "https://darwin.md/telefoane",
+        "mobile_phone": "https://darwin.md/telefoane",
         "pc": "https://enter.online/calculatoare",  # all junk hdds, monitors, gpus...etc
         "gpu": "https://darwin.md/componente-pc/placi-video",
         "ssd": "https://darwin.md/componente-pc/dispozitive-de-stocare/ssd",
@@ -175,7 +191,7 @@ CATEGORIES = {
         "function": fetch_darwin_products,
         "monitor": "https://darwin.md/monitoare",
         "laptop": "https://darwin.md/laptopuri",
-        "telefoane": "https://darwin.md/telefoane",
+        "mobile_phone": "https://darwin.md/telefoane",
         "pc": "https://darwin.md/calculatoare",
         "gpu": "",
         "ssd": "",

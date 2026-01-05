@@ -1,25 +1,28 @@
-# backend/serializers.py
 from rest_framework import serializers
-from .models import Product
 
 
 class OfferSerializer(serializers.Serializer):
+    id = serializers.IntegerField()  # DB primary key
+    external_id = serializers.CharField()
+    name = serializers.CharField()
+    variant = serializers.CharField(allow_blank=True)
+    t_name = serializers.JSONField()
+    t_variant = serializers.JSONField()
     shop = serializers.CharField()
     price = serializers.IntegerField()
     url = serializers.URLField()
-    external_id = serializers.CharField()
-    name = serializers.CharField()
     brand = serializers.CharField()
-    variant = serializers.CharField(allow_blank=True)
     in_stock = serializers.BooleanField(default=True)
 
 
 class AggregatedProductSerializer(serializers.Serializer):
-    id = serializers.CharField()
+    id = serializers.CharField()  # Generated cluster ID
     name = serializers.CharField()
+    variant = serializers.CharField(allow_blank=True)
+    t_name = serializers.JSONField()
+    t_variant = serializers.JSONField()
     brand = serializers.CharField()
     category = serializers.CharField()
-    variant = serializers.CharField(allow_blank=True)
     offers = OfferSerializer(many=True)
     lowest_price = serializers.IntegerField()
     relevance = serializers.IntegerField()
