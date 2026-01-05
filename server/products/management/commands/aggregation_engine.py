@@ -36,14 +36,18 @@ def fetch_enter_products(category_url, max_pages=1):
 
     for page in range(1, max_pages + 1):
         url = f"{category_url}?page={page}"
-        resp = requests.get(url, timeout=15)
-        resp.raise_for_status()
-        soup = BeautifulSoup(resp.text, "lxml")
 
+        try:
+            resp = requests.get(url, timeout=15)
+            resp.raise_for_status()
+        except requests.exceptions.RequestException:
+            break
+
+        soup = BeautifulSoup(resp.text, "lxml")
         nodes = soup.select("div.product-item[data-gtm]")
 
         if not nodes:
-            raise Exception("No nodes in darwin products")
+            break
 
         for node in nodes:
             raw = node.get("data-gtm")
@@ -51,11 +55,19 @@ def fetch_enter_products(category_url, max_pages=1):
             title = title_tag.get_text(strip=True) if title_tag else None
             variant_tag = node.select_one(".product-desc")
             variant = variant_tag.get_text(strip=True) if variant_tag else None
+
+            # handle in stock out of stock
+            in_stock = True
+            add_btn = node.select_one("button[data-action]")
+            if add_btn:
+                action = add_btn.get("data-action", "")
+                if action == "openOutStockModal":
+                    in_stock = False
+
             if not raw:
                 continue
 
             decoded = html.unescape(raw)
-
             item_data = {
                 "external_id": (
                     re.search(r'"item_id":"(.*?)"', decoded) or [None, None]
@@ -70,13 +82,9 @@ def fetch_enter_products(category_url, max_pages=1):
                 )[1],
                 "variant": normalize(f"{variant}"),
                 "url": node.select_one(".stretched-link")["href"] or None,
+                "in_stock": in_stock,
                 "shop": "Enter",
             }
-            # TODO: availability / stock status
-            # Example:
-            # availability_text = card.get("data-text", "").lower()
-            # item_data["in_stock"] = "epuizat" not in availability_text
-
             all_items.append(item_data)
 
     return all_items
@@ -87,18 +95,30 @@ def fetch_darwin_products(category_url, max_pages=1):
 
     for page in range(1, max_pages + 1):
         url = f"{category_url}?page={page}"
-        resp = requests.get(url, timeout=15)
-        resp.raise_for_status()
+        try:
+            resp = requests.get(url, timeout=15)
+            resp.raise_for_status()
+        except requests.exceptions.RequestException:
+            break
         soup = BeautifulSoup(resp.text, "lxml")
-        nodes = soup.select("a[data-ga4]")
+        nodes = soup.select("div.product-card.product-item")
 
         if not nodes:
             break
 
         for node in nodes:
-            raw = node.get("data-ga4")
-            decoded = html.unescape(raw)
+            link = node.select_one("a[data-ga4]")
 
+            if not link:
+                continue
+
+            raw = link.get("data-ga4")
+            in_stock = "out-of-stock" not in node.get("class", [])
+
+            if not raw:
+                continue
+
+            decoded = html.unescape(raw)
             item_data = {
                 "external_id": (
                     re.search(r'"item_id":"(.*?)"', decoded) or [None, None]
@@ -116,7 +136,8 @@ def fetch_darwin_products(category_url, max_pages=1):
                 "variant": normalize(
                     (re.search(r'"item_variant":"(.*?)"', decoded) or ["", ""])[1]
                 ),
-                "url": node.get("href") or None,
+                "url": link.get("href") or None,
+                "in_stock": in_stock,
                 "shop": "Darwin",
             }
 

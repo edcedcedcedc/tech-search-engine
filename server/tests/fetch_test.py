@@ -55,7 +55,7 @@ ENTER_CATEGORIES = {
 }
 
 
-def fetch_enter_products(category_url, valid_categories=None, max_pages=1):
+def fetch_enter_products(category_url, valid_categories=None, max_pages=5):
     all_items = []
 
     for page in range(1, max_pages + 1):
@@ -71,6 +71,13 @@ def fetch_enter_products(category_url, valid_categories=None, max_pages=1):
             raise Exception("No links in darwin products")
 
         for link in links:
+            in_stock = True
+            add_btn = link.select_one("button[data-action]")
+            if add_btn:
+                action = add_btn.get("data-action", "")
+                if action == "openOutStockModal":
+                    in_stock = False
+
             raw = link.get("data-gtm")
             title_tag = link.select_one(".product-title")
             title = title_tag.get_text(strip=True) if title_tag else None
@@ -95,6 +102,7 @@ def fetch_enter_products(category_url, valid_categories=None, max_pages=1):
                 )[1],
                 "variant": f"{variant}",
                 "url": link.select_one(".stretched-link")["href"],
+                "in_stock": in_stock,
                 "shop": "Enter",
             }
             # TODO: availability / stock status
@@ -107,44 +115,53 @@ def fetch_enter_products(category_url, valid_categories=None, max_pages=1):
     return all_items
 
 
-def fetch_darwin_products(category_url, valid_categories=None, max_pages=1):
+def fetch_darwin_products(category_url, max_pages=1):
     all_items = []
 
     for page in range(1, max_pages + 1):
         url = f"{category_url}?page={page}"
         resp = requests.get(url, timeout=15)
         resp.raise_for_status()
+
         soup = BeautifulSoup(resp.text, "lxml")
-        links = soup.select("a[data-ga4]")
 
-        if not links:
-            raise Exception("No links in darwin products")
+        cards = soup.select("div.product-card.product-item")
+        if not cards:
+            break
 
-        for link in links:
+        for card in cards:
+            # ✅ stock detection
+            in_stock = "out-of-stock" not in card.get("class", [])
+
+            link = card.select_one("a[data-ga4]")
+            if not link:
+                continue
+
             raw = link.get("data-ga4")
+            if not raw:
+                continue
+
             decoded = html.unescape(raw)
 
             item_data = {
-                "id": (re.search(r'"item_id":"(.*?)"', decoded) or [None])[1],
-                "name": (re.search(r'"item_name":"(.*?)"', decoded) or [None])[1],
-                "price": int((re.search(r'"price":(\d+)', decoded) or [0])[1]),
-                "brand": (re.search(r'"item_brand":"(.*?)"', decoded) or [None])[1],
-                "category": (re.search(r'"item_category":"(.*?)"', decoded) or [None])[
+                "id": (re.search(r'"item_id":"(.*?)"', decoded) or [None, None])[1],
+                "name": (re.search(r'"item_name":"(.*?)"', decoded) or [None, None])[1],
+                "price": int((re.search(r'"price":(\d+)', decoded) or [0, 0])[1]),
+                "brand": (re.search(r'"item_brand":"(.*?)"', decoded) or [None, None])[
                     1
                 ],
-                "variant": (re.search(r'"item_variant":"(.*?)"', decoded) or [""])[1]
+                "category": (
+                    re.search(r'"item_category":"(.*?)"', decoded) or [None, None]
+                )[1],
+                "variant": (re.search(r'"item_variant":"(.*?)"', decoded) or ["", ""])[
+                    1
+                ]
                 .replace("\\", "")
                 .strip(),
                 "url": link.get("href"),
+                "in_stock": in_stock,
+                "shop": "Darwin",
             }
-
-            # Filter by valid categories if provided
-            # if valid_categories and item_data["category"] not in valid_categories:
-            #    continue
-
-            # Try to get image
-            # img_tag = link.find_previous("div", class_="product-img").find("img")
-            # item_data["image"] = img_tag.get("data-src") if img_tag else None
 
             all_items.append(item_data)
 
@@ -153,12 +170,12 @@ def fetch_darwin_products(category_url, valid_categories=None, max_pages=1):
 
 # Example: fetch monitors
 monitors = fetch_darwin_products(
-    DARWIN_CATEGORIES["monitor"], valid_categories=["Monitoare", "Monitoare gaming"]
+    DARWIN_CATEGORIES["monitor"],
 )
-# print(len(monitors), "monitors found darwin", monitors)
+print(len(monitors), "monitors found darwin", monitors)
 
 
 monitors = fetch_enter_products(
-    ENTER_CATEGORIES["monitor"],
+    ENTER_CATEGORIES["laptop"],
 )
-print(len(monitors), "monitors found", monitors)
+# print(len(monitors), "monitors found enter", monitors)
