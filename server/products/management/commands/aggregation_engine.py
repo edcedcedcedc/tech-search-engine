@@ -12,8 +12,11 @@ import time
 from django.utils import timezone
 import traceback
 
-# How to use it for now
-# python manage.py fetch_products --shop darwin --category pc --pages 2
+
+""" 
+Usage:
+python manage.py fetch_products --shop darwin --category pc --pages 2
+ """
 
 
 def normalize(name: str) -> str:
@@ -52,11 +55,11 @@ def fetch_enter_products(category_url, max_pages=1):
         for node in nodes:
             raw = node.get("data-gtm")
             title_tag = node.select_one(".product-title")
-            title = title_tag.get_text(strip=True) if title_tag else None
+            title = title_tag.get_text(strip=True) if title_tag else ""
             variant_tag = node.select_one(".product-desc")
-            variant = variant_tag.get_text(strip=True) if variant_tag else None
+            variant = variant_tag.get_text(strip=True) if variant_tag else ""
 
-            # handle in stock out of stock
+            # handle in stock / out of stock
             in_stock = True
             add_btn = node.select_one("button[data-action]")
             if add_btn:
@@ -72,7 +75,10 @@ def fetch_enter_products(category_url, max_pages=1):
                 "external_id": (
                     re.search(r'"item_id":"(.*?)"', decoded) or [None, None]
                 )[1],
-                "name": normalize(f"{title}"),
+                "name": normalize(title),
+                "variant": normalize(variant),
+                "t_name": {"ro": normalize(title), "en": None, "ru": None},
+                "t_variant": {"ro": normalize(variant), "en": None, "ru": None},
                 "price": int((re.search(r'"price":(\d+)', decoded) or [0, 0])[1]),
                 "brand": (re.search(r'"item_brand":"(.*?)"', decoded) or [None, None])[
                     1
@@ -80,7 +86,6 @@ def fetch_enter_products(category_url, max_pages=1):
                 "category": (
                     re.search(r'"item_category":"(.*?)"', decoded) or [None, None]
                 )[1],
-                "variant": normalize(f"{variant}"),
                 "url": node.select_one(".stretched-link")["href"] or None,
                 "in_stock": in_stock,
                 "shop": "Enter",
@@ -119,13 +124,22 @@ def fetch_darwin_products(category_url, max_pages=1):
                 continue
 
             decoded = html.unescape(raw)
+
+            name = normalize(
+                (re.search(r'"item_name":"(.*?)"', decoded) or [None, ""])[1]
+            )
+            variant = normalize(
+                (re.search(r'"item_variant":"(.*?)"', decoded) or ["", ""])[1]
+            )
+
             item_data = {
                 "external_id": (
                     re.search(r'"item_id":"(.*?)"', decoded) or [None, None]
                 )[1],
-                "name": normalize(
-                    (re.search(r'"item_name":"(.*?)"', decoded) or [None, None])[1]
-                ),
+                "name": name,
+                "variant": variant,
+                "t_name": {"ro": name, "en": None, "ru": None},
+                "t_variant": {"ro": variant, "en": None, "ru": None},
                 "price": int((re.search(r'"price":(\d+)', decoded) or [0, 0])[1]),
                 "brand": (re.search(r'"item_brand":"(.*?)"', decoded) or [None, None])[
                     1
@@ -133,21 +147,10 @@ def fetch_darwin_products(category_url, max_pages=1):
                 "category": (
                     re.search(r'"item_category":"(.*?)"', decoded) or [None, None]
                 )[1],
-                "variant": normalize(
-                    (re.search(r'"item_variant":"(.*?)"', decoded) or ["", ""])[1]
-                ),
                 "url": link.get("href") or None,
                 "in_stock": in_stock,
                 "shop": "Darwin",
             }
-
-            # Filter by valid categories if provided
-            # if valid_categories and item_data["category"] not in valid_categories:
-            #    continue
-
-            # Try to get image
-            # img_tag = link.find_previous("div", class_="product-img").find("img")
-            # item_data["image"] = img_tag.get("data-src") if img_tag else None
 
             all_items.append(item_data)
 
@@ -159,15 +162,27 @@ CATEGORIES = {
         "function": fetch_enter_products,
         "monitor": "https://enter.online/for-gamers/monitoare-gaming",
         "laptop": "https://enter.online/laptopuri",
-        # "telefoane": "https://darwin.md/telefoane",
+        "telefoane": "https://darwin.md/telefoane",
         "pc": "https://enter.online/calculatoare",  # all junk hdds, monitors, gpus...etc
+        "gpu": "https://darwin.md/componente-pc/placi-video",
+        "ssd": "https://darwin.md/componente-pc/dispozitive-de-stocare/ssd",
+        "hdd": "https://darwin.md/componente-pc/dispozitive-de-stocare/hdd",
+        "ram": "https://darwin.md/componente-pc/ram",
+        "mb": "https://darwin.md/componente-pc/motherboard",
+        "cpu": "https://darwin.md/componente-pc/cpu",
     },
     "darwin": {
         "function": fetch_darwin_products,
         "monitor": "https://darwin.md/monitoare",
         "laptop": "https://darwin.md/laptopuri",
-        # "telefoane": "https://darwin.md/telefoane",
+        "telefoane": "https://darwin.md/telefoane",
         "pc": "https://darwin.md/calculatoare",
+        "gpu": "",
+        "ssd": "",
+        "hdd": "",
+        "ram": "",
+        "mb": "",
+        "cpu": "",
     },
 }
 

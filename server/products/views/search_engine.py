@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from products.models import Product
 from rapidfuzz import fuzz
-
+from django.db.models import Q
 
 from rest_framework.throttling import ScopedRateThrottle
 from products.throttles import Layer1Throttle, Layer2PreviewThrottle, Layer2FullThrottle
@@ -68,10 +68,17 @@ class SearchAPIView(APIView):
         return query.lower().split()
 
     def filter_products_by_tokens(self, tokens):
+        """
+        Filters products by searching in name and variant fields.
+        Each token is matched against words in name and variant separately.
+        """
         qs = Product.objects.all()
+
         for t in tokens:
-            qs = qs.filter(name__icontains=t)
-        return qs
+            # match token t anywhere in the name OR anywhere in variant
+            qs = qs.filter(Q(name__icontains=t) | Q(variant__icontains=t))
+
+        return qs.distinct()
 
     def aggregate_products(self, qs):
         product_dict = {}
