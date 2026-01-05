@@ -9,6 +9,8 @@ from django.db.models import Q
 from rest_framework.throttling import ScopedRateThrottle
 from products.throttles import Layer1Throttle, Layer2PreviewThrottle, Layer2FullThrottle
 import hashlib
+import random
+from collections import deque
 
 FUZZY_THRESHOLD = 85
 
@@ -22,6 +24,31 @@ def generate_cluster_id(name, variant, brand, category):
     """Generate a stable unique ID for a product cluster."""
     s = f"{name}|{variant}|{brand}|{category}"
     return hashlib.md5(s.encode("utf-8")).hexdigest()
+
+
+def balanced_offers(offers):
+    """
+    Reorders offers to avoid long streaks of the same shop.
+    - Does NOT change relevance or cluster membership.
+    - Preserves all offers.
+    - Interleaves shops as much as possible.
+
+    Example: If offers = [Enter, Enter, Darwin, Enter, Darwin]
+    The output might be: [Enter, Darwin, Enter, Darwin, Enter]
+    """
+    # Group offers per shop
+    shop_groups = {}
+    for o in offers:
+        shop_groups.setdefault(o["shop"], deque()).append(o)
+
+    mixed = []
+    while any(shop_groups.values()):
+        # pick a random shop among those with remaining offers
+        available_shops = [s for s, q in shop_groups.items() if q]
+        chosen_shop = random.choice(available_shops)
+        mixed.append(shop_groups[chosen_shop].popleft())
+
+    return mixed
 
 
 # ---------------- Layer 1: Search / Product Frames ----------------
@@ -143,7 +170,9 @@ class SearchAPIView(APIView):
                     similar.append(other)
                     aggregated.remove(other)
             all_offers = [o for s in similar for o in s["offers"]]
-            base["offers"] = all_offers
+            base["offers"] = balanced_offers(
+                all_offers
+            )  # Balance offers withing a cluster
             base["lowest_price"] = min(o["price"] for o in all_offers)
             merged.append(base)
         return merged

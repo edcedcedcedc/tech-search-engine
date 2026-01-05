@@ -81,7 +81,8 @@ def fetch_enter_products(category_url, max_pages=1):
             if add_btn:
                 action = add_btn.get("data-action", "")
                 if action == "openOutStockModal":
-                    in_stock = False
+                    # in_stock = False
+                    return all_items
 
             if not raw:
                 continue
@@ -134,7 +135,11 @@ def fetch_darwin_products(category_url, max_pages=1):
                 continue
 
             raw = link.get("data-ga4")
+
+            # return if out of stock, because the items are sorted by popularity by default
             in_stock = "out-of-stock" not in node.get("class", [])
+            if not in_stock:
+                return all_items
 
             if not raw:
                 continue
@@ -176,29 +181,33 @@ def fetch_darwin_products(category_url, max_pages=1):
 CATEGORIES = {
     "enter": {
         "function": fetch_enter_products,
-        "monitor": "https://enter.online/for-gamers/monitoare-gaming",
         "laptop": "https://enter.online/laptopuri",
-        "mobile_phone": "https://darwin.md/telefoane",
-        "pc": "https://enter.online/calculatoare",  # all junk hdds, monitors, gpus...etc
+        "mobilephone": "https://enter.online/telefoane",
+        "pc": "https://enter.online/calculatoare",
+        "gaming": "https://enter.online/for-gamers",
+    },
+    "darwin": {
+        "function": fetch_darwin_products,
+        "monitor": "https://darwin.md/monitoare",
+        "laptop": "https://darwin.md/laptopuri",
+        "mobilephone": "https://darwin.md/telefoane",
+        "pc": "https://darwin.md/calculatoare",
         "gpu": "https://darwin.md/componente-pc/placi-video",
         "ssd": "https://darwin.md/componente-pc/dispozitive-de-stocare/ssd",
         "hdd": "https://darwin.md/componente-pc/dispozitive-de-stocare/hdd",
         "ram": "https://darwin.md/componente-pc/ram",
         "mb": "https://darwin.md/componente-pc/motherboard",
         "cpu": "https://darwin.md/componente-pc/cpu",
-    },
-    "darwin": {
-        "function": fetch_darwin_products,
-        "monitor": "https://darwin.md/monitoare",
-        "laptop": "https://darwin.md/laptopuri",
-        "mobile_phone": "https://darwin.md/telefoane",
-        "pc": "https://darwin.md/calculatoare",
-        "gpu": "",
-        "ssd": "",
-        "hdd": "",
-        "ram": "",
-        "mb": "",
-        "cpu": "",
+        "keyboard": "https://darwin.md/periferice-pc/tastaturi",
+        "mouse": "https://darwin.md/periferice-pc/mouse-uri",
+        "mousepad": "https://darwin.md/periferice-pc/mouse-pad-uri",
+        "externhdd": "https://darwin.md/dispozitive-de-stocare-externe/hdd",
+        "powersupply": "https://darwin.md/componente-pc/power-supply",
+        "fan": "https://darwin.md/componente-pc/coolere",
+        "fanbase": "https://darwin.md/accesorii/accesorii-coolere",
+        "gaming": "https://darwin.md/gaming",
+        "router": "https://darwin.md/retelistica/routere",
+        "switch": "https://darwin.md/retelistica/switch",
     },
 }
 
