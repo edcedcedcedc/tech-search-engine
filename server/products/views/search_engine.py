@@ -14,7 +14,7 @@ from collections import deque
 from products.utils.search_engine_log import search_engine_log
 
 
-FUZZY_THRESHOLD = 95
+FUZZY_THRESHOLD = 85
 
 # Standard limits
 LAYER1_LIMIT = 20
@@ -125,7 +125,11 @@ class SearchAPIView(APIView):
 
         for t in tokens:
             # match token t anywhere in the name OR anywhere in variant
-            qs = qs.filter(Q(name__icontains=t) | Q(variant__icontains=t))
+            qs = qs.filter(
+                Q(name__icontains=t)
+                | Q(variant__icontains=t)
+                | Q(category__icontains=t)
+            )
         search_engine_log(f"Filtered products by tokens {tokens}, count={qs.count()}")
         return qs.distinct()
 

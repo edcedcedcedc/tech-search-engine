@@ -27,3 +27,9 @@ class Product(models.Model):
 
     class Meta:
         unique_together = ("shop", "external_id")
+
+
+class CategoryMapping(models.Model):
+    shop = models.CharField(max_length=100)
+    raw_category = models.CharField(max_length=255)
+    unified_category = models.CharField(max_length=100)
