@@ -9,45 +9,17 @@ import itertools
 import sys
 import threading
 import time
-from django.utils import timezone
 import traceback
-
+from products.utils.utils import normalize_db
+from products.utils.aggregation_engine_log import random_sleep, aggregation_log
 
 """ 
 Usage:
 python manage.py aggregation_engine --shop darwin --category pc --pages 1
  """
 
-
-def normalize(name: str) -> str:
-    if not name:
-        return ""
-
-    # Remove literal backslashes \
-    name = name.replace("\\", "")
-
-    # Replace double slashes // with single /
-    name = name.replace("//", "/")
-
-    # Remove single quotes ' and backticks `
-    name = name.replace("'", "").replace("`", "")
-
-    # Normalize quotes: curly quotes → straight quotes
-    name = name.replace("“", '"').replace("”", '"')
-
-    # Remove spaces before/after slashes
-    name = re.sub(r"\s*/\s*", "/", name)
-
-    # Remove extra space in decimal numbers (e.g., 23. 8 → 23.8)
-    name = re.sub(r"(\d)\.\s+(\d)", r"\1.\2", name)
-
-    # Normalize multiple spaces into a single space
-    name = re.sub(r"\s+", " ", name)
-
-    # Strip leading/trailing spaces
-    name = name.strip()
-
-    return name
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 
 def fetch_enter_products(category_url, max_pages=1):
@@ -92,10 +64,10 @@ def fetch_enter_products(category_url, max_pages=1):
                 "external_id": (
                     re.search(r'"item_id":"(.*?)"', decoded) or [None, None]
                 )[1],
-                "name": normalize(title),
-                "variant": normalize(variant),
-                "t_name": {"ro": normalize(title), "en": None, "ru": None},
-                "t_variant": {"ro": normalize(variant), "en": None, "ru": None},
+                "name": title,
+                "variant": variant,
+                "t_name": {"ro": title, "en": None, "ru": None},
+                "t_variant": {"ro": variant, "en": None, "ru": None},
                 "price": int((re.search(r'"price":(\d+)', decoded) or [0, 0])[1]),
                 "brand": (re.search(r'"item_brand":"(.*?)"', decoded) or [None, None])[
                     1
@@ -108,7 +80,7 @@ def fetch_enter_products(category_url, max_pages=1):
                 "shop": "Enter",
             }
             all_items.append(item_data)
-
+        random_sleep(2, 10)
     return all_items
 
 
@@ -146,12 +118,8 @@ def fetch_darwin_products(category_url, max_pages=1):
 
             decoded = html.unescape(raw)
 
-            name = normalize(
-                (re.search(r'"item_name":"(.*?)"', decoded) or [None, ""])[1]
-            )
-            variant = normalize(
-                (re.search(r'"item_variant":"(.*?)"', decoded) or ["", ""])[1]
-            )
+            name = (re.search(r'"item_name":"(.*?)"', decoded) or [None, ""])[1]
+            variant = (re.search(r'"item_variant":"(.*?)"', decoded) or ["", ""])[1]
 
             item_data = {
                 "external_id": (
@@ -174,7 +142,7 @@ def fetch_darwin_products(category_url, max_pages=1):
             }
 
             all_items.append(item_data)
-
+        random_sleep(2, 10)
     return all_items
 
 
@@ -258,7 +226,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-
         try:
             category = options["category"]
             shop = options["shop"]
@@ -268,42 +235,34 @@ class Command(BaseCommand):
             shop_cfg = CATEGORIES.get(shop)
             url = shop_cfg.get(category) if shop_cfg else None
             fetch_fn = shop_cfg.get("function") if shop_cfg else None
-            stream = io.TextIOWrapper(
-                sys.stdout.buffer, encoding="utf-8", errors="replace"
-            )
-
-            def write(msg):
-                try:
-                    stream.write(str(msg) + "\n")
-                    stream.flush()
-                except Exception:
-                    safe = str(msg).encode("ascii", "ignore").decode("ascii")
-                    stream.write(safe + "\n")
-                    stream.flush()
 
             if not url or not fetch_fn:
-                msg = f"Unknown category/shop/pages: {category} / {shop} / {pages}"
-                if auto_stdout:
-                    write(msg)
-                else:
-                    write(self.style.ERROR(msg))
+                aggregation_log(
+                    f"ERROR Unknown category/shop/pages: {category} / {shop} / {pages}"
+                )
                 return
 
+            aggregation_log(
+                f"START Fetching products | shop={shop} category={category}"
+            )
+
             if auto_stdout:
-                write(f"Fetching products from {url}")
                 items = fetch_fn(url, pages)
-                write(f"Found {len(items)} products")
             else:
                 spinner = self.Spinner(f"Fetching products from {url}")
                 spinner.start()
                 items = fetch_fn(url, pages)
                 spinner.stop()
-                write(self.style.SUCCESS(f"Found {len(items)} products"))
+
+            aggregation_log(f"FOUND {len(items)} products")
 
             saved_count = 0
             updated_count = 0
 
             for item_data in items:
+                item_data["name"] = item_data["name"]
+                item_data["variant"] = item_data["variant"]
+
                 try:
                     _, created = Product.objects.update_or_create(
                         shop=item_data["shop"],
@@ -311,34 +270,28 @@ class Command(BaseCommand):
                         defaults=item_data,
                     )
 
-                    if not created:
-                        updated_count += 1
-                    else:
+                    if created:
                         saved_count += 1
-
-                    action = "CREATED" if created else "UPDATED"
-                    write(f"{action}: {item_data['name']}")
+                        aggregation_log(f"CREATED {item_data['name']}")
+                    else:
+                        updated_count += 1
+                        aggregation_log(f"UPDATED {item_data['name']}")
 
                 except Exception as e:
-                    msg = f"ERROR saving {item_data.get('name', 'Unknown')}: {e}"
-                    if auto_stdout:
-                        write(msg)
-                    else:
-                        write(self.style.ERROR(msg))
-
-            if auto_stdout:
-                write(f"SUMMARY: {saved_count} created, {updated_count} updated")
-                write(f"COMPLETED: {category} products from {shop}")
-                write("=" * 60)
-            else:
-                write(
-                    self.style.SUCCESS(
-                        f"\nDone! {saved_count} created, {updated_count} updated"
+                    aggregation_log(
+                        f"ERROR saving {item_data.get('name', 'Unknown')}: {e}",
+                        level="error",
                     )
-                )
+
+            aggregation_log(
+                f"SUMMARY shop={shop} category={category} "
+                f"created={saved_count} updated={updated_count}"
+            )
+            aggregation_log("END aggregation_engine run")
+            aggregation_log("=" * 60)
+
         except KeyboardInterrupt:
-            write("Process interrupted by user, exiting gracefully...")
-            return
+            aggregation_log("INTERRUPTED by user")
         except Exception as e:
-            write(f"Unexpected error: {e}", is_error=True)
-            write(traceback.format_exc())
+            aggregation_log(f"FATAL error: {e}", level="error")
+            aggregation_log(traceback.format_exc(), level="error")

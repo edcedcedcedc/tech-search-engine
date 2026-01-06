@@ -5,14 +5,16 @@ from rest_framework.response import Response
 from products.models import Product
 from rapidfuzz import fuzz
 from django.db.models import Q
-
+import traceback
 from rest_framework.throttling import ScopedRateThrottle
 from products.throttles import Layer1Throttle, Layer2PreviewThrottle, Layer2FullThrottle
 import hashlib
 import random
 from collections import deque
+from products.utils.search_engine_log import search_engine_log
 
-FUZZY_THRESHOLD = 85
+
+FUZZY_THRESHOLD = 95
 
 # Standard limits
 LAYER1_LIMIT = 20
@@ -56,52 +58,63 @@ class SearchAPIView(APIView):
     throttle_classes = [Layer1Throttle]
 
     def get(self, request):
-        raw_query = request.GET.get("q", "").strip()
-        limit = min(int(request.GET.get("limit", LAYER1_LIMIT)), LAYER1_LIMIT)
-        cursor = request.GET.get("cursor")
+        try:
+            raw_query = request.GET.get("q", "").strip()
+            search_engine_log(f"Received raw query: '{raw_query}'")
+            limit = min(int(request.GET.get("limit", LAYER1_LIMIT)), LAYER1_LIMIT)
+            cursor = request.GET.get("cursor")
 
-        if not raw_query:
-            request.session["aggregated_cache"] = None
-            return Response({"products": [], "next_cursor": None})
+            if not raw_query:
+                request.session["aggregated_cache"] = None
+                return Response({"products": [], "next_cursor": None})
 
-        tokens = self.tokenize_query(raw_query)
-        qs = self.filter_products_by_tokens(tokens)
+            tokens = self.tokenize_query(raw_query)
+            qs = self.filter_products_by_tokens(tokens)
 
-        aggregated = self.aggregate_products(qs)
-        aggregated = self.identity_resolution(aggregated)
-        aggregated = self.score_relevance(aggregated, raw_query)
-        aggregated.sort(key=lambda x: (-x["relevance"], x["lowest_price"], x["id"]))
+            aggregated = self.aggregate_products(qs)
+            aggregated = self.identity_resolution(aggregated)
+            aggregated = self.score_relevance(aggregated, raw_query)
+            aggregated.sort(key=lambda x: (-x["relevance"], x["lowest_price"], x["id"]))
 
-        if cursor:
-            aggregated = self.apply_cursor(aggregated, cursor)
+            if cursor:
+                aggregated = self.apply_cursor(aggregated, cursor)
 
-        # Cache the session
-        request.session["aggregated_cache"] = aggregated
+            # Cache the session
+            request.session["aggregated_cache"] = aggregated
 
-        probabilistic_clusters = [
-            {
-                "id": p["id"],
-                "name": p["name"],
-                "brand": p["brand"],
-                "category": p["category"],
-                "variant": p["variant"],
-                "lowest_price": p["lowest_price"],
-                "offers": len(p["offers"]),  # lightweight preview
-                "relevance": p["relevance"],
-                "image": p["image"],
-                "t_name": p.get("t_name", {}),
-                "t_variant": p.get("t_variant", {}),
-            }
-            for p in aggregated[:limit]
-        ]
+            probabilistic_clusters = [
+                {
+                    "id": p["id"],
+                    "name": p["name"],
+                    "brand": p["brand"],
+                    "category": p["category"],
+                    "variant": p["variant"],
+                    "lowest_price": p["lowest_price"],
+                    "offers": len(p["offers"]),  # lightweight preview
+                    "relevance": p["relevance"],
+                    "image": p["image"],
+                    "t_name": p.get("t_name", {}),
+                    "t_variant": p.get("t_variant", {}),
+                }
+                for p in aggregated[:limit]
+            ]
 
-        next_cursor = self.get_next_cursor(aggregated, limit)
-        return Response(
-            {"products": probabilistic_clusters, "next_cursor": next_cursor}
-        )
+            next_cursor = self.get_next_cursor(aggregated, limit)
+            return Response(
+                {"products": probabilistic_clusters, "next_cursor": next_cursor}
+            )
+
+        except Exception as e:
+            # Log the full exception
+
+            trace = traceback.format_exc()
+            search_engine_log(f"Error in SearchAPIView: {e}\n{trace}")
+            return Response({"error": "Internal server error"}, status=500)
 
     def tokenize_query(self, query):
-        return query.lower().split()
+        tokens = query.split()
+        search_engine_log(f"Tokenizing query '{query}' -> {tokens}")
+        return tokens
 
     def filter_products_by_tokens(self, tokens):
         """
@@ -113,14 +126,23 @@ class SearchAPIView(APIView):
         for t in tokens:
             # match token t anywhere in the name OR anywhere in variant
             qs = qs.filter(Q(name__icontains=t) | Q(variant__icontains=t))
-
+        search_engine_log(f"Filtered products by tokens {tokens}, count={qs.count()}")
         return qs.distinct()
 
     def aggregate_products(self, qs):
         product_dict = {}
+
         for p in qs:
-            cluster_key = generate_cluster_id(p.name, p.variant, p.brand, p.category)
+            cluster_key = generate_cluster_id(
+                p.name,
+                p.variant,
+                p.brand,
+                p.category,
+            )
             product_dict.setdefault(cluster_key, []).append(p)
+            search_engine_log(
+                f"Adding product '{p.name} / {p.variant}' to cluster {cluster_key}"
+            )
         return [
             self.build_aggregated_product(cluster_id, offers)
             for cluster_id, offers in product_dict.items()
@@ -158,23 +180,48 @@ class SearchAPIView(APIView):
 
     def identity_resolution(self, aggregated):
         merged = []
+
         while aggregated:
             base = aggregated.pop(0)
             similar = [base]
+
+            # Precompute base info
+            base_full_name = f"{base['name']} {base.get('variant','')}".lower()
+            base_urls = {o["url"] for o in base["offers"] if o.get("url")}
+            base_ids = {
+                o["external_id"] for o in base["offers"] if o.get("external_id")
+            }
+
             for other in aggregated[:]:
-                score = fuzz.token_sort_ratio(
-                    base["name"].lower() + " " + (base["variant"] or ""),
-                    other["name"].lower() + " " + (other["variant"] or ""),
-                )
-                if score >= FUZZY_THRESHOLD:
+                other_full_name = f"{other['name']} {other.get('variant','')}".lower()
+                other_urls = {o["url"] for o in other["offers"] if o.get("url")}
+                other_ids = {
+                    o["external_id"] for o in other["offers"] if o.get("external_id")
+                }
+
+                # Strict fuzzy match on full name + variant
+                full_name_score = fuzz.ratio(base_full_name, other_full_name)
+
+                # Merge if URL overlap, external_id overlap, or strict fuzzy match
+                if (
+                    base_urls.intersection(other_urls)
+                    or base_ids.intersection(other_ids)
+                    or full_name_score >= FUZZY_THRESHOLD
+                ):
                     similar.append(other)
                     aggregated.remove(other)
+
+            # Merge all offers from similar products
             all_offers = [o for s in similar for o in s["offers"]]
-            base["offers"] = balanced_offers(
-                all_offers
-            )  # Balance offers withing a cluster
+            base["offers"] = balanced_offers(all_offers)
             base["lowest_price"] = min(o["price"] for o in all_offers)
+
             merged.append(base)
+            search_engine_log(
+                f"Merged cluster '{base['name']}' with {len(similar)} similar products, offers={len(all_offers)}"
+            )
+
+        search_engine_log(f"Identity resolution complete, merged count={len(merged)}")
         return merged
 
     def score_relevance(self, aggregated, query: str):
@@ -190,6 +237,12 @@ class SearchAPIView(APIView):
                 0.6 * (fuzzy_score / 100) + 0.3 * token_coverage + 0.1 * brand_score
             )
             item["relevance"] = round(relevance, 4)
+
+            search_engine_log(
+                f"Product '{item['name']}' -> fuzzy_score={fuzzy_score}, "
+                f"token_coverage={token_coverage:.2f}, brand_score={brand_score}, "
+                f"final_relevance={item['relevance']}"
+            )
         return aggregated
 
     def apply_cursor(self, aggregated, cursor):
@@ -261,6 +314,10 @@ class ProductOffersAPIView(SearchAPIView):
         has_more = len(offers) > limit
         next_cursor = self.get_next_cursor(offers, limit)
 
+        search_engine_log(
+            f"Product '{product_id}' offers count={len(product['offers'])}, "
+            f"limit={limit}, full={full}, cursor={cursor}"
+        )
         return Response(
             {"offers": result, "has_more": has_more, "next_cursor": next_cursor}
         )

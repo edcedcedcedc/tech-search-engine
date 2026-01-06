@@ -2,15 +2,15 @@
 
 PYTHON_PATH="./venv/Scripts/python"
 PROJECT_PATH="./"
-MAX_PAGES=1
-SLEEP_INTERVAL=30
-LOGFILE="./logs/fetch.log"
+MAX_PAGES=300
+SLEEP_INTERVAL=1339200
+LOGFILE="./logs/aggregation_engine.log"
 STOP_SCHEDULER=false
 declare -A SHOPS_CATEGORIES
 
 SHOPS_CATEGORIES=( 
-    ["enter"]="monitor laptop pc"
-    ["darwin"]="monitor laptop pc"
+    ["enter"]="laptop mobilephone pc gaming"
+    ["darwin"]="monitor laptop mobilephone pc gpu ssd hdd ram mb cpu keyboard mouse mousepad externhdd powersupply fan fanbase gaming router switch"
 )
 
 export LC_ALL=C.UTF-8
@@ -18,7 +18,7 @@ export LANG=C.UTF-8
 
 function handle_interrupt() {
     echo "Received interrupt signal, stopping scheduler...">> "$LOGFILE"
-    echo "=== Aggregation run gracefully stoped at $(date) ===" >> "$LOGFILE"
+    echo "=== Aggregation run gracefully stoped at $(date "+%Y-%m-%d %H:%M:%S") ===" >> "$LOGFILE"
     STOP_SCHEDULER=true
 }
 
@@ -28,7 +28,7 @@ mkdir -p ./logs
 
 while [ "$STOP_SCHEDULER" = false ]; do
     {
-        echo "=== Aggregation run started at $(date) ==="
+        echo "=== Aggregation run started at $(date "+%Y-%m-%d %H:%M:%S") ==="
         echo ""
         
         for SHOP in "${!SHOPS_CATEGORIES[@]}"; do
@@ -46,13 +46,19 @@ while [ "$STOP_SCHEDULER" = false ]; do
                 echo ""
                 echo "---"
                 echo ""
+
+                
             done
+            # <-- small sleep to avoid hammering the site
+            SLEEP_PER_SHOP=$((RANDOM % 3 + 3))  # random 3–5 seconds
+            echo "Sleeping $SLEEP_PER_SHOP seconds to avoid 429..."
+            sleep $SLEEP_PER_SHOP
         done
 
         if [ "$STOP_SCHEDULER" = true ]; then
             break 2
         fi
-        echo "=== Aggregation run complete at $(date) ==="
+        echo "=== Aggregation run complete at $(date "+%Y-%m-%d %H:%M:%S") ==="
         echo "Sleeping $SLEEP_INTERVAL seconds..."
         echo ""
         echo "=========================================="

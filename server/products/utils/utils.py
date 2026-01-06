@@ -1,6 +1,7 @@
 # products/utils.py
+import re
 from django.core.cache import cache
-from datetime import datetime, timedelta
+from datetime import timedelta
 from rest_framework.response import Response
 from functools import wraps
 from django.utils import timezone
@@ -39,3 +40,29 @@ def require_valid_session(view_func):
         return view_func(view, request, *args, **kwargs)
 
     return wrapper
+
+
+# TODO
+def normalize_db(text: str) -> str:
+    if not text:
+        return ""
+
+    # Lowercase
+    text = text.lower()
+
+    # Replace literal backslashes
+    # text = text.replace("\\", "/")
+
+    # Collapse multiple spaces
+    text = re.sub(r"\s+", " ", text)
+
+    return text
+
+
+def normalize_translate(text: str) -> str:
+    if not text:
+        return ""
+    text = re.sub(r"\s+", " ", text.strip())
+    text = re.sub(r'"\s*([^\s])', r'" \1', text)
+    text = re.sub(r'(\d+)\s+"', r'\1"', text)
+    return text
