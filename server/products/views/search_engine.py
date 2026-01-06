@@ -1,0 +1,346 @@
+from django.shortcuts import render
+from requests import request
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from products.models import Product
+from rapidfuzz import fuzz
+from django.db.models import Q
+import traceback
+from rest_framework.throttling import ScopedRateThrottle
+from products.throttles import Layer1Throttle, Layer2PreviewThrottle, Layer2FullThrottle
+import hashlib
+import random
+from collections import deque
+from products.utils.search_engine_log import search_engine_log
+
+
+FUZZY_THRESHOLD = 85
+
+# Standard limits
+LAYER1_LIMIT = 20
+LAYER2_LIMIT = 5
+LAYER3_LIMIT = 10
+
+
+def generate_cluster_id(name, variant, brand, category):
+    """Generate a stable unique ID for a product cluster."""
+    s = f"{name}|{variant}|{brand}|{category}"
+    return hashlib.md5(s.encode("utf-8")).hexdigest()
+
+
+def balanced_offers(offers):
+    """
+    Reorders offers to avoid long streaks of the same shop.
+    - Does NOT change relevance or cluster membership.
+    - Preserves all offers.
+    - Interleaves shops as much as possible.
+
+    Example: If offers = [Enter, Enter, Darwin, Enter, Darwin]
+    The output might be: [Enter, Darwin, Enter, Darwin, Enter]
+    """
+    # Group offers per shop
+    shop_groups = {}
+    for o in offers:
+        shop_groups.setdefault(o["shop"], deque()).append(o)
+
+    mixed = []
+    while any(shop_groups.values()):
+        # pick a random shop among those with remaining offers
+        available_shops = [s for s, q in shop_groups.items() if q]
+        chosen_shop = random.choice(available_shops)
+        mixed.append(shop_groups[chosen_shop].popleft())
+
+    return mixed
+
+
+# ---------------- Layer 1: Search / Product Frames ----------------
+class SearchAPIView(APIView):
+    throttle_classes = [Layer1Throttle]
+
+    def get(self, request):
+        try:
+            raw_query = request.GET.get("q", "").strip()
+            search_engine_log(f"Received raw query: '{raw_query}'")
+            limit = min(int(request.GET.get("limit", LAYER1_LIMIT)), LAYER1_LIMIT)
+            cursor = request.GET.get("cursor")
+
+            if not raw_query:
+                request.session["aggregated_cache"] = None
+                return Response({"products": [], "next_cursor": None})
+
+            tokens = self.tokenize_query(raw_query)
+            qs = self.filter_products_by_tokens(tokens)
+
+            aggregated = self.aggregate_products(qs)
+            aggregated = self.identity_resolution(aggregated)
+            aggregated = self.score_relevance(aggregated, raw_query)
+            aggregated.sort(key=lambda x: (-x["relevance"], x["lowest_price"], x["id"]))
+
+            if cursor:
+                aggregated = self.apply_cursor(aggregated, cursor)
+
+            # Cache the session
+            request.session["aggregated_cache"] = aggregated
+
+            probabilistic_clusters = [
+                {
+                    "id": p["id"],
+                    "name": p["name"],
+                    "brand": p["brand"],
+                    "category": p["category"],
+                    "variant": p["variant"],
+                    "lowest_price": p["lowest_price"],
+                    "offers": len(p["offers"]),  # lightweight preview
+                    "relevance": p["relevance"],
+                    "image": p["image"],
+                    "t_name": p.get("t_name", {}),
+                    "t_variant": p.get("t_variant", {}),
+                }
+                for p in aggregated[:limit]
+            ]
+
+            next_cursor = self.get_next_cursor(aggregated, limit)
+            return Response(
+                {"products": probabilistic_clusters, "next_cursor": next_cursor}
+            )
+
+        except Exception as e:
+            # Log the full exception
+
+            trace = traceback.format_exc()
+            search_engine_log(f"Error in SearchAPIView: {e}\n{trace}")
+            return Response({"error": "Internal server error"}, status=500)
+
+    def tokenize_query(self, query):
+        tokens = query.split()
+        search_engine_log(f"Tokenizing query '{query}' -> {tokens}")
+        return tokens
+
+    def filter_products_by_tokens(self, tokens):
+        """
+        Filters products by searching in name and variant fields.
+        Each token is matched against words in name and variant separately.
+        """
+        qs = Product.objects.all()
+
+        for t in tokens:
+            # match token t anywhere in the name OR anywhere in variant
+            qs = qs.filter(
+                Q(name__icontains=t)
+                | Q(variant__icontains=t)
+                | Q(category__icontains=t)
+            )
+        search_engine_log(f"Filtered products by tokens {tokens}, count={qs.count()}")
+        return qs.distinct()
+
+    def aggregate_products(self, qs):
+        product_dict = {}
+
+        for p in qs:
+            cluster_key = generate_cluster_id(
+                p.name,
+                p.variant,
+                p.brand,
+                p.category,
+            )
+            product_dict.setdefault(cluster_key, []).append(p)
+            search_engine_log(
+                f"Adding product '{p.name} / {p.variant}' to cluster {cluster_key}"
+            )
+        return [
+            self.build_aggregated_product(cluster_id, offers)
+            for cluster_id, offers in product_dict.items()
+        ]
+
+    def build_aggregated_product(self, cluster_id, offers):
+        rep = offers[0]
+        return {
+            "id": cluster_id,
+            "name": rep.name,
+            "variant": rep.variant,
+            "t_name": rep.t_name or {},
+            "t_variant": rep.t_variant or {},
+            "brand": rep.brand,
+            "category": rep.category,
+            "offers": [
+                {
+                    "id": o.id,
+                    "name": o.name,
+                    "variant": o.variant,
+                    "t_name": o.t_name or {},
+                    "t_variant": o.t_variant or {},
+                    "shop": o.shop,
+                    "price": o.price,
+                    "brand": o.brand,
+                    "url": o.url,
+                    "external_id": o.external_id,
+                    "in_stock": True,
+                }
+                for o in offers
+            ],
+            "lowest_price": min(o.price for o in offers),
+            "image": rep.image or "",
+        }
+
+    def identity_resolution(self, aggregated):
+        merged = []
+
+        while aggregated:
+            base = aggregated.pop(0)
+            similar = [base]
+
+            # Precompute base info
+            base_full_name = f"{base['name']} {base.get('variant','')}".lower()
+            base_urls = {o["url"] for o in base["offers"] if o.get("url")}
+            base_ids = {
+                o["external_id"] for o in base["offers"] if o.get("external_id")
+            }
+
+            for other in aggregated[:]:
+                other_full_name = f"{other['name']} {other.get('variant','')}".lower()
+                other_urls = {o["url"] for o in other["offers"] if o.get("url")}
+                other_ids = {
+                    o["external_id"] for o in other["offers"] if o.get("external_id")
+                }
+
+                # Strict fuzzy match on full name + variant
+                full_name_score = fuzz.ratio(base_full_name, other_full_name)
+
+                # Merge if URL overlap, external_id overlap, or strict fuzzy match
+                if (
+                    base_urls.intersection(other_urls)
+                    or base_ids.intersection(other_ids)
+                    or full_name_score >= FUZZY_THRESHOLD
+                ):
+                    similar.append(other)
+                    aggregated.remove(other)
+
+            # Merge all offers from similar products
+            all_offers = [o for s in similar for o in s["offers"]]
+            base["offers"] = balanced_offers(all_offers)
+            base["lowest_price"] = min(o["price"] for o in all_offers)
+
+            merged.append(base)
+            search_engine_log(
+                f"Merged cluster '{base['name']}' with {len(similar)} similar products, offers={len(all_offers)}"
+            )
+
+        search_engine_log(f"Identity resolution complete, merged count={len(merged)}")
+        return merged
+
+    def score_relevance(self, aggregated, query: str):
+        query = query.lower()
+        query_tokens = query.split()
+        for item in aggregated:
+            text = f"{item['name']} {item.get('variant', '')}".lower()
+            fuzzy_score = fuzz.token_set_ratio(query, text)
+            token_hits = sum(1 for t in query_tokens if t in text)
+            token_coverage = token_hits / max(len(query_tokens), 1)
+            brand_score = 1.0 if item.get("brand", "").lower() in query else 0.0
+            relevance = (
+                0.6 * (fuzzy_score / 100) + 0.3 * token_coverage + 0.1 * brand_score
+            )
+            item["relevance"] = round(relevance, 4)
+
+            search_engine_log(
+                f"Product '{item['name']}' -> fuzzy_score={fuzzy_score}, "
+                f"token_coverage={token_coverage:.2f}, brand_score={brand_score}, "
+                f"final_relevance={item['relevance']}"
+            )
+        return aggregated
+
+    def apply_cursor(self, aggregated, cursor):
+        try:
+            last_id, last_price = cursor.split("_")
+            last_price = int(last_price)
+            return [
+                p
+                for p in aggregated
+                if p["lowest_price"] > last_price
+                or (p["lowest_price"] == last_price and p["id"] > last_id)
+            ]
+        except ValueError:
+            return aggregated
+
+    def get_next_cursor(self, aggregated, limit):
+        if len(aggregated) > limit:
+            last_item = aggregated[limit - 1]
+            return f"{last_item['id']}_{last_item['lowest_price']}"
+        return None
+
+
+# ---------------- Layer 2: Offers (Preview / Full) ----------------
+class ProductOffersAPIView(SearchAPIView):
+    """
+    Inherits from SearchAPIView.
+    Returns offers for a product.
+    Only works if Layer1 has been called and aggregated_cache exists.
+    """
+
+    def get(self, request, product_id):
+        full = request.GET.get("full", "false").lower() == "true"
+
+        if full:
+            self.throttle_classes = [Layer2FullThrottle]
+        else:
+            self.throttle_classes = [Layer2PreviewThrottle]
+
+        limit = int(
+            request.GET.get("limit", LAYER2_LIMIT if not full else LAYER3_LIMIT)
+        )
+
+        cursor = request.GET.get("cursor")
+
+        # access Layer1 aggregated cache
+        aggregated = request.session.get("aggregated_cache")
+
+        if not aggregated or not request.session.session_key:
+            return Response({"error": "invalid session"}, status=403)
+
+        product = next((p for p in aggregated if p["id"] == product_id), None)
+        if not product:
+            return Response({"offers": [], "has_more": False, "next_cursor": None})
+
+        offers = product["offers"]
+        offers.sort(key=lambda o: o["price"])
+
+        if cursor:
+            offers = self.apply_cursor(offers, cursor)
+
+        result = (
+            offers[:limit]
+            if full
+            else [
+                {"shop": o["shop"], "name": o["name"], "price": o["price"]}
+                for o in offers[:limit]
+            ]
+        )
+        has_more = len(offers) > limit
+        next_cursor = self.get_next_cursor(offers, limit)
+
+        search_engine_log(
+            f"Product '{product_id}' offers count={len(product['offers'])}, "
+            f"limit={limit}, full={full}, cursor={cursor}"
+        )
+        return Response(
+            {"offers": result, "has_more": has_more, "next_cursor": next_cursor}
+        )
+
+    def apply_cursor(self, offers, cursor):
+        try:
+            last_price, last_shop = cursor.split("_")
+            last_price = int(last_price)
+            return [
+                o
+                for o in offers
+                if o["price"] > last_price
+                or (o["price"] == last_price and o["shop"] > last_shop)
+            ]
+        except ValueError:
+            return offers
+
+    def get_next_cursor(self, offers, limit):
+        if len(offers) > limit:
+            last_item = offers[limit - 1]
+            return f"{last_item['price']}_{last_item['shop']}"
+        return None
