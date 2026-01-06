@@ -4,6 +4,8 @@ export interface AggregatedProduct {
   brand: string;
   category: string;
   variant: string;
+  t_name: object;
+  t_variant: object;
   offers: {
     shop: string;
     price: number;
@@ -12,7 +14,9 @@ export interface AggregatedProduct {
     brand: any;
     variant:any;
     external_id: string;
-    in_stock?: boolean;       //  for later availability tracking
+    in_stock?: boolean;  
+    t_name: object;
+    t_variant: object;     //  for later availability tracking
   }[];
   lowest_price?: number;
   maximum_price?: number;

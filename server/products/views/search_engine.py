@@ -1,9 +1,10 @@
+from functools import cached_property
 from django.shortcuts import render
 from requests import request
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from products.models import Product
-from rapidfuzz import fuzz
+from rapidfuzz import process, fuzz
 from django.db.models import Q
 import traceback
 from rest_framework.throttling import ScopedRateThrottle
@@ -12,11 +13,12 @@ import hashlib
 import random
 from collections import deque
 from products.utils.search_engine_log import search_engine_log
+from products.utils.autocomplete_log import autocomplete_log
 
 
-FUZZY_THRESHOLD = 85
-
-# Standard limits
+FUZZY_THRESHOLD_CLUSTER = 85
+FUZZY_THRESHOLD_AUTOCOMPLETE = 60
+AUTOCOMPLETE_LIMIT = 10
 LAYER1_LIMIT = 20
 LAYER2_LIMIT = 5
 LAYER3_LIMIT = 10
@@ -210,7 +212,7 @@ class SearchAPIView(APIView):
                 if (
                     base_urls.intersection(other_urls)
                     or base_ids.intersection(other_ids)
-                    or full_name_score >= FUZZY_THRESHOLD
+                    or full_name_score >= FUZZY_THRESHOLD_CLUSTER
                 ):
                     similar.append(other)
                     aggregated.remove(other)
@@ -344,3 +346,50 @@ class ProductOffersAPIView(SearchAPIView):
             last_item = offers[limit - 1]
             return f"{last_item['price']}_{last_item['shop']}"
         return None
+
+
+class AutocompleteAPIView(APIView):
+    """
+    Returns top autocomplete suggestions for the search bar.
+    Uses RapidFuzz to match user input against canonical cluster names.
+    """
+
+    @cached_property
+    def cluster_names_cache(self):
+        """
+        Cache cluster canonical names (unique merged products) for fast lookup.
+        Can refresh periodically or on DB update.
+        """
+        products = Product.objects.all()
+        # Use the cluster key to get unique canonical names
+        seen = set()
+        cluster_names = []
+        for p in products:
+            cluster_id = generate_cluster_id(p.name, p.variant, p.brand, p.category)
+            if cluster_id not in seen:
+                seen.add(cluster_id)
+                cluster_names.append(f"{p.name} {p.variant}".strip())
+        return cluster_names
+
+    def get(self, request):
+        query = request.GET.get("q", "").strip()
+        autocomplete_log(f"Received query: '{query}'")
+        if not query:
+            autocomplete_log("Empty query, returning []")
+            return Response({"suggestions": []})
+
+        # RapidFuzz matching
+        matches = process.extract(
+            query,
+            self.cluster_names_cache,
+            scorer=fuzz.WRatio,
+            limit=AUTOCOMPLETE_LIMIT,
+        )
+        autocomplete_log(f"Raw matches: {matches}")
+        # Filter by threshold
+        suggestions = [
+            name for name, score, _ in matches if score >= FUZZY_THRESHOLD_AUTOCOMPLETE
+        ]
+        autocomplete_log(f"Suggestions returned: {suggestions}")
+
+        return Response({"suggestions": suggestions, "raw_matches": matches})
