@@ -11,11 +11,7 @@ const About = lazy(() => import("../views/About"));
 const Source = lazy(() => import("../views/Source"));
 const TermsOfUse = lazy(() => import("../views/TermsOfUse"));
 
-interface HeroSearchProps {
-  query: string;
-}
-
-const AppRoutes: React.FC<HeroSearchProps> = ({ query }) => {
+const AppRoutes: React.FC<any> = () => {
   return (
     <Suspense
       fallback={
@@ -32,7 +28,7 @@ const AppRoutes: React.FC<HeroSearchProps> = ({ query }) => {
       }
     >
       <Routes>
-        <Route path="/*" element={<Home query={query} />} />
+        <Route path="/*" element={<Home />} />
         <Route path="/disclaimer" element={<Disclaimer />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/contact" element={<Contact />} />

@@ -10,19 +10,16 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import { useTranslation } from "react-i18next";
 
-interface HeroSearchProps {
-  query: string;
-  setQuery: React.Dispatch<React.SetStateAction<string>>;
-}
+import { useStore } from "../store/store";
 
-const HeroSearch: React.FC<HeroSearchProps> = ({ query, setQuery }) => {
+interface HeroSearchProps {}
+
+const HeroSearch: React.FC<HeroSearchProps> = () => {
   const theme = useTheme();
   const { t } = useTranslation();
-
-  const handleSearch = () => {
-    console.log("Searching for:", query);
-    // TODO: integrate live search / navigate to results page
-  };
+  const query = useStore((state) => state.query);
+  const setQuery = useStore((state) => state.setQuery);
+  const searchProducts = useStore((state) => state.searchProducts);
 
   return (
     <Box
@@ -47,11 +44,11 @@ const HeroSearch: React.FC<HeroSearchProps> = ({ query, setQuery }) => {
           placeholder={`${t("Search_product")}...`}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          onKeyDown={(e) => e.key === "Enter" && searchProducts()}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
-                <IconButton onClick={handleSearch}>
+                <IconButton onClick={() => searchProducts()}>
                   <SearchIcon />
                 </IconButton>
               </InputAdornment>

@@ -2,14 +2,12 @@ from pathlib import Path
 import environ
 import os
 
-
 """ 
 set DJANGO_ENV=development   # Windows
 # or
 export DJANGO_ENV=development  # Linux/Mac
 python manage.py runserver
-
- """
+"""
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -39,6 +37,7 @@ ALLOWED_HOSTS = env.list(
 
 # Applications
 INSTALLED_APPS = [
+    "corsheaders",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -49,6 +48,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",  # must be first for CORS
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "products.middleware.IPBlockMiddleware",
@@ -69,7 +69,6 @@ REST_FRAMEWORK = {
         "layer2_full": "20/min",  # Layer2 full=true
     },
 }
-
 
 ROOT_URLCONF = "aggregator.urls"
 
@@ -111,9 +110,43 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
-
-# Optional: session expires when browser closes (or set your own)
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-SESSION_COOKIE_AGE = 3600  # 1 hour, in seconds
+SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_HTTPONLY = True
+
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
+CORS_EXPOSE_HEADERS = [
+    "content-type",
+    "x-csrftoken",
+]

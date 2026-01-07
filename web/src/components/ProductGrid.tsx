@@ -9,11 +9,14 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import type { Product } from "../types/Product";
+
 import { useTranslation } from "react-i18next";
+import type { AggregatedProduct } from "../types/AggregatedProduct";
+import { useStore } from "../store/store";
 
 interface Props {
-  products: Product[];
+  /* aggregated_products: AggregatedProduct[];
+  onOpenProduct: (productId: string) => void; */
 }
 
 const bull = (
@@ -30,10 +33,12 @@ const bull = (
   </Box>
 );
 
-const ProductGrid: React.FC<Props> = ({ products }) => {
+const ProductGrid: React.FC<Props> = ({}) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const isVerySmall = useMediaQuery("(max-width:320px)");
+  const aggregated_products = useStore((state) => state.aggregatedProducts);
+  const onOpenProduct = useStore((state) => state.openProduct);
 
   return (
     <Box
@@ -44,7 +49,7 @@ const ProductGrid: React.FC<Props> = ({ products }) => {
         gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
       }}
     >
-      {products.map((product) => (
+      {aggregated_products.map((product: AggregatedProduct) => (
         <Card
           key={product.id}
           sx={{
@@ -70,7 +75,7 @@ const ProductGrid: React.FC<Props> = ({ products }) => {
         >
           <CardContent>
             <Typography gutterBottom sx={{ color: "text.secondary" }}>
-              {product.shop}
+              {product.offers.toLocaleString()}
             </Typography>
 
             <Typography
@@ -91,17 +96,12 @@ const ProductGrid: React.FC<Props> = ({ products }) => {
             </Typography>
 
             <Typography variant="body2" sx={{ color: "text.primary" }}>
-              {product.price.toLocaleString()} MDL
+              {product.lowest_price.toLocaleString()} MDL
             </Typography>
           </CardContent>
 
           <CardActions>
-            <Button
-              size="small"
-              href={product.url}
-              target="_blank"
-              rel="noopener"
-            >
+            <Button size="small" onClick={() => onOpenProduct(product.id)}>
               {t("See_product")}
             </Button>
           </CardActions>

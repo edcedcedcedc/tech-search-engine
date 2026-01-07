@@ -6,14 +6,12 @@ import Footer from "./components/Footer";
 import AppRoutes from "./router/Router";
 import { useStore } from "./store/store";
 import HeroSearch from "./components/HeroSearch";
-import { useState } from "react";
 import { Cookie } from "./components/Cookie";
 import { Meta } from "./components/Meta";
 
 import ResetCookieButton from "./tests/components/ResetCookieButton";
 
 function App() {
-  const [query, setQuery] = useState("");
   const theme = useTheme();
 
   return (
@@ -33,7 +31,7 @@ function App() {
           {/* HEADER + HERO */}
           <Box sx={{ flexShrink: 0 }}>
             <Header />
-            <HeroSearch query={query} setQuery={setQuery} />
+            <HeroSearch />
           </Box>
 
           {/* MAIN CONTENT */}
@@ -63,7 +61,7 @@ function App() {
             }}
           >
             <Container sx={{ maxWidth: "800px", mx: "auto" }}>
-              <AppRoutes query={query} />
+              <AppRoutes />
             </Container>
           </Box>
 
