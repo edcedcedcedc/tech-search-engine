@@ -15,7 +15,9 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close"; // Import close icon
 import OpenInNewIcon from "@mui/icons-material/OpenInNew"; // Optional: for link icon
+import InventoryIcon from "@mui/icons-material/Inventory";
 import { useStore } from "../store/store";
+import AddIcCallIcon from "@mui/icons-material/AddIcCall";
 
 export default function ProductOffersTable() {
   const selectedProductId = useStore((s) => s.selectedProductId);
@@ -29,6 +31,8 @@ export default function ProductOffersTable() {
   // Simplify breakpoints
   const isSmallScreen = useMediaQuery("(max-width:768px)");
   const isVerySmallScreen = useMediaQuery("(max-width:425px)");
+  const isTinyScreen = useMediaQuery("(max-width:320px)");
+  const isLargeScreen = useMediaQuery("(min-width:1024px)"); // NEW: For 1024px and above
 
   const open = Boolean(selectedProductId);
 
@@ -40,12 +44,24 @@ export default function ProductOffersTable() {
       : text;
   };
 
+  // Define columns based on screen size
+  const getColumns = () => {
+    const baseColumns = ["Shop", "Price", "Name", "Variant", ""];
+    if (isTinyScreen) {
+      return baseColumns; // 320px and below - no "In Stock" column
+    }
+    // After 320px - add "In Stock" column before the link column
+    return ["Shop", "Price", "In Stock", "Name", "Variant", ""];
+  };
+
+  const columns = getColumns();
+
   return (
     <Drawer anchor="right" open={open} onClose={close}>
       <Box
         sx={{
           width: isSmallScreen ? "100vw" : 800,
-          p: isVerySmallScreen ? 0.5 : 2,
+          p: isLargeScreen ? 0.5 : isSmallScreen ? 0.5 : 0.25, // CHANGED: 8px (0.5) for 1024px and above
           maxHeight: "100vh",
           overflow: "hidden",
           display: "flex",
@@ -102,31 +118,41 @@ export default function ProductOffersTable() {
               overflowY: "auto",
               flexGrow: 1,
               "& .MuiTable-root": {
-                minWidth: isVerySmallScreen ? "320px" : "100%",
+                minWidth: isVerySmallScreen
+                  ? isTinyScreen
+                    ? "280px"
+                    : "340px"
+                  : "100%",
               },
             }}
           >
             <Table size={isVerySmallScreen ? "small" : "medium"}>
               <TableHead>
                 <TableRow>
-                  {["Shop", "Price", "Name", "Variant", ""].map((col) => (
+                  {columns.map((col) => (
                     <TableCell
                       key={col}
-                      align={col === "Price" ? "right" : "left"}
+                      align={col === "Price" ? "center" : "left"}
                       sx={{
                         fontSize: isVerySmallScreen ? "0.7rem" : "0.75rem",
                         fontWeight: 600,
                         whiteSpace: "nowrap",
-                        px: isVerySmallScreen ? 0.5 : 1,
+                        px: isVerySmallScreen ? 0.3 : 1,
                         py: isVerySmallScreen ? 0.5 : 1,
+                        display:
+                          col === "In Stock" && isTinyScreen
+                            ? "none"
+                            : "table-cell",
                       }}
                     >
                       {col === "Price" ? (
                         <div style={{ lineHeight: 1.1 }}>
-                          <div>Price</div>
-                          <div style={{ fontSize: "0.65rem", opacity: 0.8 }}>
-                            (MDL)
-                          </div>
+                          <Box sx={{ display: "flex", alignItems: "center" }}>
+                            Price{" "}
+                            <Box style={{ fontSize: "0.65rem", opacity: 0.8 }}>
+                              (MDL)
+                            </Box>
+                          </Box>
                         </div>
                       ) : (
                         col
@@ -143,34 +169,59 @@ export default function ProductOffersTable() {
                       sx={{
                         fontSize: isVerySmallScreen ? "0.7rem" : "0.75rem",
                         whiteSpace: "nowrap",
-                        px: isVerySmallScreen ? 0.5 : 1,
+                        px: isVerySmallScreen ? 0.3 : 1,
                         py: isVerySmallScreen ? 0.5 : 1,
                       }}
                     >
                       {truncateText(offer.shop, 8)}
                     </TableCell>
 
-                    {/* Price */}
+                    {/* Price - CHANGED: align="left" instead of "right" */}
                     <TableCell
-                      align="right"
+                      align={isVerySmallScreen ? "center" : "left"}
                       sx={{
                         fontSize: isVerySmallScreen ? "0.7rem" : "0.75rem",
                         fontWeight: 600,
                         whiteSpace: "nowrap",
-                        px: isVerySmallScreen ? 0.5 : 1,
+                        px: isVerySmallScreen ? 0.3 : 1,
                         py: isVerySmallScreen ? 0.5 : 1,
                       }}
                     >
                       {offer.price.toLocaleString()}
                     </TableCell>
 
+                    {/* In Stock column - hidden on 320px and below */}
+                    {!isTinyScreen && (
+                      <TableCell
+                        align="left"
+                        sx={{
+                          fontSize: isVerySmallScreen ? "0.7rem" : "0.75rem",
+                          whiteSpace: "nowrap",
+                          px: isVerySmallScreen ? 0.3 : 1,
+                          py: isVerySmallScreen ? 0.5 : 1,
+                        }}
+                      >
+                        <InventoryIcon
+                          sx={{
+                            fontSize: isVerySmallScreen ? "0.6rem" : "0.7rem",
+                            height: "24px",
+                            color: offer.in_stock
+                              ? theme.palette.success.main // Green for in stock
+                              : theme.palette.error.main, // Red for out of stock
+                            minWidth: "40px",
+                          }}
+                        />
+                        <AddIcCallIcon />
+                      </TableCell>
+                    )}
+
                     {/* Name */}
                     <TableCell
                       sx={{
                         fontSize: isVerySmallScreen ? "0.7rem" : "0.75rem",
-                        px: isVerySmallScreen ? 0.5 : 1,
+                        px: isVerySmallScreen ? 0.3 : 1,
                         py: isVerySmallScreen ? 0.5 : 1,
-                        maxWidth: isVerySmallScreen ? "80px" : "150px",
+                        maxWidth: isVerySmallScreen ? "70px" : "120px",
                         whiteSpace: "normal",
                         wordWrap: "break-word",
                         lineHeight: 1.2,
@@ -183,9 +234,9 @@ export default function ProductOffersTable() {
                     <TableCell
                       sx={{
                         fontSize: isVerySmallScreen ? "0.7rem" : "0.75rem",
-                        px: isVerySmallScreen ? 0.5 : 1,
+                        px: isVerySmallScreen ? 0.3 : 1,
                         py: isVerySmallScreen ? 0.5 : 1,
-                        maxWidth: isVerySmallScreen ? "60px" : "100px",
+                        maxWidth: isVerySmallScreen ? "50px" : "80px",
                         whiteSpace: "normal",
                         wordWrap: "break-word",
                         lineHeight: 1.2,
@@ -198,7 +249,7 @@ export default function ProductOffersTable() {
                     <TableCell
                       align="center"
                       sx={{
-                        px: isVerySmallScreen ? 0.5 : 1,
+                        px: isVerySmallScreen ? 0.3 : 1,
                         py: isVerySmallScreen ? 0.5 : 1,
                       }}
                     >
@@ -215,7 +266,7 @@ export default function ProductOffersTable() {
                         }
                         sx={{
                           minWidth: "auto",
-                          px: isVerySmallScreen ? 1 : 2,
+                          px: isVerySmallScreen ? 0.5 : 1,
                         }}
                       >
                         {isVerySmallScreen ? (
