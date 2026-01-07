@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
-import IconDarkV1 from "../assets/iconV1dark.png";
+import GrapeIcon from "../assets/icon.png";
 
 interface IconProps {
   size?: number;
@@ -38,12 +38,11 @@ const Icon: React.FC<IconProps> = ({
         width: size,
         height: size,
         backgroundColor: resolvedColor,
-        mask: `url(${IconDarkV1}) no-repeat center / contain`,
-        WebkitMask: `url(${IconDarkV1}) no-repeat center / contain`,
+        mask: `url(${GrapeIcon}) no-repeat center / contain`,
+        WebkitMask: `url(${GrapeIcon}) no-repeat center / contain`,
         display: "inline-block",
 
         ...(variant === "logo" && {
-          cursor: "pointer",
           transition: "transform 0.25s ease, filter 0.25s ease 0.05s",
           "&:hover": {
             transform: " scale(1.03)",

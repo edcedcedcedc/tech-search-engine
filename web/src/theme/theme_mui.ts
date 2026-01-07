@@ -64,7 +64,7 @@ const getTheme = (mode: "light" | "dark") => {
     },
 
     typography: {
-      fontFamily: "Inter, Arial, sans-serif",
+      fontFamily: "Roboto, Arial, sans-serif",
       h1: { fontSize: "2rem", "@media (min-width:600px)": { fontSize: "2.5rem" }, "@media (min-width:900px)": { fontSize: "3rem" }, fontWeight: 700 },
       h2: { fontSize: "1.75rem", "@media (min-width:600px)": { fontSize: "2rem" }, "@media (min-width:900px)": { fontSize: "2.5rem" }, fontWeight: 700 },
       h3: { fontSize: "1.5rem", "@media (min-width:600px)": { fontSize: "1.75rem" }, "@media (min-width:900px)": { fontSize: "2rem" }, fontWeight: 700 },
@@ -77,7 +77,7 @@ const getTheme = (mode: "light" | "dark") => {
     },
 
     breakpoints: {
-      values: { xs: 0, sm: 600, md: 960, lg: 1200, xl: 1536 } // ✅ md = 960 fixes middle shrink
+      values: { xs: 0, sm: 600, md: 960, lg: 1200, xl: 1536 } 
     },
 
     spacing: 8,
@@ -103,7 +103,7 @@ const getTheme = (mode: "light" | "dark") => {
       MuiPaper: { defaultProps: { elevation: 1 } },
 
       MuiContainer: {
-        defaultProps: { maxWidth: "lg", disableGutters: false }, // ✅ avoid shrinking at md
+        defaultProps: { maxWidth: "md", disableGutters: false },
         styleOverrides: { root: { paddingLeft: 16, paddingRight: 16 } },
       },
 

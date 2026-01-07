@@ -73,8 +73,13 @@ const Footer: React.FC = () => {
           color: theme.palette.text.primary,
         }}
       >
-        <Icon size={20} sx={{ position: "relative", top: -1 }} />©{" "}
-        {new Date().getFullYear()} Strugure™. {t("All_rights_reserved")}.
+        <Icon
+          size={20}
+          color="primary"
+          variant="logo"
+          sx={{ position: "relative", top: -1 }}
+        />
+        © {new Date().getFullYear()} Strugure™. {t("All_rights_reserved")}.
       </Box>
     </Box>
   );
