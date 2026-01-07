@@ -8,11 +8,13 @@ import {
   Button,
   useMediaQuery,
   useTheme,
+  IconButton,
 } from "@mui/material";
 
 import { useTranslation } from "react-i18next";
 import type { AggregatedProduct } from "../types/AggregatedProduct";
 import { useStore } from "../store/store";
+import ListAltIcon from "@mui/icons-material/ListAlt";
 
 interface Props {
   /* aggregated_products: AggregatedProduct[];
@@ -53,6 +55,9 @@ const ProductGrid: React.FC<Props> = ({}) => {
         <Card
           key={product.id}
           sx={{
+            display: "flex",
+            flexDirection: "column",
+            height: "100%", // Make card take full height
             ...(isVerySmall && {
               "& .MuiCardContent-root": {
                 padding: "8px 10px",
@@ -73,11 +78,12 @@ const ProductGrid: React.FC<Props> = ({}) => {
             }),
           }}
         >
-          <CardContent>
+          <CardContent sx={{ flexGrow: 1 }}>
+            {" "}
+            {/* This pushes the button down */}
             <Typography gutterBottom sx={{ color: "text.secondary" }}>
               {product.offers.toLocaleString()}
             </Typography>
-
             <Typography
               variant="h5"
               component="div"
@@ -90,20 +96,20 @@ const ProductGrid: React.FC<Props> = ({}) => {
                 </React.Fragment>
               ))}
             </Typography>
-
             <Typography sx={{ color: "text.secondary" }}>
               {product.brand} {product.variant ? `— ${product.variant}` : ""}
             </Typography>
-
             <Typography variant="body2" sx={{ color: "text.primary" }}>
               {product.lowest_price.toLocaleString()} MDL
             </Typography>
           </CardContent>
 
-          <CardActions>
-            <Button size="small" onClick={() => onOpenProduct(product.id)}>
-              {t("See_product")}
-            </Button>
+          <CardActions sx={{ mt: "auto" }}>
+            {" "}
+            {/* This ensures it sticks to bottom */}
+            <IconButton onClick={() => onOpenProduct(product.id)}>
+              <ListAltIcon />
+            </IconButton>
           </CardActions>
         </Card>
       ))}

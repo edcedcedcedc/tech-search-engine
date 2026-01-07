@@ -1,19 +1,19 @@
-import { Box, Button, Container, useTheme } from "@mui/material";
+import { Box, Button, Container, Typography, useTheme } from "@mui/material";
 import { BrowserRouter } from "react-router-dom";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import AppRoutes from "./router/Router";
 import { useStore } from "./store/store";
-import HeroSearch from "./components/HeroSearch";
 import { Cookie } from "./components/Cookie";
 import { Meta } from "./components/Meta";
 
 import ResetCookieButton from "./tests/components/ResetCookieButton";
-
+import { SearchAutocomplete } from "./components/SearchAutocomplete";
+import { useTranslation } from "react-i18next";
 function App() {
   const theme = useTheme();
-
+  const { t } = useTranslation();
   return (
     <>
       <Meta />
@@ -31,7 +31,33 @@ function App() {
           {/* HEADER + HERO */}
           <Box sx={{ flexShrink: 0 }}>
             <Header />
-            <HeroSearch />
+            <Box
+              sx={{
+                py: 4,
+                textAlign: "center",
+                backgroundColor: theme.palette.background.default,
+                px: { xs: 2, sm: 3, md: 4 },
+              }}
+            >
+              <Typography variant="h3" component="h1" gutterBottom>
+                {t("Compare_prices_in_Moldova")}
+              </Typography>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                {t("Find_the_best_price_for_your_favorite_products")}
+              </Typography>
+
+              <Box
+                sx={{
+                  mt: 4,
+                  maxWidth: 600,
+                  mx: "auto",
+                  py: 1.2,
+                  fontSize: "1.05rem",
+                }}
+              >
+                <SearchAutocomplete />
+              </Box>
+            </Box>
           </Box>
 
           {/* MAIN CONTENT */}

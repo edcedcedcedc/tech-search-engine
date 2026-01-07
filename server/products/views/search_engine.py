@@ -8,7 +8,12 @@ from rapidfuzz import process, fuzz
 from django.db.models import Q
 import traceback
 from rest_framework.throttling import ScopedRateThrottle
-from products.throttles import Layer1Throttle, Layer2PreviewThrottle, Layer2FullThrottle
+from products.throttles import (
+    AutocompleteThrottle,
+    Layer1Throttle,
+    Layer2PreviewThrottle,
+    Layer2FullThrottle,
+)
 import hashlib
 import random
 from collections import deque
@@ -354,12 +359,15 @@ class AutocompleteAPIView(APIView):
     Uses RapidFuzz to match user input against canonical cluster names.
     """
 
+    throttle_classes = [AutocompleteThrottle]
+
     @cached_property
     def cluster_names_cache(self):
         """
         Cache cluster canonical names (unique merged products) for fast lookup.
         Can refresh periodically or on DB update.
         """
+
         products = Product.objects.all()
         # Use the cluster key to get unique canonical names
         seen = set()

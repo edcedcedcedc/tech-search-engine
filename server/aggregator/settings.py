@@ -67,6 +67,7 @@ REST_FRAMEWORK = {
         "layer1": "20/min",  # Layer1 clusters
         "layer2_preview": "20/min",  # Layer2 full=false
         "layer2_full": "20/min",  # Layer2 full=true
+        "autocomplete": "60/min",
     },
 }
 

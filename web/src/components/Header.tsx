@@ -15,7 +15,6 @@ import {
   ListItemText,
   useTheme,
   useMediaQuery,
-  Divider,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import LanguageIcon from "@mui/icons-material/Language";
