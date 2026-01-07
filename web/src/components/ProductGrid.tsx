@@ -8,12 +8,17 @@ import {
   Button,
   useMediaQuery,
   useTheme,
+  IconButton,
 } from "@mui/material";
-import type { Product } from "../types/Product";
+
 import { useTranslation } from "react-i18next";
+import type { AggregatedProduct } from "../types/AggregatedProduct";
+import { useStore } from "../store/store";
+import ListAltIcon from "@mui/icons-material/ListAlt";
 
 interface Props {
-  products: Product[];
+  /* aggregated_products: AggregatedProduct[];
+  onOpenProduct: (productId: string) => void; */
 }
 
 const bull = (
@@ -30,10 +35,12 @@ const bull = (
   </Box>
 );
 
-const ProductGrid: React.FC<Props> = ({ products }) => {
+const ProductGrid: React.FC<Props> = ({}) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const isVerySmall = useMediaQuery("(max-width:320px)");
+  const aggregated_products = useStore((state) => state.aggregatedProducts);
+  const onOpenProduct = useStore((state) => state.openProduct);
 
   return (
     <Box
@@ -44,10 +51,13 @@ const ProductGrid: React.FC<Props> = ({ products }) => {
         gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
       }}
     >
-      {products.map((product) => (
+      {aggregated_products.map((product: AggregatedProduct) => (
         <Card
           key={product.id}
           sx={{
+            display: "flex",
+            flexDirection: "column",
+            height: "100%", // Make card take full height
             ...(isVerySmall && {
               "& .MuiCardContent-root": {
                 padding: "8px 10px",
@@ -68,11 +78,12 @@ const ProductGrid: React.FC<Props> = ({ products }) => {
             }),
           }}
         >
-          <CardContent>
+          <CardContent sx={{ flexGrow: 1 }}>
+            {" "}
+            {/* This pushes the button down */}
             <Typography gutterBottom sx={{ color: "text.secondary" }}>
-              {product.shop}
+              {product.offers.toLocaleString()}
             </Typography>
-
             <Typography
               variant="h5"
               component="div"
@@ -85,25 +96,20 @@ const ProductGrid: React.FC<Props> = ({ products }) => {
                 </React.Fragment>
               ))}
             </Typography>
-
             <Typography sx={{ color: "text.secondary" }}>
               {product.brand} {product.variant ? `— ${product.variant}` : ""}
             </Typography>
-
             <Typography variant="body2" sx={{ color: "text.primary" }}>
-              {product.price.toLocaleString()} MDL
+              {product.lowest_price.toLocaleString()} MDL
             </Typography>
           </CardContent>
 
-          <CardActions>
-            <Button
-              size="small"
-              href={product.url}
-              target="_blank"
-              rel="noopener"
-            >
-              {t("See_product")}
-            </Button>
+          <CardActions sx={{ mt: "auto" }}>
+            {" "}
+            {/* This ensures it sticks to bottom */}
+            <IconButton onClick={() => onOpenProduct(product.id)}>
+              <ListAltIcon />
+            </IconButton>
           </CardActions>
         </Card>
       ))}
