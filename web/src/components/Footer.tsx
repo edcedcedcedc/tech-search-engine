@@ -24,7 +24,7 @@ const Footer: React.FC = () => {
     <Box
       component="footer"
       sx={{
-        py: 2,
+        py: 1,
         px: 2,
         backgroundColor: theme.palette.background.default,
         textAlign: "center",

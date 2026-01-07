@@ -64,7 +64,7 @@ const getTheme = (mode: "light" | "dark") => {
     },
 
     typography: {
-      fontFamily: "Roboto, Arial, sans-serif",
+      fontFamily: `"InterVariable", "Inter", Arial, sans-serif`,
       h1: { fontSize: "2rem", "@media (min-width:600px)": { fontSize: "2.5rem" }, "@media (min-width:900px)": { fontSize: "3rem" }, fontWeight: 700 },
       h2: { fontSize: "1.75rem", "@media (min-width:600px)": { fontSize: "2rem" }, "@media (min-width:900px)": { fontSize: "2.5rem" }, fontWeight: 700 },
       h3: { fontSize: "1.5rem", "@media (min-width:600px)": { fontSize: "1.75rem" }, "@media (min-width:900px)": { fontSize: "2rem" }, fontWeight: 700 },
@@ -77,7 +77,7 @@ const getTheme = (mode: "light" | "dark") => {
     },
 
     breakpoints: {
-      values: { xs: 0, sm: 600, md: 960, lg: 1200, xl: 1536 } 
+      values: { xs: 0, sm: 600, md: 960, lg: 1200, xl: 1536 }
     },
 
     spacing: 8,
@@ -86,6 +86,17 @@ const getTheme = (mode: "light" | "dark") => {
     components: {
       MuiCssBaseline: {
         styleOverrides: {
+          '@global': {
+            ':root': {
+              fontFamily: `"InterVariable", "Inter", sans-serif`,
+              fontFeatureSettings: `'liga' 1, 'calt' 1`,
+            },
+            '@supports (font-variation-settings: normal)': {
+              ':root': {
+                fontFamily: `"InterVariable", sans-serif`,
+              },
+            },
+          },
           body: {
             WebkitTapHighlightColor: "transparent",
             overscrollBehaviorY: "contain",
