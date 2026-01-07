@@ -58,7 +58,10 @@ const getTheme = (mode: "light" | "dark") => {
         disabled: mode === "dark" ? "#6e7681" : "rgba(0,0,0,0.38)",
       },
 
-      divider: mode === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.11)",
+      divider: mode === "dark"
+      ? "rgba(255, 255, 255, 0.02)" // soft white on dark background
+      : "rgba(0, 0, 0, 0.11)",      // subtle black on light background
+
       contrastThreshold: 4.5,
       tonalOffset: 0.2,
     },
@@ -77,7 +80,7 @@ const getTheme = (mode: "light" | "dark") => {
     },
 
     breakpoints: {
-      values: { xs: 0, sm: 600, md: 960, lg: 1200, xl: 1536 } // ✅ md = 960 fixes middle shrink
+      values: { xs: 0, sm: 600, md: 768, lg: 900, xl: 1200 }
     },
 
     spacing: 8,
@@ -103,7 +106,7 @@ const getTheme = (mode: "light" | "dark") => {
       MuiPaper: { defaultProps: { elevation: 1 } },
 
       MuiContainer: {
-        defaultProps: { maxWidth: "lg", disableGutters: false }, // ✅ avoid shrinking at md
+        defaultProps: { maxWidth: "md", disableGutters: false },
         styleOverrides: { root: { paddingLeft: 16, paddingRight: 16 } },
       },
 
