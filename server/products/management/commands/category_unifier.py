@@ -1,6 +1,17 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from products.models import CategoryMapping, Product
+from server.products.utils.category_unifier_log import category_log
+
+
+# Update Darwin in default DB
+# python manage.py update_categories_per_shop --shop Darwin
+
+# Update Enter in default DB
+# python manage.py update_categories_per_shop --shop Enter
+
+# Update XStore in a specific DB (e.g., xtore)
+# python manage.py update_categories_per_shop --shop XStore --source xtore
 
 # ---- Unified category mapping ----
 CATEGORY_MAPPING = {
@@ -113,48 +124,60 @@ CATEGORY_MAPPING = {
 
 
 class Command(BaseCommand):
-    help = "Update unified categories for CategoryMapping and Products"
+    help = "Update unified categories for a specific shop"
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--shop",
+            type=str,
+            help="Shop name to update categories for (Darwin, Enter, XStore, etc.)",
+            required=True,
+        )
 
     def handle(self, *args, **options):
-        self.stdout.write("🔹 Updating CategoryMapping table...")
+        shop_name = options["shop"]
+        category_log(f"START category update for shop='{shop_name}'")
+
+        # Step 1: Update CategoryMapping table
+        updated_mappings = 0
         for key, unified in CATEGORY_MAPPING.items():
             shop, raw_category = key.split("|")
+            if shop != shop_name:
+                continue
+
             obj, created = CategoryMapping.objects.get_or_create(
                 shop=shop,
                 raw_category=raw_category,
                 defaults={"unified_category": unified},
             )
+
             if not created and obj.unified_category != unified:
                 obj.unified_category = unified
                 obj.save()
+                updated_mappings += 1
 
-            self.stdout.write(f"[MAP] {shop} | {raw_category} → {unified}")
+            msg = f"[MAPPING] {shop} | {raw_category} → {unified}"
+            category_log(msg)
 
-        self.stdout.write("✔ CategoryMapping table updated\n")
+        category_log(f"CategoryMapping updated/created: {updated_mappings}")
 
-        self.stdout.write("🔹 Updating Products...")
-        updated = 0
-        skipped = 0
+        # Step 2: Update Products table for this shop
+        category_log(f"🔹 Updating products for shop='{shop_name}'")
+        updated_products = 0
 
         with transaction.atomic():
-            for mapping in CategoryMapping.objects.all():
+            mappings = CategoryMapping.objects.filter(shop=shop_name)
+            for mapping in mappings:
                 qs = Product.objects.filter(
                     shop=mapping.shop, category=mapping.raw_category
-                ).exclude(
-                    category=mapping.unified_category
-                )  # skip already correct
+                ).exclude(category=mapping.unified_category)
 
                 count = qs.update(category=mapping.unified_category)
+                updated_products += count
+                msg = f"[PRODUCTS] {mapping.shop} | '{mapping.raw_category}' → '{mapping.unified_category}' ({count})"
                 if count:
-                    updated += count
-                    self.stdout.write(
-                        f"[PRODUCTS] {mapping.shop} | '{mapping.raw_category}' → "
-                        f"'{mapping.unified_category}' ({count})"
-                    )
-                else:
-                    skipped += 1
+                    category_log(msg)
 
-        self.stdout.write("\n===================================")
-        self.stdout.write(f"✔ Products updated: {updated}")
-        self.stdout.write(f" Mappings with no products: {skipped}")
-        self.stdout.write("✔ All done")
+        category_log(
+            f"END category update for shop='{shop_name}' | products updated={updated_products}"
+        )

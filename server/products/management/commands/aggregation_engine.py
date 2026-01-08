@@ -181,30 +181,29 @@ CATEGORIES = {
 
 
 class Command(BaseCommand):
+    """class Spinner:
+    def __init__(self, message="Loading"):
+        self.message = message
+        self.spinner = itertools.cycle("|/-\\")
+        self.running = False
+        self.thread = None
 
-    class Spinner:
-        def __init__(self, message="Loading"):
-            self.message = message
-            self.spinner = itertools.cycle("|/-\\")
-            self.running = False
-            self.thread = None
+    def start(self):
+        self.running = True
+        self.thread = threading.Thread(target=self._spin)
+        self.thread.start()
 
-        def start(self):
-            self.running = True
-            self.thread = threading.Thread(target=self._spin)
-            self.thread.start()
-
-        def _spin(self):
-            while self.running:
-                sys.stdout.write(f"\r{self.message} {next(self.spinner)}")
-                sys.stdout.flush()
-                time.sleep(0.1)
-
-        def stop(self):
-            self.running = False
-            self.thread.join()
-            sys.stdout.write("\r" + " " * (len(self.message) + 2) + "\r")
+    def _spin(self):
+        while self.running:
+            sys.stdout.write(f"\r{self.message} {next(self.spinner)}")
             sys.stdout.flush()
+            time.sleep(0.1)
+
+    def stop(self):
+        self.running = False
+        self.thread.join()
+        sys.stdout.write("\r" + " " * (len(self.message) + 2) + "\r")
+        sys.stdout.flush()"""
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -248,11 +247,11 @@ class Command(BaseCommand):
 
             if auto_stdout:
                 items = fetch_fn(url, pages)
-            else:
+            """ else:
                 spinner = self.Spinner(f"Fetching products from {url}")
                 spinner.start()
                 items = fetch_fn(url, pages)
-                spinner.stop()
+                spinner.stop() """
 
             aggregation_log(f"FOUND {len(items)} products")
 
@@ -260,11 +259,12 @@ class Command(BaseCommand):
             updated_count = 0
 
             for item_data in items:
-                item_data["name"] = item_data["name"]
-                item_data["variant"] = item_data["variant"]
+                # TODO normalize
+                """item_data["name"] = item_data["name"]
+                item_data["variant"] = item_data["variant"]"""
 
                 try:
-                    _, created = Product.objects.update_or_create(
+                    _, created = Product.objects.using(shop).update_or_create(
                         shop=item_data["shop"],
                         external_id=item_data["external_id"],
                         defaults=item_data,

@@ -27,7 +27,21 @@ if not SECRET_KEY:
     )
 
 # Database from env
-DATABASES = {"default": env.db()}
+DATABASES = {
+    "default": env.db(),  # production DB from environment
+    "darwin": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "shop_darwin.sqlite3",
+    },
+    "enter": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "shop_enter.sqlite3",
+    },
+    "xstore": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "shop_xstore.sqlite3",
+    },
+}
 
 # Allowed hosts
 ALLOWED_HOSTS = env.list(
