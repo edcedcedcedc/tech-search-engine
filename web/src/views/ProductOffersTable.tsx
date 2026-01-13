@@ -150,7 +150,7 @@ export default function ProductOffersTable() {
                           <Box sx={{ display: "flex", alignItems: "center" }}>
                             Price{" "}
                             <Box style={{ fontSize: "0.65rem", opacity: 0.8 }}>
-                              (MDL)
+                              MDL
                             </Box>
                           </Box>
                         </div>

@@ -1,13 +1,11 @@
+"""
+set DJANGO_ENV=development   # Windows
+export DJANGO_ENV=development  # Linux/Mac
+"""
+
 from pathlib import Path
 import environ
 import os
-
-""" 
-set DJANGO_ENV=development   # Windows
-# or
-export DJANGO_ENV=development  # Linux/Mac
-python manage.py runserver
-"""
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -27,7 +25,25 @@ if not SECRET_KEY:
     )
 
 # Database from env
-DATABASES = {"default": env.db()}
+DATABASES = {
+    "default": env.db(),
+    "stage": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "stage.sqlite3",
+    },
+    "darwin": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "shop_darwin.sqlite3",
+    },
+    "enter": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "shop_enter.sqlite3",
+    },
+    "xstore": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "shop_xstore.sqlite3",
+    },
+}
 
 # Allowed hosts
 ALLOWED_HOSTS = env.list(
@@ -44,7 +60,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "products",
+    "products.apps.ProductsConfig",
 ]
 
 MIDDLEWARE = [

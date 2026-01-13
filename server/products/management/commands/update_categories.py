@@ -1,0 +1,346 @@
+# file: products/management/commands/update_product_categories.py
+from django.core.management.base import BaseCommand
+from products.models import Product
+
+categories_cleaned = [
+    {"ro": "accesorii apple", "en": "Apple accessories", "ru": "аксессуары Apple"},
+    {
+        "ro": "accesorii gaming",
+        "en": "Gaming accessories",
+        "ru": "геймерские аксессуары",
+    },
+    {
+        "ro": "accesorii tableta",
+        "en": "Tablet accessories",
+        "ru": "аксессуары для планшетов",
+    },
+    {"ro": "accesorii tv", "en": "TV accessories", "ru": "аксессуары для телевизоров"},
+    {"ro": "aspirator robot", "en": "Robot vacuum cleaners", "ru": "роботы-пылесосы"},
+    {
+        "ro": "birou calculator, mobilier",
+        "en": "Computer desks and furniture",
+        "ru": "компьютерные столы и мебель",
+    },
+    {
+        "ro": "birou, mobilier",
+        "en": "Office desks and furniture",
+        "ru": "офисные столы и мебель",
+    },
+    {
+        "ro": "cabluri, accesorii",
+        "en": "Cables and accessories",
+        "ru": "кабели и аксессуары",
+    },
+    {"ro": "camera actiune", "en": "Action cameras", "ru": "экшн-камеры"},
+    {
+        "ro": "camera web, periferice pc",
+        "en": "Webcams and PC peripherals",
+        "ru": "веб-камеры и периферия для ПК",
+    },
+    {
+        "ro": "cană, accesorii birou",
+        "en": "Mugs and desk accessories",
+        "ru": "кружки и офисные аксессуары",
+    },
+    {
+        "ro": "carcasa pc, componente pc",
+        "en": "PC cases and components",
+        "ru": "корпуса и компоненты ПК",
+    },
+    {
+        "ro": "casti gaming, audio",
+        "en": "Gaming headsets and audio",
+        "ru": "геймерские наушники и аудио",
+    },
+    {"ro": "casti, audio", "en": "Headphones and audio", "ru": "наушники и аудио"},
+    {"ro": "console jocuri", "en": "Game consoles", "ru": "игровые консоли"},
+    {
+        "ro": "consumabile imprimanta",
+        "en": "Printer consumables",
+        "ru": "расходные материалы для принтеров",
+    },
+    {
+        "ro": "controller jocuri, accesorii gaming",
+        "en": "Game controllers and gaming accessories",
+        "ru": "геймпады и игровые аксессуары",
+    },
+    {
+        "ro": "docking station, accesorii pc",
+        "en": "Docking stations and PC accessories",
+        "ru": "док-станции и аксессуары для ПК",
+    },
+    {"ro": "ecrane proiectie", "en": "Projection screens", "ru": "проекционные экраны"},
+    {
+        "ro": "imprimanta, birou",
+        "en": "Printers and office equipment",
+        "ru": "принтеры и офисное оборудование",
+    },
+    {
+        "ro": "incarcatoare, accesorii mobile",
+        "en": "Chargers and mobile accessories",
+        "ru": "зарядные устройства и мобильные аксессуары",
+    },
+    {"ro": "jocuri video", "en": "Video games", "ru": "видеоигры"},
+    {
+        "ro": "lampa birou, iluminat",
+        "en": "Desk lamps and lighting",
+        "ru": "настольные лампы и освещение",
+    },
+    {
+        "ro": "laptop accessories",
+        "en": "Laptop accessories",
+        "ru": "аксессуары для ноутбуков",
+    },
+    {
+        "ro": "laptop gaming, notebook gaming",
+        "en": "Gaming laptops",
+        "ru": "игровые ноутбуки",
+    },
+    {
+        "ro": "laptop, notebook",
+        "en": "Laptops and notebooks",
+        "ru": "ноутбуки и портативные компьютеры",
+    },
+    {"ro": "media player", "en": "Media players", "ru": "медиаплееры"},
+    {
+        "ro": "memorie ram, componente pc",
+        "en": "RAM and PC components",
+        "ru": "оперативная память и компоненты ПК",
+    },
+    {
+        "ro": "merchandising, fan gear",
+        "en": "Merchandising and fan gear",
+        "ru": "мерчандайзинг и фанатская атрибутика",
+    },
+    {
+        "ro": "merchandising, gaming",
+        "en": "Gaming merchandising",
+        "ru": "геймерский мерчандайзинг",
+    },
+    {
+        "ro": "microfon gaming, audio",
+        "en": "Gaming microphones and audio",
+        "ru": "геймерские микрофоны и аудио",
+    },
+    {"ro": "microfon, audio", "en": "Microphones and audio", "ru": "микрофоны и аудио"},
+    {"ro": "mini pc, apple", "en": "Apple Mac mini", "ru": "мини-ПК Apple"},
+    {
+        "ro": "mini pc, desktop",
+        "en": "Mini PCs",
+        "ru": "мини-ПК и настольные компьютеры",
+    },
+    {
+        "ro": "monitor gaming, display",
+        "en": "Gaming monitors",
+        "ru": "игровые мониторы",
+    },
+    {
+        "ro": "monitor, display",
+        "en": "Monitors and displays",
+        "ru": "мониторы и дисплеи",
+    },
+    {
+        "ro": "mouse gaming, periferice pc",
+        "en": "Gaming mice and PC peripherals",
+        "ru": "геймерские мыши и периферия для ПК",
+    },
+    {
+        "ro": "mouse pad gaming, accesorii pc",
+        "en": "Gaming mouse pads and PC accessories",
+        "ru": "геймерские коврики и аксессуары для ПК",
+    },
+    {
+        "ro": "mouse pad, accesorii pc",
+        "en": "Mouse pads and PC accessories",
+        "ru": "коврики для мыши и аксессуары для ПК",
+    },
+    {
+        "ro": "mouse, periferice pc",
+        "en": "Mice and PC peripherals",
+        "ru": "компьютерные мыши и периферия для ПК",
+    },
+    {"ro": "pc all in one, apple", "en": "Apple iMac", "ru": "моноблоки Apple"},
+    {
+        "ro": "pc all in one, desktop",
+        "en": "All-in-One PCs",
+        "ru": "моноблоки и настольные компьютеры",
+    },
+    {
+        "ro": "pc desktop, apple",
+        "en": "Apple Mac Studio",
+        "ru": "настольные компьютеры Apple",
+    },
+    {
+        "ro": "pc desktop, sistem complet",
+        "en": "Desktop PCs, complete systems",
+        "ru": "настольные ПК, готовые системы",
+    },
+    {
+        "ro": "pc gaming, desktop gaming",
+        "en": "Gaming desktop PCs",
+        "ru": "игровые ПК и гейминг-компьютеры",
+    },
+    {
+        "ro": "periferice pc",
+        "en": "PC peripherals",
+        "ru": "периферийные устройства для ПК",
+    },
+    {
+        "ro": "placa de baza, motherboard, componente pc",
+        "en": "Motherboards and PC components",
+        "ru": "материнские платы и компоненты ПК",
+    },
+    {
+        "ro": "placa video, gpu, componente pc",
+        "en": "Graphics cards and PC components",
+        "ru": "видеокарты и компоненты ПК",
+    },
+    {
+        "ro": "power bank, accesorii mobile",
+        "en": "Power banks and mobile accessories",
+        "ru": "пауэрбанки и мобильные аксессуары",
+    },
+    {
+        "ro": "procesor, cpu, componente pc",
+        "en": "Processors and PC components",
+        "ru": "процессоры и компоненты ПК",
+    },
+    {
+        "ro": "proiectoare, display",
+        "en": "Projectors and displays",
+        "ru": "проекционные устройства и дисплеи",
+    },
+    {
+        "ro": "protectie retea, birou",
+        "en": "Network protection and office",
+        "ru": "защита сети и офис",
+    },
+    {
+        "ro": "protectie telefon, accesorii mobile",
+        "en": "Phone protection and mobile accessories",
+        "ru": "защита телефона и мобильные аксессуары",
+    },
+    {
+        "ro": "racire pc, accesorii",
+        "en": "PC cooling and accessories",
+        "ru": "охлаждение ПК и аксессуары",
+    },
+    {
+        "ro": "racire pc, cooler, componente pc",
+        "en": "PC cooling, coolers and components",
+        "ru": "охлаждение ПК, кулеры и компоненты",
+    },
+    {
+        "ro": "router, dispozitiv retea",
+        "en": "Routers and network devices",
+        "ru": "роутеры и сетевые устройства",
+    },
+    {
+        "ro": "router, wifi, dispozitiv retea",
+        "en": "WiFi routers and network devices",
+        "ru": "WiFi роутеры и сетевые устройства",
+    },
+    {"ro": "scanner, birou", "en": "Scanners and office", "ru": "сканеры и офис"},
+    {"ro": "scaun birou, mobilier", "en": "Office chairs", "ru": "офисные кресла"},
+    {
+        "ro": "scaun gaming, mobilier birou",
+        "en": "Gaming chairs",
+        "ru": "геймерские кресла",
+    },
+    {"ro": "shredder, birou", "en": "Office shredders", "ru": "офисные шредеры"},
+    {"ro": "smartphone, telefon mobil", "en": "Smartphones", "ru": "смартфоны"},
+    {"ro": "smartwatch", "en": "Smartwatches", "ru": "умные часы"},
+    {"ro": "software", "en": "Software", "ru": "ПО"},
+    {
+        "ro": "sticlă apă, accesorii birou",
+        "en": "Water bottles and desk accessories",
+        "ru": "бутылки для воды и офисные аксессуары",
+    },
+    {
+        "ro": "stocare externa, hdd, accesorii pc",
+        "en": "External storage and PC accessories",
+        "ru": "внешнее хранилище и аксессуары ПК",
+    },
+    {
+        "ro": "stocare interna, hdd, componente pc",
+        "en": "Internal HDD storage",
+        "ru": "внутренние HDD и компоненты ПК",
+    },
+    {
+        "ro": "stocare interna, ssd, componente pc",
+        "en": "Internal SSD storage",
+        "ru": "внутренние SSD и компоненты ПК",
+    },
+    {
+        "ro": "stocare interna, ssd, hdd, componente pc",
+        "en": "Internal SSD/HDD storage",
+        "ru": "внутренние SSD/HDD и компоненты ПК",
+    },
+    {
+        "ro": "suport auto telefon, accesorii auto",
+        "en": "Car phone holders and accessories",
+        "ru": "автомобильные держатели и аксессуары",
+    },
+    {
+        "ro": "suport monitor, accesorii birou",
+        "en": "Monitor stands and desk accessories",
+        "ru": "подставки для мониторов и офисные аксессуары",
+    },
+    {
+        "ro": "suport tv, accesorii tv",
+        "en": "TV stands and accessories",
+        "ru": "подставки для ТВ и аксессуары",
+    },
+    {
+        "ro": "sursa pc, psu, componente pc",
+        "en": "PC power supplies and components",
+        "ru": "блоки питания ПК и компоненты",
+    },
+    {
+        "ro": "switch, poe, dispozitiv retea",
+        "en": "Switches, PoE, network devices",
+        "ru": "коммутаторы, PoE и сетевые устройства",
+    },
+    {"ro": "tableta", "en": "Tablets", "ru": "планшеты"},
+    {"ro": "tableta grafica", "en": "Graphics tablets", "ru": "графические планшеты"},
+    {
+        "ro": "tableta grafica, periferice pc",
+        "en": "Graphics tablets and PC peripherals",
+        "ru": "графические планшеты и периферия ПК",
+    },
+    {
+        "ro": "tastatura gaming, periferice pc",
+        "en": "Gaming keyboards and PC peripherals",
+        "ru": "геймерские клавиатуры и периферия ПК",
+    },
+    {
+        "ro": "tastatura, periferice pc",
+        "en": "Keyboards and PC peripherals",
+        "ru": "клавиатуры и периферия ПК",
+    },
+    {
+        "ro": "telefon fix, dect, birou",
+        "en": "Landline phones and office",
+        "ru": "стационарные телефоны и офис",
+    },
+    {
+        "ro": "telefon mobil, buton, feature phone",
+        "en": "Feature phones",
+        "ru": "кнопочные телефоны",
+    },
+    {"ro": "televizor", "en": "Televisions", "ru": "телевизоры"},
+]
+
+
+class Command(BaseCommand):
+    help = "Update Product.t_category field with cleaned translations"
+
+    def handle(self, *args, **options):
+        for cat in categories_cleaned:
+            products = Product.objects.using("stage").filter(category=cat["ro"])
+            count = 0
+            for p in products:
+                p.t_category = {"ro": cat["ro"], "en": cat["en"], "ru": cat["ru"]}
+                p.save(update_fields=["t_category"])
+                count += 1
+            self.stdout.write(f"Updated {count} products for category: {cat['ro']}")

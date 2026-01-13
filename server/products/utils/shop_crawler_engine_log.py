@@ -6,10 +6,10 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 LOGS_DIR = os.path.join(BASE_DIR, "logs")
 os.makedirs(LOGS_DIR, exist_ok=True)
-LOG_FILE = os.path.join(LOGS_DIR, "aggregation_engine.log")
+LOG_FILE = os.path.join(LOGS_DIR, "shop_crawler_engine.log")
 
 
-def aggregation_log(msg: str):
+def shop_crawler_log(msg: str):
     """
     Logs a message to the aggregation_engine.log with timestamp.
     """
@@ -26,5 +26,5 @@ def random_sleep(min_seconds: float = 2, max_seconds: float = 5):
     Sleeps a random duration and logs it to the same aggregation log file.
     """
     sleep_time = random.uniform(min_seconds, max_seconds)
-    aggregation_log(f"Sleeping {sleep_time:.1f}s to avoid hammering...")
+    shop_crawler_log(f"Sleeping {sleep_time:.1f}s to avoid hammering...")
     time.sleep(sleep_time)
