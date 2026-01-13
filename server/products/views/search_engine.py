@@ -513,9 +513,9 @@ class ProductOffersAPIView(SearchAPIView):
                 continue
 
             identity = self.offer_identity_score(o, product)
-            if identity <= 0.60:  # Hard reject near-miss models
+            """ if identity <= 0.60:  # Hard reject near-miss models
                 o["offer_score"] = 0.0
-                continue
+                continue """
 
             price_component = self.price_score(o["price"], min_price)
             o["offer_score"] = round(
