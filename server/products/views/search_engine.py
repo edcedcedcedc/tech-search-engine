@@ -1,4 +1,5 @@
 from functools import cached_property
+import math
 import time
 from django.shortcuts import render
 from requests import request
@@ -96,14 +97,12 @@ class SearchAPIView(APIView):
     def get(self, request):
         try:
             raw_query = request.GET.get("q", "").strip()
-            # translated_query = self.translate_query(raw_query)
-            # embeddings_from_query_log(f"{raw_query}, {translated_query}")
-            # search_engine_log(f"Translating: '{translated_query}")
             query_embedding = self.get_query_embedding(raw_query)
-
             search_engine_log(f"Received raw query: '{raw_query}'")
+
             limit = min(int(request.GET.get("limit", LAYER1_LIMIT)), LAYER1_LIMIT)
             cursor = request.GET.get("cursor")
+            offset = int(cursor) if cursor and cursor.isdigit() else 0
 
             if not raw_query or query_embedding is None:
                 request.session["aggregated_cache"] = None
@@ -115,16 +114,18 @@ class SearchAPIView(APIView):
             top_products = self.semantic_filter_products(query_embedding)
 
             aggregated = self.aggregate_products(top_products)
+
+            # Identity resolution & relevance scoring
             aggregated = self.identity_resolution(aggregated)
             aggregated = self.score_relevance(aggregated, raw_query, query_embedding)
 
-            aggregated.sort(
-                key=lambda x: (-x["relevance"])
-            )  # x["lowest_price"], x["id"]
+            # Sort by product_score descending
+            aggregated.sort(key=lambda x: -x.get("product_score", x["relevance"]))
 
-            if cursor:
-                aggregated = self.apply_cursor(aggregated, cursor)
+            # --- Slice using index-based cursor ---
+            aggregated_slice = aggregated[offset : offset + limit]
 
+            # Save full sorted aggregated cache in session for Layer2
             request.session["aggregated_cache"] = aggregated
 
             probabilistic_clusters = [
@@ -137,15 +138,16 @@ class SearchAPIView(APIView):
                     "lowest_price": p["lowest_price"],
                     "offers": len(p["offers"]),
                     "relevance": p["relevance"],
+                    "product_score": p["product_score"],
                     "image": p["image"],
                     "t_name": p.get("t_name", {}),
                     "t_variant": p.get("t_variant", {}),
                     "shops": p.get("shops", []),
                 }
-                for p in aggregated[:limit]
+                for p in aggregated_slice
             ]
 
-            next_cursor = self.get_next_cursor(aggregated, limit)
+            next_cursor = self.get_next_cursor(aggregated, limit, offset=offset)
             return Response(
                 {"products": probabilistic_clusters, "next_cursor": next_cursor}
             )
@@ -403,7 +405,8 @@ class SearchAPIView(APIView):
 
             # Merge all offers from similar products
             all_offers = [o for s in similar for o in s["offers"]]
-            base["offers"] = balanced_offers(all_offers)
+
+            base["offers"] = all_offers  # was balaced offers
             base["lowest_price"] = min(o["price"] for o in all_offers)
 
             merged.append(base)
@@ -443,6 +446,12 @@ class SearchAPIView(APIView):
                 + 0.1 * semantic_similarity  # add semantic boost
             )
             item["relevance"] = round(relevance, 4)
+            # --- new hybrid score including price influence ---
+            # protect against price=0
+            price_factor = 0.5 / math.log(
+                item["lowest_price"] + 2
+            )  # +2 to avoid log(0) or very cheap anomalies
+            item["product_score"] = round(0.9 * relevance + 0.1 * price_factor, 4)
 
             search_engine_log(
                 f"Product '{item['name']}' -> fuzzy={fuzzy_score}, "
@@ -453,21 +462,15 @@ class SearchAPIView(APIView):
 
     def apply_cursor(self, aggregated, cursor):
         try:
-            last_id, last_price = cursor.split("_")
-            last_price = int(last_price)
-            return [
-                p
-                for p in aggregated
-                if p["lowest_price"] > last_price
-                or (p["lowest_price"] == last_price and p["id"] > last_id)
-            ]
-        except ValueError:
+            offset = int(cursor)
+            return aggregated[offset:]
+        except (ValueError, TypeError):
             return aggregated
 
-    def get_next_cursor(self, aggregated, limit):
-        if len(aggregated) > limit:
-            last_item = aggregated[limit - 1]
-            return f"{last_item['id']}_{last_item['lowest_price']}"
+    def get_next_cursor(self, aggregated, limit, offset=0):
+        next_offset = offset + limit
+        if next_offset < len(aggregated):
+            return str(next_offset)
         return None
 
 
@@ -479,23 +482,62 @@ class ProductOffersAPIView(SearchAPIView):
     Only works if Layer1 has been called and aggregated_cache exists.
     """
 
+    def offer_identity_score(self, offer, product):
+        """How well this offer matches the product cluster identity."""
+        name_score = (
+            fuzz.token_set_ratio(offer["name"].lower(), product["name"].lower()) / 100
+        )
+        variant_score = (
+            fuzz.token_set_ratio(
+                (offer.get("variant") or "").lower(),
+                (product.get("variant") or "").lower(),
+            )
+            / 100
+        )
+        return 0.7 * name_score + 0.3 * variant_score
+
+    def price_score(self, price, min_price):
+        """Soft price influence. Never dominates identity."""
+        if price <= 0 or min_price <= 0:
+            return 0.0
+        return 1 / math.log(price / min_price + 1.2)
+
+    def score_offers_for_product(self, product):
+        """Scores offers inside a product cluster."""
+        min_price = product["lowest_price"]
+        product_relevance = product["relevance"]
+
+        for o in product["offers"]:
+            if not o["in_stock"]:
+                o["offer_score"] = 0.0
+                continue
+
+            identity = self.offer_identity_score(o, product)
+            if identity <= 0.60:  # Hard reject near-miss models
+                o["offer_score"] = 0.0
+                continue
+
+            price_component = self.price_score(o["price"], min_price)
+            o["offer_score"] = round(
+                0.80 * identity + 0.15 * product_relevance + 0.05 * price_component, 4
+            )
+
     def get(self, request, product_id):
         full = request.GET.get("full", "false").lower() == "true"
+        limit = int(
+            request.GET.get("limit", LAYER2_LIMIT if not full else LAYER3_LIMIT)
+        )
 
         if full:
             self.throttle_classes = [Layer2FullThrottle]
         else:
             self.throttle_classes = [Layer2PreviewThrottle]
 
-        limit = int(
-            request.GET.get("limit", LAYER2_LIMIT if not full else LAYER3_LIMIT)
-        )
-
+        # --- Index-based cursor like Layer1 ---
         cursor = request.GET.get("cursor")
+        offset = int(cursor) if cursor and cursor.isdigit() else 0
 
-        # access Layer1 aggregated cache
         aggregated = request.session.get("aggregated_cache")
-
         if not aggregated or not request.session.session_key:
             return Response({"error": "invalid session"}, status=403)
 
@@ -504,47 +546,50 @@ class ProductOffersAPIView(SearchAPIView):
             return Response({"offers": [], "has_more": False, "next_cursor": None})
 
         offers = product["offers"]
-        offers.sort(key=lambda o: o["price"])
 
-        if cursor:
-            offers = self.apply_cursor(offers, cursor)
+        # --- Score offers relative to product ---
+        self.score_offers_for_product(product)
+
+        # Sort by offer relevance, not price
+        offers.sort(key=lambda o: o.get("offer_score", 0), reverse=True)
+
+        # Slice offers according to index-based cursor
+        offers_slice = offers[offset : offset + limit]
 
         result = (
-            offers[:limit]
+            offers_slice
             if full
             else [
                 {"shop": o["shop"], "name": o["name"], "price": o["price"]}
-                for o in offers[:limit]
+                for o in offers_slice
             ]
         )
-        has_more = len(offers) > limit
-        next_cursor = self.get_next_cursor(offers, limit)
+
+        next_cursor = str(offset + limit) if offset + limit < len(offers) else None
+        has_more = next_cursor is not None
 
         search_engine_log(
             f"Product '{product_id}' offers count={len(product['offers'])}, "
             f"limit={limit}, full={full}, cursor={cursor}"
         )
+
         return Response(
             {"offers": result, "has_more": has_more, "next_cursor": next_cursor}
         )
 
     def apply_cursor(self, offers, cursor):
+        """Index-based cursor for universal pagination."""
         try:
-            last_price, last_shop = cursor.split("_")
-            last_price = int(last_price)
-            return [
-                o
-                for o in offers
-                if o["price"] > last_price
-                or (o["price"] == last_price and o["shop"] > last_shop)
-            ]
-        except ValueError:
+            offset = int(cursor)
+            return offers[offset:]
+        except (ValueError, TypeError):
             return offers
 
-    def get_next_cursor(self, offers, limit):
-        if len(offers) > limit:
-            last_item = offers[limit - 1]
-            return f"{last_item['price']}_{last_item['shop']}"
+    def get_next_cursor(self, offers, limit, offset=0):
+        """Return next cursor based on index."""
+        next_offset = offset + limit
+        if next_offset < len(offers):
+            return str(next_offset)
         return None
 
 
