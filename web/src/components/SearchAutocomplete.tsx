@@ -236,12 +236,13 @@ import { useTranslation } from "react-i18next";
 export const SearchAutocomplete: React.FC = () => {
   const setQuery = useStore((s) => s.setQuery);
   const searchProducts = useStore((s) => s.searchProducts);
-  const { t } = useTranslation();
+
   const [value, setValue] = React.useState("");
   const [suggestions, setSuggestions] = React.useState<string[]>([]);
   const [loading, setLoading] = React.useState(false);
   const anchorRef = React.useRef<HTMLInputElement | null>(null);
-
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language.slice(0, 2);
   const closeSuggestions = () => {
     setSuggestions([]);
   };
@@ -255,13 +256,13 @@ export const SearchAutocomplete: React.FC = () => {
         }
         setLoading(true);
         try {
-          const res = await autocomplete(q);
+          const res = await autocomplete(q, lang);
           setSuggestions(res.suggestions);
         } finally {
           setLoading(false);
         }
-      }, 250),
-    []
+      }, 500),
+    [lang]
   );
 
   React.useEffect(() => {
@@ -274,7 +275,7 @@ export const SearchAutocomplete: React.FC = () => {
     if (!q) return;
     setQuery(q);
     setSuggestions([]);
-    searchProducts(q);
+    searchProducts(q, lang);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -337,8 +338,12 @@ export const SearchAutocomplete: React.FC = () => {
         <ClickAwayListener onClickAway={closeSuggestions}>
           <Paper sx={{ width: anchorRef.current?.offsetWidth }}>
             <List dense>
-              {suggestions.map((s) => (
-                <ListItemButton key={s} onClick={() => handleSelect(s)}>
+              {suggestions.map((s, idx) => (
+                <ListItemButton
+                  key={`${s}-${idx}`}
+                  onClick={() => handleSelect(s)}
+                  onDoubleClick={() => {}}
+                >
                   <ListItemText primary={s} />
                 </ListItemButton>
               ))}

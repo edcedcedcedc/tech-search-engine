@@ -1,4 +1,5 @@
 from functools import cached_property
+import time
 from django.shortcuts import render
 from requests import request
 from rest_framework.views import APIView
@@ -18,21 +19,49 @@ import hashlib
 import random
 from collections import deque
 from products.utils.search_engine_log import search_engine_log
-from products.utils.autocomplete_log import autocomplete_log
+from products.utils.search_engine_autocomplete_log import autocomplete_log
+from products.utils.precompute_embeddings_from_query_log import (
+    embeddings_from_query_log,
+)
+from products.utils.generate_canonical_id import generate_canonical_id
+import json
+import numpy as np
+from products.models import UserQueryEmbedding, PrecomputedSimilarity
+from openai import OpenAI
+import environ
+import re
+from products.utils import embeddings_cache
+from unidecode import unidecode
 
+import numpy as np
 
 FUZZY_THRESHOLD_CLUSTER = 85
-FUZZY_THRESHOLD_AUTOCOMPLETE = 60
+#  FUZZY_THRESHOLD_AUTOCOMPLETE = 50
 AUTOCOMPLETE_LIMIT = 10
 LAYER1_LIMIT = 20
 LAYER2_LIMIT = 10
 LAYER3_LIMIT = 10
 
 
-def generate_cluster_id(name, variant, brand, category):
-    """Generate a stable unique ID for a product cluster."""
-    s = f"{name}|{variant}|{brand}|{category}"
-    return hashlib.md5(s.encode("utf-8")).hexdigest()
+env = environ.Env()
+environ.Env.read_env()
+client = OpenAI(api_key=env("OPENAI_API_KEY"))
+
+
+def cosine_similarity(a, b):
+    a = np.array(a)
+    b = np.array(b)
+    if np.linalg.norm(a) == 0 or np.linalg.norm(b) == 0:
+        return 0.0
+    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
+
+
+def normalize_text(text: str) -> str:
+    text = text.lower()
+    text = unidecode(text)  # remove accents
+    text = re.sub(r"[^a-z0-9\s]", " ", text)  # remove punctuation
+    text = re.sub(r"\s+", " ", text).strip()  # normalize spaces
+    return text
 
 
 def balanced_offers(offers):
@@ -67,26 +96,35 @@ class SearchAPIView(APIView):
     def get(self, request):
         try:
             raw_query = request.GET.get("q", "").strip()
+            # translated_query = self.translate_query(raw_query)
+            # embeddings_from_query_log(f"{raw_query}, {translated_query}")
+            # search_engine_log(f"Translating: '{translated_query}")
+            query_embedding = self.get_query_embedding(raw_query)
+
             search_engine_log(f"Received raw query: '{raw_query}'")
             limit = min(int(request.GET.get("limit", LAYER1_LIMIT)), LAYER1_LIMIT)
             cursor = request.GET.get("cursor")
 
-            if not raw_query:
+            if not raw_query or query_embedding is None:
                 request.session["aggregated_cache"] = None
                 return Response({"products": [], "next_cursor": None})
 
-            tokens = self.tokenize_query(raw_query)
-            qs = self.filter_products_by_tokens(tokens)
+            # ----------------------
+            # Semantic retrieval step
+            # ----------------------
+            top_products = self.semantic_filter_products(query_embedding)
 
-            aggregated = self.aggregate_products(qs)
+            aggregated = self.aggregate_products(top_products)
             aggregated = self.identity_resolution(aggregated)
-            aggregated = self.score_relevance(aggregated, raw_query)
-            aggregated.sort(key=lambda x: (-x["relevance"], x["lowest_price"], x["id"]))
+            aggregated = self.score_relevance(aggregated, raw_query, query_embedding)
+
+            aggregated.sort(
+                key=lambda x: (-x["relevance"])
+            )  # x["lowest_price"], x["id"]
 
             if cursor:
                 aggregated = self.apply_cursor(aggregated, cursor)
 
-            # Cache the session
             request.session["aggregated_cache"] = aggregated
 
             probabilistic_clusters = [
@@ -97,11 +135,12 @@ class SearchAPIView(APIView):
                     "category": p["category"],
                     "variant": p["variant"],
                     "lowest_price": p["lowest_price"],
-                    "offers": len(p["offers"]),  # lightweight preview
+                    "offers": len(p["offers"]),
                     "relevance": p["relevance"],
                     "image": p["image"],
                     "t_name": p.get("t_name", {}),
                     "t_variant": p.get("t_variant", {}),
+                    "shops": p.get("shops", []),
                 }
                 for p in aggregated[:limit]
             ]
@@ -112,11 +151,153 @@ class SearchAPIView(APIView):
             )
 
         except Exception as e:
-            # Log the full exception
-
             trace = traceback.format_exc()
             search_engine_log(f"Error in SearchAPIView: {e}\n{trace}")
             return Response({"error": "Internal server error"}, status=500)
+
+    def get_query_embedding(self, raw_query: str):
+        """Get query embedding from DB or generate it if missing."""
+
+        uq = UserQueryEmbedding.objects.filter(query_text=raw_query).first()
+        if uq and uq.embedding:
+            return np.array(json.loads(uq.embedding))
+
+        # If not cached, generate embedding
+        try:
+            search_engine_log(f"Generating live embedding '{raw_query}'")
+            resp = client.embeddings.create(
+                model="text-embedding-3-small", input=raw_query
+            )
+            query_embedding = np.array(resp.data[0].embedding)
+
+            if not uq:
+                UserQueryEmbedding.objects.create(
+                    query_text=raw_query,
+                    embedding=json.dumps(query_embedding.tolist()),
+                )
+
+            return query_embedding
+
+        except Exception as e:
+            search_engine_log(
+                f"Failed to generate embedding for query '{raw_query}': {e}"
+            )
+            return None
+
+    def translate_query(self, raw_query: str) -> str:
+        """
+        Normalize, translate and safely expand a short e-commerce search query
+        for semantic search.
+        """
+        if not raw_query:
+            return raw_query
+
+        try:
+            search_engine_log(f"Translating query: '{raw_query}'")
+
+            resp = client.chat.completions.create(
+                model="gpt-5-nano",
+                temperature=1,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You normalize short e-commerce product search queries.\n"
+                            "\n"
+                            "Your tasks:\n"
+                            "1. Translate the query to English if needed.\n"
+                            "2. Expand informal slang to standard product terms.\n"
+                            "3. Add ONLY safe, generic synonyms at product-type level.\n"
+                            "\n"
+                            "Rules:\n"
+                            "- Output ONE single-line query string.\n"
+                            "- Use lowercase.\n"
+                            "- No explanations.\n"
+                            "- No punctuation except spaces.\n"
+                            "- Do NOT invent features, brands, or use cases.\n"
+                            "- Do NOT add adjectives beyond what is implied.\n"
+                            "- If unsure, keep it minimal.\n"
+                            "\n"
+                            "Examples:\n"
+                            "Input: моник новый\n"
+                            "Output: monitor new display\n"
+                            "\n"
+                            "Input: ноут б у\n"
+                            "Output: laptop used\n"
+                            "\n"
+                            "Input: iphone 13 pro max\n"
+                            "Output: iphone 13 pro max\n"
+                        ),
+                    },
+                    {"role": "user", "content": raw_query},
+                ],
+            )
+
+            return resp.choices[0].message.content.strip()
+
+        except Exception as e:
+            search_engine_log(f"Query translation failed '{raw_query}': {e}")
+            return raw_query
+
+    def semantic_filter_products(self, query_embedding, top_n=1000):
+        """Retrieve top products by cosine similarity using preloaded embeddings.
+        Only considers in-stock products to prevent polluting top results.
+        """
+
+        waited = 0
+        while embeddings_cache.PRODUCT_EMBEDDINGS is None and waited < 5:
+            time.sleep(0.1)
+            waited += 0.1
+
+        if (
+            embeddings_cache.PRODUCT_EMBEDDINGS is None
+            or embeddings_cache.PRODUCT_IDS is None
+        ):
+            search_engine_log("Warning: embedding cache not loaded yet!")
+            return []
+
+        query_vec = np.array(query_embedding, dtype=np.float32)
+        query_norm = np.linalg.norm(query_vec)
+        search_engine_log(f"Query vector norm: {query_norm}")
+
+        # --- Step 1: Filter to in-stock IDs only ---
+        in_stock_ids = set(
+            Product.objects.filter(in_stock=True).values_list("id", flat=True)
+        )
+        in_stock_mask = np.isin(embeddings_cache.PRODUCT_IDS, list(in_stock_ids))
+
+        filtered_embeddings = embeddings_cache.PRODUCT_EMBEDDINGS[in_stock_mask]
+        filtered_ids = embeddings_cache.PRODUCT_IDS[in_stock_mask]
+
+        if len(filtered_ids) == 0:
+            search_engine_log("No in-stock products available for semantic search.")
+            return []
+
+        # --- Step 2: Compute cosine similarity ---
+        sims = np.dot(filtered_embeddings, query_vec) / (
+            embeddings_cache.EMBEDDINGS_NORM[in_stock_mask] * query_norm + 1e-8
+        )
+
+        top_idx = np.argsort(-sims)[:top_n]  # descending
+        top_product_ids = filtered_ids[top_idx]
+
+        search_engine_log(
+            f"Top {top_n} in-stock product IDs (first 10): {top_product_ids[:10].tolist()}"
+        )
+
+        # --- Step 3: Fetch Product objects from DB ---
+        products_qs = Product.objects.filter(id__in=top_product_ids)
+        search_engine_log(f"Products fetched from DB: {products_qs.count()}")
+
+        products_dict = {p.id: p for p in products_qs}
+
+        # --- Step 4: Maintain original top-N order ---
+        top_products = [products_dict[i] for i in top_product_ids if i in products_dict]
+        search_engine_log(
+            f"Top products returned (first 10 names): {[p.name for p in top_products[:10]]}"
+        )
+
+        return top_products
 
     def tokenize_query(self, query):
         tokens = query.split()
@@ -144,12 +325,7 @@ class SearchAPIView(APIView):
         product_dict = {}
 
         for p in qs:
-            cluster_key = generate_cluster_id(
-                p.name,
-                p.variant,
-                p.brand,
-                p.category,
-            )
+            cluster_key = p.canonical_id
             product_dict.setdefault(cluster_key, []).append(p)
             search_engine_log(
                 f"Adding product '{p.name} / {p.variant}' to cluster {cluster_key}"
@@ -161,6 +337,7 @@ class SearchAPIView(APIView):
 
     def build_aggregated_product(self, cluster_id, offers):
         rep = offers[0]
+        unique_shops = sorted({o.shop for o in offers})
         return {
             "id": cluster_id,
             "name": rep.name,
@@ -181,11 +358,13 @@ class SearchAPIView(APIView):
                     "brand": o.brand,
                     "url": o.url,
                     "external_id": o.external_id,
-                    "in_stock": True,
+                    "in_stock": o.in_stock,
                 }
                 for o in offers
             ],
             "lowest_price": min(o.price for o in offers),
+            "shops": unique_shops,
+            "embedding": rep.embedding,
             "image": rep.image or "",
         }
 
@@ -235,24 +414,40 @@ class SearchAPIView(APIView):
         search_engine_log(f"Identity resolution complete, merged count={len(merged)}")
         return merged
 
-    def score_relevance(self, aggregated, query: str):
+    def score_relevance(self, aggregated, query: str, query_embedding=None):
         query = query.lower()
         query_tokens = query.split()
         for item in aggregated:
+            # fuzzy match
             text = f"{item['name']} {item.get('variant', '')}".lower()
             fuzzy_score = fuzz.token_set_ratio(query, text)
             token_hits = sum(1 for t in query_tokens if t in text)
             token_coverage = token_hits / max(len(query_tokens), 1)
             brand_score = 1.0 if item.get("brand", "").lower() in query else 0.0
+
+            # semantic match
+            semantic_similarity = 0.0
+            if query_embedding is not None and item.get("embedding"):
+                try:
+                    product_emb = np.array(json.loads(item["embedding"]))
+                    semantic_similarity = cosine_similarity(
+                        query_embedding, product_emb
+                    )
+                except Exception as e:
+                    search_engine_log(f"Error computing semantic similarity: {e}")
+
             relevance = (
-                0.6 * (fuzzy_score / 100) + 0.3 * token_coverage + 0.1 * brand_score
+                0.55 * (fuzzy_score / 100)
+                + 0.25 * token_coverage
+                + 0.1 * brand_score
+                + 0.1 * semantic_similarity  # add semantic boost
             )
             item["relevance"] = round(relevance, 4)
 
             search_engine_log(
-                f"Product '{item['name']}' -> fuzzy_score={fuzzy_score}, "
-                f"token_coverage={token_coverage:.2f}, brand_score={brand_score}, "
-                f"final_relevance={item['relevance']}"
+                f"Product '{item['name']}' -> fuzzy={fuzzy_score}, "
+                f"token_cov={token_coverage:.2f}, brand={brand_score}, "
+                f"semantic={semantic_similarity:.4f}, relevance={item['relevance']}"
             )
         return aggregated
 
@@ -357,6 +552,7 @@ class AutocompleteAPIView(APIView):
     """
     Returns top autocomplete suggestions for the search bar.
     Uses RapidFuzz to match user input against canonical cluster names.
+    Considers brand and category for better relevance.
     """
 
     throttle_classes = [AutocompleteThrottle]
@@ -364,40 +560,77 @@ class AutocompleteAPIView(APIView):
     @cached_property
     def cluster_names_cache(self):
         """
-        Cache cluster canonical names (unique merged products) for fast lookup.
-        Can refresh periodically or on DB update.
+        Cache one representative name per canonical_id cluster, including brand and category.
         """
-
-        products = Product.objects.all()
-        # Use the cluster key to get unique canonical names
+        products = Product.objects.all().order_by("id")
         seen = set()
         cluster_names = []
+
         for p in products:
-            cluster_id = generate_cluster_id(p.name, p.variant, p.brand, p.category)
-            if cluster_id not in seen:
-                seen.add(cluster_id)
-                cluster_names.append(f"{p.name} {p.variant}".strip())
+            cid = p.canonical_id
+            if cid and cid not in seen:
+                seen.add(cid)
+                full_name = f"{p.name} {p.variant}".strip()
+                cluster_names.append(
+                    {
+                        "name": normalize_text(full_name),  # normalized for matching
+                        "display": full_name,  # original for display
+                        "brand": (p.brand or "").lower(),
+                        "category": (p.category or "").lower(),
+                    }
+                )
         return cluster_names
 
     def get(self, request):
-        query = request.GET.get("q", "").strip()
-        autocomplete_log(f"Received query: '{query}'")
+        query_raw = request.GET.get("q", "").strip()
+        query = normalize_text(query_raw)
+        autocomplete_log(f"Received query: '{query_raw}' -> normalized: '{query}'")
+        embeddings_from_query_log(query)
         if not query:
-            autocomplete_log("Empty query, returning []")
             return Response({"suggestions": []})
 
-        # RapidFuzz matching
-        matches = process.extract(
-            query,
-            self.cluster_names_cache,
-            scorer=fuzz.WRatio,
-            limit=AUTOCOMPLETE_LIMIT,
-        )
-        autocomplete_log(f"Raw matches: {matches}")
-        # Filter by threshold
+        query_tokens = query.split()
+        candidates = []
+
+        for item in self.cluster_names_cache:
+            text = item["name"]
+
+            # Fuzzy match
+            fuzzy_score = fuzz.token_set_ratio(query, text)
+
+            # Token coverage
+            token_hits = sum(1 for t in query_tokens if t in text)
+            token_coverage = token_hits / max(len(query_tokens), 1)
+
+            # Brand match
+            brand_score = 1.0 if any(t in item["brand"] for t in query_tokens) else 0.0
+
+            # Category match
+            category_score = (
+                1.0 if any(t in item["category"] for t in query_tokens) else 0.0
+            )
+
+            # Final relevance
+            relevance = round(
+                0.55 * (fuzzy_score / 100)
+                + 0.25 * token_coverage
+                + 0.1 * brand_score
+                + 0.1 * category_score,
+                4,
+            )
+
+            candidates.append({"name": item["display"], "relevance": relevance})
+
+        # Sort descending by relevance
+        candidates.sort(key=lambda x: -x["relevance"])
+
+        # Top N suggestions above a threshold
         suggestions = [
-            name for name, score, _ in matches if score >= FUZZY_THRESHOLD_AUTOCOMPLETE
+            c["name"] for c in candidates[:AUTOCOMPLETE_LIMIT] if c["relevance"] >= 0.6
         ]
+
         autocomplete_log(f"Suggestions returned: {suggestions}")
 
-        return Response({"suggestions": suggestions, "raw_matches": matches})
+        return Response(
+            {"suggestions": suggestions, "raw_matches": candidates[:AUTOCOMPLETE_LIMIT]}
+        )

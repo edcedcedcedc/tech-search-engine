@@ -2,8 +2,9 @@ import { create } from "zustand";
 
 type ThemeMode = "light" | "dark";
 import type { AggregatedProduct } from "../types/AggregatedProduct";
-import { getProductOffers } from "../api/searchApi";
+import { getProductOffers as apiGetProductOffers } from "../api/searchApi";
 import { searchProducts as apiSearchProducts } from "../api/searchApi";
+import { useTranslation } from "react-i18next";
 interface CookieState {
   consent: boolean | null; // null = not answered yet
   accept: () => void;
@@ -11,12 +12,13 @@ interface CookieState {
 }
 
 interface State {
+
   closeProduct: any;
   mode: ThemeMode;
   toggleMode: () => void;
   setMode: (mode: ThemeMode) => void;
   cookie: CookieState;
-  searchProducts: (query?: string) => Promise<void>;
+  searchProducts: (query?: string, lang?: string) => Promise<void>;
 
   aggregatedProducts: AggregatedProduct[];
   setAggregatedProducts: (products: AggregatedProduct[]) => void;
@@ -112,7 +114,7 @@ export const useStore = create<State>((set, get) => ({
     }
     set({ isOffersLoading: true, selectedProductId: productId });
 
-    const data = await getProductOffers(productId, true);
+    const data = await apiGetProductOffers(productId, true);
 
     set((state) => ({
       productOffers: {
@@ -123,13 +125,13 @@ export const useStore = create<State>((set, get) => ({
     }));
   },
   closeProduct: () => set({ selectedProductId: null }),
-  searchProducts: async (query?: string) => {
+  searchProducts: async (query?: string, lang?: string) => {
     const q = query ?? get().query; // use argument or fallback to current query
+    
     if (!q) return;
-
     try {
       set({ aggregatedProducts: [] }); // optional: clear old results
-      const data = await apiSearchProducts(q);
+      const data = await apiSearchProducts(q,lang);
       console.log(data.products)
       set({ aggregatedProducts: data.products });
     } catch (err) {

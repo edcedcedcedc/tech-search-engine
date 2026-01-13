@@ -90,7 +90,7 @@ const ProductGrid: React.FC<Props> = ({}) => {
               sx={{ color: "text.primary" }}
             >
               {product.name.split(" ").map((word, idx, arr) => (
-                <React.Fragment key={idx}>
+                <React.Fragment key={`${product.id}-${idx}`}>
                   {word}
                   {idx < arr.length - 1 && bull}
                 </React.Fragment>
@@ -100,7 +100,7 @@ const ProductGrid: React.FC<Props> = ({}) => {
               {product.brand} {product.variant ? `— ${product.variant}` : ""}
             </Typography>
             <Typography variant="body2" sx={{ color: "text.primary" }}>
-              {product.lowest_price.toLocaleString()} MDL
+              Min. Price/Cluster {product.lowest_price.toLocaleString()} MDL
             </Typography>
           </CardContent>
 

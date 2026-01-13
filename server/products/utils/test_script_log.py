@@ -4,10 +4,10 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 LOGS_DIR = os.path.join(BASE_DIR, "logs")
 os.makedirs(LOGS_DIR, exist_ok=True)
-LOG_FILE = os.path.join(LOGS_DIR, "category_list.log")
+LOG_FILE = os.path.join(LOGS_DIR, "ai.log")
 
 
-def category_list_log(msg: str):
+def test_log(msg: str):
     timestamp = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
     try:
         with open(LOG_FILE, "a", encoding="utf-8") as f:

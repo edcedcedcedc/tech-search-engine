@@ -1,3 +1,4 @@
+# products/management/commands/merge_products.py
 import time
 import signal
 from django.core.management.base import BaseCommand
@@ -22,19 +23,27 @@ signal.signal(signal.SIGINT, signal_handler)
 
 
 class Command(BaseCommand):
-    help = "Merge products from a shop DB into production DB (default) in batches"
+    help = (
+        "Merge products from a shop DB into another DB (default=production) in batches"
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--source",
             type=str,
-            help="Source DB to merge from (xstore, darwin, enter)",
+            help="Source DB to merge from (xstore, darwin, enter, stage, etc.)",
             required=True,
+        )
+        parser.add_argument(
+            "--dest",
+            type=str,
+            help="Destination DB to merge into (default=default)",
+            default="default",
         )
         parser.add_argument(
             "--shop",
             type=str,
-            help="Shop name (Darwin, Enter, XStore)",
+            help="Shop name (Darwin, Enter, XStore, etc.)",
             required=True,
         )
 
@@ -42,9 +51,12 @@ class Command(BaseCommand):
         global STOP_MERGE
 
         source_db = options["source"]
-        shop_name = options["shop"]
+        dest_db = options["dest"]
+        shop_name = options["shop"].lower()  # normalize to lowercase
 
-        db_merge_log(f"START merge from DB='{source_db}' for shop='{shop_name}'")
+        db_merge_log(
+            f"START merge from DB='{source_db}' to DB='{dest_db}' for shop='{shop_name}'"
+        )
 
         offset = 0
         merged_count = 0
@@ -54,35 +66,39 @@ class Command(BaseCommand):
                 db_merge_log("Merge stopped by user")
                 break
 
-            batch = (
+            # fetch batch with case-insensitive shop filter
+            batch_qs = (
                 Product.objects.using(source_db)
-                .filter(shop=shop_name)
+                .filter(shop__iexact=shop_name)
                 .order_by("id")[offset : offset + BATCH_SIZE]
             )
 
-            if not batch.exists():
+            if not batch_qs:
                 break
 
-            for item in batch:
+            for item in batch_qs:
                 if STOP_MERGE:
                     break
 
                 for attempt in range(1, MAX_DB_RETRIES + 1):
                     try:
-                        with transaction.atomic(using="default"):
-                            Product.objects.using("default").update_or_create(
-                                shop=item.shop,
+                        with transaction.atomic(using=dest_db):
+                            Product.objects.using(dest_db).update_or_create(
+                                shop=item.shop.lower(),  # normalize
                                 external_id=item.external_id,
                                 defaults={
                                     "name": item.name,
                                     "variant": item.variant,
                                     "t_name": item.t_name,
                                     "t_variant": item.t_variant,
+                                    "t_category": item.t_category,
                                     "price": item.price,
                                     "brand": item.brand,
                                     "category": item.category,
                                     "url": item.url,
                                     "in_stock": item.in_stock,
+                                    "canonical_id": item.canonical_id,
+                                    "embedding": item.embedding,
                                 },
                             )
                         merged_count += 1
@@ -99,8 +115,6 @@ class Command(BaseCommand):
                             break
 
             offset += BATCH_SIZE
-            msg = f"➡ Merged {merged_count} products so far..."
-            db_merge_log(msg)
+            db_merge_log(f"Merged {merged_count} products so far...")
 
-        msg = f"✔ Merge finished. Total merged: {merged_count}"
-        db_merge_log(msg)
+        db_merge_log(f"Merge finished. Total merged: {merged_count}")

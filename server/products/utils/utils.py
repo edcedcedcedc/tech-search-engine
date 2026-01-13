@@ -59,7 +59,7 @@ def normalize_db(text: str) -> str:
     return text
 
 
-def normalize_translate(text: str) -> str:
+def normalize_text(text: str) -> str:
     if not text:
         return ""
     text = re.sub(r"\s+", " ", text.strip())

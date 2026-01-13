@@ -27,3 +27,18 @@ class AggregatedProductSerializer(serializers.Serializer):
     lowest_price = serializers.IntegerField()
     relevance = serializers.IntegerField()
     image = serializers.URLField(allow_blank=True, required=False)
+    shops = serializers.SerializerMethodField()
+
+    def get_shops(self, obj):
+        """
+        Return the unique list of shops for this aggregated product cluster.
+        Preserves order of first appearance.
+        """
+        seen = set()
+        unique_shops = []
+        for offer in obj["offers"]:  # obj is a dict from build_aggregated_product
+            shop = offer["shop"]
+            if shop not in seen:
+                seen.add(shop)
+                unique_shops.append(shop)
+        return unique_shops

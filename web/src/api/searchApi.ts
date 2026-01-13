@@ -26,12 +26,14 @@ const api = axios.create({
  */
 export const searchProducts = async (
   query: string,
+  lang?: string, // <-- new
   limit?: number,
   cursor?: string
 ): Promise<SearchResponse> => {
   const params: Record<string, any> = { q: query };
   if (cursor) params.cursor = cursor;
   if (limit) params.limit = limit;
+  if (lang) params.lang = lang; // send lang to backend
 
   const { data } = await api.get<SearchResponse>("/search", { params });
   return data;
@@ -42,11 +44,13 @@ export const searchProducts = async (
  * @param query User input string
  */
 export const autocomplete = async (
-  query: string
+  query: string,
+  lang?: string // <-- new
 ): Promise<AutocompleteResponse> => {
-  const { data } = await api.get<AutocompleteResponse>("/autocomplete", {
-    params: { q: query },
-  });
+  const params: Record<string, any> = { q: query };
+  if (lang) params.lang = lang;
+
+  const { data } = await api.get<AutocompleteResponse>("/autocomplete", { params });
   return data;
 };
 
