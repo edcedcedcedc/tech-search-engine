@@ -1,43 +1,6 @@
+from extra.map import map_category
 from products.models import Product
-from products.utils.shop_crawler_engine_log import random_sleep, shop_crawler_log
-import requests
-
-
-class RateLimiter:
-    """Handle rate limiting and retries for HTTP requests"""
-
-    def __init__(self):
-        self.times_429 = 0
-
-    def handle_429(self):
-        """Handle 429 Too Many Requests responses"""
-        self.times_429 += 1
-        shop_crawler_log(f"Received 429 response (times: {self.times_429})")
-
-        if self.times_429 == 2:
-            random_sleep(60, 120)
-        elif self.times_429 == 3:
-            random_sleep(900, 1000)  # 15-17 minutes
-        else:
-            random_sleep(30, 60)
-
-    def make_request(self, url, timeout=15):
-        """Make HTTP request with rate limiting handling"""
-        try:
-            resp = requests.get(url, timeout=timeout)
-
-            if resp.status_code == 429:
-                self.handle_429()
-                # Optionally retry once after handling 429
-                random_sleep(5, 10)
-                resp = requests.get(url, timeout=timeout)
-
-            resp.raise_for_status()
-            return resp
-
-        except requests.exceptions.RequestException as e:
-            shop_crawler_log(f"Request failed for {url}: {e}")
-            return None
+from products.utils.shop_crawler_engine_log import shop_crawler_log
 
 
 class ChangeTracker:
@@ -143,6 +106,7 @@ class DatabaseManager:
 
             else:
                 # Create new product
+
                 product = Product.objects.using(shop).create(**fetched_item)
                 shop_crawler_log(f"CREATED {fetched_item.get('name', 'Unknown')}")
                 return product, True, {}

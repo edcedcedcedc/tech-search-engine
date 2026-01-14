@@ -1,9 +1,11 @@
 # products/urls.py
 from django.urls import path
 from products.views.search_engine import (
-    AutocompleteAPIView,
     SearchAPIView,
     ProductOffersAPIView,
+)
+from products.views.autocomplete import (
+    AutocompleteAPIView,
 )
 
 urlpatterns = [

@@ -1,8 +1,7 @@
 import html
 import re
-import requests
 from bs4 import BeautifulSoup
-from .utils import RateLimiter
+from products.management.commands.shop_crawler_engine.infra.http import RateLimiter
 from products.utils.shop_crawler_engine_log import random_sleep
 
 
@@ -54,7 +53,7 @@ def fetch_xstore_products(category_url, max_pages=1):
                 "price": int(add_btn.get("data-price") or 0),
                 "brand": add_btn.get("data-brand") or "",
                 "category": category_text,
-                "t_category": {"ro": "", "en": "", "ru": ""},
+                "t_category": {"ro": category_text, "en": "", "ru": ""},
                 "url": link_tag.get("href") if link_tag else None,
                 "image": img_tag.get("src") if img_tag else None,
                 "shop": "xstore",
@@ -111,7 +110,7 @@ def fetch_enter_products(category_url, max_pages=1):
             external_id = safe_re_search(r'"item_id":"(.*?)"', decoded)
             price = int(safe_re_search(r'"price":(\d+)', decoded, default="0"))
             brand = safe_re_search(r'"item_brand":"(.*?)"', decoded)
-            category = safe_re_search(r'"item_category":"(.*?)"', decoded)
+            category_text = safe_re_search(r'"item_category":"(.*?)"', decoded)
 
             item_data = {
                 "external_id": external_id,
@@ -121,8 +120,8 @@ def fetch_enter_products(category_url, max_pages=1):
                 "t_variant": {"ro": variant, "en": "", "ru": ""},
                 "price": price,
                 "brand": brand,
-                "category": category,
-                "t_category": {"ro": "", "en": "", "ru": ""},
+                "category": category_text,
+                "t_category": {"ro": category_text, "en": "", "ru": ""},
                 "url": node.select_one(".stretched-link")["href"] or "",
                 "in_stock": in_stock,
                 "shop": "enter",
@@ -164,7 +163,7 @@ def fetch_darwin_products(category_url, max_pages=1):
             # return if out of stock, because the items are sorted by popularity by default
             in_stock = "out-of-stock" not in node.get("class", [])
             if not in_stock:
-                return  # ?????
+                continue
 
             if not raw:
                 continue
@@ -173,7 +172,7 @@ def fetch_darwin_products(category_url, max_pages=1):
 
             name = safe_re_search(r'"item_name":"(.*?)"', decoded)
             variant = safe_re_search(r'"item_variant":"(.*?)"', decoded)
-            category = safe_re_search(r'"item_category":"(.*?)"', decoded)
+            category_text = safe_re_search(r'"item_category":"(.*?)"', decoded)
             external_id = safe_re_search(r'"item_id":"(.*?)"', decoded)
             brand = safe_re_search(r'"item_brand":"(.*?)"', decoded)
             price = int(safe_re_search(r'"price":(\d+)', decoded, default="0"))
@@ -186,8 +185,8 @@ def fetch_darwin_products(category_url, max_pages=1):
                 "t_variant": {"ro": variant, "en": "", "ru": ""},
                 "price": price,
                 "brand": brand,
-                "category": category,
-                "t_category": {"ro": "", "en": "", "ru": ""},
+                "category": category_text,
+                "t_category": {"ro": category_text, "en": "", "ru": ""},
                 "url": link.get("href") or "",
                 "in_stock": in_stock,
                 "shop": "darwin",

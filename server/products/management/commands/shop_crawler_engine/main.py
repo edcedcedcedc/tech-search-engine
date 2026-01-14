@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from products.management.commands.shop_crawler_engine.utils import DatabaseManager
-from products.management.commands.shop_crawler_engine.config import config
+from products.management.commands.shop_crawler_engine.config import shops
 from products.utils.shop_crawler_engine_log import shop_crawler_log, random_sleep
 import traceback
 from threading import Thread
@@ -42,7 +42,7 @@ class Command(BaseCommand):
             threads = []
 
             # Launch threads for all shop/category combinations
-            for shop_name, shop_cfg in config.items():
+            for shop_name, shop_cfg in shops.items():
 
                 if filter_shop and shop_name != filter_shop:
                     continue

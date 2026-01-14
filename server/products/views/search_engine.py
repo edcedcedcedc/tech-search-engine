@@ -11,7 +11,6 @@ from django.db.models import Q
 import traceback
 from rest_framework.throttling import ScopedRateThrottle
 from products.throttles import (
-    AutocompleteThrottle,
     Layer1Throttle,
     Layer2PreviewThrottle,
     Layer2FullThrottle,
@@ -963,20 +962,14 @@ class ProductOffersAPIView(SearchAPIView):
         return None
 
 
-class AutocompleteAPIView(APIView):
-    """
-    Returns top autocomplete suggestions for the search bar.
-    Uses RapidFuzz to match user input against canonical cluster names.
-    Considers brand and category for better relevance.
-    """
+""" class AutocompleteAPIView(APIView):
+   
 
     throttle_classes = [AutocompleteThrottle]
 
     @cached_property
     def cluster_names_cache(self):
-        """
-        Cache one representative name per canonical_id cluster, including brand and category.
-        """
+       
         products = Product.objects.all().order_by("id")
         seen = set()
         cluster_names = []
@@ -1049,3 +1042,4 @@ class AutocompleteAPIView(APIView):
         return Response(
             {"suggestions": suggestions, "raw_matches": candidates[:AUTOCOMPLETE_LIMIT]}
         )
+ """
