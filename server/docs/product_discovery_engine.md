@@ -5,7 +5,7 @@
           │ id, name, variant, brand  │
           │ category, shop, price     │
           │ embedding (precomputed)   │
-          │ canonical_id (precomputed)│
+          │ canonical_id (prec embedd)│
           └─────────────┬─────────────┘
                         │
                         │
@@ -19,7 +19,7 @@
           │                           │
           ▼                           ▼
 ┌───────────────────┐       ┌─────────────────────┐
-│  Query embedding   │       │ Semantic filter:    │
+│  Query embedding  │       │ Semantic filter:    │
 │ (generated live)  │       │ cosine similarity   │
 └───────────────────┘       │ query vs product    │
                             │ embeddings          │
@@ -34,16 +34,17 @@
                                     │
                                     ▼
                          ┌──────────────────────┐
-                         │ Aggregate by          │
-                         │ canonical_id          │
-                         │ (precomputed)         │
+                         │ Aggregate by         │
+                         │ canonical_id         │
+                         │ (prec embedd)        │
                          └─────────┬────────────┘
                                    │
                                    ▼
                      ┌─────────────────────────┐
-                     │ Identity resolution     │
+                     │ Merge lexicographically │
                      │ (live merge of offers)  │
-                     │ - merge by URL          │
+                     │ - match urls            │
+                     | - match name, variant   |
                      │ - merge by external_id  │
                      │ - fuzzy match           │
                      └─────────┬──────────────┘
@@ -70,3 +71,4 @@
 Stage 1: Recall (broad, semantic)
 Stage 2: Precision (strict, lexical)
 ![alt text](image.png)
+![alt text](image-1.png)

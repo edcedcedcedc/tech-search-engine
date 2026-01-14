@@ -33,12 +33,6 @@ class Product(models.Model):
         unique_together = ("shop", "external_id")
 
 
-class CategoryMapping(models.Model):
-    shop = models.CharField(max_length=100)
-    raw_category = models.CharField(max_length=255)
-    unified_category = models.CharField(max_length=100)
-
-
 # store embeddings for user search queries
 class UserQueryEmbedding(models.Model):
     query_text = models.TextField()
@@ -52,3 +46,40 @@ class PrecomputedSimilarity(models.Model):
     product = models.ForeignKey("Product", on_delete=models.CASCADE)
     similarity = models.FloatField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class AutocompleteToken(models.Model):
+    context = models.CharField(max_length=255, db_index=True)
+    next_token = models.CharField(max_length=64, db_index=True)
+    count = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        unique_together = ("context", "next_token")
+        indexes = [
+            models.Index(fields=["context"]),
+            models.Index(fields=["next_token"]),
+        ]
+
+    def __str__(self):
+        return f"{self.context} -> {self.next_token} ({self.count})"
+
+
+class ArchivedProduct(models.Model):
+    original_id = models.IntegerField(db_index=True)
+    external_id = models.CharField(max_length=50)
+    canonical_id = models.CharField(max_length=40, null=True, blank=True)
+    name = models.CharField(max_length=255, null=True, blank=True)
+    variant = models.CharField(max_length=50, null=True, blank=True)
+
+    price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    in_stock = models.BooleanField(default=False)
+    shop = models.CharField(max_length=50)
+
+    archived_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["external_id"]),
+            models.Index(fields=["canonical_id"]),
+            models.Index(fields=["shop"]),
+        ]

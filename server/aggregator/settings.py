@@ -167,3 +167,5 @@ CORS_EXPOSE_HEADERS = [
     "content-type",
     "x-csrftoken",
 ]
+
+ELASTICSEARCH_HOSTS = ["http://localhost:9200"]
