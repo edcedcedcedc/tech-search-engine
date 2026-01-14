@@ -13,6 +13,7 @@ class OfferSerializer(serializers.Serializer):
     url = serializers.URLField()
     brand = serializers.CharField()
     in_stock = serializers.BooleanField(default=True)
+    offer_score = serializers.IntegerField()
 
 
 class AggregatedProductSerializer(serializers.Serializer):
@@ -26,6 +27,7 @@ class AggregatedProductSerializer(serializers.Serializer):
     offers = OfferSerializer(many=True)
     lowest_price = serializers.IntegerField()
     relevance = serializers.IntegerField()
+    product_score = serializers.IntegerField()
     image = serializers.URLField(allow_blank=True, required=False)
     shops = serializers.SerializerMethodField()
 

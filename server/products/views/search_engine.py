@@ -1,4 +1,5 @@
 from functools import cached_property
+import math
 import time
 from django.shortcuts import render
 from requests import request
@@ -96,14 +97,12 @@ class SearchAPIView(APIView):
     def get(self, request):
         try:
             raw_query = request.GET.get("q", "").strip()
-            # translated_query = self.translate_query(raw_query)
-            # embeddings_from_query_log(f"{raw_query}, {translated_query}")
-            # search_engine_log(f"Translating: '{translated_query}")
             query_embedding = self.get_query_embedding(raw_query)
-
             search_engine_log(f"Received raw query: '{raw_query}'")
+
             limit = min(int(request.GET.get("limit", LAYER1_LIMIT)), LAYER1_LIMIT)
             cursor = request.GET.get("cursor")
+            offset = int(cursor) if cursor and cursor.isdigit() else 0
 
             if not raw_query or query_embedding is None:
                 request.session["aggregated_cache"] = None
@@ -115,16 +114,18 @@ class SearchAPIView(APIView):
             top_products = self.semantic_filter_products(query_embedding)
 
             aggregated = self.aggregate_products(top_products)
+
+            # Identity resolution & relevance scoring
             aggregated = self.identity_resolution(aggregated)
             aggregated = self.score_relevance(aggregated, raw_query, query_embedding)
 
-            aggregated.sort(
-                key=lambda x: (-x["relevance"])
-            )  # x["lowest_price"], x["id"]
+            # Sort by product_score descending
+            aggregated.sort(key=lambda x: -x.get("product_score", x["relevance"]))
 
-            if cursor:
-                aggregated = self.apply_cursor(aggregated, cursor)
+            # --- Slice using index-based cursor ---
+            aggregated_slice = aggregated[offset : offset + limit]
 
+            # Save full sorted aggregated cache in session for Layer2
             request.session["aggregated_cache"] = aggregated
 
             probabilistic_clusters = [
@@ -137,15 +138,16 @@ class SearchAPIView(APIView):
                     "lowest_price": p["lowest_price"],
                     "offers": len(p["offers"]),
                     "relevance": p["relevance"],
+                    "product_score": p["product_score"],
                     "image": p["image"],
                     "t_name": p.get("t_name", {}),
                     "t_variant": p.get("t_variant", {}),
                     "shops": p.get("shops", []),
                 }
-                for p in aggregated[:limit]
+                for p in aggregated_slice
             ]
 
-            next_cursor = self.get_next_cursor(aggregated, limit)
+            next_cursor = self.get_next_cursor(aggregated, limit, offset=offset)
             return Response(
                 {"products": probabilistic_clusters, "next_cursor": next_cursor}
             )
@@ -187,13 +189,384 @@ class SearchAPIView(APIView):
     def translate_query(self, raw_query: str) -> str:
         """
         Normalize, translate and safely expand a short e-commerce search query
-        for semantic search.
+        for semantic search and map it to valid categories.
         """
+        categories_cleaned = [
+            {
+                "ro": "accesorii apple",
+                "en": "Apple accessories",
+                "ru": "аксессуары Apple",
+            },
+            {
+                "ro": "accesorii gaming",
+                "en": "Gaming accessories",
+                "ru": "геймерские аксессуары",
+            },
+            {
+                "ro": "accesorii tableta",
+                "en": "Tablet accessories",
+                "ru": "аксессуары для планшетов",
+            },
+            {
+                "ro": "accesorii tv",
+                "en": "TV accessories",
+                "ru": "аксессуары для телевизоров",
+            },
+            {
+                "ro": "aspirator robot",
+                "en": "Robot vacuum cleaners",
+                "ru": "роботы-пылесосы",
+            },
+            {
+                "ro": "birou calculator, mobilier",
+                "en": "Computer desks and furniture",
+                "ru": "компьютерные столы и мебель",
+            },
+            {
+                "ro": "birou, mobilier",
+                "en": "Office desks and furniture",
+                "ru": "офисные столы и мебель",
+            },
+            {
+                "ro": "cabluri, accesorii",
+                "en": "Cables and accessories",
+                "ru": "кабели и аксессуары",
+            },
+            {"ro": "camera actiune", "en": "Action cameras", "ru": "экшн-камеры"},
+            {
+                "ro": "camera web, periferice pc",
+                "en": "Webcams and PC peripherals",
+                "ru": "веб-камеры и периферия для ПК",
+            },
+            {
+                "ro": "cană, accesorii birou",
+                "en": "Mugs and desk accessories",
+                "ru": "кружки и офисные аксессуары",
+            },
+            {
+                "ro": "carcasa pc, componente pc",
+                "en": "PC cases and components",
+                "ru": "корпуса и компоненты ПК",
+            },
+            {
+                "ro": "casti gaming, audio",
+                "en": "Gaming headsets and audio",
+                "ru": "геймерские наушники и аудио",
+            },
+            {
+                "ro": "casti, audio",
+                "en": "Headphones and audio",
+                "ru": "наушники и аудио",
+            },
+            {"ro": "console jocuri", "en": "Game consoles", "ru": "игровые консоли"},
+            {
+                "ro": "consumabile imprimanta",
+                "en": "Printer consumables",
+                "ru": "расходные материалы для принтеров",
+            },
+            {
+                "ro": "controller jocuri, accesorii gaming",
+                "en": "Game controllers and gaming accessories",
+                "ru": "геймпады и игровые аксессуары",
+            },
+            {
+                "ro": "docking station, accesorii pc",
+                "en": "Docking stations and PC accessories",
+                "ru": "док-станции и аксессуары для ПК",
+            },
+            {
+                "ro": "ecrane proiectie",
+                "en": "Projection screens",
+                "ru": "проекционные экраны",
+            },
+            {
+                "ro": "imprimanta, birou",
+                "en": "Printers and office equipment",
+                "ru": "принтеры и офисное оборудование",
+            },
+            {
+                "ro": "incarcatoare, accesorii mobile",
+                "en": "Chargers and mobile accessories",
+                "ru": "зарядные устройства и мобильные аксессуары",
+            },
+            {"ro": "jocuri video", "en": "Video games", "ru": "видеоигры"},
+            {
+                "ro": "lampa birou, iluminat",
+                "en": "Desk lamps and lighting",
+                "ru": "настольные лампы и освещение",
+            },
+            {
+                "ro": "laptop accessories",
+                "en": "Laptop accessories",
+                "ru": "аксессуары для ноутбуков",
+            },
+            {
+                "ro": "laptop gaming, notebook gaming",
+                "en": "Gaming laptops",
+                "ru": "игровые ноутбуки",
+            },
+            {
+                "ro": "laptop, notebook",
+                "en": "Laptops and notebooks",
+                "ru": "ноутбуки и портативные компьютеры",
+            },
+            {"ro": "media player", "en": "Media players", "ru": "медиаплееры"},
+            {
+                "ro": "memorie ram, componente pc",
+                "en": "RAM and PC components",
+                "ru": "оперативная память и компоненты ПК",
+            },
+            {
+                "ro": "merchandising, fan gear",
+                "en": "Merchandising and fan gear",
+                "ru": "мерчандайзинг и фанатская атрибутика",
+            },
+            {
+                "ro": "merchandising, gaming",
+                "en": "Gaming merchandising",
+                "ru": "геймерский мерчандайзинг",
+            },
+            {
+                "ro": "microfon gaming, audio",
+                "en": "Gaming microphones and audio",
+                "ru": "геймерские микрофоны и аудио",
+            },
+            {
+                "ro": "microfon, audio",
+                "en": "Microphones and audio",
+                "ru": "микрофоны и аудио",
+            },
+            {"ro": "mini pc, apple", "en": "Apple Mac mini", "ru": "мини-ПК Apple"},
+            {
+                "ro": "mini pc, desktop",
+                "en": "Mini PCs",
+                "ru": "мини-ПК и настольные компьютеры",
+            },
+            {
+                "ro": "monitor gaming, display",
+                "en": "Gaming monitors",
+                "ru": "игровые мониторы",
+            },
+            {
+                "ro": "monitor, display",
+                "en": "Monitors and displays",
+                "ru": "мониторы и дисплеи",
+            },
+            {
+                "ro": "mouse gaming, periferice pc",
+                "en": "Gaming mice and PC peripherals",
+                "ru": "геймерские мыши и периферия для ПК",
+            },
+            {
+                "ro": "mouse pad gaming, accesorii pc",
+                "en": "Gaming mouse pads and PC accessories",
+                "ru": "геймерские коврики и аксессуары для ПК",
+            },
+            {
+                "ro": "mouse pad, accesorii pc",
+                "en": "Mouse pads and PC accessories",
+                "ru": "коврики для мыши и аксессуары для ПК",
+            },
+            {
+                "ro": "mouse, periferice pc",
+                "en": "Mice and PC peripherals",
+                "ru": "компьютерные мыши и периферия для ПК",
+            },
+            {"ro": "pc all in one, apple", "en": "Apple iMac", "ru": "моноблоки Apple"},
+            {
+                "ro": "pc all in one, desktop",
+                "en": "All-in-One PCs",
+                "ru": "моноблоки и настольные компьютеры",
+            },
+            {
+                "ro": "pc desktop, apple",
+                "en": "Apple Mac Studio",
+                "ru": "настольные компьютеры Apple",
+            },
+            {
+                "ro": "pc desktop, sistem complet",
+                "en": "Desktop PCs, complete systems",
+                "ru": "настольные ПК, готовые системы",
+            },
+            {
+                "ro": "pc gaming, desktop gaming",
+                "en": "Gaming desktop PCs",
+                "ru": "игровые ПК и гейминг-компьютеры",
+            },
+            {
+                "ro": "periferice pc",
+                "en": "PC peripherals",
+                "ru": "периферийные устройства для ПК",
+            },
+            {
+                "ro": "placa de baza, motherboard, componente pc",
+                "en": "Motherboards and PC components",
+                "ru": "материнские платы и компоненты ПК",
+            },
+            {
+                "ro": "placa video, gpu, componente pc",
+                "en": "Graphics cards and PC components",
+                "ru": "видеокарты и компоненты ПК",
+            },
+            {
+                "ro": "power bank, accesorii mobile",
+                "en": "Power banks and mobile accessories",
+                "ru": "пауэрбанки и мобильные аксессуары",
+            },
+            {
+                "ro": "procesor, cpu, componente pc",
+                "en": "Processors and PC components",
+                "ru": "процессоры и компоненты ПК",
+            },
+            {
+                "ro": "proiectoare, display",
+                "en": "Projectors and displays",
+                "ru": "проекционные устройства и дисплеи",
+            },
+            {
+                "ro": "protectie retea, birou",
+                "en": "Network protection and office",
+                "ru": "защита сети и офис",
+            },
+            {
+                "ro": "protectie telefon, accesorii mobile",
+                "en": "Phone protection and mobile accessories",
+                "ru": "защита телефона и мобильные аксессуары",
+            },
+            {
+                "ro": "racire pc, accesorii",
+                "en": "PC cooling and accessories",
+                "ru": "охлаждение ПК и аксессуары",
+            },
+            {
+                "ro": "racire pc, cooler, componente pc",
+                "en": "PC cooling, coolers and components",
+                "ru": "охлаждение ПК, кулеры и компоненты",
+            },
+            {
+                "ro": "router, dispozitiv retea",
+                "en": "Routers and network devices",
+                "ru": "роутеры и сетевые устройства",
+            },
+            {
+                "ro": "router, wifi, dispozitiv retea",
+                "en": "WiFi routers and network devices",
+                "ru": "WiFi роутеры и сетевые устройства",
+            },
+            {
+                "ro": "scanner, birou",
+                "en": "Scanners and office",
+                "ru": "сканеры и офис",
+            },
+            {
+                "ro": "scaun birou, mobilier",
+                "en": "Office chairs",
+                "ru": "офисные кресла",
+            },
+            {
+                "ro": "scaun gaming, mobilier birou",
+                "en": "Gaming chairs",
+                "ru": "геймерские кресла",
+            },
+            {
+                "ro": "shredder, birou",
+                "en": "Office shredders",
+                "ru": "офисные шредеры",
+            },
+            {"ro": "smartphone, telefon mobil", "en": "Smartphones", "ru": "смартфоны"},
+            {"ro": "smartwatch", "en": "Smartwatches", "ru": "умные часы"},
+            {"ro": "software", "en": "Software", "ru": "ПО"},
+            {
+                "ro": "sticlă apă, accesorii birou",
+                "en": "Water bottles and desk accessories",
+                "ru": "бутылки для воды и офисные аксессуары",
+            },
+            {
+                "ro": "stocare externa, hdd, accesorii pc",
+                "en": "External storage and PC accessories",
+                "ru": "внешнее хранилище и аксессуары ПК",
+            },
+            {
+                "ro": "stocare interna, hdd, componente pc",
+                "en": "Internal HDD storage",
+                "ru": "внутренние HDD и компоненты ПК",
+            },
+            {
+                "ro": "stocare interna, ssd, componente pc",
+                "en": "Internal SSD storage",
+                "ru": "внутренние SSD и компоненты ПК",
+            },
+            {
+                "ro": "stocare interna, ssd, hdd, componente pc",
+                "en": "Internal SSD/HDD storage",
+                "ru": "внутренние SSD/HDD и компоненты ПК",
+            },
+            {
+                "ro": "suport auto telefon, accesorii auto",
+                "en": "Car phone holders and accessories",
+                "ru": "автомобильные держатели и аксессуары",
+            },
+            {
+                "ro": "suport monitor, accesorii birou",
+                "en": "Monitor stands and desk accessories",
+                "ru": "подставки для мониторов и офисные аксессуары",
+            },
+            {
+                "ro": "suport tv, accesorii tv",
+                "en": "TV stands and accessories",
+                "ru": "подставки для ТВ и аксессуары",
+            },
+            {
+                "ro": "sursa pc, psu, componente pc",
+                "en": "PC power supplies and components",
+                "ru": "блоки питания ПК и компоненты",
+            },
+            {
+                "ro": "switch, poe, dispozitiv retea",
+                "en": "Switches, PoE, network devices",
+                "ru": "коммутаторы, PoE и сетевые устройства",
+            },
+            {"ro": "tableta", "en": "Tablets", "ru": "планшеты"},
+            {
+                "ro": "tableta grafica",
+                "en": "Graphics tablets",
+                "ru": "графические планшеты",
+            },
+            {
+                "ro": "tableta grafica, periferice pc",
+                "en": "Graphics tablets and PC peripherals",
+                "ru": "графические планшеты и периферия ПК",
+            },
+            {
+                "ro": "tastatura gaming, periferice pc",
+                "en": "Gaming keyboards and PC peripherals",
+                "ru": "геймерские клавиатуры и периферия ПК",
+            },
+            {
+                "ro": "tastatura, periferice pc",
+                "en": "Keyboards and PC peripherals",
+                "ru": "клавиатуры и периферия ПК",
+            },
+            {
+                "ro": "telefon fix, dect, birou",
+                "en": "Landline phones and office",
+                "ru": "стационарные телефоны и офис",
+            },
+            {
+                "ro": "telefon mobil, buton, feature phone",
+                "en": "Feature phones",
+                "ru": "кнопочные телефоны",
+            },
+            {"ro": "televizor", "en": "Televisions", "ru": "телевизоры"},
+        ]
         if not raw_query:
             return raw_query
 
         try:
             search_engine_log(f"Translating query: '{raw_query}'")
+
+            # Flatten categories for GPT
+            categories_words = [cat["ro"] for cat in categories_cleaned]
 
             resp = client.chat.completions.create(
                 model="gpt-5-nano",
@@ -202,31 +575,30 @@ class SearchAPIView(APIView):
                     {
                         "role": "system",
                         "content": (
-                            "You normalize short e-commerce product search queries.\n"
-                            "\n"
-                            "Your tasks:\n"
+                            "You normalize short e-commerce product search queries "
+                            "and map them to valid categories.\n\n"
+                            "Tasks:\n"
                             "1. Translate the query to English if needed.\n"
                             "2. Expand informal slang to standard product terms.\n"
-                            "3. Add ONLY safe, generic synonyms at product-type level.\n"
-                            "\n"
+                            "3. Map any recognized product type to categories in this list:\n"
+                            f"{', '.join(categories_words)}\n"
+                            "4. You can mix multiple categories if appropriate.\n\n"
                             "Rules:\n"
                             "- Output ONE single-line query string.\n"
                             "- Use lowercase.\n"
-                            "- No explanations.\n"
-                            "- No punctuation except spaces.\n"
-                            "- Do NOT invent features, brands, or use cases.\n"
-                            "- Do NOT add adjectives beyond what is implied.\n"
-                            "- If unsure, keep it minimal.\n"
-                            "\n"
+                            "- Only words separated by spaces.\n"
+                            "- Include valid category words whenever possible.\n"
+                            "- Do NOT invent new categories.\n"
+                            "- Minimal extra words beyond normalization.\n\n"
                             "Examples:\n"
                             "Input: моник новый\n"
-                            "Output: monitor new display\n"
+                            "Output: monitor display\n"
                             "\n"
-                            "Input: ноут б у\n"
-                            "Output: laptop used\n"
+                            "Input: кнопочный тел\n"
+                            "Output: telefon mobil buton\n"
                             "\n"
-                            "Input: iphone 13 pro max\n"
-                            "Output: iphone 13 pro max\n"
+                            "Input: айфон 13\n"
+                            "Output: iphone 13 smartphone\n"
                         ),
                     },
                     {"role": "user", "content": raw_query},
@@ -403,7 +775,8 @@ class SearchAPIView(APIView):
 
             # Merge all offers from similar products
             all_offers = [o for s in similar for o in s["offers"]]
-            base["offers"] = balanced_offers(all_offers)
+
+            base["offers"] = all_offers  # was balaced offers
             base["lowest_price"] = min(o["price"] for o in all_offers)
 
             merged.append(base)
@@ -443,6 +816,12 @@ class SearchAPIView(APIView):
                 + 0.1 * semantic_similarity  # add semantic boost
             )
             item["relevance"] = round(relevance, 4)
+            # --- new hybrid score including price influence ---
+            # protect against price=0
+            price_factor = 0.5 / math.log(
+                item["lowest_price"] + 2
+            )  # +2 to avoid log(0) or very cheap anomalies
+            item["product_score"] = round(0.9 * relevance + 0.1 * price_factor, 4)
 
             search_engine_log(
                 f"Product '{item['name']}' -> fuzzy={fuzzy_score}, "
@@ -453,21 +832,15 @@ class SearchAPIView(APIView):
 
     def apply_cursor(self, aggregated, cursor):
         try:
-            last_id, last_price = cursor.split("_")
-            last_price = int(last_price)
-            return [
-                p
-                for p in aggregated
-                if p["lowest_price"] > last_price
-                or (p["lowest_price"] == last_price and p["id"] > last_id)
-            ]
-        except ValueError:
+            offset = int(cursor)
+            return aggregated[offset:]
+        except (ValueError, TypeError):
             return aggregated
 
-    def get_next_cursor(self, aggregated, limit):
-        if len(aggregated) > limit:
-            last_item = aggregated[limit - 1]
-            return f"{last_item['id']}_{last_item['lowest_price']}"
+    def get_next_cursor(self, aggregated, limit, offset=0):
+        next_offset = offset + limit
+        if next_offset < len(aggregated):
+            return str(next_offset)
         return None
 
 
@@ -479,23 +852,62 @@ class ProductOffersAPIView(SearchAPIView):
     Only works if Layer1 has been called and aggregated_cache exists.
     """
 
+    def offer_identity_score(self, offer, product):
+        """How well this offer matches the product cluster identity."""
+        name_score = (
+            fuzz.token_set_ratio(offer["name"].lower(), product["name"].lower()) / 100
+        )
+        variant_score = (
+            fuzz.token_set_ratio(
+                (offer.get("variant") or "").lower(),
+                (product.get("variant") or "").lower(),
+            )
+            / 100
+        )
+        return 0.7 * name_score + 0.3 * variant_score
+
+    def price_score(self, price, min_price):
+        """Soft price influence. Never dominates identity."""
+        if price <= 0 or min_price <= 0:
+            return 0.0
+        return 1 / math.log(price / min_price + 1.2)
+
+    def score_offers_for_product(self, product):
+        """Scores offers inside a product cluster."""
+        min_price = product["lowest_price"]
+        product_relevance = product["relevance"]
+
+        for o in product["offers"]:
+            if not o["in_stock"]:
+                o["offer_score"] = 0.0
+                continue
+
+            identity = self.offer_identity_score(o, product)
+            """ if identity <= 0.60:  # Hard reject near-miss models
+                o["offer_score"] = 0.0
+                continue """
+
+            price_component = self.price_score(o["price"], min_price)
+            o["offer_score"] = round(
+                0.80 * identity + 0.15 * product_relevance + 0.05 * price_component, 4
+            )
+
     def get(self, request, product_id):
         full = request.GET.get("full", "false").lower() == "true"
+        limit = int(
+            request.GET.get("limit", LAYER2_LIMIT if not full else LAYER3_LIMIT)
+        )
 
         if full:
             self.throttle_classes = [Layer2FullThrottle]
         else:
             self.throttle_classes = [Layer2PreviewThrottle]
 
-        limit = int(
-            request.GET.get("limit", LAYER2_LIMIT if not full else LAYER3_LIMIT)
-        )
-
+        # --- Index-based cursor like Layer1 ---
         cursor = request.GET.get("cursor")
+        offset = int(cursor) if cursor and cursor.isdigit() else 0
 
-        # access Layer1 aggregated cache
         aggregated = request.session.get("aggregated_cache")
-
         if not aggregated or not request.session.session_key:
             return Response({"error": "invalid session"}, status=403)
 
@@ -504,47 +916,50 @@ class ProductOffersAPIView(SearchAPIView):
             return Response({"offers": [], "has_more": False, "next_cursor": None})
 
         offers = product["offers"]
-        offers.sort(key=lambda o: o["price"])
 
-        if cursor:
-            offers = self.apply_cursor(offers, cursor)
+        # --- Score offers relative to product ---
+        self.score_offers_for_product(product)
+
+        # Sort by offer relevance, not price
+        offers.sort(key=lambda o: o.get("offer_score", 0), reverse=True)
+
+        # Slice offers according to index-based cursor
+        offers_slice = offers[offset : offset + limit]
 
         result = (
-            offers[:limit]
+            offers_slice
             if full
             else [
                 {"shop": o["shop"], "name": o["name"], "price": o["price"]}
-                for o in offers[:limit]
+                for o in offers_slice
             ]
         )
-        has_more = len(offers) > limit
-        next_cursor = self.get_next_cursor(offers, limit)
+
+        next_cursor = str(offset + limit) if offset + limit < len(offers) else None
+        has_more = next_cursor is not None
 
         search_engine_log(
             f"Product '{product_id}' offers count={len(product['offers'])}, "
             f"limit={limit}, full={full}, cursor={cursor}"
         )
+
         return Response(
             {"offers": result, "has_more": has_more, "next_cursor": next_cursor}
         )
 
     def apply_cursor(self, offers, cursor):
+        """Index-based cursor for universal pagination."""
         try:
-            last_price, last_shop = cursor.split("_")
-            last_price = int(last_price)
-            return [
-                o
-                for o in offers
-                if o["price"] > last_price
-                or (o["price"] == last_price and o["shop"] > last_shop)
-            ]
-        except ValueError:
+            offset = int(cursor)
+            return offers[offset:]
+        except (ValueError, TypeError):
             return offers
 
-    def get_next_cursor(self, offers, limit):
-        if len(offers) > limit:
-            last_item = offers[limit - 1]
-            return f"{last_item['price']}_{last_item['shop']}"
+    def get_next_cursor(self, offers, limit, offset=0):
+        """Return next cursor based on index."""
+        next_offset = offset + limit
+        if next_offset < len(offers):
+            return str(next_offset)
         return None
 
 
