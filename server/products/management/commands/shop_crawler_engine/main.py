@@ -1,5 +1,7 @@
 from django.core.management.base import BaseCommand
-from products.management.commands.shop_crawler_engine.utils import DatabaseManager
+from products.management.commands.shop_crawler_engine.utils import (
+    DatabaseManager,
+)
 from products.management.commands.shop_crawler_engine.config import config
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log, random_sleep
 import traceback
@@ -87,6 +89,7 @@ class Command(BaseCommand):
             shop_crawler_log(
                 "Saved all created/updated records for downstream processing"
             )
+
             shop_crawler_log("END shop_crawler_engine orchestrator")
 
         except KeyboardInterrupt:

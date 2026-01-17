@@ -1,4 +1,8 @@
-from products.models import ArchivedBrokenProduct, ArchivedProduct, Product
+from products.models import (
+    ArchivedBrokenProduct,
+    ArchivedProduct,
+    Product,
+)
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
 from django.db import transaction
 

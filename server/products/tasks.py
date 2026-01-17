@@ -171,6 +171,9 @@ def run_merge_pipeline_to_stage():
     1. Overwrite stage with prod
     2. Merge all crawler DBs into stage with dirty logic
     """
+    from products.models import Product
+    from products.models import CrawlSnapshot
+
     try:
         # Step 1: Prod -> Stage (force overwrite)
         db_merge_log("[TASK] Step 1: Prod -> Stage (force overwrite)")
@@ -193,9 +196,49 @@ def run_merge_pipeline_to_stage():
             )
             db_merge_log(f"[TASK] Step 2 finished for {db}")
 
-        db_merge_log(
-            "[TASK] Merge to stage completed: ready for canonical ID generation"
-        )
+        def snapshot_crawl_stage(batch_size=5000):
+            """
+            Take a snapshot of all product external_ids in Stage DB.
+            Works in batches to avoid memory issues and counts items internally.
+            """
+            from products.models import Product, CrawlSnapshot
+
+            all_ids = []
+            offset = 0
+
+            db_count = Product.objects.using(STAGE_DB).count()
+            shop_crawler_log(
+                f"[SNAPSHOT] Stage has {db_count} products, starting batched snapshot..."
+            )
+
+            while True:
+                batch_ids = list(
+                    Product.objects.using(STAGE_DB).values_list(
+                        "external_id", flat=True
+                    )[offset : offset + batch_size]
+                )
+                if not batch_ids:
+                    break
+
+                all_ids.extend(batch_ids)
+                offset += batch_size
+
+                shop_crawler_log(
+                    f"[SNAPSHOT] Collected {len(all_ids)}/{db_count} Stage products"
+                )
+
+            # Bulk insert snapshot (single row, so not really "bulk_create" but memory-efficient)
+            snapshot = CrawlSnapshot.objects.create(shop="stage", external_ids=all_ids)
+
+            shop_crawler_log(
+                f"[SNAPSHOT] Stage snapshot created with {len(all_ids)} products"
+            )
+            return snapshot
+
+        # Call it once after Stage merge
+        snapshot_crawl_stage()
+
+        db_merge_log("[TASK] Merge to stage + snapshots completed")
 
     except Exception as e:
         db_merge_log(f"[TASK] Merge to stage failed: {e}")
@@ -233,25 +276,83 @@ def run_canonical_ids_stage(batch_size=1000, force=True):
 
 @shared_task(
     bind=True,
-    autoretry_for=(Exception,),
-    retry_backoff=60,
-    retry_kwargs={"max_retries": 3},
     name="run_merge_pipeline_to_default",
 )
-def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=True):
+def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=True, batch_size=5000):
     """
-    Final pipeline step with optional dry run:
-    1. Merge Stage -> Prod (force) [skipped if dry_run=True]
-    2. Run embeddings/translation analyzer
-    3. Mark Prod products as clean (dirty=False, change_type=None) [skipped if dry_run=True]
-    4. Delete Stage products [skipped if dry_run=True]
-    5. Delete all products from crawler DBs [skipped if dry_run=True]
+    Final pipeline step with blazing fast Prod cleanup + Stage merge.
     """
     from products.utils import embeddings_cache
-    from products.models import Product
+    from products.models import Product, ArchivedProduct
+    from django.utils import timezone
+    from django.db import transaction
 
     try:
         if not dry_run:
+
+            # Step 0: Preload Stage external_ids per shop
+            stage_ids_map = {}
+            for shop_name in CRAWLER_DBS:
+                stage_ids_map[shop_name] = set(
+                    Product.objects.using(STAGE_DB)
+                    .filter(shop=shop_name)
+                    .values_list("external_id", flat=True)
+                )
+                db_merge_log(
+                    f"[COMPARE] Stage snapshot for shop '{shop_name}' has {len(stage_ids_map[shop_name])} products"
+                )
+
+            # Step 1: Compare Prod → Stage and archive missing products in batches
+            for shop_name, stage_ids in stage_ids_map.items():
+                prod_qs = (
+                    Product.objects.using(PROD_DB)
+                    .filter(shop=shop_name)
+                    .exclude(external_id__in=stage_ids)
+                )
+                total_to_archive = prod_qs.count()
+                db_merge_log(
+                    f"[COMPARE] Shop '{shop_name}' - {total_to_archive} products to archive"
+                )
+
+                # Batch processing
+                offset = 0
+                archived_count = 0
+                while True:
+                    batch_qs = prod_qs[offset : offset + batch_size]
+                    if not batch_qs:
+                        break
+
+                    archived_objs = [
+                        ArchivedProduct(
+                            original_id=p.id,
+                            external_id=p.external_id,
+                            canonical_id=p.canonical_id,
+                            name=p.name,
+                            variant=p.variant,
+                            price=p.price,
+                            in_stock=p.in_stock,
+                            shop=p.shop,
+                            archived_at=timezone.now(),
+                        )
+                        for p in batch_qs
+                    ]
+
+                    if archived_objs:
+                        with transaction.atomic(using=PROD_DB):
+                            ArchivedProduct.objects.using(PROD_DB).bulk_create(
+                                archived_objs, batch_size=batch_size
+                            )
+                            batch_qs.delete()
+
+                        archived_count += len(archived_objs)
+
+                    offset += batch_size
+
+                db_merge_log(
+                    f"[COMPARE] Shop '{shop_name}' - Archived/deleted {archived_count} products"
+                )
+
+            # Step 2: Merge Stage -> Prod
             db_merge_log(
                 f"[TASK] Starting Stage -> Prod merge | force=True | throttle={throttle_seconds}s"
             )
@@ -264,10 +365,10 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=True):
             )
             db_merge_log("[TASK] Stage -> Prod merge finished successfully")
 
+            # Step 3: Mark Prod products clean
             Product.objects.using(PROD_DB).all().update(dirty=False, change_type=None)
-            db_merge_log(
-                "[TASK] All products in Prod marked as clean (dirty=False, change_type=None)"
-            )
+            db_merge_log("[TASK] All products in Prod marked as clean")
+
         else:
             db_merge_log("[TASK] DRY RUN: Stage -> Prod merge and cleanup SKIPPED")
 
@@ -277,10 +378,9 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=True):
             "embeddings_test", source=STAGE_DB, samples=100, check_translations=True
         )
         db_merge_log("[TASK] Embeddings/semantic analysis finished")
-        # call_command("translate", db=STAGE_DB, analyze=True)
         db_merge_log("[TASK] Translation analysis finished")
 
-        # Cleanup only if not dry_run
+        # Cleanup Stage + Crawler DBs
         if not dry_run:
             Product.objects.using(STAGE_DB).all().delete()
             db_merge_log("[TASK] Stage DB cleared")
@@ -290,6 +390,7 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=True):
 
         db_merge_log("[TASK] Pipeline finalization completed successfully")
 
+        # Reload embeddings cache
         load_embeddings_cache_log(
             "[TASK] Reloading embeddings cache after Prod merge..."
         )

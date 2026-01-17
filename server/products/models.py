@@ -122,3 +122,9 @@ class ArchivedProduct(models.Model):
             models.Index(fields=["canonical_id"]),
             models.Index(fields=["shop"]),
         ]
+
+
+class CrawlSnapshot(models.Model):
+    shop = models.CharField(max_length=50)
+    external_ids = models.JSONField(default=list)  # store list of strings
+    created_at = models.DateTimeField(auto_now_add=True)
