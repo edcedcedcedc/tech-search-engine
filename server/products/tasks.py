@@ -278,7 +278,7 @@ def run_canonical_ids_stage(batch_size=1000, force=True):
     bind=True,
     name="run_merge_pipeline_to_default",
 )
-def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=False, batch_size=5000):
+def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=True, batch_size=5000):
     """
     Final pipeline step with blazing fast Prod cleanup + Stage merge.
     """
