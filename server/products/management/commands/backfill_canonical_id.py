@@ -126,15 +126,49 @@ class Command(BaseCommand):
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from products.models import Product
-from products.utils.generate_canonical_id import generate_canonical_id
-from products.utils.backfill_canonical_id_log import backfill_canonical_id_log
+from products.utils.log.backfill_canonical_id_log import backfill_canonical_id_log
 import json
 import numpy as np
 from numpy.linalg import norm
 from rapidfuzz import fuzz
 
+
 EMBEDDING_THRESHOLD = 0.80  # cosine similarity threshold
 FUZZY_THRESHOLD = 70  # fallback fuzzy threshold
+
+
+# products/utils/canonical.py
+import re
+import hashlib
+import unicodedata
+
+# Optional: stopwords you don’t want affecting IDs
+STOPWORDS = {"new", "original", "orig", "model", "version", "gb", "tb", "ram", "rom"}
+
+
+def generate_canonical_id(base) -> str:
+    """Generate a stable SHA-1 hash as canonical ID."""
+    normalized = normalize_canonical(base)
+    return hashlib.sha1(normalized.encode("utf-8")).hexdigest()
+
+
+def normalize_canonical(s: str) -> str:
+    """Normalize product text for canonical ID."""
+    if not s:
+        return ""
+
+    # lowercase and remove accents
+    s = s.lower()
+    s = unicodedata.normalize("NFKD", s)
+    s = s.encode("ascii", "ignore").decode("ascii")
+
+    # keep letters and numbers only
+    s = re.sub(r"[^a-z0-9\s]", " ", s)
+    s = re.sub(r"\s+", " ", s).strip()
+
+    # remove stopwords
+    tokens = [t for t in s.split() if t not in STOPWORDS]
+    return " ".join(tokens)
 
 
 def cosine_sim(a, b):
@@ -142,9 +176,13 @@ def cosine_sim(a, b):
 
 
 def load_embedding(product):
-    if not product.embedding:
-        return None
-    return np.array(json.loads(product.embedding))
+    """Parse embedding JSON once and cache in product._embedding"""
+    if not getattr(product, "_embedding", None):
+        if not product.embedding:
+            product._embedding = None
+        else:
+            product._embedding = np.array(json.loads(product.embedding))
+    return product._embedding
 
 
 class Command(BaseCommand):
@@ -185,12 +223,16 @@ class Command(BaseCommand):
 
         backfill_canonical_id_log(f"Loaded {len(products)} products")
 
+        # Precompute embeddings once
+        for p in products:
+            load_embedding(p)
+
         clusters = []  # each cluster = {"centroid": np.array, "products": [Product]}
 
         for product in products:
-            emb = load_embedding(product)
+            emb = product._embedding
             if emb is None:
-                # No embedding? fallback to fuzzy only
+                # fallback to fuzzy
                 added = False
                 for cluster in clusters:
                     rep = cluster["products"][0]
@@ -204,7 +246,7 @@ class Command(BaseCommand):
                     clusters.append({"centroid": None, "products": [product]})
                 continue
 
-            # Try embedding similarity first
+            # Embedding similarity
             best_sim = -1
             best_cluster = None
             for cluster in clusters:
@@ -216,37 +258,42 @@ class Command(BaseCommand):
                     best_cluster = cluster
 
             if best_sim >= EMBEDDING_THRESHOLD:
-                # Assign to best cluster
                 best_cluster["products"].append(product)
-                # Update cluster centroid
-                all_embs = [
-                    load_embedding(p)
-                    for p in best_cluster["products"]
-                    if load_embedding(p) is not None
-                ]
-                best_cluster["centroid"] = np.mean(all_embs, axis=0)
+                # Update centroid efficiently with vectorized mean
+                embs = np.array(
+                    [
+                        p._embedding
+                        for p in best_cluster["products"]
+                        if p._embedding is not None
+                    ]
+                )
+                best_cluster["centroid"] = np.mean(embs, axis=0)
             else:
-                # No good embedding match -> create new cluster
                 clusters.append({"centroid": emb, "products": [product]})
 
         backfill_canonical_id_log(f"Formed {len(clusters)} clusters")
 
         # ---------- Assign canonical_id ----------
         processed = 0
+        all_updates = []
+
         for cluster in clusters:
             rep = cluster["products"][0]
             text_for_id = " ".join(filter(None, [rep.name, rep.variant, rep.brand]))
             canonical_id = generate_canonical_id(text_for_id)
 
-            with transaction.atomic(using=database):
-                for p in cluster["products"]:
-                    p.canonical_id = canonical_id
-                    p.save(update_fields=["canonical_id"])
-                    backfill_canonical_id_log(
-                        f"SET canonical_id={canonical_id} db={database} product_id={p.id} "
-                        f"shop={p.shop} name='{p.name}' variant='{p.variant}' brand='{p.brand}'"
-                    )
+            for p in cluster["products"]:
+                p.canonical_id = canonical_id
+                all_updates.append(p)
+                backfill_canonical_id_log(
+                    f"SET canonical_id={canonical_id} db={database} product_id={p.id} "
+                    f"shop={p.shop} name='{p.name}' variant='{p.variant}' brand='{p.brand}'"
+                )
             processed += len(cluster)
+
+        # Bulk update all products at once
+        with transaction.atomic(using=database):
+            Product.objects.using(database).bulk_update(all_updates, ["canonical_id"])
 
         backfill_canonical_id_log(
             f"END embedding backfill db={database}, processed={processed}"

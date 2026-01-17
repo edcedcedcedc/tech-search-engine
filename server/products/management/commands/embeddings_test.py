@@ -1,7 +1,7 @@
 import random
 from django.core.management.base import BaseCommand
 from products.models import Product
-from products.utils.generate_embeddings_from_object_log import (
+from products.utils.log.generate_embeddings_from_object_log import (
     generate_embeddings_from_object_log,
 )
 import numpy as np

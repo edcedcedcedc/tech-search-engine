@@ -2,7 +2,7 @@ import html
 import re
 from bs4 import BeautifulSoup
 from products.management.commands.shop_crawler_engine.infra.http import RateLimiter
-from products.utils.shop_crawler_engine_log import random_sleep
+from products.utils.log.shop_crawler_engine_log import random_sleep
 
 
 def fetch_xstore_products(category_url, max_pages=1):
@@ -62,7 +62,7 @@ def fetch_xstore_products(category_url, max_pages=1):
 
             yield item_data
 
-        random_sleep(2, 10)
+        random_sleep(2, 10, "xtore")
 
 
 def fetch_enter_products(category_url, max_pages=1):
@@ -129,7 +129,7 @@ def fetch_enter_products(category_url, max_pages=1):
 
             yield item_data
 
-        random_sleep(2, 10)
+        random_sleep(2, 10, "enter")
 
 
 def fetch_darwin_products(category_url, max_pages=1):
@@ -193,4 +193,4 @@ def fetch_darwin_products(category_url, max_pages=1):
             }
             yield item_data
 
-        random_sleep(2, 10)
+        random_sleep(2, 10, "darwin")

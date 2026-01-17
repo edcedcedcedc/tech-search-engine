@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 import threading
-from products.utils.load_embeddings_cache_log import load_embeddings_cache_log
+from products.utils.log.load_embeddings_cache_log import load_embeddings_cache_log
 
 
 class ProductsConfig(AppConfig):

@@ -4,8 +4,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from products.models import Product
 from products.models import AutocompleteToken
-from products.utils.autocomplete_text import tokenize
-from products.utils.autocomplete_log import autocomplete_log
+from products.utils.utils import tokenize
+from products.utils.log.autocomplete_log import autocomplete_log
 
 MAX_CONTEXT = 3  # last N tokens
 

@@ -18,12 +18,10 @@ from products.throttles import (
 import hashlib
 import random
 from collections import deque
-from products.utils.search_engine_log import search_engine_log
-from products.utils.search_engine_autocomplete_log import autocomplete_log
-from products.utils.precompute_embeddings_from_query_log import (
+from products.utils.log.search_engine_log import search_engine_log
+from products.utils.log.precompute_embeddings_from_query_log import (
     embeddings_from_query_log,
 )
-from products.utils.generate_canonical_id import generate_canonical_id
 import json
 import numpy as np
 from products.models import UserQueryEmbedding, PrecomputedSimilarity

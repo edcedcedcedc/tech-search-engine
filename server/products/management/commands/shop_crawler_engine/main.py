@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from products.management.commands.shop_crawler_engine.utils import DatabaseManager
-from products.management.commands.shop_crawler_engine.config import shops
-from products.utils.shop_crawler_engine_log import shop_crawler_log, random_sleep
+from products.management.commands.shop_crawler_engine.config import config
+from products.utils.log.shop_crawler_engine_log import shop_crawler_log, random_sleep
 import traceback
 from threading import Thread
 from queue import Queue
@@ -24,7 +24,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--track-fields",
             type=str,
-            default="price,name,variant",  # TODO in_stock
+            default="price",  # TODO
         )
 
     def handle(self, *args, **options):
@@ -42,7 +42,7 @@ class Command(BaseCommand):
             threads = []
 
             # Launch threads for all shop/category combinations
-            for shop_name, shop_cfg in shops.items():
+            for shop_name, shop_cfg in config.items():
 
                 if filter_shop and shop_name != filter_shop:
                     continue

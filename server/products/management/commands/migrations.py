@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.core.management import call_command
-from products.utils.db_migrations_log import db_migrations_log
+from products.utils.log.db_migrations_log import db_migrations_log
 
 
 class Command(BaseCommand):
@@ -13,4 +13,4 @@ class Command(BaseCommand):
         for db in databases:
             db_migrations_log(f"Running migrations on '{db}' database...")
             call_command("migrate", database=db, interactive=False)
-            db_migrations_log(f"✅ Migrations applied for '{db}'")
+            db_migrations_log(f"Migrations applied for '{db}'")

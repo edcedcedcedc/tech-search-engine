@@ -21,10 +21,10 @@ def shop_crawler_log(msg: str):
         print(f"Failed to write log: {e}")
 
 
-def random_sleep(min_seconds: float = 2, max_seconds: float = 5):
+def random_sleep(min_seconds: float = 2, max_seconds: float = 5, shop=None):
     """
     Sleeps a random duration and logs it to the same aggregation log file.
     """
     sleep_time = random.uniform(min_seconds, max_seconds)
-    shop_crawler_log(f"Sleeping {sleep_time:.1f}s to avoid hammering...")
+    shop_crawler_log(f"Sleeping for {shop} {sleep_time:.1f}s to avoid hammering...")
     time.sleep(sleep_time)

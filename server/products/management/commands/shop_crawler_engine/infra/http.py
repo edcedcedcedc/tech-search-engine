@@ -1,5 +1,5 @@
 import requests
-from products.utils.shop_crawler_engine_log import random_sleep, shop_crawler_log
+from products.utils.log.shop_crawler_engine_log import random_sleep, shop_crawler_log
 
 
 class RateLimiter:

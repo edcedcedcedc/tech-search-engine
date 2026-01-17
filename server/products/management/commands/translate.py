@@ -4,6 +4,7 @@ import re
 import sys
 import os
 
+
 # ========== CRITICAL: BLOCK OPENAI IMPORT BEFORE ANYTHING ELSE ==========
 # This is the KEY to running in venv_translate without openai
 import builtins
@@ -39,8 +40,8 @@ try:
 
     django.setup()
 except Exception as e:
-    print(f"Failed to setup Django: {e}")
-    print("Make sure you're in the project directory and Django is installed")
+    translation_log(f"Failed to setup Django: {e}")
+    translation_log("Make sure you're in the project directory and Django is installed")
     sys.exit(1)
 
 # ========== Import Django components ==========
@@ -51,10 +52,12 @@ from django.db import models
 # ========== Import your project modules ==========
 try:
     from products.models import Product
-    from products.utils.translation_log import translation_log
+    from products.utils.log.translation_log import translation_log
 except ImportError as e:
-    print(f"Failed to import project modules: {e}")
-    print("Make sure you're in the correct directory and venv_translate is activated")
+    translation_log(f"Failed to import project modules: {e}")
+    translation_log(
+        "Make sure you're in the correct directory and venv_translate is activated"
+    )
     sys.exit(1)
 
 # ========== Import and handle normalize_text ==========
@@ -62,7 +65,7 @@ try:
     from products.utils.utils import normalize_text
 except ImportError:
     # If normalize_text fails to import (due to DRF dependency), create a simple version
-    print("WARNING: normalize_text not found, using simple version")
+    translation_log("WARNING: normalize_text not found, using simple version")
 
     def normalize_text(text: str) -> str:
         """Simple text normalization"""
@@ -78,8 +81,8 @@ except ImportError:
 try:
     from googletrans import Translator
 except ImportError:
-    print("ERROR: googletrans not installed in venv_translate!")
-    print("Run: pip install googletrans==4.0.0-rc1")
+    translation_log("ERROR: googletrans not installed in venv_translate!")
+    translation_log("Run: pip install googletrans==4.0.0-rc1")
     sys.exit(1)
 
 # ========== Constants ==========
@@ -96,7 +99,7 @@ STOP_TRANSLATION = False
 # ========== Signal handler ==========
 def signal_handler(sig, frame):
     global STOP_TRANSLATION
-    print("\nReceived Ctrl+C, stopping translation gracefully...")
+    translation_log("\nReceived Ctrl+C, stopping translation gracefully...")
     translation_log("INTERRUPTED by user (Ctrl+C)")
     STOP_TRANSLATION = True
 

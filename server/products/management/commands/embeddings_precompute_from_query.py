@@ -7,7 +7,7 @@ import numpy as np
 import time
 import environ
 import re
-from products.utils.test_script_log import test_log
+from products.utils.log.test_script_log import test_log
 
 env = environ.Env()
 environ.Env.read_env()

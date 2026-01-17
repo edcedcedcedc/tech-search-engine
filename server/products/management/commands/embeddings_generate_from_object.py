@@ -1,185 +1,7 @@
-"""import random
-from django.core.management.base import BaseCommand
-from products.models import Product
-from products.utils.generate_embeddings_from_object_log import (
-    generate_embeddings_from_object_log,
-)
-import time
-import environ
-from openai import OpenAI
-import json
-import numpy as np
-from numpy.linalg import norm
-
-# Load environment variables
-env = environ.Env()
-environ.Env.read_env()
-client = OpenAI(api_key=env("OPENAI_API_KEY"))
-
-
-def cosine_sim(a, b):
-    return np.dot(a, b) / (norm(a) * norm(b))
-
-
-def test_semantics(batch, embeddings, max_tests=2):
-
-    if len(embeddings) < 2:
-        return
-
-    for _ in range(min(max_tests, len(embeddings) // 2)):
-        idx1, idx2 = random.sample(range(len(embeddings)), 2)
-        sim = cosine_sim(np.array(embeddings[idx1]), np.array(embeddings[idx2]))
-        generate_embeddings_from_object_log(
-            f"Cosine similarity sample: {sim:.3f} "
-            f"({batch[idx1].t_name.get('en')} vs {batch[idx2].t_name.get('en')})"
-        )
-
-
-class Command(BaseCommand):
-    help = "Generate embeddings for products"
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "--batch-size", type=int, default=20, help="Products per batch"
-        )
-        parser.add_argument("--retries", type=int, default=3, help="Retries per batch")
-        parser.add_argument(
-            "--force",
-            action="store_true",
-            help="Regenerate embeddings even if they already exist",
-        )
-        parser.add_argument("--source", type=str, help="Database", default="stage")
-        parser.add_argument(
-            "--dirty",
-            action="store_true",
-            help="Only process products marked dirty=True",
-        )
-
-    def handle(self, *args, **options):
-        batch_size = options["batch_size"]
-        max_retries = options["retries"]
-        force = options["force"]
-        db = options["source"]
-        dirty = options.get("dirty", False)
-
-        # Select products
-        qs = Product.objects.using(db).all()
-
-        if dirty:
-            qs = qs.filter(dirty=True)
-
-        if not force:
-            qs = qs.filter(embedding__isnull=True)
-
-        total = qs.count()
-
-        generate_embeddings_from_object_log(
-            f"Found {total} products to process | force={force} dirty_only={dirty}"
-        )
-
-        products = list(qs)
-
-        for i in range(0, total, batch_size):
-            batch = products[i : i + batch_size]
-
-            for attempt in range(1, max_retries + 1):
-                try:
-                    texts = []
-                    for p in batch:
-
-                        t_name = (
-                            p.t_name if isinstance(p.t_name, dict) else {"ro": p.name}
-                        )
-                        t_variant = (
-                            p.t_variant
-                            if isinstance(p.t_variant, dict)
-                            else {"ro": p.variant}
-                        )
-                        t_category = (
-                            p.t_category
-                            if isinstance(p.t_category, dict)
-                            else {"ro": p.category}
-                        )
-
-                        ro_text = " ".join(
-                            filter(
-                                None,
-                                [
-                                    t_name.get("ro"),
-                                    t_variant.get("ro"),
-                                    t_category.get("ro"),
-                                    p.brand,
-                                ],
-                            )
-                        )
-                        ru_text = " ".join(
-                            filter(
-                                None,
-                                [
-                                    t_name.get("ru"),
-                                    t_variant.get("ru"),
-                                    t_category.get("ru"),
-                                    p.brand,
-                                ],
-                            )
-                        )
-                        en_text = " ".join(
-                            filter(
-                                None,
-                                [
-                                    t_name.get("en"),
-                                    t_variant.get("en"),
-                                    t_category.get("en"),
-                                    p.brand,
-                                ],
-                            )
-                        )
-
-                        combined_text = " ".join(
-                            filter(None, [ro_text, ru_text, en_text])
-                        )
-                        texts.append(combined_text)
-
-                    embeddings = []
-                    for text in texts:
-                        resp = client.embeddings.create(
-                            model="text-embedding-3-small", input=text
-                        )
-                        emb = resp.data[0].embedding
-                        embeddings.append(emb)
-                        time.sleep(0.2)  # avoid rate limits
-
-                    # Save embeddings
-                    for p, emb in zip(batch, embeddings):
-                        p.embedding = json.dumps(emb)
-                        p.save(update_fields=["embedding"])
-
-                    # Test semantics on a few samples
-                    test_semantics(batch, embeddings, max_tests=2)
-
-                    generate_embeddings_from_object_log(
-                        f"Processed batch {i}-{i+len(batch)} successfully"
-                    )
-                    break
-
-                except Exception as e:
-                    generate_embeddings_from_object_log(
-                        f"Batch {i}-{i+len(batch)} failed on attempt {attempt}: {e}"
-                    )
-                    time.sleep(5)
-                    if attempt == max_retries:
-                        generate_embeddings_from_object_log(
-                            f"Batch {i}-{i+len(batch)} failed after {max_retries} retries. Skipping."
-                        )
-
-
-
-"""
-
 import random
 from django.core.management.base import BaseCommand
 from products.models import Product
-from products.utils.generate_embeddings_from_object_log import (
+from products.utils.log.generate_embeddings_from_object_log import (
     generate_embeddings_from_object_log,
 )
 import time
@@ -310,7 +132,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--dimensions",
             type=int,
-            default=None,
+            default=1536,
             help="Dimensions for embedding (e.g., 512, 1536)",
         )
 
@@ -323,14 +145,10 @@ class Command(BaseCommand):
         model = options["model"]
         dimensions = options["dimensions"]
 
-        # Select products
-        qs = Product.objects.using(db).all()
-
-        if dirty:
-            qs = qs.filter(dirty=True)
-
-        if not force:
-            qs = qs.filter(embedding__isnull=True)
+        if force:
+            qs = Product.objects.using(db).all()
+        else:
+            qs = Product.objects.using(db).filter(dirty=True, change_type="updated")
 
         total = qs.count()
         generate_embeddings_from_object_log(

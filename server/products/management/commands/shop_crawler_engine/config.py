@@ -1,9 +1,9 @@
 from .crawlers import fetch_darwin_products, fetch_enter_products, fetch_xstore_products
 
-shops = {
+config = {
     "enter": {
         "function": fetch_enter_products,
-        "laptop, notebook": "https://enter.online/laptopuri",
+        "laptop": "https://enter.online/laptopuri",
         "mobilephone": "https://enter.online/telefoane",
         "pc": "https://enter.online/calculatoare",
         "gaming": "https://enter.online/for-gamers",

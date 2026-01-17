@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from products.models import Product
-from products.utils.db_inspect_products_log import db_inspect_products_log
+from products.utils.log.db_inspect_products_log import db_inspect_products_log
 from django.db.models import Q
 
 
@@ -41,9 +41,14 @@ class Command(BaseCommand):
             action="store_true",
             help="Ignore everything else and list distinct categories",
         )
+        parser.add_argument(
+            "--db",
+            action="store_true",
+            help="Ignore everything else and list distinct categories",
+        )
 
     def handle(self, *args, **options):
-        db = "stage"
+        db = options["db"]
         batch_size = options["batch_size"]
         dirty_only = options["dirty_only"]
         shop_filter = options["shop"]

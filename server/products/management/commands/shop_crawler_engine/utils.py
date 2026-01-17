@@ -1,6 +1,5 @@
-from extra.map import map_category
 from products.models import Product
-from products.utils.shop_crawler_engine_log import shop_crawler_log
+from products.utils.log.shop_crawler_engine_log import shop_crawler_log
 
 
 class ChangeTracker:
@@ -72,20 +71,22 @@ class DatabaseManager:
             return None, False, {}
 
         try:
-            # Try to get existing product
-            db_product = (
-                Product.objects.using(shop)
+            # Look up canonical product
+            default_item = (
+                Product.objects.using("default")
                 .filter(shop=shop, external_id=external_id)
                 .first()
             )
 
-            if db_product:
-                # Check for changes
+            # --------------------------------------------------
+            # EXISTING PRODUCT
+            # --------------------------------------------------
+            if default_item:
                 change_info = ChangeTracker.get_changed_fields(
-                    db_product, fetched_item, fields_to_track
+                    default_item, fetched_item, fields_to_track
                 )
 
-                # Update only if there are changes
+                # Only emit stage row if something changed
                 if change_info["has_changes"]:
                     ChangeTracker.log_changes(
                         fetched_item.get("name", "Unknown"),
@@ -94,25 +95,32 @@ class DatabaseManager:
                         change_info,
                     )
 
-                    # Update the product with fetched data
-                    for key, value in fetched_item.items():
-                        if hasattr(db_product, key):
-                            setattr(db_product, key, value)
+                    stage_product = Product.objects.using(shop).create(**fetched_item)
+                    stage_product.dirty = True
+                    stage_product.change_type = "updated"
+                    stage_product.changed_fields = change_info["changed_fields"]
+                    stage_product.save(using=shop)
 
-                    db_product.save(using=shop)
-                    return db_product, False, change_info
-                else:
-                    return db_product, False, {}
+                    return stage_product, False, change_info
 
-            else:
-                # Create new product
+                # No-op crawl → no stage row
+                return None, False, {}
 
-                product = Product.objects.using(shop).create(**fetched_item)
-                shop_crawler_log(f"CREATED {fetched_item.get('name', 'Unknown')}")
-                return product, True, {}
+            # --------------------------------------------------
+            # NEW PRODUCT
+            # --------------------------------------------------
+            stage_product = Product.objects.using(shop).create(**fetched_item)
+            stage_product.dirty = True
+            stage_product.change_type = "created"
+            stage_product.changed_fields = None
+            stage_product.save(using=shop)
+            shop_crawler_log(
+                f"CREATED {stage_product.name} ({stage_product.external_id})"
+            )
+            return stage_product, True, {}
 
         except Exception as e:
             shop_crawler_log(
-                f"ERROR saving/updating {fetched_item.get('name', 'Unknown')}: {e}"
+                f"ERROR saving/updating {fetched_item.get('name', 'Unknown')} ({fetched_item.get('external_id')}): {e}"
             )
             return None, False, {}
