@@ -13,7 +13,7 @@ class Command(BaseCommand):
     """Shop Crawler Engine - Crawl Moldovan electronics shops with multithreading"""
 
     BATCH_SIZE = 500
-    PAUSE_BETWEEN_BATCHES = (60, 3600)  # seconds
+    PAUSE_BETWEEN_BATCHES = (30, 60)  # seconds
 
     def add_arguments(self, parser):
         parser.add_argument(
