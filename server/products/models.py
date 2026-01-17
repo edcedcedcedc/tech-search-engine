@@ -82,6 +82,27 @@ class AutocompleteToken(models.Model):
         return f"{self.context} -> {self.next_token} ({self.count})"
 
 
+class ArchivedBrokenProduct(models.Model):
+    original_id = models.IntegerField(db_index=True)
+    external_id = models.CharField(max_length=50)
+    canonical_id = models.CharField(max_length=40, null=True, blank=True)
+    name = models.CharField(max_length=255, null=True, blank=True)
+    variant = models.CharField(max_length=50, null=True, blank=True)
+
+    price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    in_stock = models.BooleanField(default=False)
+    shop = models.CharField(max_length=50)
+
+    archived_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["external_id"]),
+            models.Index(fields=["canonical_id"]),
+            models.Index(fields=["shop"]),
+        ]
+
+
 class ArchivedProduct(models.Model):
     original_id = models.IntegerField(db_index=True)
     external_id = models.CharField(max_length=50)
