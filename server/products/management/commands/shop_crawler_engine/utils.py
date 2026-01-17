@@ -1,5 +1,6 @@
-from products.models import Product
+from products.models import ArchivedBrokenProduct, ArchivedProduct, Product
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
+from django.db import transaction
 
 
 class ChangeTracker:
@@ -77,16 +78,24 @@ class DatabaseManager:
                 .filter(shop=shop, external_id=external_id)
                 .first()
             )
+            archived_item = (
+                ArchivedProduct.objects.using("default")
+                .filter(shop=shop, external_id=external_id)
+                .first()
+            )
+            archived_broken_item = (
+                ArchivedBrokenProduct.objects.using("default")
+                .filter(shop=shop, external_id=external_id)
+                .first()
+            )
 
             # --------------------------------------------------
-            # EXISTING PRODUCT
+            # EXCEPTION FROM COMMON PIPELINE
             # --------------------------------------------------
-            if default_item:
+            if archived_item:
                 change_info = ChangeTracker.get_changed_fields(
-                    default_item, fetched_item, fields_to_track
+                    archived_item, fetched_item, fields_to_track
                 )
-
-                # Only emit stage row if something changed
                 if change_info["has_changes"]:
                     ChangeTracker.log_changes(
                         fetched_item.get("name", "Unknown"),
@@ -95,29 +104,94 @@ class DatabaseManager:
                         change_info,
                     )
 
-                    stage_product = Product.objects.using(shop).create(**fetched_item)
-                    stage_product.dirty = True
-                    stage_product.change_type = "updated"
-                    stage_product.changed_fields = change_info["changed_fields"]
-                    stage_product.save(using=shop)
+                    # Atomic: create + delete + set fields
+                    with transaction.atomic(using=shop):
+                        fetched_item.update(
+                            dirty=True,
+                            change_type="updated",
+                            changed_fields=change_info["changed_fields"],
+                        )
+                        stage_product = Product.objects.using(shop).create(
+                            **fetched_item
+                        )
+                        ArchivedProduct.objects.using(shop).filter(
+                            id=archived_item.id
+                        ).delete()
+
+                    return stage_product, False, change_info
+
+            if archived_broken_item:
+                change_info = ChangeTracker.get_changed_fields(
+                    archived_broken_item, fetched_item, fields_to_track
+                )
+                if change_info["has_changes"]:
+                    ChangeTracker.log_changes(
+                        fetched_item.get("name", "Unknown"),
+                        external_id,
+                        shop,
+                        change_info,
+                    )
+
+                    with transaction.atomic(using=shop):
+                        fetched_item.update(
+                            dirty=True,
+                            change_type="updated",
+                            changed_fields=change_info["changed_fields"],
+                        )
+                        stage_product = Product.objects.using(shop).create(
+                            **fetched_item
+                        )
+                        ArchivedBrokenProduct.objects.using(shop).filter(
+                            id=archived_broken_item.id
+                        ).delete()
+
+                    return stage_product, False, change_info
+
+            # --------------------------------------------------
+            # EXISTING PRODUCT
+            # --------------------------------------------------
+            elif default_item:
+                change_info = ChangeTracker.get_changed_fields(
+                    default_item, fetched_item, fields_to_track
+                )
+
+                if change_info["has_changes"]:
+                    ChangeTracker.log_changes(
+                        fetched_item.get("name", "Unknown"),
+                        external_id,
+                        shop,
+                        change_info,
+                    )
+
+                    with transaction.atomic(using=shop):
+                        fetched_item.update(
+                            dirty=True,
+                            change_type="updated",
+                            changed_fields=change_info["changed_fields"],
+                        )
+                        stage_product = Product.objects.using(shop).create(
+                            **fetched_item
+                        )
 
                     return stage_product, False, change_info
 
                 # No-op crawl → no stage row
                 return None, False, {}
 
-            # --------------------------------------------------
-            # NEW PRODUCT
-            # --------------------------------------------------
-            stage_product = Product.objects.using(shop).create(**fetched_item)
-            stage_product.dirty = True
-            stage_product.change_type = "created"
-            stage_product.changed_fields = None
-            stage_product.save(using=shop)
-            shop_crawler_log(
-                f"CREATED {stage_product.name} ({stage_product.external_id})"
-            )
-            return stage_product, True, {}
+            else:
+                # --------------------------------------------------
+                # NEW PRODUCT
+                # --------------------------------------------------
+                with transaction.atomic(using=shop):
+                    fetched_item.update(
+                        dirty=True, change_type="created", changed_fields=None
+                    )
+                    stage_product = Product.objects.using(shop).create(**fetched_item)
+
+                shop_crawler_log(
+                    f"CREATED {stage_product.name} ({stage_product.external_id})"
+                )
+                return stage_product, True, {}
 
         except Exception as e:
             shop_crawler_log(

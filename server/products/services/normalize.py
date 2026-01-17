@@ -22,7 +22,7 @@ def normalize_category_for_product(
 ):
     product = Product.objects.using(db).get(id=product_id)
     shop_category_before = product.category or ""
-    raw_category = shop_category_before.copy()
+    raw_category = shop_category_before
     shop = product.shop.lower()
 
     if not raw_category.strip():
@@ -38,45 +38,45 @@ def normalize_category_for_product(
                 product.save(using=db)
 
             return "reused from audit"
+        else:
+            # ---------- SKIP ----------
+            if product.category in [c["en"] for c in categories]:
+                return "already normalized"
 
-    # ---------- SKIP ----------
-    if product.category in [c["en"] for c in categories]:
-        return "already normalized"
+            # ---------- OPENAI ----------
+            if client is None:
+                raise RuntimeError("OpenAI client required")
 
-    # ---------- OPENAI ----------
-    if client is None:
-        raise RuntimeError("OpenAI client required")
+            response = client.chat.completions.create(
+                model="gpt-5-nano",
+                temperature=1,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a product categorization assistant. "
+                            "Choose best category and return JSON ro/en/ru."
+                            f"{categories}"
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            f"Product name: {product.name}\n"
+                            f"Variant: {product.variant}\n"
+                            f"Raw category: {raw_category}\n"
+                            'Return JSON only: {"ro": "...", "en": "...", "ru": "..."}'
+                        ),
+                    },
+                ],
+            )
 
-    response = client.chat.completions.create(
-        model="gpt-5-nano",
-        temperature=1,
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are a product categorization assistant. "
-                    "Choose best category and return JSON ro/en/ru."
-                    f"{categories}"
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Product name: {product.name}\n"
-                    f"Variant: {product.variant}\n"
-                    f"Raw category: {raw_category}\n"
-                    'Return JSON only: {"ro": "...", "en": "...", "ru": "..."}'
-                ),
-            },
-        ],
-    )
+            t_category = json.loads(response.choices[0].message.content)
 
-    t_category = json.loads(response.choices[0].message.content)
+            product.category = t_category["ro"]
+            product.t_category = t_category
+            product.save(using=db)
 
-    product.category = t_category["ro"]
-    product.t_category = t_category
-    product.save(using=db)
+            set_cached(shop, shop_category_before, t_category, product.id)
 
-    set_cached(shop, shop_category_before, t_category, product.id)
-
-    return "normalized"
+            return "normalized"

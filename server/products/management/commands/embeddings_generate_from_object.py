@@ -144,13 +144,13 @@ class Command(BaseCommand):
         dirty = options.get("dirty", False)
         model = options["model"]
         dimensions = options["dimensions"]
-
+        total = 0
         if force:
             qs = Product.objects.using(db).all()
+            total = qs.count()
         else:
             qs = Product.objects.using(db).filter(dirty=True, change_type="updated")
-
-        total = qs.count()
+            total = qs.count()
         generate_embeddings_from_object_log(
             f"Found {total} products to process | force={force} dirty_only={dirty} batch_size={batch_size} model={model}"
         )

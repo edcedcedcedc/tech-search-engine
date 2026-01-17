@@ -1,0 +1,26 @@
+{
+  "xstore": {
+    "laptopuri gaming": {
+      "normalized": {
+        "ro": "laptop gaming, notebook gaming",
+        "en": "Gaming laptops",
+        "ru": "\u0438\u0433\u0440\u043e\u0432\u044b\u0435 \u043d\u043e\u0443\u0442\u0431\u0443\u043a\u0438"
+      },
+      "first_seen": "2026-01-17T14:43:36.869268+00:00",
+      "examples": [
+        9192
+      ]
+    },
+    "laptop gaming, notebook gaming": {
+      "normalized": {
+        "ro": "laptop gaming, notebook gaming",
+        "en": "Gaming laptops",
+        "ru": "\u0438\u0433\u0440\u043e\u0432\u044b\u0435 \u043d\u043e\u0443\u0442\u0431\u0443\u043a\u0438"
+      },
+      "first_seen": "2026-01-17T14:44:03.477343+00:00",
+      "examples": [
+        9192
+      ]
+    }
+  }
+}

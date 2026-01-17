@@ -4,7 +4,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 LOGS_DIR = os.path.join(BASE_DIR, "logs")  # singular
 os.makedirs(LOGS_DIR, exist_ok=True)
-LOG_FILE = os.path.join(LOGS_DIR, "db_merge.log")
+LOG_FILE = os.path.join(LOGS_DIR, "4-6db_merge.log")
 
 
 def db_merge_log(msg: str):
