@@ -1,4 +1,31 @@
+from gettext import translation
 from django.db import models
+
+from products.utils.log.shop_crawler_engine_log import shop_crawler_log
+
+
+""" 
+
+Delete behavior
+
+Deleting a Product → ProductPriceHistory survives because on_delete=SET_NULL.
+
+Archiving a Product → price history is relinked to the ArchivedProduct.
+
+Deleting an ArchivedProduct → same, history survives if needed (on_delete=SET_NULL).
+
+
+
+Analytics and statistics are never lost.
+
+You can explicitly control archiving without interfering with deletion.
+
+Unique constraint prevents accidental duplicates.
+
+Clear distinction between Product (current) and ArchivedProduct (past/out-of-stock).
+
+
+ """
 
 
 class Product(models.Model):
@@ -50,6 +77,37 @@ class Product(models.Model):
     class Meta:
         unique_together = ("shop", "external_id")
 
+    def archive(self):
+        """
+        Explicitly archive this product. Moves price history to ArchivedProduct.
+        Does NOT delete the Product immediately.
+        """
+        from products.models import ArchivedProduct, ProductPriceHistory
+
+        try:
+            with translation.atomic():
+                archived = ArchivedProduct.objects.create(
+                    original_id=self.id,
+                    external_id=self.external_id,
+                    canonical_id=self.canonical_id,
+                    name=self.name,
+                    variant=self.variant,
+                    price=self.price,
+                    in_stock=self.in_stock,
+                    shop=self.shop,
+                )
+
+                # Move price history to archived product
+                ProductPriceHistory.objects.filter(product=self).update(
+                    product=None, archived_product=archived
+                )
+                return archived
+        except Exception as e:
+            shop_crawler_log(
+                f"ERROR archiving product {self.name} ({self.external_id}): {e}"
+            )
+            return None
+
 
 # store embeddings for user search queries
 class UserQueryEmbedding(models.Model):
@@ -96,6 +154,7 @@ class ArchivedBrokenProduct(models.Model):
     archived_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        unique_together = ("shop", "external_id")
         indexes = [
             models.Index(fields=["external_id"]),
             models.Index(fields=["canonical_id"]),
@@ -117,6 +176,7 @@ class ArchivedProduct(models.Model):
     archived_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        unique_together = ("shop", "external_id")
         indexes = [
             models.Index(fields=["external_id"]),
             models.Index(fields=["canonical_id"]),
@@ -128,3 +188,39 @@ class CrawlSnapshot(models.Model):
     shop = models.CharField(max_length=50)
     external_ids = models.JSONField(default=list)  # store list of strings
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class ProductPriceHistory(models.Model):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.SET_NULL,  # Important: don’t delete history when Product is deleted
+        null=True,
+        blank=True,
+        related_name="price_history",
+    )
+    archived_product = models.ForeignKey(
+        ArchivedProduct,
+        on_delete=models.SET_NULL,  # Same for archived
+        null=True,
+        blank=True,
+        related_name="archived_price_history",
+    )
+    price = models.DecimalField(max_digits=12, decimal_places=2)
+    in_stock = models.BooleanField(default=True)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["product", "recorded_at"]),
+            models.Index(fields=["archived_product", "recorded_at"]),
+        ]
+        unique_together = (
+            "product",
+            "archived_product",
+            "recorded_at",
+        )
+        ordering = ["-recorded_at"]
+
+    def __str__(self):
+        target = self.product or self.archived_product
+        return f"{target.name} | {self.price} at {self.recorded_at}"

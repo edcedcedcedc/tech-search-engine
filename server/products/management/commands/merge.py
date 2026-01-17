@@ -45,7 +45,7 @@ BATCH_SIZE = 2000
 STOP_MERGE = False
 
 # Crawler decides what to update, merge decides what to write
-ALLOWED_FIELDS_TO_WRITE = ["price"]
+ALLOWED_FIELDS_TO_WRITE = ["price, in_stock"]
 
 
 def signal_handler(sig, frame):

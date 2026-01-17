@@ -36,6 +36,7 @@ def run_crawler():
     Run the Django crawler command via Celery.
     """
     try:
+        call_command("reset")
         call_command(
             "crawl", track_fields="price, in_stock", pages=999
         )  # assumes your command is named 'crawl.py'
@@ -311,7 +312,7 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=True, batch_size=5
                 )
                 total_to_archive = prod_qs.count()
                 db_merge_log(
-                    f"[COMPARE] Shop '{shop_name}' - {total_to_archive} products to archive"
+                    f"[COMPARE/ARCHIVE] Shop '{shop_name}' - {total_to_archive} products to archive"
                 )
 
                 # Batch processing
@@ -349,7 +350,7 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=True, batch_size=5
                     offset += batch_size
 
                 db_merge_log(
-                    f"[COMPARE] Shop '{shop_name}' - Archived/deleted {archived_count} products"
+                    f"[COMPARE/ARCHIVE] Shop '{shop_name}' - archived/deleted {archived_count} products"
                 )
 
             # Step 2: Merge Stage -> Prod
@@ -426,7 +427,7 @@ def run_full_pipeline():
         run_embeddings.si(),
         run_merge_pipeline_to_stage.si(),
         run_canonical_ids_stage.si(batch_size=1000),
-        run_merge_pipeline_to_default.si(dry_run=True),
+        run_merge_pipeline_to_default.si(dry_run=False),
     )
 
     result = workflow.apply_async()

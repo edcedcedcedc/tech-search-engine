@@ -1,15 +1,17 @@
-from .crawlers import fetch_darwin_products, fetch_enter_products, fetch_xstore_products
+from .crawler import Crawler
+
+shop_crawler = Crawler()
 
 config = {
     "enter": {
-        "function": fetch_enter_products,
+        "function": shop_crawler.fetch_enter,
         "laptop": "https://enter.online/laptopuri",
         "mobilephone": "https://enter.online/telefoane",
         "pc": "https://enter.online/calculatoare",
         "gaming": "https://enter.online/for-gamers",
     },
     "darwin": {
-        "function": fetch_darwin_products,
+        "function": shop_crawler.fetch_darwin,
         "monitor": "https://darwin.md/monitoare",
         "laptop": "https://darwin.md/laptopuri",
         "mobilephone": "https://darwin.md/telefoane",
@@ -32,7 +34,7 @@ config = {
         "switch": "https://darwin.md/retelistica/switch",
     },
     "xstore": {
-        "function": fetch_xstore_products,
+        "function": shop_crawler.fetch_xstore,
         "laptop": "https://xstore.md/laptopuri",
         "laptopaccessories": "https://xstore.md/accesorii-laptopuri",
         "software": "https://xstore.md/software",
@@ -50,7 +52,7 @@ config = {
         "tablete": "https://xstore.md/tablete",
         "perifericp": "https://xstore.md/periferice-pc",
         "monitoare": "https://xstore.md/monitoare",
-        "scaune": "https://xstore.md/scaune",
+        # TODO "scaune": "https://xstore.md/scaune",
         "televizoare": "https://xstore.md/televizoare",
         "accesoriitv": "https://xstore.md/accesorii-tv",
         "imprimante": "https://xstore.md/imprimante",

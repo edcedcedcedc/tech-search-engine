@@ -10,7 +10,15 @@ from queue import Queue
 
 
 class Command(BaseCommand):
-    """Shop Crawler Engine - Crawl Moldovan electronics shops with multithreading"""
+    """Shop Crawler Engine with multithreading
+
+    Copyright (c) 2025-2026 Andro Ranogajec
+    All rights reserved.
+
+    This software and associated documentation files (the "Software") are
+    proprietary. You may not copy, modify, distribute, or use this Software
+    without prior written permission from the author.
+    """
 
     BATCH_SIZE = 500
     PAUSE_BETWEEN_BATCHES = (30, 60)  # seconds
@@ -26,7 +34,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--track-fields",
             type=str,
-            default="price",  # TODO
+            default="price, in_stock",  # TODO
         )
 
     def handle(self, *args, **options):
