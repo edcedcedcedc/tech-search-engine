@@ -195,7 +195,7 @@ class DatabaseManager:
                     stage_product = Product.objects.using(shop).create(**fetched_item)
 
                 shop_crawler_log(
-                    f"CREATED {stage_product.name} ({stage_product.external_id})"
+                    f"TO BE CREATED {stage_product.name} ({stage_product.external_id})"
                 )
                 return stage_product, True, {}
 

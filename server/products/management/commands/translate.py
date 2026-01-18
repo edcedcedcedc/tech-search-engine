@@ -3,6 +3,7 @@ import time
 import re
 import sys
 import os
+import json
 
 
 # ========== CRITICAL: BLOCK OPENAI IMPORT BEFORE ANYTHING ELSE ==========
@@ -185,6 +186,21 @@ class Command(BaseCommand):
             action="store_true",
             help="Skip already translated products and start from first untranslated",
         )
+        parser.add_argument(
+            "--ids",
+            type=str,
+            help="Comma-separated list of product IDs to translate (e.g., '1,2,3,4,5')",
+        )
+        parser.add_argument(
+            "--ids-file",
+            type=str,
+            help="Path to file containing product IDs (one per line or JSON array)",
+        )
+        parser.add_argument(
+            "--limit",
+            type=int,
+            help="Limit number of products to process (for testing)",
+        )
 
     def handle(self, *args, **options):
         global STOP_TRANSLATION
@@ -198,13 +214,28 @@ class Command(BaseCommand):
         shop_filter = options["shop"]
         analyze_only = options["analyze"]
         skip_translated = options["skip_translated"]
+        ids_input = options["ids"]
+        ids_file = options["ids_file"]
+        limit = options["limit"]
+
+        # Get product IDs from input
+        product_ids = self.get_product_ids(ids_input, ids_file)
 
         # Get base queryset
         qs = Product.objects.using(db).all()
 
+        # Apply ID filter if provided
+        if product_ids:
+            qs = qs.filter(id__in=product_ids)
+            translation_log(f"Filtering by {len(product_ids)} product IDs")
+
         if shop_filter:
             qs = qs.filter(shop__iexact=shop_filter)
             translation_log(f"Filtering by shop: {shop_filter}")
+
+        if limit:
+            qs = qs[:limit]
+            translation_log(f"Limiting to {limit} products")
 
         total = qs.count()
 
@@ -214,7 +245,8 @@ class Command(BaseCommand):
 
         # FAST SCAN: Find where to start if skip_translated is enabled
         starting_id = None
-        if skip_translated and not force:
+        if skip_translated and not force and not product_ids:
+            # Only do fast scan if we're not processing specific IDs
             translation_log(f"FAST SCAN: Finding first product needing translation...")
             starting_id = self.find_starting_product_id_fast(qs, skip_ru, skip_category)
 
@@ -230,7 +262,7 @@ class Command(BaseCommand):
         translation_log(
             f"START translation run | products={qs.count()}/{total} force={force} "
             f"skip_ru={skip_ru} skip_category={skip_category} shop={shop_filter or 'all'} "
-            f"skip_translated={skip_translated}"
+            f"skip_translated={skip_translated} ids_provided={bool(product_ids)}"
         )
 
         if analyze_only:
@@ -243,8 +275,17 @@ class Command(BaseCommand):
         skipped_count = 0
 
         while True:
-            batch_qs = qs.order_by("id")[offset : offset + batch_size]
-            batch_list = list(batch_qs)
+            # Order by ID for consistency, but if we have specific IDs, maintain their order
+            if product_ids:
+                # Preserve the order of IDs from input
+                batch_ids = product_ids[offset : offset + batch_size]
+                batch_qs = qs.filter(id__in=batch_ids)
+                # Create a custom ordering based on input order
+                batch_dict = {p.id: p for p in batch_qs}
+                batch_list = [batch_dict[pid] for pid in batch_ids if pid in batch_dict]
+            else:
+                batch_qs = qs.order_by("id")[offset : offset + batch_size]
+                batch_list = list(batch_qs)
 
             if not batch_list or STOP_TRANSLATION:
                 break
@@ -288,6 +329,77 @@ class Command(BaseCommand):
             f"END translation run. Total scanned: {total}, "
             f"Translated this run: {translated_count}, Skipped: {skipped_count}"
         )
+
+    def get_product_ids(self, ids_input, ids_file):
+        """Parse product IDs from command line or file"""
+        product_ids = []
+
+        # Priority: ids-file over ids input
+        if ids_file:
+            try:
+                with open(ids_file, "r") as f:
+                    content = f.read().strip()
+
+                    # Try to parse as JSON first
+                    try:
+                        data = json.loads(content)
+                        if isinstance(data, list):
+                            product_ids = [int(id) for id in data]
+                        else:
+                            # Assume it's a JSON object with ids field
+                            product_ids = [int(id) for id in data.get("ids", [])]
+                    except json.JSONDecodeError:
+                        # Parse as plain text (one per line or comma-separated)
+                        lines = content.split("\n")
+                        for line in lines:
+                            line = line.strip()
+                            if line:
+                                # Handle comma-separated values in a line
+                                if "," in line:
+                                    product_ids.extend(
+                                        [
+                                            int(id.strip())
+                                            for id in line.split(",")
+                                            if id.strip()
+                                        ]
+                                    )
+                                else:
+                                    product_ids.append(int(line))
+
+                translation_log(f"Loaded {len(product_ids)} IDs from file: {ids_file}")
+
+            except Exception as e:
+                translation_log(f"Error reading IDs file {ids_file}: {e}")
+                sys.exit(1)
+
+        elif ids_input:
+            try:
+                # Parse comma-separated IDs
+                product_ids = [
+                    int(id.strip()) for id in ids_input.split(",") if id.strip()
+                ]
+                translation_log(f"Parsed {len(product_ids)} IDs from command line")
+            except ValueError as e:
+                translation_log(f"Invalid ID format in --ids parameter: {e}")
+                sys.exit(1)
+
+        # Remove duplicates while preserving order
+        if product_ids:
+            seen = set()
+            unique_ids = []
+            for pid in product_ids:
+                if pid not in seen:
+                    seen.add(pid)
+                    unique_ids.append(pid)
+
+            if len(unique_ids) < len(product_ids):
+                translation_log(
+                    f"Removed {len(product_ids) - len(unique_ids)} duplicate IDs"
+                )
+
+            product_ids = unique_ids
+
+        return product_ids
 
     def find_starting_product_id_fast(self, qs, skip_ru, skip_category):
         """

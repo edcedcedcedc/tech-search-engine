@@ -4,7 +4,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 LOGS_DIR = os.path.join(BASE_DIR, "logs")
 os.makedirs(LOGS_DIR, exist_ok=True)
-LOG_FILE = os.path.join(LOGS_DIR, "db_inspect_products.log")
+LOG_FILE = os.path.join(LOGS_DIR, "999inspect.log")
 
 
 def db_inspect_products_log(msg: str):
