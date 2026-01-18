@@ -4,13 +4,16 @@ from django.core.management.base import BaseCommand
 from products.management.commands.shop_crawler_engine.utils import (
     DatabaseManager,
 )
-from products.management.commands.shop_crawler_engine.config import config
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
 from products.management.commands.shop_crawler_engine.utils import random_sleep
 import traceback
 from threading import Thread
 from queue import Queue
 from settings import CrawlSettings
+from products.management.commands.shop_crawler_engine.config import (
+    ALLOWED_FIELDS_TO_WRITE_AND_TRACK,
+    SHOPS,
+)
 
 
 class Command(BaseCommand):
@@ -49,18 +52,18 @@ class Command(BaseCommand):
             "--category", type=str, default=None, help="Filter by specific category"
         )
         parser.add_argument("--pages", type=int, default=999)
-        parser.add_argument(
-            "--track-fields",
-            type=str,
-            default="price, in_stock",  # TODO
-        )
+        parser.add_argument("--track-fields", type=str, default=None)
 
     def handle(self, *args, **options):
         try:
             filter_shop = options["shop"]
             filter_category = options["category"]
             max_pages = options["pages"]
-            track_fields = options["track_fields"].split(",")
+            track_fields = (
+                options["track_fields"].split(",")
+                if options["track_fields"]
+                else ALLOWED_FIELDS_TO_WRITE_AND_TRACK
+            )
 
             shop_crawler_log("START shop_crawler_engine orchestrator")
 
@@ -70,7 +73,7 @@ class Command(BaseCommand):
             threads = []
 
             # Launch threads for all shop/category combinations
-            for shop_name, shop_cfg in config.items():
+            for shop_name, shop_cfg in SHOPS.items():
 
                 if filter_shop and shop_name != filter_shop:
                     continue

@@ -40,12 +40,14 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from products.models import Product
 from products.utils.log.db_merge_log import db_merge_log
+from products.management.commands.shop_crawler_engine.config import (
+    ALLOWED_FIELDS_TO_WRITE_AND_TRACK,
+)
 
 BATCH_SIZE = 2000
 STOP_MERGE = False
 
 # Crawler decides what to update, merge decides what to write
-ALLOWED_FIELDS_TO_WRITE = ["price, in_stock"]
 
 
 def signal_handler(sig, frame):
@@ -73,6 +75,8 @@ class Command(BaseCommand):
         force = options["force"]
         shop = options.get("shop")
         shop = shop.lower() if shop else None
+
+        self.test_before_merge(source_db, dest_db, shop=shop)
 
         if force:
             db_merge_log(f"[FORCE] {source_db} → {dest_db}")
@@ -138,6 +142,9 @@ class Command(BaseCommand):
             f"[FORCE] Completed: {total} products in {round(time.time() - start, 2)}s"
         )
 
+    # --------------------------------------------------
+    # DIRTY MERGE
+    # --------------------------------------------------
     def dirty_merge(self, source_db, dest_db, shop):
         global STOP_MERGE
 
@@ -199,7 +206,7 @@ class Command(BaseCommand):
                 dest = dest_map[key]
 
                 changed_fields = set(p.changed_fields or [])
-                allowed_fields = changed_fields & set(ALLOWED_FIELDS_TO_WRITE)
+                allowed_fields = changed_fields & set(ALLOWED_FIELDS_TO_WRITE_AND_TRACK)
 
                 if not allowed_fields:
                     continue
@@ -230,3 +237,65 @@ class Command(BaseCommand):
             f"[DIRTY] created={len(to_create)} updated={len(to_update)} "
             f"in {round(time.time() - start, 2)}s"
         )
+
+    def test_before_merge(
+        self, source_db, dest_db, shop=None, fields_to_compare=None, limit=50
+    ):
+        from products.models import Product
+
+        fields_to_compare = fields_to_compare or ALLOWED_FIELDS_TO_WRITE_AND_TRACK
+
+        db_merge_log(f"[TEST] Running pre-merge comparison: {source_db} → {dest_db}")
+
+        src_qs = Product.objects.using(source_db)
+        dest_qs = Product.objects.using(dest_db)
+
+        if shop:
+            src_qs = src_qs.filter(shop__iexact=shop)
+            dest_qs = dest_qs.filter(shop__iexact=shop)
+
+        # Build destination map for fast lookup
+        dest_map = {
+            (p.shop.lower(), p.external_id): p
+            for p in dest_qs.iterator(chunk_size=2000)
+        }
+
+        differences = []
+        count_checked = 0
+
+        for src in src_qs.iterator(chunk_size=2000):
+            key = (src.shop.lower(), src.external_id)
+            dest = dest_map.get(key)
+            if not dest:
+                continue  # new product → nothing to compare
+
+            diff = {}
+            for field in fields_to_compare:
+                src_val = getattr(src, field)
+                dest_val = getattr(dest, field)
+                if src_val != dest_val:
+                    diff[field] = (dest_val, src_val)  # old → new
+
+            if diff:
+                differences.append(
+                    {
+                        "shop": src.shop,
+                        "external_id": src.external_id,
+                        "name": src.name,
+                        "diff": diff,
+                    }
+                )
+
+            count_checked += 1
+            if limit and count_checked >= limit:
+                break
+
+        db_merge_log(
+            f"[TEST] Checked {count_checked} products. Differences found: {len(differences)}"
+        )
+        for d in differences:
+            db_merge_log(f"[TEST] [{d['shop']}] {d['name']} ({d['external_id']})")
+            for f, vals in d["diff"].items():
+                db_merge_log(f"  {f}: {vals[0]} → {vals[1]}")
+
+        return differences

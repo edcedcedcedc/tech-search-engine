@@ -34,9 +34,8 @@ class Crawler:
         m = re.search(pattern, text)
         return m.group(group) if m else default
 
-    def fetch_xstore(self, category_url, max_pages=1, out_of_stock_limit=75):
+    def fetch_xstore(self, category_url, max_pages=1):
         limiter = self.rate_limiters["xstore"]
-        unavailable_count = 0
 
         for page in range(1, max_pages + 1):
             url = f"{category_url}?page={page}"
@@ -83,88 +82,13 @@ class Crawler:
                     "in_stock": in_stock,
                 }
 
-    def fetch_enter(self, category_url, max_pages=1, out_of_stock_limit=75):
-        """
-        Fetch products from Enter shop.
-        Stops early if too many consecutive items are out of stock in this category.
-        """
-        limiter = self.rate_limiters["enter"]
-        unavailable_count = 0
-
-        for page in range(1, max_pages + 1):
-            url = f"{category_url}?page={page}"
-            resp = limiter.make_request(url)
-            if not resp:
-                break
-
-            soup = BeautifulSoup(resp.text, "lxml")
-            nodes = soup.select("div.product-item[data-gtm]")
-            if not nodes:
-                break
-
-            for node in nodes:
-                raw = node.get("data-gtm")
-                if not raw:
-                    continue
-
-                title_tag = node.select_one(".product-title")
-                title = title_tag.get_text(strip=True) if title_tag else ""
-                variant_tag = node.select_one(".product-desc")
-                variant = variant_tag.get_text(strip=True) if variant_tag else ""
-
-                in_stock = True
-                add_btn = node.select_one("button[data-action]")
-
-                if add_btn and add_btn.get("data-action") in "openOutStockModal":
-                    in_stock = False
-
-                if "out-of-stock" in node.get("class", []):
-                    in_stock = False
-
-                try:
-                    decoded = json.loads(html.unescape(raw))
-                    item = decoded.get("ecommerce", {}).get("items", [{}])[0]
-                    # Some shops may include availability
-                    if item.get("availability") == "out_of_stock":
-                        in_stock = False
-                except Exception:
-                    pass
-                if not in_stock:
-                    unavailable_count += 1
-                else:
-                    unavailable_count = 0
-                yield {
-                    "external_id": self.safe_re_search(r'"item_id":"(.*?)"', raw),
-                    "name": title,
-                    "variant": variant,
-                    "t_name": {"ro": title, "en": "", "ru": ""},
-                    "t_variant": {"ro": variant, "en": "", "ru": ""},
-                    "price": int(
-                        self.safe_re_search(r'"price":(\d+)', raw, default="0")
-                    ),
-                    "brand": self.safe_re_search(r'"item_brand":"(.*?)"', raw),
-                    "category": self.safe_re_search(r'"item_category":"(.*?)"', raw),
-                    "t_category": {"ro": title, "en": "", "ru": ""},
-                    "url": (
-                        node.select_one(".stretched-link")["href"]
-                        if node.select_one(".stretched-link")
-                        else ""
-                    ),
-                    "in_stock": in_stock,
-                    "shop": "enter",
-                }
-
-                if unavailable_count >= out_of_stock_limit:
-                    return
-
-    def fetch_darwin(self, category_url, max_pages=1, out_of_stock_limit=75):
+    def fetch_darwin(self, category_url, max_pages=1):
         """
         Fetch products from Darwin shop.
 
         Stops early if too many consecutive items are out of stock in this category.
         """
         limiter = self.rate_limiters["darwin"]
-        consecutive_unavailable = 0
 
         for page in range(1, max_pages + 1):
             url = f"{category_url}?page={page}"
@@ -186,20 +110,19 @@ class Crawler:
                 if not raw:
                     continue
 
-                in_stock = True
-                # Darwin marks out-of-stock with a specific class
-                if "out-of-stock" in node.get("class", []):
-                    in_stock = False
-                    consecutive_unavailable += 1
-                else:
-                    consecutive_unavailable = 0  # reset if we find an in-stock item
+                # ---------- STOCK DETECTION ----------
+                classes = node.get("class", [])
+                has_out_class = "out-of-stock" in classes
+                has_notify_btn = (
+                    node.select_one('[wire\\:click*="toggleNotificationModal"]')
+                    is not None
+                )
+                has_add_to_cart = (
+                    node.select_one('[wire\\:click*="addProductToCart"]') is not None
+                )
 
-                if consecutive_unavailable >= out_of_stock_limit:
-                    shop_crawler_log(
-                        f"[STOPPER] shop=darwin {consecutive_unavailable} consecutive items out of stock in {category_url}"
-                    )
-                    return
-                # stop crawling this category
+                in_stock = not has_out_class and has_add_to_cart and not has_notify_btn
+
                 decoded = html.unescape(raw)
 
                 yield {
@@ -219,4 +142,67 @@ class Crawler:
                     "url": link.get("href") or "",
                     "in_stock": in_stock,
                     "shop": "darwin",
+                }
+
+    def fetch_enter(self, category_url, max_pages=1, timeout=15):
+        """
+        Fetch products from Enter shop using requests (testing purpose).
+
+        Returns a generator of product dicts with in_stock=True/False.
+        """
+        limiter = self.rate_limiters["enter"]
+
+        for page in range(1, max_pages + 1):
+            url = f"{category_url}?page={page}"
+            resp = limiter.make_request(url)
+            if not resp:
+                break
+
+            soup = BeautifulSoup(resp.text, "lxml")
+            nodes = soup.select("div.product-item[data-gtm]")
+
+            if not nodes:
+                break
+
+            for node in nodes:
+                raw = node.get("data-gtm")
+                if not raw:
+                    continue
+
+                decoded = html.unescape(raw)
+                title_tag = node.select_one(".product-title")
+                title = title_tag.get_text(strip=True) if title_tag else ""
+                variant_tag = node.select_one(".product-desc")
+                variant = variant_tag.get_text(strip=True) if variant_tag else ""
+
+                # ---------- STOCK DETECTION ----------
+                in_stock = True
+                add_btn = node.select_one("button[data-action]")
+
+                if add_btn and add_btn.get("data-action") == "openOutStockModal":
+                    in_stock = False
+                elif "out-of-stock" in node.get("class", []):
+                    in_stock = False
+
+                yield {
+                    "external_id": self.safe_re_search(r'"item_id":"(.*?)"', decoded),
+                    "name": title,
+                    "variant": variant,
+                    "t_name": {"ro": title, "en": "", "ru": ""},
+                    "t_variant": {"ro": variant, "en": "", "ru": ""},
+                    "price": int(
+                        self.safe_re_search(r'"price":(\d+)', decoded, default="0")
+                    ),
+                    "brand": self.safe_re_search(r'"item_brand":"(.*?)"', decoded),
+                    "category": self.safe_re_search(
+                        r'"item_category":"(.*?)"', decoded
+                    ),
+                    "t_category": {"ro": title, "en": "", "ru": ""},
+                    "url": (
+                        node.select_one(".stretched-link")["href"]
+                        if node.select_one(".stretched-link")
+                        else ""
+                    ),
+                    "in_stock": in_stock,
+                    "shop": "enter",
                 }

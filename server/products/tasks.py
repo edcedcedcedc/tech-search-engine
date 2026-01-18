@@ -1,6 +1,9 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 from pathlib import Path
+import random
 import subprocess
+import time
 from celery import shared_task
 import environ
 from django.utils import timezone
@@ -120,6 +123,15 @@ def run_translation_in_venv_translate(*args, **kwargs):
     subprocess.run(cmd, check=True, env=env)
 
 
+# =========================
+# Random sleep helper
+# =========================
+def random_sleep(min_seconds: float = 2, max_seconds: float = 5):
+    sleep_time = random.uniform(min_seconds, max_seconds)
+    time.sleep(sleep_time)
+    print(f"Sleeping {sleep_time:.2f}s")
+
+
 # ===============================
 # Celery task
 # ===============================
@@ -127,12 +139,24 @@ def run_translation_in_venv_translate(*args, **kwargs):
 def run_translation():
     """
     Run translation command for all databases with correct flags using venv_translate.
+    Multithreaded and random delay added to avoid rate limits.
     """
     databases = ["enter", "darwin", "xstore"]
 
-    for db in databases:
-        # call the helper instead of running Translate class directly
+    def run_db_translation(db):
+        translation_log(f"Starting translation for DB: {db}")
+        # Optional random delay before starting each DB
+        random_sleep(1, 3)
         run_translation_in_venv_translate(db=db, shop_filter=db)
+        translation_log(f"Finished translation for DB: {db}")
+
+    with ThreadPoolExecutor(max_workers=len(databases)) as executor:
+        futures = [executor.submit(run_db_translation, db) for db in databases]
+        for future in as_completed(futures):
+            try:
+                future.result()  # raise exception if task failed
+            except Exception as e:
+                translation_log(f"Translation failed: {e}")
 
 
 @shared_task(

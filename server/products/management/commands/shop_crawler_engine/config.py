@@ -2,7 +2,9 @@ from .crawler import Crawler
 
 shop_crawler = Crawler()
 
-config = {
+ALLOWED_FIELDS_TO_WRITE_AND_TRACK = ["price", "in_stock"]
+
+SHOPS = {
     "enter": {
         "function": shop_crawler.fetch_enter,
         "laptop": "https://enter.online/laptopuri",
