@@ -38,7 +38,7 @@ def run_crawler():
     try:
         call_command("reset")
         call_command(
-            "crawl", track_fields="price, in_stock", pages=1, shop="xstore"
+            "crawl", track_fields="price, in_stock", pages=1
         )  # assumes your command is named 'crawl.py'
         shop_crawler_log("[TASK]Crawler finished successfully")
     except Exception as e:
@@ -354,16 +354,8 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=True, batch_size=5
                 )
 
             # Step 2: Merge Stage -> Prod
-            db_merge_log(
-                f"[TASK] Starting Stage -> Prod merge | force=True | throttle={throttle_seconds}s"
-            )
-            call_command(
-                "merge",
-                source=STAGE_DB,
-                dest=PROD_DB,
-                force=True,
-                throttle=throttle_seconds,
-            )
+            db_merge_log(f"[TASK] Starting Stage -> Prod merge | force=True")
+            call_command("merge", source=STAGE_DB, dest=PROD_DB, force=True)
             db_merge_log("[TASK] Stage -> Prod merge finished successfully")
 
             # Step 2.5: Price History Prod

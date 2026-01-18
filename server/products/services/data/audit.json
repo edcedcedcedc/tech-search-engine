@@ -21,6 +21,846 @@
       "examples": [
         9192
       ]
+    },
+    "mouse": {
+      "normalized": {
+        "ro": "mouse gaming, periferice pc",
+        "en": "Gaming mice and PC peripherals",
+        "ru": "\u0433\u0435\u0439\u043c\u0435\u0440\u0441\u043a\u0438\u0435 \u043c\u044b\u0448\u0438 \u0438 \u043f\u0435\u0440\u0438\u0444\u0435\u0440\u0438\u044f \u0434\u043b\u044f \u041f\u041a"
+      },
+      "first_seen": "2026-01-18T04:40:19.740596+00:00",
+      "examples": [
+        13712
+      ]
+    },
+    "sony ps5 slim": {
+      "normalized": {
+        "ro": "console jocuri",
+        "en": "Game consoles",
+        "ru": "\u0438\u0433\u0440\u043e\u0432\u044b\u0435 \u043a\u043e\u043d\u0441\u043e\u043b\u0438"
+      },
+      "first_seen": "2026-01-18T04:40:25.466121+00:00",
+      "examples": [
+        13820
+      ]
+    },
+    "nintendo switch": {
+      "normalized": {
+        "ro": "console jocuri",
+        "en": "Game consoles",
+        "ru": "\u0438\u0433\u0440\u043e\u0432\u044b\u0435 \u043a\u043e\u043d\u0441\u043e\u043b\u0438"
+      },
+      "first_seen": "2026-01-18T04:40:29.091041+00:00",
+      "examples": [
+        13821
+      ]
+    },
+    "procesoare": {
+      "normalized": {
+        "ro": "procesor, cpu, componente pc",
+        "en": "Processors and PC components",
+        "ru": "\u043f\u0440\u043e\u0446\u0435\u0441\u0441\u043e\u0440\u044b \u0438 \u043a\u043e\u043c\u043f\u043e\u043d\u0435\u043d\u0442\u044b \u041f\u041a"
+      },
+      "first_seen": "2026-01-18T04:40:34.067635+00:00",
+      "examples": [
+        13833
+      ]
+    },
+    "tablete": {
+      "normalized": {
+        "ro": "tableta",
+        "en": "Tablets",
+        "ru": "\u043f\u043b\u0430\u043d\u0448\u0435\u0442\u044b"
+      },
+      "first_seen": "2026-01-18T04:40:37.933041+00:00",
+      "examples": [
+        13846
+      ]
+    },
+    "smartphone": {
+      "normalized": {
+        "ro": "smartphone, telefon mobil",
+        "en": "Smartphones",
+        "ru": "\u0441\u043c\u0430\u0440\u0442\u0444\u043e\u043d\u044b"
+      },
+      "first_seen": "2026-01-18T04:40:41.136621+00:00",
+      "examples": [
+        13874
+      ]
+    },
+    "televizoare": {
+      "normalized": {
+        "ro": "televizor",
+        "en": "Televisions",
+        "ru": "\u0442\u0435\u043b\u0435\u0432\u0438\u0437\u043e\u0440\u044b"
+      },
+      "first_seen": "2026-01-18T04:40:47.487714+00:00",
+      "examples": [
+        13918
+      ]
+    },
+    "scaune gaming": {
+      "normalized": {
+        "ro": "scaun gaming, mobilier",
+        "en": "Gaming chairs",
+        "ru": "\u0433\u0435\u0439\u043c\u0435\u0440\u0441\u043a\u0438\u0435 \u043a\u0440\u0435\u0441\u043b\u0430"
+      },
+      "first_seen": "2026-01-18T04:40:50.320311+00:00",
+      "examples": [
+        13922
+      ]
+    },
+    "ceasuri pentru copii cu gps": {
+      "normalized": {
+        "ro": "smartwatch",
+        "en": "Smartwatches",
+        "ru": "\u0443\u043c\u043d\u044b\u0435 \u0447\u0430\u0441\u044b"
+      },
+      "first_seen": "2026-01-18T04:40:57.703969+00:00",
+      "examples": [
+        14002
+      ]
+    },
+    "ceasuri inteligente": {
+      "normalized": {
+        "ro": "smartwatch",
+        "en": "Smartwatches",
+        "ru": "\u0443\u043c\u043d\u044b\u0435 \u0447\u0430\u0441\u044b"
+      },
+      "first_seen": "2026-01-18T04:41:04.218228+00:00",
+      "examples": [
+        14011
+      ]
+    },
+    "camere action": {
+      "normalized": {
+        "ro": "camera actiune",
+        "en": "Action cameras",
+        "ru": "\u044d\u043a\u0448\u043d-\u043a\u0430\u043c\u0435\u0440\u044b"
+      },
+      "first_seen": "2026-01-18T04:41:08.600420+00:00",
+      "examples": [
+        14023
+      ]
+    },
+    "boxe portabile": {
+      "normalized": {
+        "ro": "boxe, difuzoare",
+        "en": "Speakers and sound systems",
+        "ru": "\u043a\u043e\u043b\u043e\u043d\u043a\u0438 \u0438 \u0437\u0432\u0443\u043a\u043e\u0432\u044b\u0435 \u0441\u0438\u0441\u0442\u0435\u043c\u044b"
+      },
+      "first_seen": "2026-01-18T04:41:13.774642+00:00",
+      "examples": [
+        14027
+      ]
+    },
+    "boxe partybox": {
+      "normalized": {
+        "ro": "boxe, difuzoare",
+        "en": "Speakers and sound systems",
+        "ru": "\u043a\u043e\u043b\u043e\u043d\u043a\u0438 \u0438 \u0437\u0432\u0443\u043a\u043e\u0432\u044b\u0435 \u0441\u0438\u0441\u0442\u0435\u043c\u044b"
+      },
+      "first_seen": "2026-01-18T04:41:17.429346+00:00",
+      "examples": [
+        14028
+      ]
+    },
+    "boxe pentru pc": {
+      "normalized": {
+        "ro": "Boxe, difuzoare",
+        "en": "Speakers and sound systems",
+        "ru": "\u043a\u043e\u043b\u043e\u043d\u043a\u0438 \u0438 \u0437\u0432\u0443\u043a\u043e\u0432\u044b\u0435 \u0441\u0438\u0441\u0442\u0435\u043c\u044b"
+      },
+      "first_seen": "2026-01-18T04:41:20.303687+00:00",
+      "examples": [
+        14030
+      ]
+    }
+  },
+  "enter": {
+    "\u043e\u0445\u043b\u0430\u0436\u0434\u0430\u044e\u0449\u0438\u0435 \u043f\u043e\u0434\u0441\u0442\u0430\u0432\u043a\u0438": {
+      "normalized": {
+        "ro": "laptop accessories",
+        "en": "Laptop accessories",
+        "ru": "\u0430\u043a\u0441\u0435\u0441\u0441\u0443\u0430\u0440\u044b \u0434\u043b\u044f \u043d\u043e\u0443\u0442\u0431\u0443\u043a\u043e\u0432"
+      },
+      "first_seen": "2026-01-18T04:33:58.205778+00:00",
+      "examples": [
+        17425
+      ]
+    },
+    "\u0447\u0435\u0445\u043b\u044b \u0434\u043b\u044f \u043d\u043e\u0443\u0442\u0431\u0443\u043a\u043e\u0432": {
+      "normalized": {
+        "ro": "laptop accessories",
+        "en": "Laptop accessories",
+        "ru": "\u0430\u043a\u0441\u0435\u0441\u0441\u0443\u0430\u0440\u044b \u0434\u043b\u044f \u043d\u043e\u0443\u0442\u0431\u0443\u043a\u043e\u0432"
+      },
+      "first_seen": "2026-01-18T04:34:05.836122+00:00",
+      "examples": [
+        17433
+      ]
+    },
+    "\u0447\u0435\u0445\u043b\u044b \u0434\u043b\u044f \u043f\u043b\u0430\u043d\u0448\u0435\u0442\u043e\u0432": {
+      "normalized": {
+        "ro": "accesorii tableta",
+        "en": "Tablet accessories",
+        "ru": "\u0430\u043a\u0441\u0435\u0441\u0441\u0443\u0430\u0440\u044b \u0434\u043b\u044f \u043f\u043b\u0430\u043d\u0448\u0435\u0442\u043e\u0432"
+      },
+      "first_seen": "2026-01-18T04:34:10.272981+00:00",
+      "examples": [
+        17445
+      ]
+    },
+    "\u0441\u0442\u0438\u043b\u0443\u0441\u044b": {
+      "normalized": {
+        "ro": "accesorii apple",
+        "en": "Apple accessories",
+        "ru": "\u0430\u043a\u0441\u0435\u0441\u0441\u0443\u0430\u0440\u044b Apple"
+      },
+      "first_seen": "2026-01-18T04:34:15.901689+00:00",
+      "examples": [
+        17446
+      ]
+    },
+    "\u043a\u0430\u043c\u0435\u0440\u044b \u0432\u0438\u0434\u0435\u043e\u043d\u0430\u0431\u043b\u044e\u0434\u0435\u043d\u0438\u044f": {
+      "normalized": {
+        "ro": "Foto video",
+        "en": "Photo and video equipment",
+        "ru": "\u0444\u043e\u0442\u043e \u0438 \u0432\u0438\u0434\u0435\u043e \u043e\u0431\u043e\u0440\u0443\u0434\u043e\u0432\u0430\u043d\u0438\u0435"
+      },
+      "first_seen": "2026-01-18T04:34:24.650948+00:00",
+      "examples": [
+        17470
+      ]
+    },
+    "\u0444\u043e\u0442\u043e\u0430\u043f\u043f\u0430\u0440\u0430\u0442\u044b": {
+      "normalized": {
+        "ro": "foto video",
+        "en": "Photo and video equipment",
+        "ru": "\u0444\u043e\u0442\u043e \u0438 \u0432\u0438\u0434\u0435\u043e \u043e\u0431\u043e\u0440\u0443\u0434\u043e\u0432\u0430\u043d\u0438\u0435"
+      },
+      "first_seen": "2026-01-18T04:34:32.555532+00:00",
+      "examples": [
+        17473
+      ]
+    },
+    "\u044d\u043a\u0448\u043d-\u043a\u0430\u043c\u0435\u0440\u044b": {
+      "normalized": {
+        "ro": "camera actiune",
+        "en": "Action cameras",
+        "ru": "\u044d\u043a\u0448\u043d-\u043a\u0430\u043c\u0435\u0440\u044b"
+      },
+      "first_seen": "2026-01-18T04:34:38.075166+00:00",
+      "examples": [
+        17476
+      ]
+    },
+    "\u0444\u043e\u0442\u043e \u043e\u0431\u044a\u0435\u043a\u0442\u0438\u0432\u044b": {
+      "normalized": {
+        "ro": "obiective foto video",
+        "en": "Camera lenses",
+        "ru": "\u0444\u043e\u0442\u043e \u0438 \u0432\u0438\u0434\u0435\u043e \u043e\u0431\u044a\u0435\u043a\u0442\u0438\u0432\u044b"
+      },
+      "first_seen": "2026-01-18T04:34:45.246358+00:00",
+      "examples": [
+        17481
+      ]
+    },
+    "\u0442\u0435\u043b\u0435\u0432\u0438\u0437\u043e\u0440\u044b": {
+      "normalized": {
+        "ro": "televizor",
+        "en": "Televisions",
+        "ru": "\u0442\u0435\u043b\u0435\u0432\u0438\u0437\u043e\u0440\u044b"
+      },
+      "first_seen": "2026-01-18T04:34:49.608044+00:00",
+      "examples": [
+        17490
+      ]
+    },
+    "\u043f\u0440\u043e\u0435\u043a\u0442\u043e\u0440\u044b": {
+      "normalized": {
+        "ro": "proiectoare, display",
+        "en": "Projection screens",
+        "ru": "\u043f\u0440\u043e\u0435\u043a\u0446\u0438\u043e\u043d\u043d\u044b\u0435 \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u0430 \u0438 \u0434\u0438\u0441\u043f\u043b\u0435\u0438"
+      },
+      "first_seen": "2026-01-18T04:34:59.034514+00:00",
+      "examples": [
+        17510
+      ]
+    },
+    "\u0444\u043e\u043d\u044b \u0434\u043b\u044f \u0444\u043e\u0442\u043e": {
+      "normalized": {
+        "ro": "foto video",
+        "en": "Photo and video equipment",
+        "ru": "\u0444\u043e\u0442\u043e \u0438 \u0432\u0438\u0434\u0435\u043e \u043e\u0431\u043e\u0440\u0443\u0434\u043e\u0432\u0430\u043d\u0438\u0435"
+      },
+      "first_seen": "2026-01-18T04:35:05.852629+00:00",
+      "examples": [
+        17512
+      ]
+    },
+    "\u043f\u0440\u043e\u0435\u043a\u0446\u0438\u043e\u043d\u043d\u044b\u0435 \u044d\u043a\u0440\u0430\u043d\u044b": {
+      "normalized": {
+        "ro": "ecrane proiectie",
+        "en": "Projection screens",
+        "ru": "\u043f\u0440\u043e\u0435\u043a\u0446\u0438\u043e\u043d\u043d\u044b\u0435 \u044d\u043a\u0440\u0430\u043d\u044b"
+      },
+      "first_seen": "2026-01-18T04:35:10.956702+00:00",
+      "examples": [
+        17513
+      ]
+    },
+    "\u0442\u0435\u043b\u0435\u0441\u043a\u043e\u043f\u044b": {
+      "normalized": {
+        "ro": "optica si astronomie",
+        "en": "Optics and astronomy",
+        "ru": "\u043e\u043f\u0442\u0438\u043a\u0430 \u0438 \u0430\u0441\u0442\u0440\u043e\u043d\u043e\u043c\u0438\u044f"
+      },
+      "first_seen": "2026-01-18T04:35:18.050820+00:00",
+      "examples": [
+        17530
+      ]
+    },
+    "\u043c\u0438\u043a\u0440\u043e\u0441\u043a\u043e\u043f\u044b": {
+      "normalized": {
+        "ro": "optica si astronomie",
+        "en": "Optics and astronomy",
+        "ru": "\u043e\u043f\u0442\u0438\u043a\u0430 \u0438 \u0430\u0441\u0442\u0440\u043e\u043d\u043e\u043c\u0438\u044f"
+      },
+      "first_seen": "2026-01-18T04:35:23.820104+00:00",
+      "examples": [
+        17532
+      ]
+    },
+    "\u0437\u0440\u0438\u0442\u0435\u043b\u044c\u043d\u044b\u0435 \u0442\u0440\u0443\u0431\u044b": {
+      "normalized": {
+        "ro": "optica si astronomie",
+        "en": "Optics and astronomy",
+        "ru": "\u043e\u043f\u0442\u0438\u043a\u0430 \u0438 \u0430\u0441\u0442\u0440\u043e\u043d\u043e\u043c\u0438\u044f"
+      },
+      "first_seen": "2026-01-18T04:35:31.340280+00:00",
+      "examples": [
+        17542
+      ]
+    },
+    "\u0440\u0435\u0442\u0440\u0430\u043d\u0441\u043b\u044f\u0442\u043e\u0440": {
+      "normalized": {
+        "ro": "router, wifi, dispozitiv retea",
+        "en": "WiFi routers and network devices",
+        "ru": "WiFi \u0440\u043e\u0443\u0442\u0435\u0440\u044b \u0438 \u0441\u0435\u0442\u0435\u0432\u044b\u0435 \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u0430"
+      },
+      "first_seen": "2026-01-18T04:35:40.146607+00:00",
+      "examples": [
+        17551
+      ]
+    },
+    "wi-fi \u0440\u043e\u0443\u0442\u0435\u0440\u044b": {
+      "normalized": {
+        "ro": "router, wifi, dispozitiv retea",
+        "en": "WiFi routers and network devices",
+        "ru": "WiFi \u0440\u043e\u0443\u0442\u0435\u0440\u044b \u0438 \u0441\u0435\u0442\u0435\u0432\u044b\u0435 \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u0430"
+      },
+      "first_seen": "2026-01-18T04:35:46.628900+00:00",
+      "examples": [
+        17552
+      ]
+    },
+    "\u043a\u043b\u0430\u0432\u0438\u0430\u0442\u0443\u0440\u044b": {
+      "normalized": {
+        "ro": "tastatura, periferice pc",
+        "en": "Keyboards and PC peripherals",
+        "ru": "\u043a\u043b\u0430\u0432\u0438\u0430\u0442\u0443\u0440\u044b \u0438 \u043f\u0435\u0440\u0438\u0444\u0435\u0440\u0438\u044f \u041f\u041a"
+      },
+      "first_seen": "2026-01-18T04:35:51.573288+00:00",
+      "examples": [
+        17553
+      ]
+    },
+    "\u043c\u0438\u043a\u0440\u043e\u0444\u043e\u043d\u044b": {
+      "normalized": {
+        "ro": "microfon gaming, audio",
+        "en": "Gaming microphones and audio",
+        "ru": "\u0433\u0435\u0439\u043c\u0435\u0440\u0441\u043a\u0438\u0435 \u043c\u0438\u043a\u0440\u043e\u0444\u043e\u043d\u044b \u0438 \u0430\u0443\u0434\u0438\u043e"
+      },
+      "first_seen": "2026-01-18T04:35:55.994840+00:00",
+      "examples": [
+        17554
+      ]
+    },
+    "\u0432\u043d\u0435\u0448\u043d\u0438\u0435 \u0436\u0435\u0441\u0442\u043a\u0438\u0435 \u0434\u0438\u0441\u043a\u0438 (hdd)": {
+      "normalized": {
+        "ro": "stocare externa, hdd, accesorii pc",
+        "en": "External storage and PC accessories",
+        "ru": "\u0432\u043d\u0435\u0448\u043d\u0435\u0435 \u0445\u0440\u0430\u043d\u0438\u043b\u0438\u0449\u0435 \u0438 \u0430\u043a\u0441\u0435\u0441\u0441\u0443\u0430\u0440\u044b \u041f\u041a"
+      },
+      "first_seen": "2026-01-18T04:36:00.544261+00:00",
+      "examples": [
+        17555
+      ]
+    },
+    "\u043c\u044b\u0448\u043a\u0438": {
+      "normalized": {
+        "ro": "mouse, periferice pc",
+        "en": "Mice and PC peripherals",
+        "ru": "\u043a\u043e\u043c\u043f\u044c\u044e\u0442\u0435\u0440\u043d\u044b\u0435 \u043c\u044b\u0448\u0438 \u0438 \u043f\u0435\u0440\u0438\u0444\u0435\u0440\u0438\u044f \u0434\u043b\u044f \u041f\u041a"
+      },
+      "first_seen": "2026-01-18T04:36:04.373190+00:00",
+      "examples": [
+        17557
+      ]
+    },
+    "\u0432\u0435\u0431-\u043a\u0430\u043c\u0435\u0440\u044b": {
+      "normalized": {
+        "ro": "camera web, periferice pc",
+        "en": "Webcams and PC peripherals",
+        "ru": "\u0432\u0435\u0431-\u043a\u0430\u043c\u0435\u0440\u044b \u0438 \u043f\u0435\u0440\u0438\u0444\u0435\u0440\u0438\u044f \u0434\u043b\u044f \u041f\u041a"
+      },
+      "first_seen": "2026-01-18T04:36:09.090734+00:00",
+      "examples": [
+        17558
+      ]
+    },
+    "\u0444\u0438\u0442\u043d\u0435\u0441-\u0442\u0440\u0435\u043a\u0435\u0440\u044b": {
+      "normalized": {
+        "ro": "smartwatch",
+        "en": "Smartwatches",
+        "ru": "\u0443\u043c\u043d\u044b\u0435 \u0447\u0430\u0441\u044b"
+      },
+      "first_seen": "2026-01-18T04:36:15.423604+00:00",
+      "examples": [
+        17561
+      ]
+    },
+    "\u0443\u043c\u043d\u044b\u0435 \u0447\u0430\u0441\u044b \u0434\u043b\u044f \u0434\u0435\u0442\u0435\u0439": {
+      "normalized": {
+        "ro": "smartwatch",
+        "en": "Smartwatches",
+        "ru": "\u0443\u043c\u043d\u044b\u0435 \u0447\u0430\u0441\u044b"
+      },
+      "first_seen": "2026-01-18T04:36:22.445577+00:00",
+      "examples": [
+        17581
+      ]
+    },
+    "\u0443\u043c\u043d\u044b\u0435 \u0447\u0430\u0441\u044b": {
+      "normalized": {
+        "ro": "smartwatch",
+        "en": "Smartwatches",
+        "ru": "\u0443\u043c\u043d\u044b\u0435 \u0447\u0430\u0441\u044b"
+      },
+      "first_seen": "2026-01-18T04:36:27.698929+00:00",
+      "examples": [
+        17601
+      ]
+    },
+    "\u043a\u0440\u043e\u043d\u0448\u0442\u0435\u0439\u043d\u044b \u0434\u043b\u044f \u0442\u0432": {
+      "normalized": {
+        "ro": "suport tv, accesorii tv",
+        "en": "TV stands and accessories",
+        "ru": "\u043f\u043e\u0434\u0441\u0442\u0430\u0432\u043a\u0438 \u0434\u043b\u044f \u0422\u0412 \u0438 \u0430\u043a\u0441\u0435\u0441\u0441\u0443\u0430\u0440\u044b"
+      },
+      "first_seen": "2026-01-18T04:36:37.218016+00:00",
+      "examples": [
+        17621
+      ]
+    },
+    "\u043f\u0443\u043b\u044c\u0442\u044b \u0434\u0443": {
+      "normalized": {
+        "ro": "accesorii tv",
+        "en": "TV accessories",
+        "ru": "\u0430\u043a\u0441\u0435\u0441\u0441\u0443\u0430\u0440\u044b \u0434\u043b\u044f \u0442\u0435\u043b\u0435\u0432\u0438\u0437\u043e\u0440\u043e\u0432"
+      },
+      "first_seen": "2026-01-18T04:36:42.369340+00:00",
+      "examples": [
+        17637
+      ]
+    },
+    "\u0440\u0435\u043c\u0435\u0448\u043a\u0438": {
+      "normalized": {
+        "ro": "accesorii apple",
+        "en": "Apple accessories",
+        "ru": "\u0430\u043a\u0441\u0435\u0441\u0441\u0443\u0430\u0440\u044b Apple"
+      },
+      "first_seen": "2026-01-18T04:36:47.867990+00:00",
+      "examples": [
+        17641
+      ]
+    },
+    "\u0441\u043c\u0430\u0440\u0442-\u0442\u0440\u0435\u043a\u0435\u0440\u044b": {
+      "normalized": {
+        "ro": "accesorii apple",
+        "en": "Apple accessories",
+        "ru": "\u0430\u043a\u0441\u0435\u0441\u0441\u0443\u0430\u0440\u044b Apple"
+      },
+      "first_seen": "2026-01-18T04:36:54.756761+00:00",
+      "examples": [
+        17661
+      ]
+    },
+    "\u0443\u043c\u043d\u044b\u0435 \u0434\u0430\u0442\u0447\u0438\u043a\u0438": {
+      "normalized": {
+        "ro": "smart home",
+        "en": "Smart home",
+        "ru": "\u0443\u043c\u043d\u044b\u0439 \u0434\u043e\u043c"
+      },
+      "first_seen": "2026-01-18T04:37:01.010846+00:00",
+      "examples": [
+        17663
+      ]
+    },
+    "\u043d\u0430\u0443\u0448\u043d\u0438\u043a\u0438": {
+      "normalized": {
+        "ro": "casti, audio",
+        "en": "Headphones and audio",
+        "ru": "\u043d\u0430\u0443\u0448\u043d\u0438\u043a\u0438 \u0438 \u0430\u0443\u0434\u0438\u043e"
+      },
+      "first_seen": "2026-01-18T04:37:08.526404+00:00",
+      "examples": [
+        17688
+      ]
+    },
+    "\u043f\u043e\u0440\u0442\u0430\u0442\u0438\u0432\u043d\u044b\u0435 \u043a\u043e\u043b\u043e\u043d\u043a\u0438": {
+      "normalized": {
+        "ro": "boxe, difuzoare",
+        "en": "Speakers and sound systems",
+        "ru": "\u043a\u043e\u043b\u043e\u043d\u043a\u0438 \u0438 \u0437\u0432\u0443\u043a\u043e\u0432\u044b\u0435 \u0441\u0438\u0441\u0442\u0435\u043c\u044b"
+      },
+      "first_seen": "2026-01-18T04:37:14.425468+00:00",
+      "examples": [
+        17689
+      ]
+    },
+    "\u043a\u043e\u043b\u043e\u043d\u043a\u0438 \u0434\u043b\u044f \u0432\u0435\u0447\u0435\u0440\u0438\u043d\u043e\u043a": {
+      "normalized": {
+        "ro": "Boxe, difuzoare",
+        "en": "Speakers and sound systems",
+        "ru": "\u043a\u043e\u043b\u043e\u043d\u043a\u0438 \u0438 \u0437\u0432\u0443\u043a\u043e\u0432\u044b\u0435 \u0441\u0438\u0441\u0442\u0435\u043c\u044b"
+      },
+      "first_seen": "2026-01-18T04:37:18.190546+00:00",
+      "examples": [
+        17691
+      ]
+    },
+    "\u043a\u043e\u043b\u043e\u043d\u043a\u0438": {
+      "normalized": {
+        "ro": "boxe, difuzoare",
+        "en": "Speakers and sound systems",
+        "ru": "\u043a\u043e\u043b\u043e\u043d\u043a\u0438 \u0438 \u0437\u0432\u0443\u043a\u043e\u0432\u044b\u0435 \u0441\u0438\u0441\u0442\u0435\u043c\u044b"
+      },
+      "first_seen": "2026-01-18T04:37:22.468441+00:00",
+      "examples": [
+        17695
+      ]
+    },
+    "\u0440\u0430\u0446\u0438\u0438": {
+      "normalized": {
+        "ro": "statii radio",
+        "en": "Radio stations",
+        "ru": "\u0440\u0430\u0434\u0438\u043e\u0441\u0442\u0430\u043d\u0446\u0438\u0438"
+      },
+      "first_seen": "2026-01-18T04:37:27.935005+00:00",
+      "examples": [
+        17707
+      ]
+    },
+    "\u0430\u043a\u043a\u0443\u043c\u0443\u043b\u044f\u0442\u043e\u0440\u044b": {
+      "normalized": {
+        "ro": "acumulatoare, baterii",
+        "en": "Batteries and accumulators",
+        "ru": "\u0430\u043a\u043a\u0443\u043c\u0443\u043b\u044f\u0442\u043e\u0440\u044b \u0438 \u0431\u0430\u0442\u0430\u0440\u0435\u0438"
+      },
+      "first_seen": "2026-01-18T04:37:33.978727+00:00",
+      "examples": [
+        17727
+      ]
+    },
+    "\u0442\u0435\u0441\u0442\u0435\u0440\u044b": {
+      "normalized": {
+        "ro": "testere",
+        "en": "Testers",
+        "ru": "\u0422\u0435\u0441\u0442\u0435\u0440\u044b"
+      },
+      "first_seen": "2026-01-18T04:37:53.512687+00:00",
+      "examples": [
+        17747
+      ]
+    },
+    "\u0434\u0440\u043e\u043d\u044b": {
+      "normalized": {
+        "ro": "foto video",
+        "en": "Photo and video equipment",
+        "ru": "\u0444\u043e\u0442\u043e \u0438 \u0432\u0438\u0434\u0435\u043e \u043e\u0431\u043e\u0440\u0443\u0434\u043e\u0432\u0430\u043d\u0438\u0435"
+      },
+      "first_seen": "2026-01-18T04:38:01.008834+00:00",
+      "examples": [
+        17748
+      ]
+    },
+    "\u043e\u0447\u043a\u0438 vr": {
+      "normalized": {
+        "ro": "casti gaming, audio",
+        "en": "Gaming headsets and audio",
+        "ru": "\u0433\u0435\u0439\u043c\u0435\u0440\u0441\u043a\u0438\u0435 \u043d\u0430\u0443\u0448\u043d\u0438\u043a\u0438 \u0438 \u0430\u0443\u0434\u0438\u043e"
+      },
+      "first_seen": "2026-01-18T04:38:10.155763+00:00",
+      "examples": [
+        17752
+      ]
+    },
+    "\u043e\u043d\u043b\u0430\u0439\u043d \u043a\u0438\u043d\u043e\u0442\u0435\u0430\u0442\u0440": {
+      "normalized": {
+        "ro": "divertisment",
+        "en": "Entertainment",
+        "ru": "\u0440\u0430\u0437\u0432\u043b\u0435\u0447\u0435\u043d\u0438\u044f"
+      },
+      "first_seen": "2026-01-18T04:38:13.688727+00:00",
+      "examples": [
+        17753
+      ]
+    },
+    "\u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u043d\u043e\u0435 \u043e\u0431\u0435\u0441\u043f\u0435\u0447\u0435\u043d\u0438\u0435": {
+      "normalized": {
+        "ro": "programe soft",
+        "en": "Software",
+        "ru": "\u041f\u041e"
+      },
+      "first_seen": "2026-01-18T04:38:17.468099+00:00",
+      "examples": [
+        17755
+      ]
+    },
+    "\u044d\u043b\u0435\u043a\u0442\u0440\u043e\u043d\u043d\u044b\u0435 \u043a\u043d\u0438\u0433\u0438": {
+      "normalized": {
+        "ro": "carte electronice",
+        "en": "E-books",
+        "ru": "\u044d\u043b\u0435\u043a\u0442\u0440\u043e\u043d\u043d\u044b\u0435 \u043a\u043d\u0438\u0433\u0438"
+      },
+      "first_seen": "2026-01-18T04:38:23.998684+00:00",
+      "examples": [
+        17773
+      ]
+    },
+    "\u043a\u043e\u043b\u044c\u0446\u0435\u0432\u044b\u0435 \u043b\u0430\u043c\u043f\u044b": {
+      "normalized": {
+        "ro": "lampa birou, iluminat",
+        "en": "Desk lamps and lighting",
+        "ru": "\u043d\u0430\u0441\u0442\u043e\u043b\u044c\u043d\u044b\u0435 \u043b\u0430\u043c\u043f\u044b \u0438 \u043e\u0441\u0432\u0435\u0449\u0435\u043d\u0438\u0435"
+      },
+      "first_seen": "2026-01-18T04:38:31.675027+00:00",
+      "examples": [
+        17793
+      ]
+    },
+    "\u043b\u0430\u043c\u043f\u044b": {
+      "normalized": {
+        "ro": "lampa birou, iluminat",
+        "en": "Desk lamps and lighting",
+        "ru": "\u043d\u0430\u0441\u0442\u043e\u043b\u044c\u043d\u044b\u0435 \u043b\u0430\u043c\u043f\u044b \u0438 \u043e\u0441\u0432\u0435\u0449\u0435\u043d\u0438\u0435"
+      },
+      "first_seen": "2026-01-18T04:38:37.229456+00:00",
+      "examples": [
+        17794
+      ]
+    },
+    "\u043b\u0430\u043c\u043f\u043e\u0447\u043a\u0438": {
+      "normalized": {
+        "ro": "smart home",
+        "en": "Smart home",
+        "ru": "\u0443\u043c\u043d\u044b\u0439 \u0434\u043e\u043c"
+      },
+      "first_seen": "2026-01-18T04:38:44.045549+00:00",
+      "examples": [
+        17795
+      ]
+    },
+    "\u0444\u043e\u043d\u0430\u0440\u0438": {
+      "normalized": {
+        "ro": "lampa birou, iluminat",
+        "en": "Desk lamps and lighting",
+        "ru": "\u043d\u0430\u0441\u0442\u043e\u043b\u044c\u043d\u044b\u0435 \u043b\u0430\u043c\u043f\u044b \u0438 \u043e\u0441\u0432\u0435\u0449\u0435\u043d\u0438\u0435"
+      },
+      "first_seen": "2026-01-18T04:38:50.929726+00:00",
+      "examples": [
+        17811
+      ]
+    },
+    "\u043f\u0440\u0438\u043d\u0442\u0435\u0440\u044b": {
+      "normalized": {
+        "ro": "imprimanta, birou",
+        "en": "Printers and office equipment",
+        "ru": "\u043f\u0440\u0438\u043d\u0442\u0435\u0440\u044b \u0438 \u043e\u0444\u0438\u0441\u043d\u043e\u0435 \u043e\u0431\u043e\u0440\u0443\u0434\u043e\u0432\u0430\u043d\u0438\u0435"
+      },
+      "first_seen": "2026-01-18T04:38:55.809193+00:00",
+      "examples": [
+        17813
+      ]
+    },
+    "\u043c\u0444\u0443": {
+      "normalized": {
+        "ro": "imprimanta, birou",
+        "en": "Printers and office equipment",
+        "ru": "\u043f\u0440\u0438\u043d\u0442\u0435\u0440\u044b \u0438 \u043e\u0444\u0438\u0441\u043d\u043e\u0435 \u043e\u0431\u043e\u0440\u0443\u0434\u043e\u0432\u0430\u043d\u0438\u0435"
+      },
+      "first_seen": "2026-01-18T04:39:00.346926+00:00",
+      "examples": [
+        17817
+      ]
+    },
+    "\u0447\u0435\u0440\u043d\u0438\u043b\u0430 \u0434\u043b\u044f \u043f\u0440\u0438\u043d\u0442\u0435\u0440\u043e\u0432": {
+      "normalized": {
+        "ro": "consumabile imprimanta",
+        "en": "Printer consumables",
+        "ru": "\u0440\u0430\u0441\u0445\u043e\u0434\u043d\u044b\u0435 \u043c\u0430\u0442\u0435\u0440\u0438\u0430\u043b\u044b \u0434\u043b\u044f \u043f\u0440\u0438\u043d\u0442\u0435\u0440\u043e\u0432"
+      },
+      "first_seen": "2026-01-18T04:39:02.909462+00:00",
+      "examples": [
+        17818
+      ]
+    },
+    "\u043a\u0430\u0440\u0442\u0440\u0438\u0434\u0436\u0438 \u0434\u043b\u044f \u043f\u0440\u0438\u043d\u0442\u0435\u0440\u043e\u0432": {
+      "normalized": {
+        "ro": "consumabile imprimanta",
+        "en": "Printer consumables",
+        "ru": "\u0440\u0430\u0441\u0445\u043e\u0434\u043d\u044b\u0435 \u043c\u0430\u0442\u0435\u0440\u0438\u0430\u043b\u044b \u0434\u043b\u044f \u043f\u0440\u0438\u043d\u0442\u0435\u0440\u043e\u0432"
+      },
+      "first_seen": "2026-01-18T04:39:06.867673+00:00",
+      "examples": [
+        17823
+      ]
+    },
+    "\u043a\u043e\u043d\u0434\u0438\u0446\u0438\u043e\u043d\u0435\u0440\u044b": {
+      "normalized": {
+        "ro": "climatizare",
+        "en": "Air conditioning",
+        "ru": "\u043a\u043b\u0438\u043c\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u0442\u0435\u0445\u043d\u0438\u043a\u0430"
+      },
+      "first_seen": "2026-01-18T04:39:10.877781+00:00",
+      "examples": [
+        17833
+      ]
+    },
+    "\u0443\u0432\u043b\u0430\u0436\u043d\u0438\u0442\u0435\u043b\u0438 \u0432\u043e\u0437\u0434\u0443\u0445\u0430": {
+      "normalized": {
+        "ro": "climatizare",
+        "en": "Air conditioning",
+        "ru": "\u043a\u043b\u0438\u043c\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u0442\u0435\u0445\u043d\u0438\u043a\u0430"
+      },
+      "first_seen": "2026-01-18T04:39:16.700631+00:00",
+      "examples": [
+        17838
+      ]
+    },
+    "\u043a\u043e\u043d\u0432\u0435\u043a\u0442\u043e\u0440\u044b": {
+      "normalized": {
+        "ro": "climatizare",
+        "en": "Air conditioning",
+        "ru": "\u043a\u043b\u0438\u043c\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u0442\u0435\u0445\u043d\u0438\u043a\u0430"
+      },
+      "first_seen": "2026-01-18T04:39:21.018920+00:00",
+      "examples": [
+        17839
+      ]
+    },
+    "\u0432\u043e\u0434\u043e\u043d\u0430\u0433\u0440\u0435\u0432\u0430\u0442\u0435\u043b\u0438": {
+      "normalized": {
+        "ro": "smart home",
+        "en": "Smart home",
+        "ru": "\u0443\u043c\u043d\u044b\u0439 \u0434\u043e\u043c"
+      },
+      "first_seen": "2026-01-18T04:39:27.168232+00:00",
+      "examples": [
+        17842
+      ]
+    },
+    "\u043e\u0441\u0443\u0448\u0438\u0442\u0435\u043b\u0438 \u0432\u043e\u0437\u0434\u0443\u0445\u0430": {
+      "normalized": {
+        "ro": "climatizare",
+        "en": "Air conditioning",
+        "ru": "\u043a\u043b\u0438\u043c\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u0442\u0435\u0445\u043d\u0438\u043a\u0430"
+      },
+      "first_seen": "2026-01-18T04:39:34.232063+00:00",
+      "examples": [
+        17844
+      ]
+    },
+    "\u043f\u0440\u043e\u0442\u043e\u0447\u043d\u044b\u0435 \u0432\u043e\u0434\u043e\u043d\u0430\u0433\u0440\u0435\u0432\u0430\u0442\u0435\u043b\u0438": {
+      "normalized": {
+        "ro": "climatizare",
+        "en": "Air conditioning",
+        "ru": "\u043a\u043b\u0438\u043c\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u0442\u0435\u0445\u043d\u0438\u043a\u0430"
+      },
+      "first_seen": "2026-01-18T04:39:42.406953+00:00",
+      "examples": [
+        17845
+      ]
+    },
+    "\u0442\u0435\u043f\u043b\u043e\u0432\u0435\u043d\u0442\u0438\u043b\u044f\u0442\u043e\u0440\u044b": {
+      "normalized": {
+        "ro": "climatizare",
+        "en": "Air conditioning",
+        "ru": "\u043a\u043b\u0438\u043c\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u0442\u0435\u0445\u043d\u0438\u043a\u0430"
+      },
+      "first_seen": "2026-01-18T04:39:47.821796+00:00",
+      "examples": [
+        17851
+      ]
+    }
+  },
+  "darwin": {
+    "monitoare gaming": {
+      "normalized": {
+        "ro": "monitor gaming, display",
+        "en": "Gaming monitors",
+        "ru": "\u0438\u0433\u0440\u043e\u0432\u044b\u0435 \u043c\u043e\u043d\u0438\u0442\u043e\u0440\u044b"
+      },
+      "first_seen": "2026-01-18T04:39:52.972630+00:00",
+      "examples": [
+        1859
+      ]
+    },
+    "pl\u0103ci de baz\u0103": {
+      "normalized": {
+        "ro": "placa de baza, motherboard, componente pc",
+        "en": "Motherboards and PC components",
+        "ru": "\u043c\u0430\u0442\u0435\u0440\u0438\u043d\u0441\u043a\u0438\u0435 \u043f\u043b\u0430\u0442\u044b \u0438 \u043a\u043e\u043c\u043f\u043e\u043d\u0435\u043d\u0442\u044b \u041f\u041a"
+      },
+      "first_seen": "2026-01-18T04:39:57.814002+00:00",
+      "examples": [
+        1898
+      ]
+    },
+    "accesorii coolere": {
+      "normalized": {
+        "ro": "racire pc, accesorii",
+        "en": "PC cooling and accessories",
+        "ru": "\u043e\u0445\u043b\u0430\u0436\u0434\u0435\u043d\u0438\u0435 \u041f\u041a \u0438 \u0430\u043a\u0441\u0435\u0441\u0441\u0443\u0430\u0440\u044b"
+      },
+      "first_seen": "2026-01-18T04:40:05.290326+00:00",
+      "examples": [
+        1931
+      ]
+    },
+    "all in one pc": {
+      "normalized": {
+        "ro": "pc all in one, desktop",
+        "en": "All-in-One PCs",
+        "ru": "\u043c\u043e\u043d\u043e\u0431\u043b\u043e\u043a\u0438 \u0438 \u043d\u0430\u0441\u0442\u043e\u043b\u044c\u043d\u044b\u0435 \u043a\u043e\u043c\u043f\u044c\u044e\u0442\u0435\u0440\u044b"
+      },
+      "first_seen": "2026-01-18T04:40:10.046810+00:00",
+      "examples": [
+        1941
+      ]
+    },
+    "sisteme pc": {
+      "normalized": {
+        "ro": "pc desktop, apple",
+        "en": "Apple Mac Studio",
+        "ru": "\u043d\u0430\u0441\u0442\u043e\u043b\u044c\u043d\u044b\u0435 \u043a\u043e\u043c\u043f\u044c\u044e\u0442\u0435\u0440\u044b Apple"
+      },
+      "first_seen": "2026-01-18T04:40:14.801724+00:00",
+      "examples": [
+        1944
+      ]
     }
   }
 }
