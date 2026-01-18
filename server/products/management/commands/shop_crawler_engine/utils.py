@@ -4,7 +4,6 @@ from products.models import (
     ArchivedBrokenProduct,
     ArchivedProduct,
     Product,
-    ProductPriceHistory,
 )
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
 from django.db import transaction
@@ -180,16 +179,6 @@ class DatabaseManager:
                             **fetched_item
                         )
 
-                        if (
-                            "price" in change_info["changed_fields"]
-                            or "in_stock" in change_info["changed_fields"]
-                        ):
-                            ProductPriceHistory.objects.create(
-                                product=stage_product,
-                                price=stage_product.price,
-                                in_stock=stage_product.in_stock,
-                            )
-
                     return stage_product, False, change_info
 
                 # No-op crawl → no stage row
@@ -204,11 +193,7 @@ class DatabaseManager:
                         dirty=True, change_type="created", changed_fields=None
                     )
                     stage_product = Product.objects.using(shop).create(**fetched_item)
-                    ProductPriceHistory.objects.create(
-                        product=stage_product,
-                        price=stage_product.price,
-                        in_stock=stage_product.in_stock,
-                    )
+
                 shop_crawler_log(
                     f"CREATED {stage_product.name} ({stage_product.external_id})"
                 )

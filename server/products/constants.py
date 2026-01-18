@@ -22,6 +22,12 @@ categories = [
         "en": "Office desks and furniture",
         "ru": "офисные столы и мебель",
     },
+    {"ro": "climatizare", "en": "Air conditioning", "ru": "климатическая техника"},
+    {
+        "ro": "boxe, difuzoare",
+        "en": "Speakers and sound systems",
+        "ru": "колонки и звуковые системы",
+    },
     {
         "ro": "cabluri, accesorii",
         "en": "Cables and accessories",
@@ -71,6 +77,7 @@ categories = [
         "en": "Printers and office equipment",
         "ru": "принтеры и офисное оборудование",
     },
+    {"ro": "carti electronice", "en": "E-books", "ru": "электронные книги"},
     {
         "ro": "incarcatoare, accesorii mobile",
         "en": "Chargers and mobile accessories",
@@ -117,6 +124,21 @@ categories = [
         "ro": "microfon gaming, audio",
         "en": "Gaming microphones and audio",
         "ru": "геймерские микрофоны и аудио",
+    },
+    {
+        "ro": "obiective foto video",
+        "en": "Camera lenses",
+        "ru": "фото и видео объективы",
+    },
+    {
+        "ro": "foto video",
+        "en": "Photo and video equipment",
+        "ru": "фото и видео оборудование",
+    },
+    {
+        "ro": "acumulatoare, baterii",
+        "en": "Batteries and accumulators",
+        "ru": "аккумуляторы и батареи",
     },
     {"ro": "microfon, audio", "en": "Microphones and audio", "ru": "микрофоны и аудио"},
     {"ro": "mini pc, apple", "en": "Apple Mac mini", "ru": "мини-ПК Apple"},
@@ -246,12 +268,15 @@ categories = [
     {"ro": "shredder, birou", "en": "Office shredders", "ru": "офисные шредеры"},
     {"ro": "smartphone, telefon mobil", "en": "Smartphones", "ru": "смартфоны"},
     {"ro": "smartwatch", "en": "Smartwatches", "ru": "умные часы"},
-    {"ro": "software", "en": "Software", "ru": "ПО"},
+    {"ro": "smart home", "en": "Smart home", "ru": "умный дом"},
+    {"ro": "programe soft", "en": "Software", "ru": "ПО"},
+    {"ro": "divertisment", "en": "Entertainment", "ru": "развлечения"},
     {
         "ro": "sticlă apă, accesorii birou",
         "en": "Water bottles and desk accessories",
         "ru": "бутылки для воды и офисные аксессуары",
     },
+    {"ro": "statii radio", "en": "Radio stations", "ru": "радиостанции"},
     {
         "ro": "stocare externa, hdd, accesorii pc",
         "en": "External storage and PC accessories",
@@ -325,4 +350,9 @@ categories = [
         "ru": "кнопочные телефоны",
     },
     {"ro": "televizor", "en": "Televisions", "ru": "телевизоры"},
+    {
+        "ro": "optica si astronomie",
+        "en": "Optics and astronomy",
+        "ru": "оптика и астрономия",
+    },
 ]

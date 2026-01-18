@@ -2,50 +2,57 @@ from urllib.parse import urljoin
 import requests
 import time
 import random
-from products.utils.log.shop_crawler_engine_log import shop_crawler_log, random_sleep
+from products.utils.log.shop_crawler_engine_log import shop_crawler_log
+from settings import CrawlSettings
 
 
 class RateLimiter:
-    def __init__(self, shop, min_delay=3, max_delay=10):
+    def __init__(self, shop, robotics_url):
         self.shop = shop
-        self.min_delay = min_delay
-        self.max_delay = max_delay
+        self.robotics_url = robotics_url
+        self.settings = CrawlSettings()
+        self.min_delay = self.settings.min_delay
+        self.max_delay = self.settings.max_delay
         self.last_request_ts = 0
         self.times_429 = 0
+
         self.crawl_delay = self.fetch_crawl_delay()
 
-        def fetch_crawl_delay(self):
-            """Read robots.txt and extract Crawl-delay (for all user agents *)"""
-            robots_url = urljoin(self.base_url, "/robots.txt")
-            try:
-                resp = requests.get(robots_url, timeout=10)
-                if resp.status_code == 200:
-                    lines = resp.text.splitlines()
-                    user_agent = None
-                    for line in lines:
-                        line = line.strip()
-                        if line.lower().startswith("user-agent:"):
-                            user_agent = line.split(":", 1)[1].strip()
-                        elif line.lower().startswith("crawl-delay:") and (
-                            user_agent == "*" or user_agent.lower() == "*"
-                        ):
-                            delay = float(line.split(":", 1)[1].strip())
-                            shop_crawler_log(
-                                f"[ROBOTS] shop={self.shop} crawl-delay={delay}s"
-                            )
-                            return delay
-            except Exception as e:
-                shop_crawler_log(
-                    f"[ROBOTS] shop={self.shop} failed to fetch robots.txt: {e}"
-                )
-            return self.min_delay
+    def fetch_crawl_delay(self):
+        """Read robots.txt and extract Crawl-delay (for all user agents *)"""
+        robots_url = urljoin(self.robotics_url, "/robots.txt")
+        try:
+            resp = requests.get(robots_url, timeout=10)
+            if resp.status_code == 200:
+                lines = resp.text.splitlines()
+                user_agent = None
+                for line in lines:
+                    line = line.strip()
+                    if line.lower().startswith("user-agent:"):
+                        user_agent = line.split(":", 1)[1].strip()
+                    elif line.lower().startswith("crawl-delay:") and (
+                        user_agent == "*" or user_agent.lower() == "*"
+                    ):
+                        delay = float(line.split(":", 1)[1].strip())
+                        shop_crawler_log(
+                            f"[ROBOTS] shop={self.shop} crawl-delay={delay}s"
+                        )
+                        return delay
+        except Exception as e:
+            shop_crawler_log(
+                f"[ROBOTS] shop={self.shop} failed to fetch robots.txt: {e}"
+            )
+        return self.min_delay
 
     def wait_if_needed(self):
         """Ensure minimum delay between requests"""
         now = time.time()
         elapsed = now - self.last_request_ts
-        if elapsed < self.min_delay:
-            sleep_time = self.min_delay - elapsed
+
+        effective_delay = max(self.min_delay, self.crawl_delay)
+
+        if elapsed < effective_delay:
+            sleep_time = effective_delay - elapsed
             shop_crawler_log(f"[RATE-LIMIT] shop={self.shop} waiting {sleep_time:.1f}s")
             time.sleep(sleep_time)
 
@@ -76,7 +83,7 @@ class RateLimiter:
 
             except requests.exceptions.RequestException as e:
                 shop_crawler_log(f"[REQUEST-FAIL] shop={self.shop} url={url} error={e}")
-                time.sleep(5 + random.uniform(0, 5))
+                time.sleep(5 + random.uniform(0, 15))
 
         shop_crawler_log(
             f"[REQUEST-FAIL] shop={self.shop} url={url} FAILED after {max_retries} attempts"

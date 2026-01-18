@@ -193,24 +193,29 @@ class CrawlSnapshot(models.Model):
 class ProductPriceHistory(models.Model):
     product = models.ForeignKey(
         Product,
-        on_delete=models.SET_NULL,  # Important: don’t delete history when Product is deleted
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="price_history",
     )
     archived_product = models.ForeignKey(
         ArchivedProduct,
-        on_delete=models.SET_NULL,  # Same for archived
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="archived_price_history",
     )
+    shop = models.CharField(
+        max_length=50, db_index=True, null=True
+    )  # <-- preserve shop
+
     price = models.DecimalField(max_digits=12, decimal_places=2)
     in_stock = models.BooleanField(default=True)
     recorded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         indexes = [
+            models.Index(fields=["shop", "recorded_at"]),
             models.Index(fields=["product", "recorded_at"]),
             models.Index(fields=["archived_product", "recorded_at"]),
         ]
@@ -223,4 +228,59 @@ class ProductPriceHistory(models.Model):
 
     def __str__(self):
         target = self.product or self.archived_product
-        return f"{target.name} | {self.price} at {self.recorded_at}"
+        if target:
+            return f"{target.name} | {self.price} at {self.recorded_at}"
+        else:
+            return f"Orphaned ({self.shop}) | {self.price} at {self.recorded_at}"
+
+
+class ProductAnalytics(models.Model):
+    product = models.OneToOneField(
+        "Product",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="analytics",
+    )
+    archived_product = models.OneToOneField(
+        "ArchivedProduct",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="analytics",
+    )
+
+    # Price metrics
+    first_price = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    last_price = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    max_price = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    min_price = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    avg_price = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    price_change_count = models.IntegerField(default=0)
+
+    # Stock metrics
+    total_days_in_stock = models.IntegerField(default=0)
+    total_days_out_of_stock = models.IntegerField(default=0)
+    last_in_stock = models.BooleanField(default=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["product"]),
+            models.Index(fields=["archived_product"]),
+        ]
+
+    def __str__(self):
+        target = self.product or self.archived_product
+        return f"Analytics for {target.name} ({target.external_id})"

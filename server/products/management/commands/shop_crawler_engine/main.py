@@ -1,12 +1,16 @@
+import random
+import time
 from django.core.management.base import BaseCommand
 from products.management.commands.shop_crawler_engine.utils import (
     DatabaseManager,
 )
 from products.management.commands.shop_crawler_engine.config import config
-from products.utils.log.shop_crawler_engine_log import shop_crawler_log, random_sleep
+from products.utils.log.shop_crawler_engine_log import shop_crawler_log
+from products.management.commands.shop_crawler_engine.utils import random_sleep
 import traceback
 from threading import Thread
 from queue import Queue
+from settings import CrawlSettings
 
 
 class Command(BaseCommand):
@@ -18,10 +22,24 @@ class Command(BaseCommand):
     This software and associated documentation files (the "Software") are
     proprietary. You may not copy, modify, distribute, or use this Software
     without prior written permission from the author.
+
+
+
+
+    | Symptom    | Action                      |
+    | ---------- | --------------------------- |
+    | Too slow   | Increase `MAX_THREADS` to 6 |
+    | 429s       | Increase `SPAWN_DELAY`      |
+    | CPU spike  | Reduce `MAX_THREADS`        |
+    | Network OK | Reduce delay, not threads   |
     """
 
-    BATCH_SIZE = 500
-    PAUSE_BETWEEN_BATCHES = (30, 60)  # seconds
+    settings = CrawlSettings()
+
+    MAX_THREADS = settings.max_threads
+    SPAWN_DELAY = settings.spawn_delay
+    BATCH_SIZE = settings.batch_size
+    PAUSE_BETWEEN_BATCHES = settings.pause_between_batches
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -30,7 +48,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--category", type=str, default=None, help="Filter by specific category"
         )
-        parser.add_argument("--pages", type=int, default=1)
+        parser.add_argument("--pages", type=int, default=999)
         parser.add_argument(
             "--track-fields",
             type=str,
@@ -67,6 +85,12 @@ class Command(BaseCommand):
                     if filter_category and category_name != filter_category:
                         continue
 
+                    while sum(t.is_alive() for t in threads) >= self.MAX_THREADS:
+                        shop_crawler_log(
+                            f"[SPAWN] Max threads reached ({self.MAX_THREADS}), waiting..."
+                        )
+                        time.sleep(2)
+
                     t = Thread(
                         target=self.shop_worker,
                         args=(
@@ -81,6 +105,14 @@ class Command(BaseCommand):
                     )
                     t.start()
                     threads.append(t)
+
+                    # stagger thread startup
+                    sleep_time = random.uniform(*self.SPAWN_DELAY)
+                    shop_crawler_log(
+                        f"[SPAWN] Started worker shop={shop_name} category={category_name}, "
+                        f"sleeping {sleep_time:.1f}s before next spawn"
+                    )
+                    time.sleep(sleep_time)
 
             batch_number = 1
 
@@ -113,9 +145,18 @@ class Command(BaseCommand):
 
             batch = []
             batch_number = 1
+            item_counter = 0
 
             for item_data in fetch_fn(url, max_pages):
                 batch.append(item_data)
+                item_counter += 1
+
+                if item_counter % self.settings.items_before_pause == 0:
+                    pause_sec = random.uniform(*self.settings.item_pause_range)
+                    shop_crawler_log(
+                        f"[HL-PAUSE] shop={shop} category={category} processed {item_counter} items, sleeping {pause_sec:.1f}s"
+                    )
+                    time.sleep(pause_sec)
 
                 if len(batch) >= self.BATCH_SIZE:
                     batch_queue.put((batch.copy(), shop, category, batch_number))

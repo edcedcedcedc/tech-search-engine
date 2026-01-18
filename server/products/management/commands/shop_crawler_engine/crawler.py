@@ -1,8 +1,8 @@
 import html
+import json
 import re
 from bs4 import BeautifulSoup
 from products.management.commands.shop_crawler_engine.infra.http import RateLimiter
-from products.management.commands.shop_crawler_engine.utils import random_sleep
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
 
 
@@ -11,9 +11,18 @@ class Crawler:
 
     def __init__(self):
         self.rate_limiters = {
-            "xstore": RateLimiter(shop="xstore", min_delay=3, max_delay=10),
-            "enter": RateLimiter(shop="enter", min_delay=4, max_delay=12),
-            "darwin": RateLimiter(shop="darwin", min_delay=5, max_delay=15),
+            "xstore": RateLimiter(
+                shop="xstore",
+                robotics_url="https://xstore.md/",
+            ),
+            "enter": RateLimiter(
+                shop="enter",
+                robotics_url="https://enter.online/",
+            ),
+            "darwin": RateLimiter(
+                shop="darwin",
+                robotics_url="https://darwin.md/",
+            ),
         }
 
     @staticmethod
@@ -25,9 +34,9 @@ class Crawler:
         m = re.search(pattern, text)
         return m.group(group) if m else default
 
-    def fetch_xstore(self, category_url, max_pages=1):
+    def fetch_xstore(self, category_url, max_pages=1, out_of_stock_limit=75):
         limiter = self.rate_limiters["xstore"]
-        count = 0
+        unavailable_count = 0
 
         for page in range(1, max_pages + 1):
             url = f"{category_url}?page={page}"
@@ -41,7 +50,7 @@ class Crawler:
                 break
 
             for node in nodes:
-                count += 1
+
                 add_btn = node.select_one("a.xadd_tocard")
                 title_tag = node.select_one("a.xp-title")
                 variant_tag = node.select_one("span.xp-attr")
@@ -74,18 +83,13 @@ class Crawler:
                     "in_stock": in_stock,
                 }
 
-            if count % 15 == 0:
-                shop_crawler_log(
-                    f"Processed {count} items for enter, taking a human-like break..."
-                )
-                random_sleep(10, 30)
-            shop_crawler_log(f"Sleeping for xstore to avoid overloading...")
-            random_sleep(2, 10)
-
-    def fetch_enter(self, category_url, max_pages=1):
+    def fetch_enter(self, category_url, max_pages=1, out_of_stock_limit=75):
+        """
+        Fetch products from Enter shop.
+        Stops early if too many consecutive items are out of stock in this category.
+        """
         limiter = self.rate_limiters["enter"]
-        unavailable_count = 0  # count unavailable items per category
-        total_count = 0
+        unavailable_count = 0
 
         for page in range(1, max_pages + 1):
             url = f"{category_url}?page={page}"
@@ -100,59 +104,67 @@ class Crawler:
 
             for node in nodes:
                 raw = node.get("data-gtm")
+                if not raw:
+                    continue
+
                 title_tag = node.select_one(".product-title")
                 title = title_tag.get_text(strip=True) if title_tag else ""
                 variant_tag = node.select_one(".product-desc")
                 variant = variant_tag.get_text(strip=True) if variant_tag else ""
+
                 in_stock = True
                 add_btn = node.select_one("button[data-action]")
-                if add_btn and add_btn.get("data-action") == "openOutStockModal":
+
+                if add_btn and add_btn.get("data-action") in "openOutStockModal":
                     in_stock = False
-                    unavailable_count += 1  # increment if out of stock
 
-                if not raw:
-                    continue
+                if "out-of-stock" in node.get("class", []):
+                    in_stock = False
 
-                decoded = html.unescape(raw)
+                try:
+                    decoded = json.loads(html.unescape(raw))
+                    item = decoded.get("ecommerce", {}).get("items", [{}])[0]
+                    # Some shops may include availability
+                    if item.get("availability") == "out_of_stock":
+                        in_stock = False
+                except Exception:
+                    pass
+                if not in_stock:
+                    unavailable_count += 1
+                else:
+                    unavailable_count = 0
                 yield {
-                    "external_id": self.safe_re_search(r'"item_id":"(.*?)"', decoded),
+                    "external_id": self.safe_re_search(r'"item_id":"(.*?)"', raw),
                     "name": title,
                     "variant": variant,
                     "t_name": {"ro": title, "en": "", "ru": ""},
                     "t_variant": {"ro": variant, "en": "", "ru": ""},
                     "price": int(
-                        self.safe_re_search(r'"price":(\d+)', decoded, default="0")
+                        self.safe_re_search(r'"price":(\d+)', raw, default="0")
                     ),
-                    "brand": self.safe_re_search(r'"item_brand":"(.*?)"', decoded),
-                    "category": self.safe_re_search(
-                        r'"item_category":"(.*?)"', decoded
-                    ),
+                    "brand": self.safe_re_search(r'"item_brand":"(.*?)"', raw),
+                    "category": self.safe_re_search(r'"item_category":"(.*?)"', raw),
                     "t_category": {"ro": title, "en": "", "ru": ""},
-                    "url": node.select_one(".stretched-link")["href"] or "",
+                    "url": (
+                        node.select_one(".stretched-link")["href"]
+                        if node.select_one(".stretched-link")
+                        else ""
+                    ),
                     "in_stock": in_stock,
                     "shop": "enter",
                 }
 
-                total_count += 1
-                if total_count % 15 == 0:
-                    shop_crawler_log(
-                        f"Processed {total_count} items for enter, taking a human-like break..."
-                    )
-                    random_sleep(10, 30)
+                if unavailable_count >= out_of_stock_limit:
+                    return
 
-                # Guard: skip category if too many unavailable
-                if unavailable_count > 200:
-                    shop_crawler_log(
-                        f"[SKIP CATEGORY] More than 200 unavailable items in {category_url}, skipping remaining pages."
-                    )
-                    return  # stop this generator for this category
+    def fetch_darwin(self, category_url, max_pages=1, out_of_stock_limit=75):
+        """
+        Fetch products from Darwin shop.
 
-            shop_crawler_log(f"Sleeping for enter to avoid overloading...")
-            random_sleep(2, 10)
-
-    def fetch_darwin(self, category_url, max_pages=1):
+        Stops early if too many consecutive items are out of stock in this category.
+        """
         limiter = self.rate_limiters["darwin"]
-        count = 0
+        consecutive_unavailable = 0
 
         for page in range(1, max_pages + 1):
             url = f"{category_url}?page={page}"
@@ -174,7 +186,20 @@ class Crawler:
                 if not raw:
                     continue
 
-                in_stock = False if "out-of-stock" in node.get("class", []) else True
+                in_stock = True
+                # Darwin marks out-of-stock with a specific class
+                if "out-of-stock" in node.get("class", []):
+                    in_stock = False
+                    consecutive_unavailable += 1
+                else:
+                    consecutive_unavailable = 0  # reset if we find an in-stock item
+
+                if consecutive_unavailable >= out_of_stock_limit:
+                    shop_crawler_log(
+                        f"[STOPPER] shop=darwin {consecutive_unavailable} consecutive items out of stock in {category_url}"
+                    )
+                    return
+                # stop crawling this category
                 decoded = html.unescape(raw)
 
                 yield {
@@ -195,11 +220,3 @@ class Crawler:
                     "in_stock": in_stock,
                     "shop": "darwin",
                 }
-                if count % 15 == 0:
-                    shop_crawler_log(
-                        "Processed {count} items for darwin, taking a human-like break..."
-                    )
-                random_sleep(10, 30)
-
-            shop_crawler_log(f"Sleeping for darwin to avoid overloading...")
-            random_sleep(2, 10)

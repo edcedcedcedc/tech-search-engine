@@ -38,7 +38,7 @@ def run_crawler():
     try:
         call_command("reset")
         call_command(
-            "crawl", track_fields="price, in_stock", pages=999
+            "crawl", track_fields="price, in_stock", pages=1, shop="xstore"
         )  # assumes your command is named 'crawl.py'
         shop_crawler_log("[TASK]Crawler finished successfully")
     except Exception as e:
@@ -366,6 +366,9 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=True, batch_size=5
             )
             db_merge_log("[TASK] Stage -> Prod merge finished successfully")
 
+            # Step 2.5: Price History Prod
+            call_command("history")
+            db_merge_log("[TASK] Price history snapshot created")
             # Step 3: Mark Prod products clean
             Product.objects.using(PROD_DB).all().update(dirty=False, change_type=None)
             db_merge_log("[TASK] All products in Prod marked as clean")
@@ -430,7 +433,7 @@ def run_full_pipeline():
         run_merge_pipeline_to_default.si(dry_run=False),
     )
 
-    result = workflow.apply_async()
+    result = workflow.apply()
     return f"Full pipeline queued with ID: {result.id}"
 
 
