@@ -19,18 +19,23 @@ from products.utils.log.generate_embeddings_from_object_log import (
 from products.utils.log.backfill_canonical_id_log import backfill_canonical_id_log
 from django.core.management import call_command
 from products.utils.log.db_merge_log import db_merge_log
+from products.utils.log.db_merge_pipeline_to_stage import db_merge_to_stage_log
+from products.utils.log.db_merge_pipeline_to_default import db_merge_to_default_log
 from products.services.normalize import normalize_category_for_product
 from products.utils.log.load_embeddings_cache_log import load_embeddings_cache_log
+from products.management.commands.shop_crawler_engine.config import (
+    DRY_RUN,
+    PAGES_TO_CRAWL,
+    CRAWLER_DBS,
+    STAGE_DB,
+    PROD_DB,
+)
+
 
 # Load environment variables
 env = environ.Env()
 environ.Env.read_env()  # reads .env
 client = OpenAI(api_key=env("OPENAI_API_KEY"))
-
-
-CRAWLER_DBS = ["enter", "darwin", "xstore"]
-STAGE_DB = "stage"
-PROD_DB = "default"
 
 
 @shared_task(name="run_crawler")
@@ -39,17 +44,13 @@ def run_crawler():
     Run the Django crawler command via Celery.
     """
     try:
-        call_command("reset")
-        call_command(
-            "crawl", track_fields="price, in_stock", pages=1
-        )  # assumes your command is named 'crawl.py'
+        if DRY_RUN:
+            call_command("reset")
+        call_command("crawl", pages=PAGES_TO_CRAWL)
         shop_crawler_log("[TASK]Crawler finished successfully")
     except Exception as e:
         shop_crawler_log(f"[TASK]Crawler failed: {e}")
         raise  # let Celery retry if needed
-
-
-RAWLER_DBS = ["enter", "darwin", "xstore"]
 
 
 @shared_task(name="run_normalize_recent_products")
@@ -141,7 +142,6 @@ def run_translation():
     Run translation command for all databases with correct flags using venv_translate.
     Multithreaded and random delay added to avoid rate limits.
     """
-    databases = ["enter", "darwin", "xstore"]
 
     def run_db_translation(db):
         translation_log(f"Starting translation for DB: {db}")
@@ -150,8 +150,8 @@ def run_translation():
         run_translation_in_venv_translate(db=db, shop_filter=db)
         translation_log(f"Finished translation for DB: {db}")
 
-    with ThreadPoolExecutor(max_workers=len(databases)) as executor:
-        futures = [executor.submit(run_db_translation, db) for db in databases]
+    with ThreadPoolExecutor(max_workers=len(CRAWLER_DBS)) as executor:
+        futures = [executor.submit(run_db_translation, db) for db in CRAWLER_DBS]
         for future in as_completed(futures):
             try:
                 future.result()  # raise exception if task failed
@@ -167,9 +167,8 @@ def run_embeddings():
     Run embeddings generation command for all databases.
     The command itself decides what needs embedding.
     """
-    databases = ["enter", "darwin", "xstore"]
 
-    for db in databases:
+    for db in CRAWLER_DBS:
         try:
             generate_embeddings_from_object_log(
                 f"[TASK][{db}] Starting embeddings generation"
@@ -196,30 +195,27 @@ def run_merge_pipeline_to_stage():
     1. Overwrite stage with prod
     2. Merge all crawler DBs into stage with dirty logic
     """
-    from products.models import Product
-    from products.models import CrawlSnapshot
-
     try:
         # Step 1: Prod -> Stage (force overwrite)
-        db_merge_log("[TASK] Step 1: Prod -> Stage (force overwrite)")
+        db_merge_to_stage_log("[TASK] Step 1: Prod -> Stage (force overwrite)")
         call_command(
             "merge",
             source=PROD_DB,
             dest=STAGE_DB,
             force=True,
         )
-        db_merge_log("[TASK] Step 1 finished: Stage now matches Prod")
+        db_merge_to_stage_log("[TASK] Step 1 finished: Stage now matches Prod")
 
         # Step 2: Merge crawler DBs -> Stage (dirty logic)
         for db in CRAWLER_DBS:
-            db_merge_log(f"[TASK] Step 2: {db} -> Stage (dirty merge)")
+            db_merge_to_stage_log(f"[TASK] Step 2: {db} -> Stage (dirty merge)")
             call_command(
                 "merge",
                 source=db,
                 dest=STAGE_DB,
                 shop=db,  # shop name = DB name
             )
-            db_merge_log(f"[TASK] Step 2 finished for {db}")
+            db_merge_to_stage_log(f"[TASK] Step 2 finished for {db}")
 
         def snapshot_crawl_stage(batch_size=5000):
             """
@@ -258,15 +254,16 @@ def run_merge_pipeline_to_stage():
             shop_crawler_log(
                 f"[SNAPSHOT] Stage snapshot created with {len(all_ids)} products"
             )
+
             return snapshot
 
         # Call it once after Stage merge
         snapshot_crawl_stage()
 
-        db_merge_log("[TASK] Merge to stage + snapshots completed")
+        db_merge_to_stage_log("[TASK] Merge to stage + snapshots completed")
 
     except Exception as e:
-        db_merge_log(f"[TASK] Merge to stage failed: {e}")
+        db_merge_to_stage_log(f"[TASK] Merge to stage failed: {e}")
         raise
 
 
@@ -303,7 +300,7 @@ def run_canonical_ids_stage(batch_size=1000, force=True):
     bind=True,
     name="run_merge_pipeline_to_default",
 )
-def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=True, batch_size=5000):
+def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=DRY_RUN, batch_size=5000):
     """
     Final pipeline step with blazing fast Prod cleanup + Stage merge.
     """
@@ -323,7 +320,7 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=True, batch_size=5
                     .filter(shop=shop_name)
                     .values_list("external_id", flat=True)
                 )
-                db_merge_log(
+                db_merge_to_default_log(
                     f"[COMPARE] Stage snapshot for shop '{shop_name}' has {len(stage_ids_map[shop_name])} products"
                 )
 
@@ -335,7 +332,7 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=True, batch_size=5
                     .exclude(external_id__in=stage_ids)
                 )
                 total_to_archive = prod_qs.count()
-                db_merge_log(
+                db_merge_to_default_log(
                     f"[COMPARE/ARCHIVE] Shop '{shop_name}' - {total_to_archive} products to archive"
                 )
 
@@ -373,42 +370,44 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=True, batch_size=5
 
                     offset += batch_size
 
-                db_merge_log(
+                db_merge_to_default_log(
                     f"[COMPARE/ARCHIVE] Shop '{shop_name}' - archived/deleted {archived_count} products"
                 )
 
             # Step 2: Merge Stage -> Prod
-            db_merge_log(f"[TASK] Starting Stage -> Prod merge | force=True")
+            db_merge_to_default_log(f"[TASK] Starting Stage -> Prod merge | force=True")
             call_command("merge", source=STAGE_DB, dest=PROD_DB, force=True)
-            db_merge_log("[TASK] Stage -> Prod merge finished successfully")
+            db_merge_to_default_log("[TASK] Stage -> Prod merge finished successfully")
 
             # Step 2.5: Price History Prod
             call_command("history")
-            db_merge_log("[TASK] Price history snapshot created")
+            db_merge_to_default_log("[TASK] Price history snapshot created")
             # Step 3: Mark Prod products clean
             Product.objects.using(PROD_DB).all().update(dirty=False, change_type=None)
-            db_merge_log("[TASK] All products in Prod marked as clean")
+            db_merge_to_default_log("[TASK] All products in Prod marked as clean")
 
         else:
-            db_merge_log("[TASK] DRY RUN: Stage -> Prod merge and cleanup SKIPPED")
+            db_merge_to_default_log(
+                "[TASK] DRY RUN: Stage -> Prod merge and cleanup SKIPPED"
+            )
 
         # Analyzer runs regardless of dry_run
-        db_merge_log("[TASK] Running Stage -> Prod analyzer")
+        db_merge_to_default_log(db_merge_log("[TASK] Running Stage -> Prod analyzer"))
         call_command(
             "embeddings_test", source=STAGE_DB, samples=100, check_translations=True
         )
-        db_merge_log("[TASK] Embeddings/semantic analysis finished")
-        db_merge_log("[TASK] Translation analysis finished")
+        db_merge_to_default_log("[TASK] Embeddings/semantic analysis finished")
+        db_merge_to_default_log("[TASK] Translation analysis finished")
 
         # Cleanup Stage + Crawler DBs
         if not dry_run:
             Product.objects.using(STAGE_DB).all().delete()
-            db_merge_log("[TASK] Stage DB cleared")
+            db_merge_to_default_log(db_merge_log("[TASK] Stage DB cleared"))
             for db in CRAWLER_DBS:
                 Product.objects.using(db).all().delete()
-                db_merge_log(f"[TASK] Crawler DB '{db}' cleared")
+                db_merge_to_default_log(f"[TASK] Crawler DB '{db}' cleared")
 
-        db_merge_log("[TASK] Pipeline finalization completed successfully")
+        db_merge_to_default_log("[TASK] Pipeline finalization completed successfully")
 
         # Reload embeddings cache
         load_embeddings_cache_log(
@@ -418,7 +417,7 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=True, batch_size=5
         load_embeddings_cache_log("[TASK] Embeddings cache reloaded.")
 
     except Exception as e:
-        db_merge_log(f"[TASK] Finalize pipeline merge failed: {e}")
+        db_merge_to_default_log(f"[TASK] Finalize pipeline merge failed: {e}")
         raise
 
 
@@ -446,7 +445,7 @@ def run_full_pipeline():
         run_embeddings.si(),
         run_merge_pipeline_to_stage.si(),
         run_canonical_ids_stage.si(batch_size=1000),
-        run_merge_pipeline_to_default.si(dry_run=False),
+        run_merge_pipeline_to_default.si(dry_run=DRY_RUN),
     )
 
     result = workflow.apply()

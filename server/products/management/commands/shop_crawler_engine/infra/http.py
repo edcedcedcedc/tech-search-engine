@@ -3,7 +3,7 @@ import requests
 import time
 import random
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
-from settings import CrawlSettings
+from ..settings import CrawlSettings
 
 
 class RateLimiter:
@@ -59,14 +59,13 @@ class RateLimiter:
     def handle_429(self):
         """Exponential backoff on 429"""
         self.times_429 += 1
-        sleep_time = min(2**self.times_429 * 5, 1800)  # max 30min
+        sleep_time = min(2**self.times_429 * 30, 3600)
         shop_crawler_log(
             f"[RATE-LIMIT] shop={self.shop} hit 429 | fail_count={self.times_429} | sleeping {sleep_time:.1f}s"
         )
         time.sleep(sleep_time)
 
     def make_request(self, url, timeout=15, max_retries=3):
-        """Make a request with politeness + 429 handling"""
         for attempt in range(max_retries):
             self.wait_if_needed()
             try:
@@ -75,15 +74,21 @@ class RateLimiter:
 
                 if resp.status_code == 429:
                     self.handle_429()
-                    continue  # retry after backoff
+                    continue
 
                 resp.raise_for_status()
-                self.times_429 = 0  # reset counter on success
+                self.times_429 = 0
                 return resp
 
             except requests.exceptions.RequestException as e:
                 shop_crawler_log(f"[REQUEST-FAIL] shop={self.shop} url={url} error={e}")
                 time.sleep(5 + random.uniform(0, 15))
+
+        final_sleep = min(60 * max_retries, 300)  # 1–5 min depending on max_retries
+        shop_crawler_log(
+            f"[RATE-LIMIT] shop={self.shop} cooling down {final_sleep}s after repeated failures"
+        )
+        time.sleep(final_sleep)
 
         shop_crawler_log(
             f"[REQUEST-FAIL] shop={self.shop} url={url} FAILED after {max_retries} attempts"

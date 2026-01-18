@@ -4,6 +4,18 @@ shop_crawler = Crawler()
 
 ALLOWED_FIELDS_TO_WRITE_AND_TRACK = ["price", "in_stock"]
 
+PAGES_TO_CRAWL = 2
+
+# If TRUE resets the CRAWLER_DBS and STAGE_DB and doesn't merge STAGE_DB to PROD_DB
+DRY_RUN = False
+
+CRAWLER_DBS = ["enter", "darwin", "xstore"]
+
+STAGE_DB = "stage"
+
+PROD_DB = "default"
+
+
 SHOPS = {
     "enter": {
         "function": shop_crawler.fetch_enter,

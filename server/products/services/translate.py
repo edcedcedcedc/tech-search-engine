@@ -64,7 +64,7 @@ def run_translation(
 
     signal.signal(signal.SIGINT, signal_handler)
 
-    MAX_RETRIES = 3
+    MAX_RETRIES = 5
     SLEEP_BETWEEN_REQUESTS = 1.0
 
     def normalize_text(text: str) -> str:

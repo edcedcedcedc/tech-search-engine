@@ -89,57 +89,57 @@ def fetch_enter_products(category_url, max_pages=1, timeout=15):
     return results
 
 
-""" def fetch_darwin_products(category_url, max_pages=1):
-    all_items = []
+def fetch_xstore_products(category_url, max_pages=1):
 
+    results = []
     for page in range(1, max_pages + 1):
         url = f"{category_url}?page={page}"
-        resp = requests.get(url, timeout=15)
-        resp.raise_for_status()
-
-        soup = BeautifulSoup(resp.text, "lxml")
-
-        cards = soup.select("div.product-card.product-item")
-        if not cards:
+        try:
+            resp = requests.session.get(url, timeout=15)
+            resp.raise_for_status()
+        except requests.RequestException as e:
+            print(f"[REQUEST-FAIL] enter {url} → {e}")
             break
 
-        for card in cards:
-            # ✅ stock detection
-            in_stock = "out-of-stock" not in card.get("class", [])
+        soup = BeautifulSoup(resp.text, "lxml")
+        nodes = soup.select("figure.card-product")
+        if not nodes:
+            break
 
-            link = card.select_one("a[data-ga4]")
-            if not link:
+        for node in nodes:
+
+            add_btn = node.select_one("a.xadd_tocard")
+            title_tag = node.select_one("a.xp-title")
+            variant_tag = node.select_one("span.xp-attr")
+            img_tag = node.select_one("a.img-wrap img")
+            link_tag = node.select_one("a.img-wrap")
+
+            if not add_btn or not title_tag:
                 continue
 
-            raw = link.get("data-ga4")
-            if not raw:
-                continue
+            name_text = self.safe_text(title_tag.get_text())
+            variant_text = self.safe_text(variant_tag.get_text() if variant_tag else "")
+            category_text = self.safe_text(add_btn.get("data-category") or "")
+            in_stock = True
 
-            decoded = html.unescape(raw)
-
-            item_data = {
-                "id": (re.search(r'"item_id":"(.*?)"', decoded) or [None, None])[1],
-                "name": (re.search(r'"item_name":"(.*?)"', decoded) or [None, None])[1],
-                "price": int((re.search(r'"price":(\d+)', decoded) or [0, 0])[1]),
-                "brand": (re.search(r'"item_brand":"(.*?)"', decoded) or [None, None])[
-                    1
-                ],
-                "category": (
-                    re.search(r'"item_category":"(.*?)"', decoded) or [None, None]
-                )[1],
-                "variant": (re.search(r'"item_variant":"(.*?)"', decoded) or ["", ""])[
-                    1
-                ]
-                .replace("\\", "")
-                .strip(),
-                "url": link.get("href"),
-                "in_stock": in_stock,
-                "shop": "Darwin",
-            }
-
-            all_items.append(item_data)
-
-    return all_items """
+            results.append(
+                {
+                    "external_id": add_btn.get("data-id"),
+                    "name": name_text,
+                    "variant": variant_text,
+                    "t_name": {"ro": name_text, "en": "", "ru": ""},
+                    "t_variant": {"ro": variant_text, "en": "", "ru": ""},
+                    "price": int(add_btn.get("data-price") or 0),
+                    "brand": add_btn.get("data-brand") or "",
+                    "category": category_text,
+                    "t_category": {"ro": category_text, "en": "", "ru": ""},
+                    "url": link_tag.get("href") if link_tag else None,
+                    "image": img_tag.get("src") if img_tag else None,
+                    "shop": "xstore",
+                    "in_stock": in_stock,
+                }
+            )
+        return results
 
 
 import requests
@@ -322,9 +322,14 @@ CATEGORIES = {
 
 
 # Example: fetch monitors
-items = fetch_enter_products(
-    CATEGORIES["enter"]["pc"],
-    max_pages=40,
+""" items = fetch_enter_products(
+    CATEGORIES["enter"]["proiectoaresiecrane"],
+    max_pages=8,
+) """
+
+items = fetch_xstore_products(
+    CATEGORIES["xstore"]["software"],
+    max_pages=8,
 )
 
 print(f"\n{len(items)} items found (enter)\n")
