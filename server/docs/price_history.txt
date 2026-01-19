@@ -1,0 +1,12 @@
+States: 
+- Product (active)
+- ArchivedProduct (out of stock/archived)  
+- ArchivedBrokenProduct (price=0/broken)
+
+Transitions:
+1. Product → ArchivedProduct (archive)
+2. ArchivedProduct → Product (restore)
+3. Product → ArchivedBrokenProduct (price becomes 0)
+4. ArchivedBrokenProduct → Product (price > 0 again)
+5. NEW → ArchivedProduct (OOS threshold)
+6. NEW → ArchivedBrokenProduct (price=0)

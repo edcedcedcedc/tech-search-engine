@@ -6,6 +6,7 @@ from products.models import (
     ArchivedBrokenProduct,
     ArchivedProduct,
     Product,
+    ProductPriceHistory,
 )
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
 
@@ -210,6 +211,7 @@ class DatabaseManager:
             # --------------------------------------------------
             # EXCEPTION FROM COMMON PIPELINE
             # --------------------------------------------------
+            # In save_or_update_product, fix the archived_item section:
             if archived_item:
                 change_info = ChangeTracker.get_changed_fields(
                     archived_item, fetched_item, fields_to_track
@@ -224,13 +226,22 @@ class DatabaseManager:
 
                     fetched_item.update(
                         dirty=True,
-                        change_type="updated",
+                        change_type="restored",  # NEW: "restored" not "updated"
                         changed_fields=change_info["changed_fields"],
                     )
+
+                    # Create Product (restored)
                     stage_product = Product.objects.using(shop).create(**fetched_item)
-                    ArchivedProduct.objects.using(shop).filter(
-                        id=archived_item.id
-                    ).delete()
+
+                    # UPDATE ArchivedProduct (don't delete!)
+                    archived_item.price = fetched_item.get("price")
+                    archived_item.in_stock = fetched_item.get("in_stock", True)
+                    archived_item.save()
+
+                    # Move history BACK to Product
+                    ProductPriceHistory.objects.filter(
+                        archived_product=archived_item
+                    ).update(archived_product=None, product=stage_product)
 
                     return stage_product, False, change_info
 
@@ -238,7 +249,9 @@ class DatabaseManager:
                 change_info = ChangeTracker.get_changed_fields(
                     archived_broken_item, fetched_item, fields_to_track
                 )
-                if change_info["has_changes"]:
+
+                # Only restore if NOT broken anymore (price > 0)
+                if change_info["has_changes"] and fetched_item.get("price", 0) > 0:
                     ChangeTracker.log_changes(
                         fetched_item.get("name", "Unknown"),
                         external_id,
@@ -248,15 +261,31 @@ class DatabaseManager:
 
                     fetched_item.update(
                         dirty=True,
-                        change_type="updated",
+                        change_type="restored_from_broken",  # DIFFERENT
                         changed_fields=change_info["changed_fields"],
                     )
+
                     stage_product = Product.objects.using(shop).create(**fetched_item)
-                    ArchivedBrokenProduct.objects.using(shop).filter(
-                        id=archived_broken_item.id
-                    ).delete()
+
+                    # UPDATE ArchivedBrokenProduct
+                    archived_broken_item.price = fetched_item.get("price")
+                    archived_broken_item.in_stock = fetched_item.get("in_stock", True)
+                    archived_broken_item.save()
+
+                    # Create NEW history (ArchivedBrokenProduct has no history)
+                    ProductPriceHistory.objects.create(
+                        product=stage_product,
+                        archived_product=None,
+                        shop=shop,
+                        price=fetched_item.get("price"),
+                        in_stock=fetched_item.get("in_stock", True),
+                        recorded_at=timezone.now(),
+                    )
 
                     return stage_product, False, change_info
+
+                # If still broken, keep archived
+                return None, False, {}
 
             # --------------------------------------------------
             # EXISTING PRODUCT

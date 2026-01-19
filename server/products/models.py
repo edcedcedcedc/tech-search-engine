@@ -60,10 +60,12 @@ class Product(models.Model):
     dirty = models.BooleanField(default=False)  # "needs downstream processing"
 
     change_type = models.CharField(
-        max_length=16,
+        max_length=32,
         choices=[
             ("created", "created"),
             ("updated", "updated"),
+            ("restored", "restored"),
+            ("restored_from_broken", "restored_from_broken"),
         ],
         null=True,
         blank=True,
