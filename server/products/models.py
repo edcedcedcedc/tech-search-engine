@@ -1,4 +1,4 @@
-from gettext import translation
+from django.db import transaction
 from django.db import models
 
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
@@ -85,7 +85,7 @@ class Product(models.Model):
         from products.models import ArchivedProduct, ProductPriceHistory
 
         try:
-            with translation.atomic():
+            with transaction.atomic():
                 archived = ArchivedProduct.objects.create(
                     original_id=self.id,
                     external_id=self.external_id,
@@ -141,7 +141,7 @@ class AutocompleteToken(models.Model):
 
 
 class ArchivedBrokenProduct(models.Model):
-    original_id = models.IntegerField(db_index=True)
+    original_id = models.IntegerField(db_index=True, null=True)
     external_id = models.CharField(max_length=50)
     canonical_id = models.CharField(max_length=40, null=True, blank=True)
     name = models.CharField(max_length=255, null=True, blank=True)
@@ -163,7 +163,7 @@ class ArchivedBrokenProduct(models.Model):
 
 
 class ArchivedProduct(models.Model):
-    original_id = models.IntegerField(db_index=True)
+    original_id = models.IntegerField(db_index=True, null=True)
     external_id = models.CharField(max_length=50)
     canonical_id = models.CharField(max_length=40, null=True, blank=True)
     name = models.CharField(max_length=255, null=True, blank=True)

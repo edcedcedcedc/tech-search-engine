@@ -197,7 +197,7 @@ class Crawler:
                     "category": self.safe_re_search(
                         r'"item_category":"(.*?)"', decoded
                     ),
-                    "t_category": {"ro": title, "en": "", "ru": ""},
+                    "t_category": {"ro": "", "en": "", "ru": ""},
                     "url": (
                         node.select_one(".stretched-link")["href"]
                         if node.select_one(".stretched-link")

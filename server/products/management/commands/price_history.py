@@ -42,10 +42,7 @@ class Command(BaseCommand):
         )
 
         to_create = []
-        to_update = []
-
         created = 0
-        updated = 0
         skipped = 0
 
         for product in products:
@@ -70,19 +67,24 @@ class Command(BaseCommand):
             last = history_map[last_id]
 
             # --------------------------------------------------------------
-            # History exists → UPDATE if changed
+            # History exists → CREATE NEW ENTRY if changed
             # --------------------------------------------------------------
             if last.price != product.price or last.in_stock != product.in_stock:
-                last.price = product.price
-                last.in_stock = product.in_stock
-                last.shop = product.shop
-                last.recorded_at = now
-                to_update.append(last)
+                to_create.append(
+                    ProductPriceHistory(
+                        product=product,
+                        archived_product_id=None,
+                        shop=product.shop,
+                        price=product.price,  # NEW price
+                        in_stock=product.in_stock,  # NEW stock status
+                        recorded_at=now,  # Time of this change
+                    )
+                )
             else:
                 skipped += 1
 
             # --------------------------------------------------------------
-            # Flush batches
+            # Flush batch
             # --------------------------------------------------------------
             if len(to_create) >= self.BATCH_SIZE:
                 ProductPriceHistory.objects.using("default").bulk_create(
@@ -90,15 +92,6 @@ class Command(BaseCommand):
                 )
                 created += len(to_create)
                 to_create.clear()
-
-            if len(to_update) >= self.BATCH_SIZE:
-                ProductPriceHistory.objects.using("default").bulk_update(
-                    to_update,
-                    fields=["price", "in_stock", "shop", "recorded_at"],
-                    batch_size=self.BATCH_SIZE,
-                )
-                updated += len(to_update)
-                to_update.clear()
 
         # ------------------------------------------------------------------
         # 3. Final flush
@@ -109,10 +102,6 @@ class Command(BaseCommand):
             )
             created += len(to_create)
 
-        if to_update:
-            ProductPriceHistory.objects.using("default").bulk_update(
-                to_update,
-                fields=["price", "in_stock", "shop", "recorded_at"],
-                batch_size=self.BATCH_SIZE,
-            )
-            updated += len(to_update)
+        shop_crawler_log(
+            f"[HISTORY] Created {created} new entries, skipped {skipped} unchanged products"
+        )

@@ -4,12 +4,14 @@ shop_crawler = Crawler()
 
 ALLOWED_FIELDS_TO_WRITE_AND_TRACK = ["price", "in_stock"]
 
-PAGES_TO_CRAWL = 2
+PAGES_TO_CRAWL = 999
 
 # If TRUE resets the CRAWLER_DBS and STAGE_DB and doesn't merge STAGE_DB to PROD_DB
 DRY_RUN = False
 
 CRAWLER_DBS = ["enter", "darwin", "xstore"]
+
+SHOPS_TO_CRAWL = ["enter", "xstore", "darwin"]
 
 STAGE_DB = "stage"
 
@@ -21,8 +23,6 @@ SHOPS = {
         "function": shop_crawler.fetch_enter,
         "laptop": "https://enter.online/laptopuri",
         "apple": "https://xstore.md/apple",
-        "pentrulaptop": "https://enter.online/accesorii/pentru-laptop",
-        "pentrutableta": "https://enter.online/accesorii/pentru-tableta",
         "mobilephone": "https://enter.online/telefoane",
         "perifericepc": "https://enter.online/periferice-pc",
         "pc": "https://enter.online/calculatoare",
@@ -33,20 +33,16 @@ SHOPS = {
         "proiectoaresiecrane": "https://enter.online/echipamente-de-proiectie",
         "opticasiastronomie": "https://enter.online/optica-si-astronomie",
         "tehnicaaudio": "https://enter.online/tehnica-audio",
-        "accesoriitv": "https://enter.online/accesorii/accesorii-tv",
-        "smartwatch": "https://enter.online/gadgeturi/smartwatch",
-        "brataritfitness": "https://enter.online/gadgeturi/bratari-fitness",
-        "ceasurismartcopii": "https://enter.online/gadgeturi/smartwatch-pentru-copii",
-        "accessorii": "https://enter.online/accesorii/pentru-ceasuri-si-bratari",
-        "smarthome": "https://enter.online/gadgeturi/smart-home",
+        "accesorii": "https://enter.online/accesorii",
         "iluminare": "https://enter.online/iluminare",
-        "divertisment": "https://enter.online/gadgeturi?ff[11][]=Dron%C4%83,VR+Glasses,AR+GUN,Robot,Ochelari",
-        "statiiradio": "https://enter.online/gadgeturi/statii-radio",
-        "acumulatoare": "https://enter.online/accesorii/acumulatoare",
+        "gadgeturi": "https://enter.online/gadgeturi",
         "software": "https://enter.online/programe-soft",
         "tehnicabirou": "https://enter.online/tehnica-de-birou",
         "cartielectronice": "https://enter.online/tablete/carti-electronice",
         "climatizare": "https://enter.online/climatizare",
+        "coafat": "https://enter.online/aparate-de-coafat",
+        "aparatefitnes": "https://enter.online/sport-si-agrement/aparate-fitness",
+        "instrumentemuzicale": "https://enter.online/instrumente-muzicale",
     },
     "darwin": {
         "function": shop_crawler.fetch_darwin,
@@ -70,6 +66,9 @@ SHOPS = {
         "gaming": "https://darwin.md/gaming",
         "router": "https://darwin.md/retelistica/routere",
         "switch": "https://darwin.md/retelistica/switch",
+        "cargadgets": "https://darwin.md/car-gadgets",
+        "sportsanatate": "https://darwin.md/sport-si-sanatate",
+        "electrocasnice": "https://darwin.md/electrocasnice",
     },
     "xstore": {
         "function": shop_crawler.fetch_xstore,

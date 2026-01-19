@@ -35,13 +35,11 @@ class RateLimiter:
                     ):
                         delay = float(line.split(":", 1)[1].strip())
                         shop_crawler_log(
-                            f"[ROBOTS] shop={self.shop} crawl-delay={delay}s"
+                            f"ROBOTS shop={self.shop} crawl-delay={delay}s"
                         )
                         return delay
         except Exception as e:
-            shop_crawler_log(
-                f"[ROBOTS] shop={self.shop} failed to fetch robots.txt: {e}"
-            )
+            shop_crawler_log(f"ROBOTS shop={self.shop} failed to fetch robots.txt: {e}")
         return self.min_delay
 
     def wait_if_needed(self):
@@ -53,7 +51,7 @@ class RateLimiter:
 
         if elapsed < effective_delay:
             sleep_time = effective_delay - elapsed
-            shop_crawler_log(f"[RATE-LIMIT] shop={self.shop} waiting {sleep_time:.1f}s")
+            shop_crawler_log(f"RATE-LIMIT shop={self.shop} waiting {sleep_time:.1f}s")
             time.sleep(sleep_time)
 
     def handle_429(self):
@@ -61,7 +59,7 @@ class RateLimiter:
         self.times_429 += 1
         sleep_time = min(2**self.times_429 * 30, 3600)
         shop_crawler_log(
-            f"[RATE-LIMIT] shop={self.shop} hit 429 | fail_count={self.times_429} | sleeping {sleep_time:.1f}s"
+            f"RATE-LIMIT shop={self.shop} hit 429 | fail_count={self.times_429} | sleeping {sleep_time:.1f}s"
         )
         time.sleep(sleep_time)
 
@@ -81,16 +79,16 @@ class RateLimiter:
                 return resp
 
             except requests.exceptions.RequestException as e:
-                shop_crawler_log(f"[REQUEST-FAIL] shop={self.shop} url={url} error={e}")
+                shop_crawler_log(f"REQUEST-FAIL shop={self.shop} url={url} error={e}")
                 time.sleep(5 + random.uniform(0, 15))
 
         final_sleep = min(60 * max_retries, 300)  # 1–5 min depending on max_retries
         shop_crawler_log(
-            f"[RATE-LIMIT] shop={self.shop} cooling down {final_sleep}s after repeated failures"
+            f"RATE-LIMIT shop={self.shop} cooling down {final_sleep}s after repeated failures"
         )
         time.sleep(final_sleep)
 
         shop_crawler_log(
-            f"[REQUEST-FAIL] shop={self.shop} url={url} FAILED after {max_retries} attempts"
+            f"REQUEST-FAIL shop={self.shop} url={url} FAILED after {max_retries} attempts"
         )
         return None

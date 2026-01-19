@@ -40,6 +40,11 @@ categories = [
         "ru": "веб-камеры и периферия для ПК",
     },
     {
+        "ro": "drona, quadcopter",
+        "en": "Drones and quadcopters",
+        "ru": "дроны и квадрокоптеры",
+    },
+    {
         "ro": "cană, accesorii birou",
         "en": "Mugs and desk accessories",
         "ru": "кружки и офисные аксессуары",

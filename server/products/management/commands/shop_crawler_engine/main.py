@@ -12,6 +12,7 @@ from queue import Queue
 from settings import CrawlSettings
 from products.management.commands.shop_crawler_engine.config import (
     ALLOWED_FIELDS_TO_WRITE_AND_TRACK,
+    SHOPS_TO_CRAWL,
     SHOPS,
 )
 
@@ -56,7 +57,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            filter_shop = options["shop"]
+            shop_option = options.get("shop")
+            if shop_option:
+                crawl_shops = [shop_option]
+            else:
+                crawl_shops = SHOPS_TO_CRAWL
             filter_category = options["category"]
             max_pages = options["pages"]
             track_fields = (
@@ -75,7 +80,7 @@ class Command(BaseCommand):
             # Launch threads for all shop/category combinations
             for shop_name, shop_cfg in SHOPS.items():
 
-                if filter_shop and shop_name != filter_shop:
+                if shop_name not in crawl_shops:
                     continue
 
                 fetch_fn = shop_cfg.get("function")
@@ -90,7 +95,7 @@ class Command(BaseCommand):
 
                     while sum(t.is_alive() for t in threads) >= self.MAX_THREADS:
                         shop_crawler_log(
-                            f"[SPAWN] Max threads reached ({self.MAX_THREADS}), waiting..."
+                            f"SPAWN Max threads reached ({self.MAX_THREADS}), waiting..."
                         )
                         time.sleep(2)
 
@@ -112,7 +117,7 @@ class Command(BaseCommand):
                     # stagger thread startup
                     sleep_time = random.uniform(*self.SPAWN_DELAY)
                     shop_crawler_log(
-                        f"[SPAWN] Started worker shop={shop_name} category={category_name}, "
+                        f"SPAWN Started worker shop={shop_name} category={category_name}, "
                         f"sleeping {sleep_time:.1f}s before next spawn"
                     )
                     time.sleep(sleep_time)
@@ -150,6 +155,8 @@ class Command(BaseCommand):
             batch_number = 1
             item_counter = 0
 
+            DatabaseManager.reset_oos_counters([category])
+
             for item_data in fetch_fn(url, max_pages):
                 batch.append(item_data)
                 item_counter += 1
@@ -157,7 +164,7 @@ class Command(BaseCommand):
                 if item_counter % self.settings.items_before_pause == 0:
                     pause_sec = random.uniform(*self.settings.item_pause_range)
                     shop_crawler_log(
-                        f"[HL-PAUSE] shop={shop} category={category} processed {item_counter} items, sleeping {pause_sec:.1f}s"
+                        f"HL-PAUSE shop={shop} category={category} processed {item_counter} items, sleeping {pause_sec:.1f}s"
                     )
                     time.sleep(pause_sec)
 
@@ -182,7 +189,7 @@ class Command(BaseCommand):
     def process_batch(self, batch, shop, category, batch_number, track_fields):
         saved_count = 0
         updated_count = 0
-
+        archived_count = 0
         shop_crawler_log(
             f"PROCESSING batch {batch_number} | "
             f"shop={shop} category={category} size={len(batch)}"
@@ -197,8 +204,10 @@ class Command(BaseCommand):
                     saved_count += 1
                 elif change_info.get("has_changes"):
                     updated_count += 1
+                else:
+                    archived_count += 1
 
         shop_crawler_log(
             f"BATCH {batch_number} RESULT | "
-            f"created={saved_count} updated={updated_count}"
+            f"created={saved_count} updated={updated_count} archived={archived_count}"
         )
