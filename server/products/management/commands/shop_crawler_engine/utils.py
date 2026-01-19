@@ -272,16 +272,6 @@ class DatabaseManager:
                     archived_broken_item.in_stock = fetched_item.get("in_stock", True)
                     archived_broken_item.save()
 
-                    # Create NEW history (ArchivedBrokenProduct has no history)
-                    ProductPriceHistory.objects.create(
-                        product=stage_product,
-                        archived_product=None,
-                        shop=shop,
-                        price=fetched_item.get("price"),
-                        in_stock=fetched_item.get("in_stock", True),
-                        recorded_at=timezone.now(),
-                    )
-
                     return stage_product, False, change_info
 
                 # If still broken, keep archived

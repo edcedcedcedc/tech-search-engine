@@ -10,3 +10,23 @@ Transitions:
 4. ArchivedBrokenProduct → Product (price > 0 again)
 5. NEW → ArchivedProduct (OOS threshold)
 6. NEW → ArchivedBrokenProduct (price=0)
+
+
+Pipeline Flow:
+1. Crawlers fetch products → save to crawler DBs
+2. Merge to Stage → Stage has latest data  
+3. Merge Stage → Prod (archives missing products)
+4. Run history command → Creates history for:
+   - All ACTIVE products in Prod
+   - All ARCHIVED products (just archived in step 3!)
+   
+Result: Complete price timeline for ALL products!
+
+Visual Timeline
+Time  Product State        History
+----  ------------        -------
+T1    Broken (price=0)    ArchivedBrokenProduct created
+T2    Fixed (price>100)   [Pipeline creates history in Prod]
+T3    Out of stock        Archived via archive() - history moves
+T4    Back in stock       Restored - history moves back
+T5    Price change        New history entry created
