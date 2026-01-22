@@ -7,7 +7,9 @@ from products.utils.log.shop_crawler_engine_log import shop_crawler_log
 
 
 class Command(BaseCommand):
-    help = "Create price history for ALL products (active + archived)"
+    help = (
+        "Create price history for ALL products (active + archived) with daily snapshots"
+    )
 
     BATCH_SIZE = 1000
 
@@ -23,56 +25,62 @@ class Command(BaseCommand):
             action="store_true",
             help="Include archived products in history creation",
         )
+        parser.add_argument(
+            "--per-day",
+            action="store_true",
+            help="Force daily snapshot even if price/stock didn't change",
+        )
 
     def handle(self, *args, **options):
         db = options["db"]
         include_archived = options["include_archived"]
+        force_daily = options["per-day"]
 
         now = timezone.now()
+        today = now.date()
 
         shop_crawler_log(f"[HISTORY] Starting price history for DB: {db}")
         shop_crawler_log(f"[HISTORY] Include archived: {include_archived}")
+        shop_crawler_log(f"[HISTORY] Force daily snapshots: {force_daily}")
 
         total_created = 0
         total_skipped = 0
+        to_create = []
 
-        # ------------------------------------------------------------------
-        # 1. PROCESS ACTIVE PRODUCTS
-        # ------------------------------------------------------------------
+        # ------------------------
+        # 1. ACTIVE PRODUCTS
+        # ------------------------
         shop_crawler_log("[HISTORY] Processing active products...")
 
-        # Load latest history for active products
-        latest_active_history = {
-            row["product_id"]: row["max_id"]
-            for row in (
-                ProductPriceHistory.objects.using(db)
-                .filter(product__isnull=False)
-                .values("product_id")
-                .annotate(max_id=Max("id"))
-            )
-        }
+        latest_active = (
+            ProductPriceHistory.objects.using(db)
+            .filter(product__isnull=False)
+            .order_by("product_id", "-recorded_at")
+            .distinct("product_id")
+        )
+        latest_active_map = {h.product_id: h for h in latest_active}
 
-        active_history_map = {}
-        if latest_active_history:
-            active_history_map = {
-                h.id: h
-                for h in ProductPriceHistory.objects.using(db).filter(
-                    id__in=latest_active_history.values()
-                )
-            }
-
-        # Process active products
-        to_create = []
         active_created = 0
         active_skipped = 0
 
-        products = Product.objects.using(db).all().iterator(chunk_size=self.BATCH_SIZE)
+        for product in (
+            Product.objects.using(db).all().iterator(chunk_size=self.BATCH_SIZE)
+        ):
+            last = latest_active_map.get(product.id)
 
-        for product in products:
-            last_id = latest_active_history.get(product.id)
+            create_new = False
 
-            if not last_id:
-                # No history → CREATE
+            if not last:
+                # No history → create
+                create_new = True
+            else:
+                last_date = last.recorded_at.date()
+                if force_daily and last_date < today:
+                    create_new = True
+                elif last.price != product.price or last.in_stock != product.in_stock:
+                    create_new = True
+
+            if create_new:
                 to_create.append(
                     ProductPriceHistory(
                         product=product,
@@ -80,29 +88,12 @@ class Command(BaseCommand):
                         shop=product.shop,
                         price=product.price,
                         in_stock=product.in_stock,
-                        recorded_at=product.updated_at or now,
+                        recorded_at=now,
                     )
                 )
             else:
-                last = active_history_map.get(last_id)
-                if last and (
-                    last.price != product.price or last.in_stock != product.in_stock
-                ):
-                    # Price/stock changed → CREATE NEW ENTRY
-                    to_create.append(
-                        ProductPriceHistory(
-                            product=product,
-                            archived_product=None,
-                            shop=product.shop,
-                            price=product.price,
-                            in_stock=product.in_stock,
-                            recorded_at=now,
-                        )
-                    )
-                else:
-                    active_skipped += 1
+                active_skipped += 1
 
-            # Flush batch
             if len(to_create) >= self.BATCH_SIZE:
                 ProductPriceHistory.objects.using(db).bulk_create(
                     to_create, batch_size=self.BATCH_SIZE
@@ -110,7 +101,6 @@ class Command(BaseCommand):
                 active_created += len(to_create)
                 to_create.clear()
 
-        # Final flush for active products
         if to_create:
             ProductPriceHistory.objects.using(db).bulk_create(
                 to_create, batch_size=self.BATCH_SIZE
@@ -120,52 +110,48 @@ class Command(BaseCommand):
 
         total_created += active_created
         total_skipped += active_skipped
-
         shop_crawler_log(
             f"[HISTORY] Active: Created {active_created}, Skipped {active_skipped}"
         )
 
-        # ------------------------------------------------------------------
-        # 2. PROCESS ARCHIVED PRODUCTS (if requested)
-        # ------------------------------------------------------------------
+        # ------------------------
+        # 2. ARCHIVED PRODUCTS
+        # ------------------------
         archived_created = 0
         archived_skipped = 0
 
         if include_archived:
             shop_crawler_log("[HISTORY] Processing archived products...")
 
-            # Load latest history for archived products
-            latest_archived_history = {
-                row["archived_product_id"]: row["max_id"]
-                for row in (
-                    ProductPriceHistory.objects.using(db)
-                    .filter(archived_product__isnull=False)
-                    .values("archived_product_id")
-                    .annotate(max_id=Max("id"))
-                )
-            }
+            latest_archived = (
+                ProductPriceHistory.objects.using(db)
+                .filter(archived_product__isnull=False)
+                .order_by("archived_product_id", "-recorded_at")
+                .distinct("archived_product_id")
+            )
+            latest_archived_map = {h.archived_product_id: h for h in latest_archived}
 
-            archived_history_map = {}
-            if latest_archived_history:
-                archived_history_map = {
-                    h.id: h
-                    for h in ProductPriceHistory.objects.using(db).filter(
-                        id__in=latest_archived_history.values()
-                    )
-                }
-
-            # Process archived products
-            archived_products = (
+            for archived in (
                 ArchivedProduct.objects.using(db)
                 .all()
                 .iterator(chunk_size=self.BATCH_SIZE)
-            )
+            ):
+                last = latest_archived_map.get(archived.id)
+                create_new = False
 
-            for archived in archived_products:
-                last_id = latest_archived_history.get(archived.id)
+                if not last:
+                    create_new = True
+                else:
+                    last_date = last.recorded_at.date()
+                    if force_daily and last_date < today:
+                        create_new = True
+                    elif (
+                        last.price != archived.price
+                        or last.in_stock != archived.in_stock
+                    ):
+                        create_new = True
 
-                if not last_id:
-                    # No history for this archived product → CREATE
+                if create_new:
                     to_create.append(
                         ProductPriceHistory(
                             product=None,
@@ -173,30 +159,12 @@ class Command(BaseCommand):
                             shop=archived.shop,
                             price=archived.price,
                             in_stock=archived.in_stock,
-                            recorded_at=archived.archived_at or now,
+                            recorded_at=now,
                         )
                     )
                 else:
-                    last = archived_history_map.get(last_id)
-                    if last and (
-                        last.price != archived.price
-                        or last.in_stock != archived.in_stock
-                    ):
-                        # Changed since last history → CREATE NEW
-                        to_create.append(
-                            ProductPriceHistory(
-                                product=None,
-                                archived_product=archived,
-                                shop=archived.shop,
-                                price=archived.price,
-                                in_stock=archived.in_stock,
-                                recorded_at=now,
-                            )
-                        )
-                    else:
-                        archived_skipped += 1
+                    archived_skipped += 1
 
-                # Flush batch
                 if len(to_create) >= self.BATCH_SIZE:
                     ProductPriceHistory.objects.using(db).bulk_create(
                         to_create, batch_size=self.BATCH_SIZE
@@ -204,7 +172,6 @@ class Command(BaseCommand):
                     archived_created += len(to_create)
                     to_create.clear()
 
-            # Final flush for archived products
             if to_create:
                 ProductPriceHistory.objects.using(db).bulk_create(
                     to_create, batch_size=self.BATCH_SIZE
@@ -214,28 +181,17 @@ class Command(BaseCommand):
 
             total_created += archived_created
             total_skipped += archived_skipped
-
             shop_crawler_log(
                 f"[HISTORY] Archived: Created {archived_created}, Skipped {archived_skipped}"
             )
 
-        # ------------------------------------------------------------------
+        # ------------------------
         # 3. SUMMARY
-        # ------------------------------------------------------------------
+        # ------------------------
         shop_crawler_log(
-            f"[HISTORY] COMPLETED: "
-            f"Total created: {total_created} "
-            f"Total skipped: {total_skipped}"
+            f"[HISTORY] COMPLETED: Total created: {total_created}, Total skipped: {total_skipped}"
         )
-
-        # Show counts for reference
-        active_count = Product.objects.using(db).count()
-        archived_count = (
-            ArchivedProduct.objects.using(db).count() if include_archived else 0
-        )
-
         shop_crawler_log(
-            f"[HISTORY] TOTALS: "
-            f"Active products: {active_count}, "
-            f"Archived products: {archived_count}"
+            f"[HISTORY] TOTALS: Active products: {Product.objects.using(db).count()}, "
+            f"Archived products: {ArchivedProduct.objects.using(db).count() if include_archived else 0}"
         )

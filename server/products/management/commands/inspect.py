@@ -35,16 +35,16 @@ class Command(BaseCommand):
             action="store_true",
             help="Ignore everything else and list distinct categories",
         )
-
         parser.add_argument(
             "--list-tcategories",
             action="store_true",
-            help="Ignore everything else and list distinct categories",
+            help="Ignore everything else and list distinct t_categories",
         )
         parser.add_argument(
             "--db",
-            action="store_true",
-            help="Ignore everything else and list distinct categories",
+            type=str,
+            default="default",
+            help="Database alias to use (default: 'default')",
         )
 
     def handle(self, *args, **options):
@@ -55,11 +55,12 @@ class Command(BaseCommand):
         empty_category_only = options["empty_categories"]
         list_categories = options["list_categories"]
         list_tcategories = options["list_tcategories"]
+
+        db_inspect_products_log(f"Using database: {db}")
+
         qs = Product.objects.using(db).all().order_by("id")
-        db_inspect_products_log(f"Using database {db}")
 
         if list_categories:
-            # Only list distinct categories
             categories = (
                 Product.objects.using(db)
                 .values_list("category", flat=True)
@@ -69,15 +70,12 @@ class Command(BaseCommand):
             db_inspect_products_log("Distinct categories in DB:")
             for cat in categories:
                 db_inspect_products_log(f"- {cat or 'EMPTY'}")
-            return  # Stop here, ignore other filters or inspections
+            return
 
         if list_tcategories:
             db_inspect_products_log("Distinct t_categories grouped by RO value:")
-
             qs = Product.objects.using(db).values_list("t_category", flat=True)
-
-            grouped = {}  # ro_value -> set of serialized variants
-
+            grouped = {}
             for tcat in qs:
                 if not tcat or not isinstance(tcat, dict):
                     ro_key = "EMPTY"
@@ -91,17 +89,13 @@ class Command(BaseCommand):
                             "ru": tcat.get("ru", ""),
                         }
                     )
-
                 grouped.setdefault(ro_key, set()).add(variant)
-
             for ro_key in sorted(grouped.keys()):
                 db_inspect_products_log(f"\nRO = {ro_key}")
                 for variant in grouped[ro_key]:
                     db_inspect_products_log(f"  - {variant}")
-
             return
 
-        # Apply other filters
         if dirty_only:
             qs = qs.filter(dirty=True)
 
@@ -116,7 +110,6 @@ class Command(BaseCommand):
         total = qs.count()
         db_inspect_products_log(f"Total products to inspect: {total}")
 
-        # Iterate in batches to avoid memory issues
         start = 0
         while start < total:
             batch = qs[start : start + batch_size]

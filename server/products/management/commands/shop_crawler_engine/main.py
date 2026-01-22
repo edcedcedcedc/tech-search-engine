@@ -58,10 +58,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         try:
             shop_option = options.get("shop")
-            if shop_option:
-                crawl_shops = [shop_option]
-            else:
-                crawl_shops = SHOPS_TO_CRAWL
+            crawl_shops = [shop_option] if shop_option else SHOPS_TO_CRAWL
             filter_category = options["category"]
             max_pages = options["pages"]
             track_fields = (
@@ -75,14 +72,19 @@ class Command(BaseCommand):
             # Queue to hold batches from all threads
             batch_queue = Queue()
 
-            threads = []
+            # Start the batch consumer thread
+            consumer_thread = Thread(
+                target=self.batch_consumer,
+                args=(batch_queue, track_fields),
+                daemon=True,
+            )
+            consumer_thread.start()
 
-            # Launch threads for all shop/category combinations
+            # Flatten all tasks from all shops/categories
+            tasks = []
             for shop_name, shop_cfg in SHOPS.items():
-
                 if shop_name not in crawl_shops:
                     continue
-
                 fetch_fn = shop_cfg.get("function")
                 if not fetch_fn:
                     continue
@@ -92,98 +94,64 @@ class Command(BaseCommand):
                         continue
                     if filter_category and category_name != filter_category:
                         continue
+                    tasks.append((shop_name, category_name, fetch_fn, url))
 
-                    while sum(t.is_alive() for t in threads) >= self.MAX_THREADS:
-                        shop_crawler_log(
-                            f"SPAWN Max threads reached ({self.MAX_THREADS}), waiting..."
-                        )
-                        time.sleep(2)
+            # Shuffle tasks to spread requests
+            random.shuffle(tasks)
 
-                    t = Thread(
-                        target=self.shop_worker,
-                        args=(
-                            shop_name,
-                            category_name,
-                            fetch_fn,
-                            url,
-                            max_pages,
-                            batch_queue,
-                        ),
-                        daemon=True,
-                    )
-                    t.start()
-                    threads.append(t)
+            threads = []
 
-                    # stagger thread startup
-                    sleep_time = random.uniform(*self.SPAWN_DELAY)
+            # Launch threads for shuffled tasks
+            for shop_name, category_name, fetch_fn, url in tasks:
+                # Wait if max threads reached
+                while sum(t.is_alive() for t in threads) >= self.MAX_THREADS:
                     shop_crawler_log(
-                        f"SPAWN Started worker shop={shop_name} category={category_name}, "
-                        f"sleeping {sleep_time:.1f}s before next spawn"
+                        f"SPAWN Max threads reached ({self.MAX_THREADS}), waiting..."
                     )
-                    time.sleep(sleep_time)
+                    time.sleep(2)
 
-            batch_number = 1
+                t = Thread(
+                    target=self.shop_worker,
+                    args=(
+                        shop_name,
+                        category_name,
+                        fetch_fn,
+                        url,
+                        max_pages,
+                        batch_queue,
+                    ),
+                    daemon=True,
+                )
+                t.start()
+                threads.append(t)
 
-            # Consume batches from the queue while threads are alive
-            while any(t.is_alive() for t in threads) or not batch_queue.empty():
-                try:
-                    batch, shop, category, batch_idx = batch_queue.get(timeout=5)
-                    self.process_batch(batch, shop, category, batch_idx, track_fields)
-                    batch_number += 1
+                # stagger thread startup
+                sleep_time = random.uniform(*self.SPAWN_DELAY)
+                shop_crawler_log(
+                    f"SPAWN Started worker shop={shop_name} category={category_name}, "
+                    f"sleeping {sleep_time:.1f}s before next spawn"
+                )
+                time.sleep(sleep_time)
 
-                except:
-                    continue
+            # Wait for all worker threads to finish
+            for t in threads:
+                t.join()
+
+            # Push sentinel to stop consumer thread
+            batch_queue.put(None)
+
+            # Wait for consumer to finish
+            consumer_thread.join()
 
             shop_crawler_log(
                 "Saved all created/updated records for downstream processing"
             )
-
             shop_crawler_log("END shop_crawler_engine orchestrator")
 
         except KeyboardInterrupt:
             shop_crawler_log("INTERRUPTED by user")
         except Exception as e:
             shop_crawler_log(f"FATAL error: {e}")
-            shop_crawler_log(traceback.format_exc())
-
-    def shop_worker(self, shop, category, fetch_fn, url, max_pages, batch_queue):
-        """Worker thread to fetch items from a shop/category and push batches into the queue"""
-        try:
-            shop_crawler_log(f"START worker for shop={shop}, category={category}")
-
-            batch = []
-            batch_number = 1
-            item_counter = 0
-
-            DatabaseManager.reset_oos_counters([category])
-
-            for item_data in fetch_fn(url, max_pages):
-                batch.append(item_data)
-                item_counter += 1
-
-                if item_counter % self.settings.items_before_pause == 0:
-                    pause_sec = random.uniform(*self.settings.item_pause_range)
-                    shop_crawler_log(
-                        f"HL-PAUSE shop={shop} category={category} processed {item_counter} items, sleeping {pause_sec:.1f}s"
-                    )
-                    time.sleep(pause_sec)
-
-                if len(batch) >= self.BATCH_SIZE:
-                    batch_queue.put((batch.copy(), shop, category, batch_number))
-                    batch.clear()
-                    batch_number += 1
-                    random_sleep(*self.PAUSE_BETWEEN_BATCHES)
-
-            # remaining items
-            if batch:
-                batch_queue.put((batch.copy(), shop, category, batch_number))
-
-            shop_crawler_log(f"END worker for shop={shop}, category={category}")
-
-        except Exception as e:
-            shop_crawler_log(
-                f"ERROR in worker for shop={shop}, category={category}: {e}"
-            )
             shop_crawler_log(traceback.format_exc())
 
     def process_batch(self, batch, shop, category, batch_number, track_fields):
@@ -204,10 +172,23 @@ class Command(BaseCommand):
                     saved_count += 1
                 elif change_info.get("has_changes"):
                     updated_count += 1
-                else:
-                    archived_count += 1
-
+            # archived={archived_count}
         shop_crawler_log(
             f"BATCH {batch_number} RESULT | "
-            f"created={saved_count} updated={updated_count} archived={archived_count}"
+            f"created={saved_count} updated={updated_count} "
         )
+
+    def batch_consumer(self, batch_queue, track_fields):
+        """Consume batches from the queue and process them immediately"""
+        batch_number = 1
+
+        while True:
+            try:
+                batch, shop, category, batch_idx = batch_queue.get(timeout=5)
+                if batch is None:  # sentinel to stop consumer
+                    break
+                self.process_batch(batch, shop, category, batch_idx, track_fields)
+                batch_queue.task_done()
+                batch_number += 1
+            except batch_queue.Empty:
+                continue
