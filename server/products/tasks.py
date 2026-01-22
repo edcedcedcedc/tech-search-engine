@@ -66,13 +66,8 @@ def run_normalize(interval_minutes=None, max_db_workers=3):
         from products.models import Product
 
         products_qs = Product.objects.using(db).filter(dirty=True)
-        category_log(f"[DEBUG] DB={db} | {products_qs}")
         for p in products_qs:
             try:
-                category_log(
-                    f"[DEBUG] DB={db} | ID={p.id} | Name={p.name} | Variant={p.variant} "
-                    f"| Category={p.category} | t_category={p.t_category}"
-                )
                 result = normalize_category_for_product(p.id, db=db, client=client)
                 category_log(f"[{db}] {p.id} normalized: {result}")
             except Exception as e:
@@ -81,7 +76,7 @@ def run_normalize(interval_minutes=None, max_db_workers=3):
     with ThreadPoolExecutor(max_workers=max_db_workers) as executor:
         futures = [executor.submit(normalize_db, db) for db in CRAWLER_DBS]
         for f in as_completed(futures):
-            f.result()  # just wait for all
+            f.result()
 
     category_log("[TASK] Finished normalization for all DBs")
     call_command("normalize_test")
