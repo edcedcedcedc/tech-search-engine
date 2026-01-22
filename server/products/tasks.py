@@ -29,6 +29,7 @@ from products.management.commands.shop_crawler_engine.config import (
     CRAWLER_DBS,
     STAGE_DB,
     PROD_DB,
+    MAX_DB_WORKERS_AT_NORMALIZE,
 )
 
 
@@ -57,7 +58,7 @@ def run_crawler():
 
 
 @shared_task(name="run_normalize")
-def run_normalize(interval_minutes=None, max_db_workers=3):
+def run_normalize(interval_minutes=None, max_db_workers=MAX_DB_WORKERS_AT_NORMALIZE):
     env = environ.Env()
     environ.Env.read_env()
     client = OpenAI(api_key=env("OPENAI_API_KEY"))

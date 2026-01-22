@@ -6,12 +6,16 @@ const roMD = {
   Select_Language: "Selectați limba",
 
   // landing
-  Compare_prices_in_Moldova: "Compară prețurile în Moldova",
-  Find_the_best_price_for_your_favorite_products:
-    "Găsește cel mai bun preț pentru produsele tale preferate",
-  Compare_product_prices_from_multiple_online_stores_in_the_Republic_of_Moldova_in_one_place:
-    "Compară prețurile produselor din mai multe magazine online din Republica Moldova, într-un singur loc.",
-  The_application_is_in_the_MVP_stage: "Aplicația este în stadiu MVP.",
+Explore_prices_in_Moldova: 
+  "Explorează produsele tech în Moldova",
+
+Discover_the_best_offers_for_your_favorite_products:
+  "Descoperă cele mai bune oferte, într-un singur loc",
+
+Track_product_prices_from_multiple_online_stores_in_Moldova:
+  "Monitorizează prețurile produselor din magazinele online moldovenești",
+  
+The_application_is_in_the_MVP_stage: "Aplicația este în stadiu MVP.",
 
   // Footer
   All_rights_reserved: "Toate drepturile rezervate",

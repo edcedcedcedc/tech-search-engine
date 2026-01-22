@@ -1,39 +1,3 @@
-"""
-MERGE PERFORMANCE NOTES (READ BEFORE MODIFYING):
-
-This merge is optimized for speed and scalability.
-
-Key optimizations:
-1. Bulk operations over per-row writes
-   - Uses bulk_create / bulk_update instead of update_or_create or save()
-   - Reduces DB queries from ~100k+ to <100 for large datasets
-
-2. No OFFSET-based pagination
-   - Uses queryset.iterator(chunk_size=...)
-   - Prevents O(n²) behavior on large tables
-
-3. One transaction per batch (not per row)
-   - Minimizes DB locking, fsync, and WAL overhead
-
-4. In-memory destination index
-   - Preloads destination products into a dict {(shop, external_id): product}
-   - Eliminates DB lookups during merge (O(1) access)
-
-5. Minimal writes in dirty mode
-   - Updates only changed fields (e.g. price)
-   - Avoids unnecessary overwrites
-
-6. Logging kept out of hot paths
-   - No per-row logging
-   - Logs only per batch / summary
-
-Design principle:
-    "Databases love sets, hate loops"
-
-Do NOT revert to update_or_create, OFFSET slicing, or per-row transactions
-unless correctness absolutely requires it.
-"""
-
 import time
 import signal
 from django.core.management.base import BaseCommand
@@ -47,8 +11,6 @@ from products.management.commands.shop_crawler_engine.config import (
 BATCH_SIZE = 2000
 STOP_MERGE = False
 
-# Crawler decides what to update, merge decides what to write
-
 
 def signal_handler(sig, frame):
     global STOP_MERGE
@@ -61,241 +23,107 @@ signal.signal(signal.SIGINT, signal_handler)
 
 
 class Command(BaseCommand):
-    help = "High-performance merge between product databases (force or dirty)"
+    help = "High-performance merge between product databases (dirty only, dirty=True)"
 
     def add_arguments(self, parser):
         parser.add_argument("--source", type=str, required=True)
         parser.add_argument("--dest", type=str, default="default")
-        parser.add_argument("--shop", type=str)
-        parser.add_argument("--force", action="store_true")
+        parser.add_argument("--shop", type=str, required=True)
 
     def handle(self, *args, **options):
+        global STOP_MERGE
+
         source_db = options["source"]
         dest_db = options["dest"]
-        force = options["force"]
-        shop = options.get("shop")
-        shop = shop.lower() if shop else None
+        shop = options["shop"].lower()
 
-        self.test_before_merge(source_db, dest_db, shop=shop)
+        start_time = time.time()
+        db_merge_log(f"[DIRTY] Starting merge {source_db} → {dest_db} | shop={shop}")
 
-        if force:
-            db_merge_log(f"[FORCE] {source_db} → {dest_db}")
-            self.force_merge(source_db, dest_db)
-        else:
-            if not shop:
-                raise db_merge_log("Shop must be provided for dirty merges.")
-            db_merge_log(f"[DIRTY] {source_db} → {dest_db} | shop={shop}")
-            self.dirty_merge(source_db, dest_db, shop)
-
-    # ------------------------------------------------------------------
-    # FORCE MERGE (Stage <-> Prod)
-    # ------------------------------------------------------------------
-    def force_merge(self, source_db, dest_db):
-        global STOP_MERGE
-
-        start = time.time()
-
-        with transaction.atomic(using=dest_db):
-            db_merge_log("[FORCE] Clearing destination DB")
-            Product.objects.using(dest_db).all().delete()
-
-            batch = []
-            total = 0
-
-            for p in (
-                Product.objects.using(source_db).all().iterator(chunk_size=BATCH_SIZE)
-            ):
-                if STOP_MERGE:
-                    break
-
-                batch.append(
-                    Product(
-                        shop=p.shop,
-                        external_id=p.external_id,
-                        canonical_id=p.canonical_id,
-                        name=p.name,
-                        variant=p.variant,
-                        t_name=p.t_name,
-                        t_variant=p.t_variant,
-                        t_category=p.t_category,
-                        price=p.price,
-                        brand=p.brand,
-                        category=p.category,
-                        url=p.url,
-                        image=p.image,
-                        in_stock=p.in_stock,
-                        embedding=p.embedding,
-                        dirty=p.dirty,
-                    )
-                )
-
-                if len(batch) >= BATCH_SIZE:
-                    Product.objects.using(dest_db).bulk_create(batch)
-                    total += len(batch)
-                    batch.clear()
-
-            if batch:
-                Product.objects.using(dest_db).bulk_create(batch)
-                total += len(batch)
-
-        db_merge_log(
-            f"[FORCE] Completed: {total} products in {round(time.time() - start, 2)}s"
-        )
-
-    # --------------------------------------------------
-    # DIRTY MERGE
-    # --------------------------------------------------
-    def dirty_merge(self, source_db, dest_db, shop):
-        global STOP_MERGE
-
-        start = time.time()
-
-        src_qs = Product.objects.using(source_db).filter(
-            shop__iexact=shop,
-            dirty=True,
-            change_type__in=["created", "updated"],
-        )
-
-        # Preload destination products ONCE
+        # Preload destination products for fast lookup
         dest_map = {
             (p.shop.lower(), p.external_id): p
             for p in Product.objects.using(dest_db).filter(shop__iexact=shop)
         }
 
+        src_qs = Product.objects.using(source_db).filter(shop__iexact=shop, dirty=True)
+
         to_create = []
         to_update = []
         update_fields_union = set()
+        processed_ids = []
 
-        for p in src_qs.iterator(chunk_size=BATCH_SIZE):
+        for src in src_qs.iterator(chunk_size=BATCH_SIZE):
             if STOP_MERGE:
                 break
 
-            key = (p.shop.lower(), p.external_id)
-
-            # --------------------------------------------------
-            # CREATED → bulk_create
-            # --------------------------------------------------
-            if p.change_type == "created":
-                if key not in dest_map:
-                    to_create.append(
-                        Product(
-                            shop=p.shop.lower(),
-                            external_id=p.external_id,
-                            canonical_id=p.canonical_id,
-                            name=p.name,
-                            variant=p.variant,
-                            t_name=p.t_name,
-                            t_variant=p.t_variant,
-                            t_category=p.t_category,
-                            price=p.price,
-                            brand=p.brand,
-                            category=p.category,
-                            url=p.url,
-                            image=p.image,
-                            in_stock=p.in_stock,
-                            embedding=p.embedding,
-                            dirty=False,
-                        )
-                    )
-                continue
-
-            # --------------------------------------------------
-            # UPDATED → bulk_update (field-level)
-            # --------------------------------------------------
-            if p.change_type == "updated" and key in dest_map:
-                dest = dest_map[key]
-
-                changed_fields = set(p.changed_fields or [])
-                allowed_fields = changed_fields & set(ALLOWED_FIELDS_TO_WRITE_AND_TRACK)
-
-                if not allowed_fields:
-                    continue
-
-                for field in allowed_fields:
-                    setattr(dest, field, getattr(p, field))
-
-                update_fields_union |= allowed_fields
-                to_update.append(dest)
-
-        # --------------------------------------------------
-        # WRITE PHASE
-        # --------------------------------------------------
-        with transaction.atomic(using=dest_db):
-            if to_create:
-                Product.objects.using(dest_db).bulk_create(
-                    to_create, batch_size=BATCH_SIZE
-                )
-
-            if to_update:
-                Product.objects.using(dest_db).bulk_update(
-                    to_update,
-                    fields=list(update_fields_union),
-                    batch_size=BATCH_SIZE,
-                )
-
-        db_merge_log(
-            f"[DIRTY] created={len(to_create)} updated={len(to_update)} "
-            f"in {round(time.time() - start, 2)}s"
-        )
-
-    def test_before_merge(
-        self, source_db, dest_db, shop=None, fields_to_compare=None, limit=50
-    ):
-        from products.models import Product
-
-        fields_to_compare = fields_to_compare or ALLOWED_FIELDS_TO_WRITE_AND_TRACK
-
-        db_merge_log(f"[TEST] Running pre-merge comparison: {source_db} → {dest_db}")
-
-        src_qs = Product.objects.using(source_db)
-        dest_qs = Product.objects.using(dest_db)
-
-        if shop:
-            src_qs = src_qs.filter(shop__iexact=shop)
-            dest_qs = dest_qs.filter(shop__iexact=shop)
-
-        # Build destination map for fast lookup
-        dest_map = {
-            (p.shop.lower(), p.external_id): p
-            for p in dest_qs.iterator(chunk_size=2000)
-        }
-
-        differences = []
-        count_checked = 0
-
-        for src in src_qs.iterator(chunk_size=2000):
             key = (src.shop.lower(), src.external_id)
             dest = dest_map.get(key)
+
             if not dest:
-                continue  # new product → nothing to compare
-
-            diff = {}
-            for field in fields_to_compare:
-                src_val = getattr(src, field)
-                dest_val = getattr(dest, field)
-                if src_val != dest_val:
-                    diff[field] = (dest_val, src_val)  # old → new
-
-            if diff:
-                differences.append(
-                    {
-                        "shop": src.shop,
-                        "external_id": src.external_id,
-                        "name": src.name,
-                        "diff": diff,
-                    }
+                # New product → bulk_create
+                to_create.append(
+                    Product(
+                        shop=src.shop,
+                        external_id=src.external_id,
+                        canonical_id=src.canonical_id,
+                        name=src.name,
+                        variant=src.variant,
+                        t_name=src.t_name,
+                        t_variant=src.t_variant,
+                        t_category=src.t_category,
+                        price=src.price,
+                        brand=src.brand,
+                        category=src.category,
+                        url=src.url,
+                        image=src.image,
+                        in_stock=src.in_stock,
+                        embedding=src.embedding,
+                        dirty=False,
+                    )
                 )
+                processed_ids.append(src.id)
+                continue
 
-            count_checked += 1
-            if limit and count_checked >= limit:
-                break
+            # Existing product → compare allowed fields
+            changed_fields = [
+                f
+                for f in ALLOWED_FIELDS_TO_WRITE_AND_TRACK
+                if getattr(src, f) != getattr(dest, f)
+            ]
+            if changed_fields:
+                for field in changed_fields:
+                    setattr(dest, field, getattr(src, field))
+                update_fields_union |= set(changed_fields)
+                to_update.append(dest)
+
+            processed_ids.append(src.id)
+
+            # Batch write per BATCH_SIZE
+            if len(to_create) + len(to_update) >= BATCH_SIZE:
+                self._flush_batch(dest_db, to_create, to_update, update_fields_union)
+                to_create.clear()
+                to_update.clear()
+                update_fields_union.clear()
+
+        # Flush remaining items
+        self._flush_batch(dest_db, to_create, to_update, update_fields_union)
+
+        # Reset dirty flag in source DB
+        Product.objects.using(source_db).filter(id__in=processed_ids).update(
+            dirty=False
+        )
 
         db_merge_log(
-            f"[TEST] Checked {count_checked} products. Differences found: {len(differences)}"
+            f"[DIRTY] Merge completed. Created={len(to_create)}, Updated={len(to_update)} "
+            f"in {round(time.time() - start_time, 2)}s"
         )
-        for d in differences:
-            db_merge_log(f"[TEST] [{d['shop']}] {d['name']} ({d['external_id']})")
-            for f, vals in d["diff"].items():
-                db_merge_log(f"  {f}: {vals[0]} → {vals[1]}")
 
-        return differences
+    def _flush_batch(self, dest_db, to_create, to_update, update_fields_union):
+        """Bulk write a batch of products"""
+        if to_create:
+            Product.objects.using(dest_db).bulk_create(to_create, batch_size=BATCH_SIZE)
+        if to_update:
+            Product.objects.using(dest_db).bulk_update(
+                to_update, fields=list(update_fields_union), batch_size=BATCH_SIZE
+            )

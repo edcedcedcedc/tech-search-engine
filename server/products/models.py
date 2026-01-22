@@ -36,12 +36,11 @@ class Product(models.Model):
         null=True,
         blank=True,
     )
-
     name = models.CharField(max_length=255, null=True, blank=True)
     variant = models.CharField(max_length=50, null=True, blank=True)
     embedding = models.TextField(blank=True, null=True)
 
-    price = models.IntegerField()
+    price = models.DecimalField(max_digits=12, decimal_places=2)
     brand = models.CharField(max_length=100)
     category = models.CharField(max_length=100)
     url = models.URLField()
@@ -49,7 +48,6 @@ class Product(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
     shop = models.CharField(max_length=50, default="")
     in_stock = models.BooleanField(default=True)
     t_name = models.JSONField(default=dict, null=True, blank=True)
@@ -68,11 +66,10 @@ class Product(models.Model):
     def archive(self, db=None):
         """
         Archive this product, moving its price history to an ArchivedProduct.
-        `db` can be PROD_DB, ENTER_DB, or any other Django database alias.
         """
         from products.models import ArchivedProduct, ProductPriceHistory
 
-        db = db or "default"  # fallback if not specified
+        db = db or "default"
 
         try:
             with transaction.atomic(using=db):
@@ -82,8 +79,15 @@ class Product(models.Model):
                     canonical_id=self.canonical_id,
                     name=self.name,
                     variant=self.variant,
-                    price=self.price,
+                    embedding=self.embedding,
+                    brand=self.brand,
+                    category=self.category,
+                    t_name=self.t_name,
+                    t_variant=self.t_variant,
+                    t_category=self.t_category,
                     url=self.url,
+                    image=self.image,
+                    price=self.price,
                     in_stock=self.in_stock,
                     shop=self.shop,
                     archived_at=timezone.now(),
@@ -91,7 +95,7 @@ class Product(models.Model):
 
                 ProductPriceHistory.objects.using(db).create(
                     archived_product=archived,
-                    product=None,  # not linked to active product
+                    product=None,
                     shop=self.shop,
                     price=self.price,
                     in_stock=self.in_stock,
@@ -110,27 +114,31 @@ class Product(models.Model):
         Archive a product as broken (price=0) and create initial price history.
         """
         from products.models import ArchivedBrokenProduct, ProductPriceHistory
-        from django.utils import timezone
 
         db = db or "default"
 
         try:
             with transaction.atomic(using=db):
-                # Step 1: create ArchivedBrokenProduct
                 archived_broken = ArchivedBrokenProduct.objects.using(db).create(
                     original_id=self.id,
                     external_id=self.external_id,
                     canonical_id=self.canonical_id or "",
                     name=self.name or "Unknown",
                     variant=self.variant,
+                    embedding=self.embedding,
+                    brand=self.brand,
+                    category=self.category,
+                    t_name=self.t_name,
+                    t_variant=self.t_variant,
+                    t_category=self.t_category,
+                    url=self.url or "",
+                    image=self.image or "",
                     price=0,
                     in_stock=False,
                     shop=self.shop,
                     archived_at=timezone.now(),
-                    url=self.url or "",
                 )
 
-                # Step 2: create initial price history node
                 ProductPriceHistory.objects.using(db).create(
                     archived_product=archived_broken,
                     product=None,
@@ -148,67 +156,24 @@ class Product(models.Model):
             )
             return None
 
-    def restore(self, db=None):
-        """
-        Restore this archived product back to an active Product.
-        Moves its price history back to the Product.
-        `db` can be PROD_DB, ENTER_DB, or any other Django database alias.
-        """
-        from products.models import Product, ProductPriceHistory
-
-        db = db or "default"  # fallback if not specified
-
-        try:
-            with transaction.atomic(using=db):
-                # Create a new active Product based on the archived one
-                restored = Product.objects.using(db).create(
-                    external_id=self.external_id,
-                    canonical_id=self.canonical_id,
-                    name=self.name,
-                    variant=self.variant,
-                    price=self.price,
-                    in_stock=self.in_stock,
-                    shop=self.shop,
-                    created_at=timezone.now(),
-                    updated_at=timezone.now(),
-                )
-
-                # Move price history back to active Product
-                ProductPriceHistory.link_to_product(
-                    ProductPriceHistory.objects.using(db).filter(archived_product=self),
-                    restored,
-                )
-
-                return restored
-        except Exception as e:
-            shop_crawler_log(
-                f"ERROR restoring archived product {self.name} ({self.external_id}) in DB '{db}': {e}"
-            )
-            return None
-
-    BATCH_ARCHIVE_SIZE = 500
-
     @classmethod
     def archive_batch(cls, queryset, db=None):
         """
         Archive a queryset of products in batches, moving their price history
         to ArchivedProduct reliably.
-        Returns a dict with counts: {"archived": X, "failed": Y}
         """
         from products.models import ArchivedProduct, ProductPriceHistory
-        from django.utils import timezone
 
         db = db or "default"
         archived_count = 0
         failed_count = 0
-
         total = queryset.count()
+
         for start in range(0, total, cls.BATCH_ARCHIVE_SIZE):
             batch = list(queryset[start : start + cls.BATCH_ARCHIVE_SIZE])
 
             try:
                 with transaction.atomic(using=db):
-                    # Step 1: Create ArchivedProducts one by one to ensure IDs exist
                     archived_objs = []
                     for p in batch:
                         archived = ArchivedProduct.objects.using(db).create(
@@ -217,6 +182,14 @@ class Product(models.Model):
                             canonical_id=p.canonical_id,
                             name=p.name,
                             variant=p.variant,
+                            embedding=p.embedding,
+                            brand=p.brand,
+                            category=p.category,
+                            t_name=p.t_name,
+                            t_variant=p.t_variant,
+                            t_category=p.t_category,
+                            url=p.url,
+                            image=p.image,
                             price=p.price,
                             in_stock=p.in_stock,
                             shop=p.shop,
@@ -224,7 +197,6 @@ class Product(models.Model):
                         )
                         archived_objs.append((p, archived))
 
-                    # Step 2: Move price history
                     for p, archived in archived_objs:
                         ProductPriceHistory.objects.using(db).filter(product=p).update(
                             product=None, archived_product=archived
@@ -246,18 +218,15 @@ class Product(models.Model):
         """
         Restore ArchivedProducts back to Product in batches.
         Moves price history back to Product.
-        Returns a dict with counts: {"restored": X, "failed": Y}
         """
         from products.models import Product, ProductPriceHistory
-        from django.utils import timezone
 
         db = db or "default"
         restored_count = 0
         failed_count = 0
-
         batch_size = cls.BATCH_ARCHIVE_SIZE
-
         total = archived_queryset.count()
+
         for start in range(0, total, batch_size):
             batch = list(archived_queryset[start : start + batch_size])
 
@@ -270,15 +239,22 @@ class Product(models.Model):
                             canonical_id=a.canonical_id,
                             name=a.name,
                             variant=a.variant,
+                            embedding=a.embedding,
+                            brand=a.brand,
+                            category=a.category,
+                            t_name=a.t_name,
+                            t_variant=a.t_variant,
+                            t_category=a.t_category,
+                            url=a.url,
+                            image=a.image,
                             price=a.price,
-                            shop=a.shop,
                             in_stock=a.in_stock,
+                            shop=a.shop,
                             created_at=timezone.now(),
                             updated_at=timezone.now(),
                         )
                         restored_objs.append((a, product))
 
-                    # Relink price history
                     for archived, product in restored_objs:
                         ProductPriceHistory.objects.using(db).filter(
                             archived_product=archived
@@ -333,11 +309,17 @@ class ArchivedBrokenProduct(models.Model):
     canonical_id = models.CharField(max_length=40, null=True, blank=True)
     name = models.CharField(max_length=255, null=True, blank=True)
     variant = models.CharField(max_length=50, null=True, blank=True)
+    embedding = models.TextField(blank=True, null=True)
+    brand = models.CharField(max_length=100, null=True, blank=True)
+    category = models.CharField(max_length=100, null=True)
+    t_name = models.JSONField(default=dict, null=True, blank=True)
+    t_variant = models.JSONField(default=dict, null=True, blank=True)
+    t_category = models.JSONField(default=dict, null=True, blank=True)
     url = models.URLField(blank=True)
-    price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    image = models.URLField(blank=True)
+    price = models.DecimalField(max_digits=12, decimal_places=2)
     in_stock = models.BooleanField(default=False)
     shop = models.CharField(max_length=50)
-
     archived_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -355,11 +337,17 @@ class ArchivedProduct(models.Model):
     canonical_id = models.CharField(max_length=40, null=True, blank=True)
     name = models.CharField(max_length=255, null=True, blank=True)
     variant = models.CharField(max_length=50, null=True, blank=True)
+    embedding = models.TextField(blank=True, null=True)
+    brand = models.CharField(max_length=100, null=True, blank=True)
+    category = models.CharField(max_length=100, null=True)
+    t_name = models.JSONField(default=dict, null=True, blank=True)
+    t_variant = models.JSONField(default=dict, null=True, blank=True)
+    t_category = models.JSONField(default=dict, null=True, blank=True)
     url = models.URLField(blank=True)
-    price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    image = models.URLField(blank=True)
+    price = models.DecimalField(max_digits=12, decimal_places=2)
     in_stock = models.BooleanField(default=False)
     shop = models.CharField(max_length=50)
-
     archived_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -469,7 +457,7 @@ class ProductAnalytics(models.Model):
     avg_price = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True
     )
-    price_change_count = models.IntegerField(default=0)
+    price_change_count = models.DecimalField(max_digits=12, decimal_places=2)
 
     # Stock metrics
     total_days_in_stock = models.IntegerField(default=0)

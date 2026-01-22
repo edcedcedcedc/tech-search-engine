@@ -11,7 +11,7 @@ DRY_RUN = False
 
 CRAWLER_DBS = []
 
-BROKEN = True
+BROKEN = False
 
 if BROKEN:
     CRAWLER_DBS = ["broken"]
@@ -24,6 +24,8 @@ STAGE_DB = "stage"
 
 PROD_DB = "default"
 # uses broken db if something goes wrong with translation or normalization and then you can manually adjust
+
+MAX_DB_WORKERS_AT_NORMALIZE = 3
 
 
 SHOPS = {

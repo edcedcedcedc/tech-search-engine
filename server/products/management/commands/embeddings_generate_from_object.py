@@ -83,7 +83,7 @@ def prepare_text_for_embedding(product):
         texts.append(" ".join(en_parts))
 
     # Russian
-    ru_parts = []
+    """   ru_parts = []
     if t_name.get("ru"):
         ru_parts.append(t_name["ru"])
     if t_variant.get("ru"):
@@ -93,7 +93,7 @@ def prepare_text_for_embedding(product):
     if product.brand:
         ru_parts.append(product.brand)
     if ru_parts:
-        texts.append(" ".join(ru_parts))
+        texts.append(" ".join(ru_parts)) """
 
     # Combine all language versions for richer embedding
     combined = " ".join(texts)
