@@ -12,6 +12,8 @@ import numpy as np
 from numpy.linalg import norm
 from django.db import transaction
 
+from django.db.models import Q
+
 # Load environment variables
 env = environ.Env()
 environ.Env.read_env()
@@ -22,7 +24,7 @@ def cosine_sim(a, b):
     return np.dot(a, b) / (norm(a) * norm(b))
 
 
-def test_semantics(batch, embeddings, max_tests=2):
+def test_semantics(batch, embeddings, texts, max_tests=2):
     if len(embeddings) < 2:
         return
 
@@ -31,7 +33,7 @@ def test_semantics(batch, embeddings, max_tests=2):
         sim = cosine_sim(np.array(embeddings[idx1]), np.array(embeddings[idx2]))
         generate_embeddings_from_object_log(
             f"Cosine similarity sample: {sim:.3f} "
-            f"({batch[idx1].t_name.get('en', '')[:30]} vs {batch[idx2].t_name.get('en', '')[:30]})"
+            f"({texts[idx1][:50]} vs {texts[idx2][:50]})"
         )
 
 
@@ -149,7 +151,11 @@ class Command(BaseCommand):
             qs = Product.objects.using(db).all()
             total = qs.count()
         else:
-            qs = Product.objects.using(db).filter(dirty=True, change_type="updated")
+            qs = (
+                Product.objects.using(db)
+                .filter(dirty=True)
+                .filter(Q(embedding__isnull=True) | Q(embedding__exact=""))
+            )
             total = qs.count()
         generate_embeddings_from_object_log(
             f"Found {total} products to process | force={force} dirty_only={dirty} batch_size={batch_size} model={model}"

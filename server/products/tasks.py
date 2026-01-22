@@ -3,11 +3,11 @@ import os
 from pathlib import Path
 import random
 import subprocess
+import threading
 import time
 from celery import shared_task
 import environ
-from django.utils import timezone
-from datetime import timedelta
+
 
 from openai import OpenAI
 from products.utils.log.category_log import category_log
@@ -48,54 +48,44 @@ def run_crawler():
             call_command("reset")
         call_command("crawl", pages=PAGES_TO_CRAWL)
         shop_crawler_log("[TASK]Crawler finished successfully")
+        shop_crawler_log("[TASK]Testing Categories")
+        for db in CRAWLER_DBS:
+            call_command("broken", source=db, by_category=True, dry_run=DRY_RUN)
     except Exception as e:
         shop_crawler_log(f"[TASK]Crawler failed: {e}")
-        raise  # let Celery retry if needed
+        raise
 
 
-@shared_task(name="run_normalize_recent_products")
-def run_normalize_recent_products(interval_minutes=None):
-    """
-    Normalize products created in the last `interval_minutes` across all crawler DBs.
-    Loops through each DB, finds 'dirty' + 'created' products, and assigns categories.
-    """
+@shared_task(name="run_normalize")
+def run_normalize(interval_minutes=None, max_db_workers=3):
     env = environ.Env()
     environ.Env.read_env()
     client = OpenAI(api_key=env("OPENAI_API_KEY"))
-    from products.models import Product
 
-    if interval_minutes is None:
-        interval_minutes = 999
+    def normalize_db(db):
+        from products.models import Product
 
-    since = timezone.now() - timedelta(minutes=interval_minutes)
-    total_scheduled = 0
-
-    for db in CRAWLER_DBS:
-        products_qs = Product.objects.using(db).filter(
-            created_at__gte=since,
-            dirty=True,
-            change_type="created",
-        )
-        count = products_qs.count()
-        total_scheduled += count
-        category_log(f"[TASK][{db}] Found {count} new dirty products to normalize")
-
-        for product in products_qs:
+        products_qs = Product.objects.using(db).filter(dirty=True)
+        category_log(f"[DEBUG] DB={db} | {products_qs}")
+        for p in products_qs:
             try:
-                # Call the normalization function synchronously
-                result = normalize_category_for_product(
-                    product.id, db=db, client=client
-                )
-                category_log(f"[TASK][{db}] {product.id} normalized: {result}")
-
-            except Exception as e:
                 category_log(
-                    f"[TASK][{db}] Error normalizing product {product.id}: {e}"
+                    f"[DEBUG] DB={db} | ID={p.id} | Name={p.name} | Variant={p.variant} "
+                    f"| Category={p.category} | t_category={p.t_category}"
                 )
+                result = normalize_category_for_product(p.id, db=db, client=client)
+                category_log(f"[{db}] {p.id} normalized: {result}")
+            except Exception as e:
+                category_log(f"[{db}] Error normalizing {p.id}: {e}")
 
-    return category_log(
-        "[TASK] Total products processed across all DBs: {total_scheduled}"
-    )
+    with ThreadPoolExecutor(max_workers=max_db_workers) as executor:
+        futures = [executor.submit(normalize_db, db) for db in CRAWLER_DBS]
+        for f in as_completed(futures):
+            f.result()  # just wait for all
+
+    category_log("[TASK] Finished normalization for all DBs")
+    call_command("normalize_test")
+    category_log("[TESTING] Finished normalization for all DBs")
 
 
 def run_translation_in_venv_translate(*args, **kwargs):
@@ -124,39 +114,176 @@ def run_translation_in_venv_translate(*args, **kwargs):
     subprocess.run(cmd, check=True, env=env)
 
 
-# =========================
-# Random sleep helper
-# =========================
-def random_sleep(min_seconds: float = 2, max_seconds: float = 5):
-    sleep_time = random.uniform(min_seconds, max_seconds)
-    time.sleep(sleep_time)
-    print(f"Sleeping {sleep_time:.2f}s")
-
-
-# ===============================
-# Celery task
-# ===============================
 @shared_task(name="run_translation")
 def run_translation():
     """
-    Run translation command for all databases with correct flags using venv_translate.
-    Multithreaded and random delay added to avoid rate limits.
+    Run translation for all databases with batch-level parallelism.
+    Each DB runs in parallel, and each batch within DB runs in parallel.
     """
+    BATCH_SIZE = 500
+    MAX_BATCH_WORKERS = 8
 
     def run_db_translation(db):
+        from products.models import Product
+
         translation_log(f"Starting translation for DB: {db}")
-        # Optional random delay before starting each DB
-        random_sleep(1, 3)
-        run_translation_in_venv_translate(db=db, shop_filter=db)
+
+        # Optional random delay per DB to avoid overloading
+        time.sleep(random.uniform(1, 3))
+
+        # Fetch all dirty product IDs once
+        product_ids = list(
+            Product.objects.using(db).filter(dirty=True).values_list("id", flat=True)
+        )
+        if not product_ids:
+            translation_log(f"[{db}] No products to translate")
+            return
+
+        # Split into batches
+        batches = [
+            product_ids[i : i + BATCH_SIZE]
+            for i in range(0, len(product_ids), BATCH_SIZE)
+        ]
+
+        def run_batch(batch, idx):
+            thread_name = f"{db}-batch-{idx}"
+            threading.current_thread().name = thread_name
+            translation_log(
+                f"[{thread_name}] Translating batch {idx}/{len(batches)} IDs {batch[0]}-{batch[-1]}"
+            )
+            # Random sleep per batch
+            time.sleep(random.uniform(2, 5))
+
+            # Call your subprocess translation function
+            run_translation_in_venv_translate(
+                db=db, product_ids=",".join(map(str, batch))
+            )
+
+            translation_log(f"[{thread_name}] Finished batch {idx}")
+
+        # Run batches in parallel per DB
+        with ThreadPoolExecutor(max_workers=MAX_BATCH_WORKERS) as batch_executor:
+            futures = [
+                batch_executor.submit(run_batch, batch, i + 1)
+                for i, batch in enumerate(batches)
+            ]
+            for f in as_completed(futures):
+                try:
+                    f.result()
+                except Exception as e:
+                    translation_log(f"[{db}] Batch failed: {e}")
+        for db in CRAWLER_DBS:
+            call_command("map", db=db)
         translation_log(f"Finished translation for DB: {db}")
 
-    with ThreadPoolExecutor(max_workers=len(CRAWLER_DBS)) as executor:
-        futures = [executor.submit(run_db_translation, db) for db in CRAWLER_DBS]
-        for future in as_completed(futures):
+    # Run all DBs in parallel
+    with ThreadPoolExecutor(max_workers=len(CRAWLER_DBS)) as db_executor:
+        futures = [db_executor.submit(run_db_translation, db) for db in CRAWLER_DBS]
+        for f in as_completed(futures):
             try:
-                future.result()  # raise exception if task failed
+                f.result()
             except Exception as e:
-                translation_log(f"Translation failed: {e}")
+                translation_log(f"DB-level translation failed: {e}")
+
+
+def run_translation_libre_subprocess(**kwargs):
+    """
+    Run translate_libre.py as a subprocess using the dedicated venv.
+    Safe for Celery, avoids DB locks, isolates crashes.
+    """
+
+    # 1. Explicit venv python (Windows-safe)
+    venv_path = Path("venv/Scripts/python.exe")
+
+    if not venv_path.exists():
+        raise RuntimeError(f"Venv python not found at {venv_path}")
+
+    python_path = str(venv_path)
+
+    # 2. Script path
+    script_path = Path(__file__).resolve().parent / "services" / "translate_libre.py"
+
+    # 3. Project root for PYTHONPATH
+    project_root = Path(__file__).resolve().parent.parent  # server/
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(project_root) + os.pathsep + env.get("PYTHONPATH", "")
+
+    # (optional but nice)
+    env["VIRTUAL_ENV"] = str(venv_path.parent.parent)
+
+    # 4. Build command
+    cmd = [python_path, str(script_path)]
+
+    for k, v in kwargs.items():
+        if v is None:
+            continue
+
+        flag = f"--{k.replace('_', '-')}"
+        if isinstance(v, bool):
+            if v:
+                cmd.append(flag)
+        else:
+            cmd.extend([flag, str(v)])
+
+    translation_log("Running command: " + " ".join(cmd))
+    subprocess.run(cmd, check=True, env=env)
+
+
+@shared_task(name="run_translation_libre")
+def run_translation_libre():
+    from products.models import Product
+
+    BATCH_SIZE = 500
+    MAX_SHOP_WORKERS = 3  # parallel shops
+    MAX_BATCH_WORKERS = 12  # parallel batches per shop
+    """ if BROKEN:
+        CRAWLER_DBS = ["broken"] """
+
+    def run_shop(db):
+        translation_log(f"Starting LibreTranslate for DB={db}")
+
+        # Fetch IDs once
+        product_ids = list(
+            Product.objects.using(db)
+            .filter(dirty=True)  # shop__iexact=db you don't need shop db == shop
+            .values_list("id", flat=True)
+        )
+
+        batches = [
+            product_ids[i : i + BATCH_SIZE]
+            for i in range(0, len(product_ids), BATCH_SIZE)
+        ]
+
+        def run_batch(batch, idx):
+
+            thread_name = f"{db}-batch-{idx}"
+            threading.current_thread().name = thread_name
+            translation_log(
+                f"[{thread_name}] DB={db} batch {idx}/{len(batches)} "
+                f"IDs {batch[0]}-{batch[-1]}"
+            )
+            time.sleep(random.uniform(0.5, 1.5))
+            run_translation_libre_subprocess(
+                db=db,
+                product_ids=",".join(map(str, batch)),
+            )
+
+        # Run batches in parallel per shop
+        with ThreadPoolExecutor(max_workers=MAX_BATCH_WORKERS) as batch_executor:
+            futures = [
+                batch_executor.submit(run_batch, batch, i + 1)
+                for i, batch in enumerate(batches)
+            ]
+            for f in as_completed(futures):
+                f.result()
+
+        translation_log(f"Finished LibreTranslate for DB={db}")
+
+    # Run shops in parallel
+    with ThreadPoolExecutor(max_workers=MAX_SHOP_WORKERS) as shop_executor:
+        futures = [shop_executor.submit(run_shop, db) for db in CRAWLER_DBS]
+        for f in as_completed(futures):
+            f.result()
 
 
 @shared_task(
@@ -425,7 +552,6 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=DRY_RUN, batch_siz
         raise
 
 
-# Add pipeline function here too
 @shared_task(name="run_full_pipeline")
 def run_full_pipeline():
     """
@@ -444,7 +570,7 @@ def run_full_pipeline():
 
     workflow = chain(
         run_crawler.s(),
-        run_normalize_recent_products.si(interval_minutes=999),
+        run_normalize.si(interval_minutes=999),
         run_translation.si(),
         run_embeddings.si(),
         run_merge_pipeline_to_stage.si(),

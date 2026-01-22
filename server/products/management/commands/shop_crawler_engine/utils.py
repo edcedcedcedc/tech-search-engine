@@ -9,7 +9,6 @@ from products.models import (
     ProductPriceHistory,
 )
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
-
 from products.management.commands.shop_crawler_engine.config import PROD_DB, STAGE_DB
 
 
@@ -30,7 +29,7 @@ class ChangeTracker:
                 db_value = getattr(db_product, field, None)
                 fetched_value = fetched_data[field]
 
-                # Special handling for different data types
+                # Special handling for boolean values
                 if isinstance(db_value, bool) or isinstance(fetched_value, bool):
                     if bool(db_value) != bool(fetched_value):
                         changed_fields.append(field)
@@ -63,35 +62,23 @@ class ChangeTracker:
                 )
 
 
+from django.utils import timezone
+import threading
+from products.models import (
+    ArchivedBrokenProduct,
+    ArchivedProduct,
+    Product,
+    ProductPriceHistory,
+)
+from products.utils.log.shop_crawler_engine_log import shop_crawler_log
+from products.management.commands.shop_crawler_engine.config import PROD_DB
+
+
 class DatabaseManager:
-    """Handle database operations for products"""
-
-    _oos_counter = {}
-    _oos_counter_lock = threading.Lock()
-    MAX_OOS_PER_CATEGORY = 20
-
-    @staticmethod
-    def reset_oos_counters(categories=None):
-        """
-        Reset OOS counters at the start of a crawl session.
-        If categories list is provided, reset only those categories.
-        Otherwise, reset all counters.
-        """
-        with DatabaseManager._oos_counter_lock:
-            if categories:
-                for cat in categories:
-                    DatabaseManager._oos_counter[cat] = 0
-            else:
-                DatabaseManager._oos_counter = {}
+    """Handles database operations for products in a linear DAG style using ChangeTracker"""
 
     @staticmethod
     def save_or_update_product(fetched_item, fields_to_track=None):
-        """
-        Save or update product in database, tracking changes.
-
-        Returns:
-            Tuple: (product_instance, created_bool, change_info_dict)
-        """
         shop = fetched_item.get("shop")
         external_id = fetched_item.get("external_id")
         category = fetched_item.get("category", "unknown")
@@ -99,11 +86,12 @@ class DatabaseManager:
 
         if not shop or not external_id or in_stock is None:
             shop_crawler_log(
-                f"ERROR: Missing shop{shop} or external_id{external_id} or in_stock is {in_stock} {fetched_item}"
+                f"ERROR: Missing shop {shop} or external_id {external_id} or in_stock={in_stock} {fetched_item}"
             )
             return None, False, {}
 
         try:
+            # Fetch DB entries
             archived_broken_item = (
                 ArchivedBrokenProduct.objects.using(PROD_DB)
                 .filter(shop=shop, external_id=external_id)
@@ -114,177 +102,109 @@ class DatabaseManager:
                 .filter(shop=shop, external_id=external_id)
                 .first()
             )
-            default_item = (
+            active_item = (
                 Product.objects.using(PROD_DB)
                 .filter(shop=shop, external_id=external_id)
                 .first()
             )
 
-            # --------------------------------------------------
-            # SPECIAL CASE: Price 0 → Archive as broken immediately
-            # --------------------------------------------------
-            if fetched_item.get("price") == 0:
-                try:
-                    archived_broken = (
-                        ArchivedBrokenProduct.objects.using(PROD_DB)
-                        .filter(shop=shop, external_id=external_id)
-                        .first()
-                    )
-
-                    if not archived_broken:
-                        # Try to find existing product for original_id
-                        existing_product = (
-                            Product.objects.using(PROD_DB)
-                            .filter(shop=shop, external_id=external_id)
-                            .first()
-                        )
-
-                        ArchivedBrokenProduct.objects.using(PROD_DB).create(
-                            shop=shop,
-                            external_id=external_id,
-                            canonical_id="",
+            # -----------------------------
+            # Price=0 → archive broken, create price history node
+            # -----------------------------
+            if fetched_item.get("price", 0) == 0:
+                # check if already archived anywhere
+                if not archived_broken_item and not archived_item:
+                    if active_item:
+                        archived = active_item.archive_broken()
+                        name = active_item.name
+                        ext_id = active_item.external_id
+                    else:
+                        # create a temp product to archive
+                        temp_product = Product(
                             name=fetched_item.get("name", "Unknown"),
                             variant=fetched_item.get("variant"),
-                            price=fetched_item.get("price"),
-                            in_stock=fetched_item.get("in_stock", True),
-                            archived_at=timezone.now(),
-                            # Get original_id from existing product if it exists
-                            original_id=(
-                                existing_product.id if existing_product else None
-                            ),
+                            price=0,
+                            external_id=fetched_item["external_id"],
+                            shop=fetched_item.get("shop"),
+                            in_stock=False,
+                            dirty=False,
                         )
-                        shop_crawler_log(
-                            f"ARCHIVED-BROKEN product {fetched_item.get('name', 'Unknown')} "
-                            f"({external_id}) due to price=0"
-                        )
+                        archived = temp_product.archive_broken()
+                        name = temp_product.name
+                        ext_id = temp_product.external_id
 
-                    return None, False, {}
-                except Exception as e:
                     shop_crawler_log(
-                        f"ERROR archiving broken product {fetched_item.get('name', 'Unknown')} "
-                        f"({external_id}): {e}"
+                        f"ARCHIVED-BROKEN product {name} ({ext_id}) due to price=0"
                     )
-                    return None, False, {}
-
-            # --------------------------------------------------
-            # Handle Out-of-Stock threshold only for NEW items
-            # --------------------------------------------------
-            if not in_stock and not (
-                default_item or archived_item or archived_broken_item
-            ):
-                with DatabaseManager._oos_counter_lock:
-                    if category not in DatabaseManager._oos_counter:
-                        DatabaseManager._oos_counter[category] = 0
-
-                    if (
-                        DatabaseManager._oos_counter[category]
-                        >= DatabaseManager.MAX_OOS_PER_CATEGORY
-                    ):
-                        # Archive immediately - CREATE DIRECTLY instead of calling archive()
-                        try:
-                            # Create ArchivedProduct directly instead of calling temp_product.archive()
-                            ArchivedProduct.objects.using(PROD_DB).create(
-                                shop=shop,
-                                external_id=external_id,
-                                canonical_id="",
-                                name=fetched_item.get("name", "Unknown"),
-                                variant=fetched_item.get("variant"),
-                                price=fetched_item.get("price"),
-                                in_stock=False,
-                                archived_at=timezone.now(),
-                                original_id=None,  # It's a new product, no original
-                            )
-                            shop_crawler_log(
-                                f"ARCHIVED-OOS product {fetched_item.get('name', 'Unknown')} "
-                                f"({external_id}) in category '{category}'"
-                            )
-                            return None, False, {}
-                        except Exception as e:
-                            shop_crawler_log(
-                                f"ERROR archiving OOS product {fetched_item.get('name', 'Unknown')} "
-                                f"({external_id}): {e}"
-                            )
-                            return None, False, {}
-                    else:
-                        DatabaseManager._oos_counter[category] += 1
-
-            # --------------------------------------------------
-            # EXCEPTION FROM COMMON PIPELINE
-            # --------------------------------------------------
-            # In save_or_update_product, fix the archived_item section:
-            if archived_item:
-                change_info = ChangeTracker.get_changed_fields(
-                    archived_item, fetched_item, fields_to_track
-                )
-                if change_info["has_changes"]:
-                    ChangeTracker.log_changes(
-                        fetched_item.get("name", "Unknown"),
-                        external_id,
-                        shop,
-                        change_info,
-                    )
-
-                    fetched_item.update(
-                        dirty=True,
-                        change_type="restored",  # NEW: "restored" not "updated"
-                        changed_fields=change_info["changed_fields"],
-                    )
-
-                    # Create Product (restored)
-                    stage_product = Product.objects.using(shop).create(**fetched_item)
-
-                    # UPDATE ArchivedProduct (don't delete!)
-                    archived_item.price = fetched_item.get("price")
-                    archived_item.in_stock = fetched_item.get("in_stock", True)
-                    archived_item.save()
-
-                    # Move history BACK to Product
-                    ProductPriceHistory.objects.filter(
-                        archived_product=archived_item
-                    ).update(archived_product=None, product=stage_product)
-
-                    return stage_product, False, change_info
-
-            if archived_broken_item:
-                change_info = ChangeTracker.get_changed_fields(
-                    archived_broken_item, fetched_item, fields_to_track
-                )
-
-                # Only restore if NOT broken anymore (price > 0)
-                if change_info["has_changes"] and fetched_item.get("price", 0) > 0:
-                    ChangeTracker.log_changes(
-                        fetched_item.get("name", "Unknown"),
-                        external_id,
-                        shop,
-                        change_info,
-                    )
-
-                    fetched_item.update(
-                        dirty=True,
-                        change_type="restored_from_broken",  # DIFFERENT
-                        changed_fields=change_info["changed_fields"],
-                    )
-
-                    stage_product = Product.objects.using(shop).create(**fetched_item)
-
-                    # UPDATE ArchivedBrokenProduct
-                    archived_broken_item.price = fetched_item.get("price")
-                    archived_broken_item.in_stock = fetched_item.get("in_stock", True)
-                    archived_broken_item.save()
-
-                    return stage_product, False, change_info
-
-                # If still broken, keep archived
                 return None, False, {}
 
-            # --------------------------------------------------
-            # EXISTING PRODUCT
-            # --------------------------------------------------
-            elif default_item:
-                change_info = ChangeTracker.get_changed_fields(
-                    default_item, fetched_item, fields_to_track
+            # -----------------------------
+            # in_stock false -> archived, create price history node
+            # -----------------------------
+            if not in_stock and not (
+                active_item or archived_item or archived_broken_item
+            ):
+                temp_product = Product(
+                    shop=shop,
+                    external_id=external_id,
+                    canonical_id="",
+                    name=fetched_item.get("name", "Unknown"),
+                    variant=fetched_item.get("variant"),
+                    price=fetched_item.get("price"),
+                    url=fetched_item.get("url", ""),
+                    in_stock=False,
+                    dirty=False,
                 )
+                archived = temp_product.archive()
+                shop_crawler_log(
+                    f"ARCHIVED-OOS product {fetched_item.get('name', 'Unknown')} ({external_id}) category='{category}'"
+                )
+                return archived, False, {}
 
+            # -----------------------------
+            # Restore from archive or broken
+            # -----------------------------
+            for db_item, reason in [
+                (archived_item, "archive"),
+                (archived_broken_item, "broken"),
+            ]:
+                if db_item and (
+                    reason == "broken"
+                    and fetched_item.get("price", 0) > 0
+                    or reason == "archive"
+                ):
+                    change_info = ChangeTracker.get_changed_fields(
+                        db_item, fetched_item, fields_to_track
+                    )
+                    if change_info["has_changes"]:
+                        ChangeTracker.log_changes(
+                            fetched_item.get("name", "Unknown"),
+                            external_id,
+                            shop,
+                            change_info,
+                        )
+                        fetched_item["dirty"] = True
+                        restored = Product.objects.using(shop).create(**fetched_item)
+
+                        ProductPriceHistory.link_to_product(
+                            ProductPriceHistory.objects.using(shop).filter(
+                                archived_product=db_item
+                            ),
+                            restored,
+                        )
+                        shop_crawler_log(
+                            f"RESTORED product {external_id} from {reason}"
+                        )
+                        return restored, False, change_info
+                    return None, False, {}
+
+            # -----------------------------
+            # Update active product
+            # -----------------------------
+            if active_item:
+                change_info = ChangeTracker.get_changed_fields(
+                    active_item, fetched_item, fields_to_track
+                )
                 if change_info["has_changes"]:
                     ChangeTracker.log_changes(
                         fetched_item.get("name", "Unknown"),
@@ -292,42 +212,27 @@ class DatabaseManager:
                         shop,
                         change_info,
                     )
-
                     fetched_item.update(
                         dirty=True,
                         change_type="updated",
                         changed_fields=change_info["changed_fields"],
                     )
-                    stage_product = Product.objects.using(shop).create(**fetched_item)
-
-                    return stage_product, False, change_info
-
+                    updated_product = Product.objects.using(shop).create(**fetched_item)
+                    return updated_product, False, change_info
                 return None, False, {}
 
-            else:
-                # --------------------------------------------------
-                # NEW PRODUCT
-                # --------------------------------------------------
-                fetched_item.update(
-                    dirty=True, change_type="created", changed_fields=None
-                )
-                stage_product = Product.objects.using(shop).create(**fetched_item)
-
-                shop_crawler_log(
-                    f"TO BE CREATED {stage_product.name} ({stage_product.external_id})"
-                )
-                return stage_product, True, {}
+            # -----------------------------
+            # Create new product
+            # -----------------------------
+            fetched_item["dirty"] = True
+            new_product = Product.objects.using(shop).create(**fetched_item)
+            shop_crawler_log(
+                f"CREATED new product {new_product.name} ({new_product.external_id})"
+            )
+            return new_product, True, {}
 
         except Exception as e:
             shop_crawler_log(
                 f"ERROR saving/updating {fetched_item.get('name', 'Unknown')} ({fetched_item.get('external_id')}): {e}"
             )
             return None, False, {}
-
-
-def random_sleep(min_seconds: float = 2, max_seconds: float = 5):
-    """
-    Sleeps a random duration and logs it to the same aggregation log file.
-    """
-    sleep_time = random.uniform(min_seconds, max_seconds)
-    time.sleep(sleep_time)

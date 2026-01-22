@@ -129,7 +129,11 @@ class Crawler:
                     "external_id": self.safe_re_search(r'"item_id":"(.*?)"', decoded),
                     "name": self.safe_re_search(r'"item_name":"(.*?)"', decoded),
                     "variant": self.safe_re_search(r'"item_variant":"(.*?)"', decoded),
-                    "t_name": {"ro": "", "en": "", "ru": ""},
+                    "t_name": {
+                        "ro": self.safe_re_search(r'"item_name":"(.*?)"', decoded),
+                        "en": "",
+                        "ru": "",
+                    },
                     "t_variant": {"ro": "", "en": "", "ru": ""},
                     "price": int(
                         self.safe_re_search(r'"price":(\d+)', decoded, default="0")
