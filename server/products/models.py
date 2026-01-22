@@ -30,7 +30,13 @@ Clear distinction between Product (current) and ArchivedProduct (past/out-of-sto
 
 class Product(models.Model):
     external_id = models.CharField(max_length=50)
-    canonical_id = models.CharField(
+    similar_id = models.CharField(
+        max_length=40,
+        db_index=True,
+        null=True,
+        blank=True,
+    )
+    identical_id = models.CharField(
         max_length=40,
         db_index=True,
         null=True,
@@ -76,7 +82,8 @@ class Product(models.Model):
                 archived = ArchivedProduct.objects.using(db).create(
                     original_id=self.id,
                     external_id=self.external_id,
-                    canonical_id=self.canonical_id,
+                    similar_id=self.similar_id or "",
+                    identical_id=self.identical_id or "",
                     name=self.name,
                     variant=self.variant,
                     embedding=self.embedding,
@@ -122,7 +129,8 @@ class Product(models.Model):
                 archived_broken = ArchivedBrokenProduct.objects.using(db).create(
                     original_id=self.id,
                     external_id=self.external_id,
-                    canonical_id=self.canonical_id or "",
+                    similar_id=self.similar_id or "",
+                    identical_id=self.identical_id or "",
                     name=self.name or "Unknown",
                     variant=self.variant,
                     embedding=self.embedding,
@@ -179,7 +187,8 @@ class Product(models.Model):
                         archived = ArchivedProduct.objects.using(db).create(
                             original_id=p.id,
                             external_id=p.external_id,
-                            canonical_id=p.canonical_id,
+                            similar_id=p.similar_id or "",
+                            identical_id=p.identical_id or "",
                             name=p.name,
                             variant=p.variant,
                             embedding=p.embedding,
@@ -236,7 +245,8 @@ class Product(models.Model):
                     for a in batch:
                         product = Product.objects.using(db).create(
                             external_id=a.external_id,
-                            canonical_id=a.canonical_id,
+                            similar_id=a.similar_id or "",
+                            identical_id=a.identical_id or "",
                             name=a.name,
                             variant=a.variant,
                             embedding=a.embedding,
@@ -306,7 +316,8 @@ class AutocompleteToken(models.Model):
 class ArchivedBrokenProduct(models.Model):
     original_id = models.IntegerField(db_index=True, null=True)
     external_id = models.CharField(max_length=50)
-    canonical_id = models.CharField(max_length=40, null=True, blank=True)
+    similar_id = models.CharField(max_length=40, null=True, blank=True)
+    identical_id = models.CharField(max_length=40, null=True, blank=True)
     name = models.CharField(max_length=255, null=True, blank=True)
     variant = models.CharField(max_length=50, null=True, blank=True)
     embedding = models.TextField(blank=True, null=True)
@@ -326,7 +337,7 @@ class ArchivedBrokenProduct(models.Model):
         unique_together = ("shop", "external_id")
         indexes = [
             models.Index(fields=["external_id"]),
-            models.Index(fields=["canonical_id"]),
+            models.Index(fields=["similar_id"]),
             models.Index(fields=["shop"]),
         ]
 
@@ -334,7 +345,8 @@ class ArchivedBrokenProduct(models.Model):
 class ArchivedProduct(models.Model):
     original_id = models.IntegerField(db_index=True, null=True)
     external_id = models.CharField(max_length=50)
-    canonical_id = models.CharField(max_length=40, null=True, blank=True)
+    similar_id = models.CharField(max_length=40, null=True, blank=True)
+    identical_id = models.CharField(max_length=40, null=True, blank=True)
     name = models.CharField(max_length=255, null=True, blank=True)
     variant = models.CharField(max_length=50, null=True, blank=True)
     embedding = models.TextField(blank=True, null=True)
@@ -354,7 +366,7 @@ class ArchivedProduct(models.Model):
         unique_together = ("shop", "external_id")
         indexes = [
             models.Index(fields=["external_id"]),
-            models.Index(fields=["canonical_id"]),
+            models.Index(fields=["similar_id"]),
             models.Index(fields=["shop"]),
         ]
 

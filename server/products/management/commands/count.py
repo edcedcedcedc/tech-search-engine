@@ -10,7 +10,7 @@ from products.models import (
 class Command(BaseCommand):
     help = "Count all objects across crawler databases and default archived tables."
 
-    CRAWLER_DBS = ["xstore", "enter", "darwin", "stage", "default"]
+    CRAWLER_DBS = ["xstore", "enter", "darwin", "stage", "default", "broken"]
 
     def handle(self, *args, **options):
         self.stdout.write("Counting all objects across databases...\n")
