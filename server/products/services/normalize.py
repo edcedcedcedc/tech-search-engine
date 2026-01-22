@@ -56,7 +56,6 @@ def normalize_category_for_product(
                         "content": (
                             "You are a product categorization assistant. "
                             "Choose best category and return JSON ro/en/ru."
-                            "If no suitable match exists, propose a new category in the same format. "
                             f"{categories}"
                         ),
                     },
