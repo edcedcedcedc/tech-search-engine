@@ -9,7 +9,7 @@ class CrawlSettings:
     spawn_delay: Tuple[float, float] = (0.3, 1.0)
 
     # batching
-    batch_size: int = 100
+    batch_size: int = 500
     pause_between_batches: Tuple[int, int] = (1, 3)
 
     # request pacing (used by RateLimiter)
