@@ -1,32 +1,41 @@
-States: 
-- Product (active)
-- ArchivedProduct (out of stock/archived)  
-- ArchivedBrokenProduct (price=0/broken)
+States
 
-Transitions:
-1. Product → ArchivedProduct (archive)
-2. ArchivedProduct → Product (restore)
-3. Product → ArchivedBrokenProduct (price becomes 0)
-4. ArchivedBrokenProduct → Product (price > 0 again)
-5. NEW → ArchivedProduct (OOS threshold)
-6. NEW → ArchivedBrokenProduct (price=0)
+Product → Active product in stock.
+ArchivedProduct → Out-of-stock or manually archived product.
+ArchivedBrokenProduct → Broken product (price = 0).
+
+Transitions
+
+Product → ArchivedProduct → Product goes out-of-stock or is manually archived.
+ArchivedProduct → Product → Restore a previously archived product.
+Product → ArchivedBrokenProduct → Product price becomes 0 (broken).
+ArchivedBrokenProduct → Product → Product is fixed (price > 0).
+NEW → ArchivedProduct → New product that is out-of-stock but exceeds OOS threshold.
+NEW → ArchivedBrokenProduct → New product with price = 0.
 
 
-Pipeline Flow:
-1. Crawlers fetch products → save to crawler DBs
-2. Merge to Stage → Stage has latest data  
-3. Merge Stage → Prod (archives missing products)
-4. Run history command → Creates history for:
-   - All ACTIVE products in Prod
-   - All ARCHIVED products (just archived in step 3!)
-   
-Result: Complete price timeline for ALL products!
+Price History DAG
 
-Visual Timeline
-Time  Product State        History
-----  ------------        -------
-T1    Broken (price=0)    ArchivedBrokenProduct created
-T2    Fixed (price>100)   [Pipeline creates history in Prod]
-T3    Out of stock        Archived via archive() - history moves
-T4    Back in stock       Restored - history moves back
-T5    Price change        New history entry created
+1. Nodes
+   Each `ProductPriceHistory` entry is a **node** representing the state of a product at a specific time (price, stock, etc.).
+   A node points to either a `Product` (active) or an `ArchivedProduct` (out-of-stock/historical).
+
+2. Edges / Links
+   Moving a product **to archive** relinks its history nodes from `Product` → `ArchivedProduct`.
+   Restoring a product relinks nodes back from `ArchivedProduct` → `Product`.
+   These links **preserve historical snapshots** without creating duplicate states.
+
+3. Linear DAG property
+   Each state change creates a **new node at the end of the pipeline**, maintaining a **timeline of changes**.
+   No loops: nodes always point backward to their product/archived snapshot.
+
+4. Why this matters
+   Keeps history **clean and linear**.
+   Allows tracking of price/stock changes over time.
+   Archives represent the last known state before a product was inactive.
+
+
+Think of it like a timeline:** each node is a snapshot, active products are the current branch, 
+and archived products are the “frozen branch” of past states.
+
+

@@ -1,0 +1,12 @@
+services:
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    container_name: libretranslate
+    ports:
+      - "5000:5000"
+    environment:
+      LT_DEFAULT_SOURCE_LANG: ro
+      LT_DEFAULT_TARGET_LANG: en
+      LT_CACHE_ENABLED: "false"
+    command: ["--load-only", "ro,en,ru"]
+    restart: always
