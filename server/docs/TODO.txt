@@ -1,6 +1,7 @@
 update generate canonical ids 
 create generate identital ids 90 80 
 refactor tasks.py(its a mess)
+refactor logs 
 
 
 

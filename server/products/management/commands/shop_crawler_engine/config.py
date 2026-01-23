@@ -56,7 +56,7 @@ def run_full_pipeline():
         6. Generate canonical IDs in Stage
         7. Merge Stage into Prod (finalize)
     """
-    from tasks import (
+    from products.tasks import (
         run_crawler,
         run_normalize,
         run_translation,

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.utils import timezone
 from products.models import (
     ArchivedBrokenProduct,
@@ -65,7 +66,7 @@ class DatabaseManager:
     def save_or_update_product(fetched_item, fields_to_track=None):
         shop = fetched_item.get("shop")
         external_id = fetched_item.get("external_id")
-        price = fetched_item.get("price", 0)
+        fetched_item["price"] = Decimal(fetched_item.get("price", 0))
         in_stock = fetched_item.get("in_stock", True)
 
         if not shop or not external_id:
@@ -76,7 +77,7 @@ class DatabaseManager:
             ctx = DatabaseManager._load_context(shop, external_id)
 
             # 1price = 0 → broken
-            if price == 0:
+            if fetched_item["price"] == 0:
                 return DatabaseManager._handle_broken(ctx, fetched_item)
 
             # restore from archive / broken
@@ -138,7 +139,7 @@ class DatabaseManager:
                 f"ARCHIVED-BROKEN {archived.name} ({archived.external_id})"
             )
         else:
-            temp = Product(**fetched_item, in_stock=False, dirty=False)
+            temp = Product(**fetched_item, dirty=False)
             temp.archive_broken()
 
         return None, False, {}
@@ -199,7 +200,7 @@ class DatabaseManager:
 
     @staticmethod
     def _archive_oos(fetched_item):
-        temp = Product(**fetched_item, in_stock=False, dirty=False)
+        temp = Product(**fetched_item, dirty=False)
         archived = temp.archive()
         shop_crawler_log(f"ARCHIVED-OOS {archived.name} ({archived.external_id})")
         return archived, False, {}

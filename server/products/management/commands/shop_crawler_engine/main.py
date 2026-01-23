@@ -5,10 +5,9 @@ from products.management.commands.shop_crawler_engine.utils import (
     DatabaseManager,
 )
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
-from products.management.commands.shop_crawler_engine.utils import random_sleep
 import traceback
 from threading import Thread
-from queue import Queue
+from queue import Queue, Empty
 from settings import CrawlSettings
 from products.management.commands.shop_crawler_engine.config import (
     ALLOWED_FIELDS_TO_WRITE_AND_TRACK,
@@ -190,5 +189,36 @@ class Command(BaseCommand):
                 self.process_batch(batch, shop, category, batch_idx, track_fields)
                 batch_queue.task_done()
                 batch_number += 1
-            except batch_queue.Empty:
+            except Empty:
                 continue
+
+    def shop_worker(
+        self, shop_name, category_name, fetch_fn, category_url, max_pages, batch_queue
+    ):
+        """Worker thread for crawling a specific shop/category"""
+        shop_crawler_log(f"[WORKER] START shop={shop_name} category={category_name}")
+
+        try:
+            batch = []
+            for page_num, item in enumerate(
+                fetch_fn(category_url, max_pages=max_pages), start=1
+            ):
+                batch.append(item)
+
+                # Process batch if it reaches BATCH_SIZE
+                if len(batch) >= self.BATCH_SIZE:
+                    batch_queue.put((batch, shop_name, category_name, page_num))
+                    batch = []
+
+            # Push remaining items in last batch
+            if batch:
+                batch_queue.put((batch, shop_name, category_name, page_num))
+
+            shop_crawler_log(
+                f"[WORKER] FINISHED shop={shop_name} category={category_name}"
+            )
+
+        except Exception as e:
+            shop_crawler_log(
+                f"[WORKER] ERROR shop={shop_name} category={category_name}: {e}"
+            )
