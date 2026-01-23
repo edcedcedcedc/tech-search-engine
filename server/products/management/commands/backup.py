@@ -38,7 +38,7 @@ class Command(BaseCommand):
             help="Path to backup file to restore into target database",
         )
         parser.add_argument(
-            "--target-db",
+            "--db",
             type=str,
             default="default",
             help="Database alias to restore into (default='default')",
@@ -46,7 +46,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         backup_path = options.get("restore")
-        target_db = options.get("target_db", "default")
+        target_db = options.get("db", "default")
 
         db_settings = settings.DATABASES.get(target_db)
         if not db_settings:
