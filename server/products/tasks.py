@@ -164,8 +164,6 @@ def run_translation():
                     f.result()
                 except Exception as e:
                     translation_log(f"[{db}] Batch failed: {e}")
-        for db in CRAWLER_DBS:
-            call_command("map", db=db)
         translation_log(f"Finished translation for DB: {db}")
 
     # Run all DBs in parallel
