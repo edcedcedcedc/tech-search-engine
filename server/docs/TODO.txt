@@ -1,8 +1,11 @@
-update generate canonical ids 
-create generate identital ids 90 80 
+
 refactor tasks.py(its a mess)
+
 refactor logs 
+
 write interleaved shopping in crawler
 
+you didn't get me, this is like so, we compare PRO_DB across all shops we compare 
+all DBS=SHOPS of the crawler and if the sum of newly crawled out of stock + prod_db shop out of stock is greater then 100 we need to 
 
 
