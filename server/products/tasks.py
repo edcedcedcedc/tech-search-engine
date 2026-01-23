@@ -503,7 +503,9 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=DRY_RUN, batch_siz
             db_merge_to_default_log("[TASK] Stage -> Prod merge finished successfully")
 
             # Step 2.5: Price History Prod
-            call_command("price_history", db=PROD_DB, include_archived=True)
+            call_command(
+                "price_history", db=PROD_DB, include_archived=True, include_broken=True
+            )
             db_merge_to_default_log(
                 "[TASK] Complete price history created for all products"
             )

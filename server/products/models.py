@@ -100,15 +100,6 @@ class Product(models.Model):
                     archived_at=timezone.now(),
                 )
 
-                ProductPriceHistory.objects.using(db).create(
-                    archived_product=archived,
-                    product=None,
-                    shop=self.shop,
-                    price=self.price,
-                    in_stock=self.in_stock,
-                    recorded_at=timezone.now(),
-                )
-
                 return archived
         except Exception as e:
             shop_crawler_log(
@@ -145,15 +136,6 @@ class Product(models.Model):
                     in_stock=False,
                     shop=self.shop,
                     archived_at=timezone.now(),
-                )
-
-                ProductPriceHistory.objects.using(db).create(
-                    archived_product=archived_broken,
-                    product=None,
-                    shop=self.shop,
-                    price=0,
-                    in_stock=False,
-                    recorded_at=timezone.now(),
                 )
 
                 return archived_broken

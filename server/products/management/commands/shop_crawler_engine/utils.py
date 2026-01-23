@@ -3,7 +3,6 @@ from products.models import (
     ArchivedBrokenProduct,
     ArchivedProduct,
     Product,
-    ProductPriceHistory,
 )
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
 from products.management.commands.shop_crawler_engine.config import PROD_DB, STAGE_DB
@@ -166,11 +165,6 @@ class DatabaseManager:
             fetched_item["dirty"] = True
             restored = Product.objects.using(fetched_item["shop"]).create(
                 **fetched_item
-            )
-
-            ProductPriceHistory.link_to_product(
-                ProductPriceHistory.objects.filter(archived_product=source),
-                restored,
             )
 
             shop_crawler_log(
