@@ -1,4 +1,5 @@
 from .crawler import Crawler
+from celery import chain, shared_task
 
 shop_crawler = Crawler()
 
@@ -26,6 +27,74 @@ PROD_DB = "default"
 # uses broken db if something goes wrong with translation or normalization and then you can manually adjust
 
 MAX_DB_WORKERS_AT_NORMALIZE = 3
+
+# --- Configurable switches ---
+PIPELINE_STEPS_ENABLED = {
+    "crawler": True,
+    "normalize": True,
+    "translation": True,
+    "embeddings": False,
+    "merge_to_stage": False,
+    "canonical_ids_stage": False,
+    "merge_to_prod": False,
+}
+
+DRY_RUN = False
+
+
+@shared_task(name="run_full_pipeline")
+def run_full_pipeline():
+    """
+    Full shop crawler + processing pipeline with configurable steps.
+
+    Steps (configurable via PIPELINE_STEPS_ENABLED):
+        1. Run crawler
+        2. Normalize recent products
+        3. Run translation
+        4. Generate embeddings
+        5. Merge all crawler DBs into Stage
+        6. Generate canonical IDs in Stage
+        7. Merge Stage into Prod (finalize)
+    """
+    from tasks import (
+        run_crawler,
+        run_normalize,
+        run_translation,
+        run_embeddings,
+        run_merge_pipeline_to_stage,
+        run_canonical_ids_stage,
+        run_merge_pipeline_to_default,
+    )
+
+    workflow_steps = []
+
+    if PIPELINE_STEPS_ENABLED.get("crawler"):
+        workflow_steps.append(run_crawler.s())
+
+    if PIPELINE_STEPS_ENABLED.get("normalize"):
+        workflow_steps.append(run_normalize.si(interval_minutes=9999999))
+
+    if PIPELINE_STEPS_ENABLED.get("translation"):
+        workflow_steps.append(run_translation.si())
+
+    if PIPELINE_STEPS_ENABLED.get("embeddings"):
+        workflow_steps.append(run_embeddings.si())
+
+    if PIPELINE_STEPS_ENABLED.get("merge_to_stage"):
+        workflow_steps.append(run_merge_pipeline_to_stage.si())
+
+    if PIPELINE_STEPS_ENABLED.get("canonical_ids_stage"):
+        workflow_steps.append(run_canonical_ids_stage.si(batch_size=1000))
+
+    if PIPELINE_STEPS_ENABLED.get("merge_to_prod"):
+        workflow_steps.append(run_merge_pipeline_to_default.si(dry_run=DRY_RUN))
+
+    if not workflow_steps:
+        return "No pipeline steps enabled. Nothing queued."
+
+    workflow = chain(*workflow_steps)
+    result = workflow.apply()
+    return f"Full pipeline queued with ID: {result.id}"
 
 
 SHOPS = {

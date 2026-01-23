@@ -7,8 +7,6 @@ import threading
 import time
 from celery import shared_task
 import environ
-
-
 from openai import OpenAI
 from products.utils.log.category_log import category_log
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
@@ -548,36 +546,6 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=DRY_RUN, batch_siz
     except Exception as e:
         db_merge_to_default_log(f"[TASK] Finalize pipeline merge failed: {e}")
         raise
-
-
-@shared_task(name="run_full_pipeline")
-def run_full_pipeline():
-    """
-    Full shop crawler + processing pipeline.
-
-    Steps:
-        1 Run crawler
-        2 Normalize recent products
-        3 Run translation
-        4 Generate embeddings
-        5 Merge all crawler DBs into Stage
-        6 Generate canonical IDs in Stage
-        7 Merge Stage into Prod (finalize)
-    """
-    from celery import chain
-
-    workflow = chain(
-        run_crawler.s(),
-        run_normalize.si(interval_minutes=999),
-        run_translation.si(),
-        run_embeddings.si(),
-        run_merge_pipeline_to_stage.si(),
-        run_canonical_ids_stage.si(batch_size=1000),
-        run_merge_pipeline_to_default.si(dry_run=DRY_RUN),
-    )
-
-    result = workflow.apply()
-    return f"Full pipeline queued with ID: {result.id}"
 
 
 @shared_task(name="debug_test_task")
