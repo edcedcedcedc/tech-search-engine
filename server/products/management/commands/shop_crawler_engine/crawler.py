@@ -134,7 +134,11 @@ class Crawler:
                         "en": "",
                         "ru": "",
                     },
-                    "t_variant": {"ro": "", "en": "", "ru": ""},
+                    "t_variant": {
+                        "ro": self.safe_re_search(r'"item_variant":"(.*?)"', decoded),
+                        "en": "",
+                        "ru": "",
+                    },
                     "price": int(
                         self.safe_re_search(r'"price":(\d+)', decoded, default="0")
                     ),
