@@ -13,9 +13,10 @@ DRY_RUN = False
 CRAWLER_DBS = []
 
 BROKEN = False
+BROKEN_DB = "broken"
 
 if BROKEN:
-    CRAWLER_DBS = ["broken"]
+    CRAWLER_DBS = BROKEN_DB
 else:
     CRAWLER_DBS = ["enter", "xstore", "darwin"]
 
@@ -35,8 +36,11 @@ PIPELINE_STEPS_ENABLED = {
     "translation": True,
     "embeddings": False,
     "merge_to_stage": False,
-    "canonical_ids_stage": False,
+    "similar_ids_stage": False,
+    "identical_ids_stage": False,
     "merge_to_prod": False,
+    "price_history_prod": False,
+    "load_embeddings_cache": False,
 }
 
 DRY_RUN = False
@@ -53,7 +57,7 @@ def run_full_pipeline():
         3. Run translation
         4. Generate embeddings
         5. Merge all crawler DBs into Stage
-        6. Generate canonical IDs in Stage
+        6. Generate similar IDs in Stage
         7. Merge Stage into Prod (finalize)
     """
     from products.tasks import (
@@ -62,8 +66,11 @@ def run_full_pipeline():
         run_translation,
         run_embeddings,
         run_merge_pipeline_to_stage,
-        run_canonical_ids_stage,
+        run_similar_ids_stage,
+        run_identical_ids_stage,
         run_merge_pipeline_to_default,
+        run_price_history_default,
+        run_load_embeddings_cache,
     )
 
     workflow_steps = []
@@ -83,11 +90,20 @@ def run_full_pipeline():
     if PIPELINE_STEPS_ENABLED.get("merge_to_stage"):
         workflow_steps.append(run_merge_pipeline_to_stage.si())
 
-    if PIPELINE_STEPS_ENABLED.get("canonical_ids_stage"):
-        workflow_steps.append(run_canonical_ids_stage.si(batch_size=1000))
+    if PIPELINE_STEPS_ENABLED.get("similar_ids_stage"):
+        workflow_steps.append(run_similar_ids_stage.si(batch_size=1000))
+
+    if PIPELINE_STEPS_ENABLED.get("identical_ids_stage"):
+        workflow_steps.append(run_identical_ids_stage.si(batch_size=1000))
 
     if PIPELINE_STEPS_ENABLED.get("merge_to_prod"):
         workflow_steps.append(run_merge_pipeline_to_default.si(dry_run=DRY_RUN))
+
+    if PIPELINE_STEPS_ENABLED.get("price_history_prod"):
+        workflow_steps.append(run_price_history_default.si())
+
+    if PIPELINE_STEPS_ENABLED.get("load_embeddings_cache"):
+        workflow_steps.append(run_load_embeddings_cache.si())
 
     if not workflow_steps:
         return "No pipeline steps enabled. Nothing queued."

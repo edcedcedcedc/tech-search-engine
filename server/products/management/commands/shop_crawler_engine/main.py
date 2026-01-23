@@ -1,7 +1,7 @@
 import random
 import time
 from django.core.management.base import BaseCommand
-from products.management.commands.shop_crawler_engine.utils import (
+from manager import (
     DatabaseManager,
 )
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log

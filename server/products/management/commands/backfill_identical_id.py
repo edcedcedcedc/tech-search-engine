@@ -1,4 +1,4 @@
-# file: products/management/commands/backfill_canonical_embeddings.py
+# file: products/management/commands/backfill_identical_embeddings.py
 
 """import json
 import numpy as np
@@ -6,9 +6,9 @@ from numpy.linalg import norm
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from products.models import Product
-from products.utils.generate_canonical_id import generate_canonical_id
+from products.utils.generate_identical_id import generate_identical_id
 from rapidfuzz import fuzz
-from products.utils.backfill_canonical_id_log import backfill_canonical_id_log
+from products.utils.backfill_identical_id_log import backfill_identical_id_log
 
 # Thresholds
 EMBEDDING_THRESHOLD = 0.92  # strong embedding match
@@ -21,7 +21,7 @@ def cosine_sim(a, b):
 
 
 class Command(BaseCommand):
-    help = "Backfill canonical_id using embeddings + fuzzy hybrid"
+    help = "Backfill identical_id using embeddings + fuzzy hybrid"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -33,7 +33,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--force",
             action="store_true",
-            help="Recompute canonical_id even if it already exists",
+            help="Recompute identical_id even if it already exists",
         )
         parser.add_argument(
             "--batch-size",
@@ -50,10 +50,10 @@ class Command(BaseCommand):
         # Load products
         qs = Product.objects.using(db).all()
         if not force:
-            qs = qs.filter(canonical_id__isnull=True)
+            qs = qs.filter(identical_id__isnull=True)
 
         total = qs.count()
-        backfill_canonical_id_log(f"START embeddings backfill db={db}, total={total}")
+        backfill_identical_id_log(f"START embeddings backfill db={db}, total={total}")
 
         products = list(qs)
 
@@ -97,47 +97,47 @@ class Command(BaseCommand):
             if not placed:
                 clusters.append([p])
 
-        backfill_canonical_id_log(f"Clustering done, {len(clusters)} clusters formed")
+        backfill_identical_id_log(f"Clustering done, {len(clusters)} clusters formed")
 
-        # --------- Assign canonical_id per cluster ---------
+        # --------- Assign identical_id per cluster ---------
         processed = 0
         for cluster in clusters:
             rep = cluster[0]
             text_for_id = " ".join(filter(None, [rep.name, rep.variant, rep.brand]))
-            canonical_id = generate_canonical_id(text_for_id)
+            identical_id = generate_identical_id(text_for_id)
 
             with transaction.atomic(using=db):
                 for p in cluster:
-                    p.canonical_id = canonical_id
-                    p.save(update_fields=["canonical_id"])
-                    backfill_canonical_id_log(
-                        f"SET canonical_id={canonical_id} db={db} product_id={p.id} "
+                    p.identical_id = identical_id
+                    p.save(update_fields=["identical_id"])
+                    backfill_identical_id_log(
+                        f"SET identical_id={identical_id} db={db} product_id={p.id} "
                         f"shop={p.shop} name='{p.name}' variant='{p.variant}' brand='{p.brand}'"
                     )
             processed += len(cluster)
 
-        backfill_canonical_id_log(
+        backfill_identical_id_log(
             f"END embeddings backfill db={db}, processed={processed}/{total}"
         )
 """
 
 
-# file: products/management/commands/backfill_canonical_embeddings.py
+# file: products/management/commands/backfill_identical_embeddings.py
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from products.models import Product
-from products.utils.log.backfill_canonical_id_log import backfill_canonical_id_log
+from products.utils.log.backfill_identical_id_log import backfill_identical_id_log
 import json
 import numpy as np
 from numpy.linalg import norm
 from rapidfuzz import fuzz
 
 
-EMBEDDING_THRESHOLD = 0.80  # cosine similarity threshold
-FUZZY_THRESHOLD = 70  # fallback fuzzy threshold
+EMBEDDING_THRESHOLD = 0.90  # cosine identicality threshold
+FUZZY_THRESHOLD = 80  # fallback fuzzy threshold
 
 
-# products/utils/canonical.py
+# products/utils/identical.py
 import re
 import hashlib
 import unicodedata
@@ -146,14 +146,14 @@ import unicodedata
 STOPWORDS = {"new", "original", "orig", "model", "version", "gb", "tb", "ram", "rom"}
 
 
-def generate_canonical_id(base) -> str:
-    """Generate a stable SHA-1 hash as canonical ID."""
-    normalized = normalize_canonical(base)
+def generate_identical_id(base) -> str:
+    """Generate a stable SHA-1 hash as identical ID."""
+    normalized = normalize_identical(base)
     return hashlib.sha1(normalized.encode("utf-8")).hexdigest()
 
 
-def normalize_canonical(s: str) -> str:
-    """Normalize product text for canonical ID."""
+def normalize_identical(s: str) -> str:
+    """Normalize product text for identical ID."""
     if not s:
         return ""
 
@@ -187,14 +187,14 @@ def load_embedding(product):
 
 class Command(BaseCommand):
     help = (
-        "Backfill canonical_id using embeddings and fuzzy as backup (centroid method)"
+        "Backfill identical_id using embeddings and fuzzy as backup (centroid method)"
     )
 
     def add_arguments(self, parser):
         parser.add_argument("--batch_size", type=int, default=1000)
         parser.add_argument("--db", type=str, default="default")
         parser.add_argument(
-            "--force", action="store_true", help="Recompute canonical_id even if exists"
+            "--force", action="store_true", help="Recompute identical_id even if exists"
         )
 
     def handle(self, *args, **options):
@@ -204,10 +204,10 @@ class Command(BaseCommand):
 
         qs = Product.objects.using(database).all()
         if not force:
-            qs = qs.filter(canonical_id__isnull=True)
+            qs = qs.filter(identical_id__isnull=True)
 
         total = qs.count()
-        backfill_canonical_id_log(
+        backfill_identical_id_log(
             f"START embedding backfill db={database}, total={total}"
         )
 
@@ -221,7 +221,7 @@ class Command(BaseCommand):
             products.extend(batch)
             offset += batch_size
 
-        backfill_canonical_id_log(f"Loaded {len(products)} products")
+        backfill_identical_id_log(f"Loaded {len(products)} products")
 
         # Precompute embeddings once
         for p in products:
@@ -246,7 +246,7 @@ class Command(BaseCommand):
                     clusters.append({"centroid": None, "products": [product]})
                 continue
 
-            # Embedding similarity
+            # Embedding identicality
             best_sim = -1
             best_cluster = None
             for cluster in clusters:
@@ -271,30 +271,30 @@ class Command(BaseCommand):
             else:
                 clusters.append({"centroid": emb, "products": [product]})
 
-        backfill_canonical_id_log(f"Formed {len(clusters)} clusters")
+        backfill_identical_id_log(f"Formed {len(clusters)} clusters")
 
-        # ---------- Assign canonical_id ----------
+        # ---------- Assign identical_id ----------
         processed = 0
         all_updates = []
 
         for cluster in clusters:
             rep = cluster["products"][0]
             text_for_id = " ".join(filter(None, [rep.name, rep.variant, rep.brand]))
-            canonical_id = generate_canonical_id(text_for_id)
+            identical_id = generate_identical_id(text_for_id)
 
             for p in cluster["products"]:
-                p.canonical_id = canonical_id
+                p.identical_id = identical_id
                 all_updates.append(p)
-                backfill_canonical_id_log(
-                    f"SET canonical_id={canonical_id} db={database} product_id={p.id} "
+                backfill_identical_id_log(
+                    f"SET identical_id={identical_id} db={database} product_id={p.id} "
                     f"shop={p.shop} name='{p.name}' variant='{p.variant}' brand='{p.brand}'"
                 )
             processed += len(cluster)
 
         # Bulk update all products at once
         with transaction.atomic(using=database):
-            Product.objects.using(database).bulk_update(all_updates, ["canonical_id"])
+            Product.objects.using(database).bulk_update(all_updates, ["identical_id"])
 
-        backfill_canonical_id_log(
+        backfill_identical_id_log(
             f"END embedding backfill db={database}, processed={processed}"
         )

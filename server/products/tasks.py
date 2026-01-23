@@ -14,7 +14,8 @@ from products.utils.log.translation_log import translation_log
 from products.utils.log.generate_embeddings_from_object_log import (
     generate_embeddings_from_object_log,
 )
-from products.utils.log.backfill_canonical_id_log import backfill_canonical_id_log
+from products.utils.log.backfill_similar_id_log import backfill_similar_id_log
+from products.utils.log.backfill_identical_id_log import backfill_identical_id_log
 from django.core.management import call_command
 from products.utils.log.db_merge_log import db_merge_log
 from products.utils.log.db_merge_pipeline_to_stage import db_merge_to_stage_log
@@ -309,7 +310,7 @@ def run_embeddings():
 @shared_task(name="run_merge_pipeline_to_stage")
 def run_merge_pipeline_to_stage():
     """
-    Full merge pipeline to prepare stage for canonical_id generation:
+    Full merge pipeline to prepare stage for similar_id and identical_id generation:
     1. Overwrite stage with prod
     2. Merge all crawler DBs into stage with dirty logic
     """
@@ -386,31 +387,58 @@ def run_merge_pipeline_to_stage():
 
 
 @shared_task(
-    name="run_canonical_ids_stage",
+    name="run_similar_ids_stage",
 )
-def run_canonical_ids_stage(batch_size=1000, force=True):
+def run_similar_ids_stage(batch_size=1000, force=True):
     """
-    Generate canonical_ids for all products in stage after merges.
-    Mirrors backfill_canonical_embeddings.py logic.
+    Generate similar_ids for all products in stage after merges.
+    Mirrors backfill_similar_embeddings.py logic.
     """
     try:
-        backfill_canonical_id_log(
-            f"[TASK] Starting canonical ID generation on stage | batch_size={batch_size} | force={force}"
+        backfill_similar_id_log(
+            f"[TASK] Starting similar ID generation on stage | batch_size={batch_size} | force={force}"
         )
 
         call_command(
-            "backfill_canonical_id",
+            "backfill_similar_id",
             db=STAGE_DB,
             batch_size=batch_size,
             force=force,
         )
 
-        backfill_canonical_id_log(
-            "[TASK] Canonical ID generation finished successfully"
+        backfill_similar_id_log("[TASK] similar ID generation finished successfully")
+
+    except Exception as e:
+        backfill_similar_id_log(f"[TASK] similar ID generation failed: {e}")
+        raise
+
+
+@shared_task(
+    name="run_identical_ids_stage",
+)
+def run_identical_ids_stage(batch_size=1000, force=True):
+    """
+    Generate similar_ids for all products in stage after merges.
+    Mirrors backfill_identical_embeddings.py logic.
+    """
+    try:
+        backfill_identical_id_log(
+            f"[TASK] Starting identical ID generation on stage | batch_size={batch_size} | force={force}"
+        )
+
+        call_command(
+            "backfill_identical_id",
+            db=STAGE_DB,
+            batch_size=batch_size,
+            force=force,
+        )
+
+        backfill_identical_id_log(
+            "[TASK] identical ID generation finished successfully"
         )
 
     except Exception as e:
-        backfill_canonical_id_log(f"[TASK] Canonical ID generation failed: {e}")
+        backfill_identical_id_log(f"[TASK] identical ID generation failed: {e}")
         raise
 
 
@@ -422,7 +450,6 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=DRY_RUN, batch_siz
     """
     Final pipeline step with blazing fast Prod cleanup + Stage merge.
     """
-    from products.utils import embeddings_cache
     from products.models import Product, ArchivedProduct
     from django.utils import timezone
     from django.db import transaction
@@ -466,7 +493,7 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=DRY_RUN, batch_siz
                         ArchivedProduct(
                             original_id=p.id,
                             external_id=p.external_id,
-                            canonical_id=p.canonical_id,
+                            similar_id=p.similar_id,
                             name=p.name,
                             variant=p.variant,
                             price=p.price,
@@ -497,31 +524,14 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=DRY_RUN, batch_siz
             call_command("merge", source=STAGE_DB, dest=PROD_DB, force=True)
             db_merge_to_default_log("[TASK] Stage -> Prod merge finished successfully")
 
-            # Step 2.5: Price History Prod
-            call_command(
-                "price_history", db=PROD_DB, include_archived=True, include_broken=True
-            )
-            db_merge_to_default_log(
-                "[TASK] Complete price history created for all products"
-            )
-            # Step 2.9: Price History Test
-            call_command("price_history_test")
             # Step 3: Mark Prod products clean
-            Product.objects.using(PROD_DB).all().update(dirty=False, change_type=None)
+            Product.objects.using(PROD_DB).all().update(dirty=False)
             db_merge_to_default_log("[TASK] All products in Prod marked as clean")
 
         else:
             db_merge_to_default_log(
                 "[TASK] DRY RUN: Stage -> Prod merge and cleanup SKIPPED"
             )
-
-        # Analyzer runs regardless of dry_run
-        db_merge_to_default_log(db_merge_log("[TASK] Running Stage -> Prod analyzer"))
-        call_command(
-            "embeddings_test", source=STAGE_DB, samples=100, check_translations=True
-        )
-        db_merge_to_default_log("[TASK] Embeddings/semantic analysis finished")
-        db_merge_to_default_log("[TASK] Translation analysis finished")
 
         # Cleanup Stage + Crawler DBs
         if not dry_run:
@@ -533,16 +543,33 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=DRY_RUN, batch_siz
 
         db_merge_to_default_log("[TASK] Pipeline finalization completed successfully")
 
-        # Reload embeddings cache
-        load_embeddings_cache_log(
-            "[TASK] Reloading embeddings cache after Prod merge..."
-        )
-        embeddings_cache.load_embeddings_cache()
-        load_embeddings_cache_log("[TASK] Embeddings cache reloaded.")
-
     except Exception as e:
         db_merge_to_default_log(f"[TASK] Finalize pipeline merge failed: {e}")
         raise
+
+
+@shared_task(
+    bind=True,
+    name="run_price_history_default",
+)
+def run_price_history_default():
+    call_command(
+        "price_history", db=PROD_DB, include_archived=True, include_broken=True
+    )
+    call_command("price_history_test")
+
+
+@shared_task(
+    bind=True,
+    name="run_load_embeddings_cache",
+)
+def run_load_embeddings_cache():
+
+    from products.utils import embeddings_cache
+
+    load_embeddings_cache_log("[TASK] Reloading embeddings cache after Prod merge...")
+    embeddings_cache.load_embeddings_cache()
+    load_embeddings_cache_log("[TASK] Embeddings cache reloaded.")
 
 
 @shared_task(name="debug_test_task")

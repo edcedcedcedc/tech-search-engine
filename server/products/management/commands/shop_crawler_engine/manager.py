@@ -1,5 +1,4 @@
 from decimal import Decimal
-from django.utils import timezone
 from products.models import (
     ArchivedBrokenProduct,
     ArchivedProduct,
@@ -75,7 +74,7 @@ class DatabaseManager:
     """Handles product persistence using ChangeTracker"""
 
     @staticmethod
-    def save_or_update_product(fetched_item, fields_to_track=None):
+    def state_machine(fetched_item, fields_to_track=None):
         shop = fetched_item.get("shop") or ""
         external_id = fetched_item.get("external_id") or ""
         fetched_item["price"] = Decimal(fetched_item.get("price", 0))
@@ -88,29 +87,56 @@ class DatabaseManager:
         try:
             ctx = DatabaseManager._load_context(shop, external_id)
 
-            # price = 0 → broken
+            # Determine "seen count"
+            if ctx["active"] or ctx["archived"] or ctx["broken"]:
+                seen_count = 2  # subsequent crawl
+            else:
+                seen_count = 1  # first crawl
+
+            # ---------- STATE MACHINE ----------
+
+            # Price is zero → BROKEN always wins
             if fetched_item["price"] == 0:
                 return DatabaseManager._handle_broken(ctx, fetched_item)
 
-            # restore from archive / broken
-            restored = DatabaseManager._maybe_restore(
-                ctx, fetched_item, fields_to_track
-            )
-            if restored:
-                return restored
+            # in_stock == true → ACTIVE
+            if in_stock:
+                if seen_count == 1:
+                    # First crawl → create ACTIVE
+                    if ctx["active"]:
+                        return DatabaseManager._update_active(
+                            ctx["active"], fetched_item, fields_to_track
+                        )
+                    return DatabaseManager._create_new(fetched_item)
+                else:
+                    # Subsequent crawl
+                    if ctx["archived"]:
+                        return DatabaseManager._restore_from_archive(
+                            ctx["archived"], fetched_item
+                        )
+                    if ctx["active"]:
+                        return DatabaseManager._update_active(
+                            ctx["active"], fetched_item, fields_to_track
+                        )
+                    return DatabaseManager._create_new(fetched_item)
 
-            # update active
-            if ctx["active"]:
-                return DatabaseManager._update_active(
-                    ctx["active"], fetched_item, fields_to_track
-                )
-
-            # archive OOS (never seen active)
-            if not in_stock:
-                return DatabaseManager._archive_oos(fetched_item)
-
-            # create new
-            return DatabaseManager._create_new(fetched_item)
+            # in_stock == false → ARCHIVED / ACTIVE
+            else:
+                if seen_count == 1:
+                    # First crawl → ARCHIVED
+                    return DatabaseManager._archive_oos(fetched_item)
+                else:
+                    # Subsequent crawl
+                    if ctx["archived"]:
+                        # Already archived → do nothing
+                        return None, False, {}
+                    if ctx["active"]:
+                        # If not archived → keep ACTIVE
+                        return DatabaseManager._update_active(
+                            ctx["active"], fetched_item, fields_to_track
+                        )
+                    # Fresh OOS not in DB yet → create ACTIVE
+                    return DatabaseManager._create_new(fetched_item)
 
         except Exception as e:
             pname = fetched_item.get("name") or ""

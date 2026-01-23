@@ -211,16 +211,47 @@ This is NOT CRUD.
 This is a state machine with memory.
 
 
-# STATES 
+# STATES
 
 | State           | Model / Table           | Characteristics                                  |
-| --------------- | ----------------------- | ------------------------------------------------ |
-| Active          | `Product`               | current, live product; mutable; can be updated   |
-| Archived        | `ArchivedProduct`       | snapshot of an inactive product; immutable       |
-| Broken Archived | `ArchivedBrokenProduct` | snapshot of invalid or broken product; immutable |
-| Deleted         | `None` (row removed)    | historical price data survives                   |
+| --------------- | ---------------------- | ------------------------------------------------ |
+| Active          | `Product`               | current, live product; mutable; can be updated  |
+| Archived        | `ArchivedProduct`       | snapshot of an inactive product; immutable      |
+| Broken Archived | `ArchivedBrokenProduct` | snapshot of invalid or broken product; immutable|
+| Deleted         | `None` (row removed)    | historical price data survives                  |
 
-A product cannot be simultaneously in multiple of these states, except price history references (which are relinked).
+# STATE MACHINE
+
+| Condition         | First Crawl (seen = 1) | Subsequent Crawls (seen > 1)                                           | Notes                                                    |
+| ----------------- | ---------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------- |
+| price == 0        | BROKEN                 | BROKEN                                                                 | Always wins; overrides in_stock                          |
+| in_stock == false | ARCHIVED               | If not archived → ACTIVE; If already archived → do nothing             | Fresh OOS items can appear in active if not yet archived |
+| in_stock == true  | ACTIVE                 | ACTIVE; If previously archived → restore to active                     | In-stock items must always be active                     |
+
+
+
+# COMBINATIONS OF STATE
+| Price | In Stock | Seen Count | Active Exists | Archived Exists | Broken Exists | Resulting Method / Action | Notes                                       |
+| ----- | -------- | ---------- | ------------- | --------------- | ------------- | ------------------------- | ------------------------------------------- |
+| 0     | True     | 1          | No            | No              | No            | `_handle_broken`          | Always wins, becomes broken                 |
+| 0     | True     | 1          | Yes           | No              | No            | `_handle_broken`          | Active archived as broken                   |
+| 0     | False    | 1          | No            | No              | No            | `_handle_broken`          | Broken overrides OOS                        |
+| 0     | False    | 2          | Yes           | Yes             | No            | `_handle_broken`          | Broken overrides everything                 |
+| >0    | True     | 1          | No            | No              | No            | `_create_new`             | First crawl, create ACTIVE                  |
+| >0    | True     | 1          | Yes           | No              | No            | `_update_active`          | First crawl, update existing ACTIVE         |
+| >0    | True     | 2          | No            | Yes             | No            | `_restore_from_archive`   | Restore previously archived → ACTIVE        |
+| >0    | True     | 2          | Yes           | No              | No            | `_update_active`          | Update existing ACTIVE                      |
+| >0    | True     | 2          | No            | No              | No            | `_create_new`             | Create new ACTIVE (rare, edge case)         |
+| >0    | False    | 1          | No            | No              | No            | `_archive_oos`            | First crawl OOS → ARCHIVED                  |
+| >0    | False    | 1          | Yes           | No              | No            | `_archive_oos`            | Active archived OOS                         |
+| >0    | False    | 2          | No            | Yes             | No            | `None / do nothing`       | Already archived → nothing                  |
+| >0    | False    | 2          | Yes           | No              | No            | `_update_active`          | Active exists, not archived → update ACTIVE |
+| >0    | False    | 2          | No            | No              | No            | `_create_new`             | Fresh OOS not in DB yet → create ACTIVE     |
+
+
+
+
+
 
 
 
