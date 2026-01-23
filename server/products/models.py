@@ -29,7 +29,11 @@ Clear distinction between Product (current) and ArchivedProduct (past/out-of-sto
 
 
 class Product(models.Model):
-    external_id = models.CharField(max_length=50)
+    external_id = models.CharField(max_length=50, null=False)
+    name = models.CharField(max_length=255, null=False, blank=True)
+    brand = models.CharField(max_length=100, null=False)
+    category = models.CharField(max_length=100, null=False)
+
     similar_id = models.CharField(
         max_length=40,
         db_index=True,
@@ -42,13 +46,12 @@ class Product(models.Model):
         null=True,
         blank=True,
     )
-    name = models.CharField(max_length=255, null=True, blank=True)
+
     variant = models.CharField(max_length=50, null=True, blank=True)
     embedding = models.TextField(blank=True, null=True)
 
     price = models.DecimalField(max_digits=12, decimal_places=2)
-    brand = models.CharField(max_length=100)
-    category = models.CharField(max_length=100)
+
     url = models.URLField()
     image = models.URLField(blank=True)
 
@@ -79,16 +82,22 @@ class Product(models.Model):
 
         try:
             with transaction.atomic(using=db):
+
+                name = self.name or ""
+                external_id = self.external_id or ""
+                brand = self.brand or ""
+                category = self.category or ""
+
                 archived = ArchivedProduct.objects.using(db).create(
                     original_id=self.id,
-                    external_id=self.external_id,
+                    external_id=external_id,
                     similar_id=self.similar_id or "",
                     identical_id=self.identical_id or "",
-                    name=self.name,
+                    name=name,
                     variant=self.variant,
                     embedding=self.embedding,
-                    brand=self.brand,
-                    category=self.category,
+                    brand=brand,
+                    category=category,
                     t_name=self.t_name,
                     t_variant=self.t_variant,
                     t_category=self.t_category,
@@ -297,14 +306,14 @@ class AutocompleteToken(models.Model):
 
 class ArchivedBrokenProduct(models.Model):
     original_id = models.IntegerField(db_index=True, null=True)
-    external_id = models.CharField(max_length=50)
+    external_id = models.CharField(max_length=50, null=False)
     similar_id = models.CharField(max_length=40, null=True, blank=True)
     identical_id = models.CharField(max_length=40, null=True, blank=True)
-    name = models.CharField(max_length=255, null=True, blank=True)
+    name = models.CharField(max_length=255, null=False, blank=True)
     variant = models.CharField(max_length=50, null=True, blank=True)
     embedding = models.TextField(blank=True, null=True)
-    brand = models.CharField(max_length=100, null=True, blank=True)
-    category = models.CharField(max_length=100, null=True)
+    brand = models.CharField(max_length=100, null=False, blank=True)
+    category = models.CharField(max_length=100, null=False)
     t_name = models.JSONField(default=dict, null=True, blank=True)
     t_variant = models.JSONField(default=dict, null=True, blank=True)
     t_category = models.JSONField(default=dict, null=True, blank=True)
@@ -326,14 +335,14 @@ class ArchivedBrokenProduct(models.Model):
 
 class ArchivedProduct(models.Model):
     original_id = models.IntegerField(db_index=True, null=True)
-    external_id = models.CharField(max_length=50)
+    external_id = models.CharField(max_length=50, null=False)
     similar_id = models.CharField(max_length=40, null=True, blank=True)
     identical_id = models.CharField(max_length=40, null=True, blank=True)
-    name = models.CharField(max_length=255, null=True, blank=True)
+    name = models.CharField(max_length=255, null=False, blank=True)
     variant = models.CharField(max_length=50, null=True, blank=True)
     embedding = models.TextField(blank=True, null=True)
-    brand = models.CharField(max_length=100, null=True, blank=True)
-    category = models.CharField(max_length=100, null=True)
+    brand = models.CharField(max_length=100, null=False, blank=True)
+    category = models.CharField(max_length=100, null=False)
     t_name = models.JSONField(default=dict, null=True, blank=True)
     t_variant = models.JSONField(default=dict, null=True, blank=True)
     t_category = models.JSONField(default=dict, null=True, blank=True)

@@ -47,9 +47,6 @@ def run_crawler():
             call_command("reset")
         call_command("crawl", pages=PAGES_TO_CRAWL)
         shop_crawler_log("[TASK]Crawler finished successfully")
-        shop_crawler_log("[TASK]Testing Categories")
-        for db in CRAWLER_DBS:
-            call_command("broken", source=db, by_category=True, dry_run=DRY_RUN)
     except Exception as e:
         shop_crawler_log(f"[TASK]Crawler failed: {e}")
         raise

@@ -97,7 +97,6 @@ class Command(BaseCommand):
 
             # Shuffle tasks to spread requests
             random.shuffle(tasks)
-
             threads = []
 
             # Launch threads for shuffled tasks
@@ -183,11 +182,16 @@ class Command(BaseCommand):
 
         while True:
             try:
-                batch, shop, category, batch_idx = batch_queue.get(timeout=5)
-                if batch is None:  # sentinel to stop consumer
+                item = batch_queue.get(timeout=5)
+
+                if item is None:
+                    batch_queue.task_done()
                     break
+
+                batch, shop, category, batch_idx = item
                 self.process_batch(batch, shop, category, batch_idx, track_fields)
                 batch_queue.task_done()
+
                 batch_number += 1
             except Empty:
                 continue

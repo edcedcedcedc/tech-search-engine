@@ -26,13 +26,25 @@ class ChangeTracker:
                 db_value = getattr(db_product, field, None)
                 fetched_value = fetched_data[field]
 
-                # Special handling for boolean values
+                # --- Normalize numeric values ---
+                if field == "price":
+                    try:
+                        db_value = Decimal(db_value)
+                    except:
+                        db_value = Decimal(0)
+                    try:
+                        fetched_value = Decimal(fetched_value)
+                    except:
+                        fetched_value = Decimal(0)
+
+                # --- Boolean comparison ---
                 if isinstance(db_value, bool) or isinstance(fetched_value, bool):
                     if bool(db_value) != bool(fetched_value):
                         changed_fields.append(field)
                         old_values[field] = db_value
                         new_values[field] = fetched_value
-                elif str(db_value) != str(fetched_value):
+                # --- String/other comparison ---
+                elif db_value != fetched_value:
                     changed_fields.append(field)
                     old_values[field] = db_value
                     new_values[field] = fetched_value
@@ -64,8 +76,8 @@ class DatabaseManager:
 
     @staticmethod
     def save_or_update_product(fetched_item, fields_to_track=None):
-        shop = fetched_item.get("shop")
-        external_id = fetched_item.get("external_id")
+        shop = fetched_item.get("shop") or ""
+        external_id = fetched_item.get("external_id") or ""
         fetched_item["price"] = Decimal(fetched_item.get("price", 0))
         in_stock = fetched_item.get("in_stock", True)
 
@@ -76,7 +88,7 @@ class DatabaseManager:
         try:
             ctx = DatabaseManager._load_context(shop, external_id)
 
-            # 1price = 0 → broken
+            # price = 0 → broken
             if fetched_item["price"] == 0:
                 return DatabaseManager._handle_broken(ctx, fetched_item)
 
@@ -101,9 +113,8 @@ class DatabaseManager:
             return DatabaseManager._create_new(fetched_item)
 
         except Exception as e:
-            shop_crawler_log(
-                f"ERROR saving {fetched_item.get('name')} ({external_id}): {e}"
-            )
+            pname = fetched_item.get("name") or ""
+            shop_crawler_log(f"ERROR saving {pname} ({external_id}): {e}")
             return None, False, {}
 
     # ------------------------------------------------------------------
@@ -130,17 +141,23 @@ class DatabaseManager:
 
     @staticmethod
     def _handle_broken(ctx, fetched_item):
-        if ctx["broken"] or ctx["archived"]:
-            return None, False, {}
+        try:
+            if ctx["broken"] or ctx["archived"]:
+                return None, False, {}
 
-        if ctx["active"]:
-            archived = ctx["active"].archive_broken()
-            shop_crawler_log(
-                f"ARCHIVED-BROKEN {archived.name} ({archived.external_id})"
-            )
-        else:
-            temp = Product(**fetched_item, dirty=False)
-            temp.archive_broken()
+            if ctx["active"]:
+                archived = ctx["active"].archive_broken()
+                name = getattr(archived, "name", "")
+                ext = getattr(archived, "external_id", "")
+                shop_crawler_log(f"ARCHIVED-BROKEN {name} ({ext})")
+            else:
+                temp = Product(**fetched_item, dirty=False)
+                archived_broken = temp.archive_broken()
+                name = getattr(archived_broken, "name", "")
+                ext = getattr(archived_broken, "external_id", "")
+                shop_crawler_log(f"ARCHIVED-BROKEN {name} ({ext})")
+        except Exception as e:
+            shop_crawler_log(f"ERROR logging ARCHIVED-BROKEN: {e}")
 
         return None, False, {}
 
@@ -156,21 +173,27 @@ class DatabaseManager:
             if not change_info["has_changes"]:
                 return None
 
-            ChangeTracker.log_changes(
-                fetched_item.get("name"),
-                fetched_item["external_id"],
-                fetched_item["shop"],
-                change_info,
-            )
+            try:
+                ChangeTracker.log_changes(
+                    fetched_item.get("name") or "",
+                    fetched_item.get("external_id") or "",
+                    fetched_item.get("shop") or "",
+                    change_info,
+                )
+            except Exception as e:
+                shop_crawler_log(f"ERROR logging changes for restore: {e}")
 
             fetched_item["dirty"] = True
-            restored = Product.objects.using(fetched_item["shop"]).create(
-                **fetched_item
-            )
+            restored = Product.objects.using(
+                fetched_item.get("shop") or PROD_DB
+            ).create(**fetched_item)
+            try:
+                shop_crawler_log(
+                    f"RESTORED {getattr(restored, 'name', '')} ({getattr(restored, 'external_id', '')})"
+                )
+            except Exception as e:
+                shop_crawler_log(f"ERROR logging RESTORED product: {e}")
 
-            shop_crawler_log(
-                f"RESTORED {restored.name} ({restored.external_id}) from {label}"
-            )
             return restored, False, change_info
 
         return None
@@ -183,18 +206,21 @@ class DatabaseManager:
         if not change_info["has_changes"]:
             return None, False, {}
 
-        ChangeTracker.log_changes(
-            fetched_item.get("name"),
-            active.external_id,
-            fetched_item["shop"],
-            change_info,
-        )
+        try:
+            ChangeTracker.log_changes(
+                fetched_item.get("name") or "",
+                getattr(active, "external_id", ""),
+                fetched_item.get("shop") or "",
+                change_info,
+            )
+        except Exception as e:
+            shop_crawler_log(f"ERROR logging changes for update_active: {e}")
 
         for k, v in fetched_item.items():
             setattr(active, k, v)
 
         active.dirty = True
-        active.save(using=fetched_item["shop"])
+        active.save(using=fetched_item.get("shop") or PROD_DB)
 
         return active, False, change_info
 
@@ -202,13 +228,24 @@ class DatabaseManager:
     def _archive_oos(fetched_item):
         temp = Product(**fetched_item, dirty=False)
         archived = temp.archive()
-        shop_crawler_log(f"ARCHIVED-OOS {archived.name} ({archived.external_id})")
+        try:
+            shop_crawler_log(
+                f"ARCHIVED-OOS {getattr(archived, 'name', '')} ({getattr(archived, 'external_id', '')})"
+            )
+        except Exception as e:
+            shop_crawler_log(f"ERROR logging ARCHIVED-OOS: {e}")
         return archived, False, {}
 
     @staticmethod
     def _create_new(fetched_item):
         fetched_item["dirty"] = True
-        product = Product.objects.using(fetched_item["shop"]).create(**fetched_item)
-
-        shop_crawler_log(f"CREATED {product.name} ({product.external_id})")
+        product = Product.objects.using(fetched_item.get("shop") or PROD_DB).create(
+            **fetched_item
+        )
+        try:
+            shop_crawler_log(
+                f"CREATED {getattr(product, 'name', '')} ({getattr(product, 'external_id', '')})"
+            )
+        except Exception as e:
+            shop_crawler_log(f"ERROR logging CREATED product: {e}")
         return product, True, {}
