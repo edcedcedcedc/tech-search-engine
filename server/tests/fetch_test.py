@@ -211,11 +211,14 @@ def fetch_darwin_products(category_url, max_pages=1, timeout=15):
             # ---------- GA4 PARSING ----------
             decoded = html.unescape(raw)
 
+            variant_node = node.select_one(".title-description .fs-12")
+            variant = variant_node.text.strip() if variant_node else ""
+
             results.append(
                 {
                     "external_id": safe_re_search(r'"item_id":"(.*?)"', decoded),
                     "name": safe_re_search(r'"item_name":"(.*?)"', decoded),
-                    "variant": safe_re_search(r'"item_variant":"(.*?)"', decoded),
+                    "variant": variant,
                     "t_name": {"ro": "", "en": "", "ru": ""},
                     "t_variant": {"ro": "", "en": "", "ru": ""},
                     "price": int(
@@ -284,7 +287,12 @@ CATEGORIES = {
         "powersupply": "https://darwin.md/componente-pc/power-supply",
         "fan": "https://darwin.md/componente-pc/coolere",
         "fanbase": "https://darwin.md/accesorii/accesorii-coolere",
-        "gaming": "https://darwin.md/gaming",
+        "gaming1": "https://darwin.md/gaming/periferice",
+        "gaming2": "https://darwin.md/gaming/pc-si-laptopuri",
+        "gaming3": "https://darwin.md/gaming/console",
+        "gaming4": "https://darwin.md/gaming/jocuri",
+        "gaming5": "https://darwin.md/gaming/scaune",
+        "gaming6": "https://darwin.md/gadgets/ochelari-vr",
         "router": "https://darwin.md/retelistica/routere",
         "switch": "https://darwin.md/retelistica/switch",
     },
@@ -327,9 +335,9 @@ CATEGORIES = {
     max_pages=8,
 ) """
 
-items = fetch_xstore_products(
-    CATEGORIES["xstore"]["software"],
-    max_pages=8,
+items = fetch_enter_products(
+    CATEGORIES["enter"]["pc"],
+    max_pages=20,
 )
 
 print(f"\n{len(items)} items found (enter)\n")
@@ -345,5 +353,6 @@ for i, p in enumerate(items, 1):
         f"{p['price']:^5} | "
         f"{p['shop']:<6} | "
         f"{p['name']:<40} | "
+        f"{p['variant']:<40} | "
         f"{p['url']}"
     )

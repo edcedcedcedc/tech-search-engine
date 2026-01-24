@@ -18,6 +18,11 @@ categories = [
         "ru": "компьютерные столы и мебель",
     },
     {
+        "ro": "camera de supraveghere, securitate",
+        "en": "Surveillance cameras and security",
+        "ru": "камеры видеонаблюдения и безопасность",
+    },
+    {
         "ro": "birou, mobilier",
         "en": "Office desks and furniture",
         "ru": "офисные столы и мебель",
@@ -28,6 +33,11 @@ categories = [
         "ru": "кабели и аксессуары",
     },
     {"ro": "camera actiune", "en": "Action cameras", "ru": "экшн-камеры"},
+    {
+        "ro": "camera foto, fotografie",
+        "en": "Digital cameras and photography",
+        "ru": "цифровые фотоаппараты и фотография",
+    },
     {
         "ro": "camera web, periferice pc",
         "en": "Webcams and PC peripherals",
@@ -93,6 +103,26 @@ categories = [
         "ru": "игровые ноутбуки",
     },
     {
+        "ro": "boxe portabile, audio",
+        "en": "Portable speakers and audio",
+        "ru": "портативные колонки и аудио",
+    },
+    {
+        "ro": "boxe, audio",
+        "en": "speakers and audio",
+        "ru": "колонки и аудио",
+    },
+    {
+        "ro": "boxe pc, audio",
+        "en": "PC speakers and audio",
+        "ru": "колонки для ПК и аудио",
+    },
+    {
+        "ro": "echipamente de înregistrare audio, studio",
+        "en": "Audio recording equipment and studio gear",
+        "ru": "оборудование для аудиозаписи и студии",
+    },
+    {
         "ro": "laptop, notebook",
         "en": "Laptops and notebooks",
         "ru": "ноутбуки и портативные компьютеры",
@@ -120,6 +150,11 @@ categories = [
     },
     {"ro": "microfon, audio", "en": "Microphones and audio", "ru": "микрофоны и аудио"},
     {"ro": "mini pc, apple", "en": "Apple Mac mini", "ru": "мини-ПК Apple"},
+    {
+        "ro": "pc, desktop",
+        "en": "PCs",
+        "ru": "ПК и настольные компьютеры",
+    },
     {
         "ro": "mini pc, desktop",
         "en": "Mini PCs",
@@ -256,6 +291,11 @@ categories = [
         "ro": "stocare externa, hdd, accesorii pc",
         "en": "External storage and PC accessories",
         "ru": "внешнее хранилище и аксессуары ПК",
+    },
+    {
+        "ro": "ochelari vr, gadgeturi gaming",
+        "en": "VR glasses and gaming gadgets",
+        "ru": "VR очки и игровые гаджеты",
     },
     {
         "ro": "stocare interna, hdd, componente pc",

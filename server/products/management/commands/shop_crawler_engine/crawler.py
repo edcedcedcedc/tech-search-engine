@@ -124,18 +124,20 @@ class Crawler:
                 in_stock = not has_out_class and has_add_to_cart and not has_notify_btn
 
                 decoded = html.unescape(raw)
+                variant_node = node.select_one(".title-description .fs-12")
+                variant = variant_node.text.strip() if variant_node else ""
 
                 yield {
                     "external_id": self.safe_re_search(r'"item_id":"(.*?)"', decoded),
                     "name": self.safe_re_search(r'"item_name":"(.*?)"', decoded),
-                    "variant": self.safe_re_search(r'"item_variant":"(.*?)"', decoded),
+                    "variant": variant,
                     "t_name": {
                         "ro": self.safe_re_search(r'"item_name":"(.*?)"', decoded),
                         "en": "",
                         "ru": "",
                     },
                     "t_variant": {
-                        "ro": self.safe_re_search(r'"item_variant":"(.*?)"', decoded),
+                        "ro": variant,
                         "en": "",
                         "ru": "",
                     },

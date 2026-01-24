@@ -112,7 +112,7 @@ class DatabaseManager:
                     # Subsequent crawl
                     if ctx["archived"]:
                         return DatabaseManager._maybe_restore(
-                            ctx["archived"], fetched_item
+                            ctx["archived"], fetched_item, fields_to_track
                         )
                     if ctx["active"]:
                         return DatabaseManager._update_active(
@@ -194,7 +194,9 @@ class DatabaseManager:
                 continue
 
             change_info = ChangeTracker.get_changed_fields(
-                source, fetched_item, fields_to_track
+                db_product=source,
+                fetched_data=fetched_item,
+                fields_to_track=fields_to_track,
             )
             if not change_info["has_changes"]:
                 return None
@@ -256,7 +258,7 @@ class DatabaseManager:
         archived = temp.archive()
         try:
             shop_crawler_log(
-                f"ARCHIVED-OOS {getattr(archived, 'name', '')} ({getattr(archived, 'external_id', '')})"
+                f"ARCHIVED-OOS {getattr(archived, 'name', '')} ({getattr(archived, 'external_id', '')})  shop={getattr(archived, 'shop', '')}"
             )
         except Exception as e:
             shop_crawler_log(f"ERROR logging ARCHIVED-OOS: {e}")
@@ -268,7 +270,7 @@ class DatabaseManager:
         product = Product.objects.using(fetched_item.get("shop")).create(**fetched_item)
         try:
             shop_crawler_log(
-                f"CREATED {getattr(product, 'name', '')} ({getattr(product, 'external_id', '')})"
+                f"CREATED {getattr(product, 'name', '')} ({getattr(product, 'external_id', '')} shop={getattr(product, 'shop', '')}"
             )
         except Exception as e:
             shop_crawler_log(f"ERROR logging CREATED product: {e}")

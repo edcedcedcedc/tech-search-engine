@@ -18,9 +18,9 @@ BROKEN_DB = "broken"
 if BROKEN:
     CRAWLER_DBS = BROKEN_DB
 else:
-    CRAWLER_DBS = ["enter", "xstore", "darwin"]
+    CRAWLER_DBS = ["enter", "darwin"]
 
-SHOPS_TO_CRAWL = ["darwin", "enter", "xstore"]
+SHOPS_TO_CRAWL = ["darwin", "enter"]
 
 STAGE_DB = "stage"
 
@@ -124,7 +124,7 @@ SHOPS = {
         "televizoare": "https://enter.online/televizoare",
         "fotovideo": "https://enter.online/foto-video",
         "proiectoaresiecrane": "https://enter.online/echipamente-de-proiectie",
-        "opticasiastronomie": "https://enter.online/optica-si-astronomie",
+        # "opticasiastronomie": "https://enter.online/optica-si-astronomie",
         "tehnicaaudio": "https://enter.online/tehnica-audio",
         "software": "https://enter.online/programe-soft",
         "tehnicabirou": "https://enter.online/tehnica-de-birou",

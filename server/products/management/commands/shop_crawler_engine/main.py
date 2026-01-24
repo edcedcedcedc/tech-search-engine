@@ -162,7 +162,7 @@ class Command(BaseCommand):
         )
 
         for item_data in batch:
-            product, created, change_info = DatabaseManager.save_or_update_product(
+            product, created, change_info = DatabaseManager.state_machine(
                 item_data, track_fields
             )
             if product:
