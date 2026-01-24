@@ -112,7 +112,7 @@ class DatabaseManager:
                     # Subsequent crawl
                     if ctx["archived"]:
                         return DatabaseManager._maybe_restore(
-                            ctx["archived"], fetched_item, fields_to_track
+                            ctx, fetched_item, fields_to_track
                         )
                     if ctx["active"]:
                         return DatabaseManager._update_active(
@@ -199,7 +199,7 @@ class DatabaseManager:
                 fields_to_track=fields_to_track,
             )
             if not change_info["has_changes"]:
-                return None
+                return None, False, {}
 
             try:
                 ChangeTracker.log_changes(
