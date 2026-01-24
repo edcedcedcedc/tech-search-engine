@@ -1,4 +1,5 @@
 import random
+from collections import defaultdict, deque
 import time
 from django.core.management.base import BaseCommand
 from manager import (
@@ -80,7 +81,7 @@ class Command(BaseCommand):
             consumer_thread.start()
 
             # Flatten all tasks from all shops/categories
-            tasks = []
+            tasks_by_shop = defaultdict(list)
             for shop_name, shop_cfg in SHOPS.items():
                 if shop_name not in crawl_shops:
                     continue
@@ -93,10 +94,12 @@ class Command(BaseCommand):
                         continue
                     if filter_category and category_name != filter_category:
                         continue
-                    tasks.append((shop_name, category_name, fetch_fn, url))
+                    tasks_by_shop[shop_name].append(
+                        (shop_name, category_name, fetch_fn, url)
+                    )
 
             # Shuffle tasks to spread requests
-            random.shuffle(tasks)
+            tasks = self.interleave_tasks(tasks_by_shop, shuffle_within_shop=True)
             threads = []
 
             # Launch threads for shuffled tasks
@@ -226,3 +229,33 @@ class Command(BaseCommand):
             shop_crawler_log(
                 f"[WORKER] ERROR shop={shop_name} category={category_name}: {e}"
             )
+
+    def interleave_tasks(tasks_by_shop: dict, shuffle_within_shop: bool = True):
+        """
+        Round-robin interleave tasks from different shops (or categories).
+
+        Args:
+            tasks_by_shop (dict): {shop_name: list of tasks} where task = (shop_name, category_name, fetch_fn, url)
+            shuffle_within_shop (bool): Whether to shuffle tasks within each shop before interleaving.
+
+        Returns:
+            list: Interleaved list of tasks
+        """
+        # Optionally shuffle tasks within each shop
+        if shuffle_within_shop:
+            for tsk_list in tasks_by_shop.values():
+                random.shuffle(tsk_list)
+
+        # Convert lists to deque for efficient popping
+        tasks_deque = {
+            shop: deque(tsk_list) for shop, tsk_list in tasks_by_shop.items()
+        }
+        interleaved = []
+
+        # Round-robin until all deques are empty
+        while any(tasks_deque.values()):
+            for shop, dq in list(tasks_deque.items()):
+                if dq:
+                    interleaved.append(dq.popleft())
+
+        return interleaved
