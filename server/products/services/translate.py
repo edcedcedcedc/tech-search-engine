@@ -228,13 +228,11 @@ if __name__ == "__main__":
         else None
     )
 
-    translation_log(f"Starting translation: db={args.db}, shop={args.shop_filter}")
-
     run_translation(
         db=args.db,
         # shop_filter=args.shop_filter,
         force=args.force,
-        skip_ru=args.skip_ru,
+        skip_ru=True,
         skip_category=args.skip_category,
         product_ids=product_ids,
     )

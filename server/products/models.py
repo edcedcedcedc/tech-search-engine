@@ -104,7 +104,7 @@ class Product(models.Model):
                     url=self.url,
                     image=self.image,
                     price=self.price,
-                    in_stock=self.in_stock,
+                    in_stock=False,
                     shop=self.shop,
                     archived_at=timezone.now(),
                 )
@@ -142,7 +142,7 @@ class Product(models.Model):
                     url=self.url or "",
                     image=self.image or "",
                     price=0,
-                    in_stock=False,
+                    in_stock=False,  # I imply its false
                     shop=self.shop,
                     archived_at=timezone.now(),
                 )
@@ -191,7 +191,7 @@ class Product(models.Model):
                             url=p.url,
                             image=p.image,
                             price=p.price,
-                            in_stock=p.in_stock,
+                            in_stock=False,
                             shop=p.shop,
                             archived_at=timezone.now(),
                         )

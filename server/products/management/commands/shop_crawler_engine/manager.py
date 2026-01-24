@@ -111,7 +111,7 @@ class DatabaseManager:
                 else:
                     # Subsequent crawl
                     if ctx["archived"]:
-                        return DatabaseManager._restore_from_archive(
+                        return DatabaseManager._maybe_restore(
                             ctx["archived"], fetched_item
                         )
                     if ctx["active"]:
@@ -210,9 +210,9 @@ class DatabaseManager:
                 shop_crawler_log(f"ERROR logging changes for restore: {e}")
 
             fetched_item["dirty"] = True
-            restored = Product.objects.using(
-                fetched_item.get("shop") or PROD_DB
-            ).create(**fetched_item)
+            restored = Product.objects.using(fetched_item.get("shop")).create(
+                **fetched_item
+            )
             try:
                 shop_crawler_log(
                     f"RESTORED {getattr(restored, 'name', '')} ({getattr(restored, 'external_id', '')})"
@@ -246,7 +246,7 @@ class DatabaseManager:
             setattr(active, k, v)
 
         active.dirty = True
-        active.save(using=fetched_item.get("shop") or PROD_DB)
+        active.save(using=fetched_item.get("shop"))
 
         return active, False, change_info
 
@@ -265,9 +265,7 @@ class DatabaseManager:
     @staticmethod
     def _create_new(fetched_item):
         fetched_item["dirty"] = True
-        product = Product.objects.using(fetched_item.get("shop") or PROD_DB).create(
-            **fetched_item
-        )
+        product = Product.objects.using(fetched_item.get("shop")).create(**fetched_item)
         try:
             shop_crawler_log(
                 f"CREATED {getattr(product, 'name', '')} ({getattr(product, 'external_id', '')})"

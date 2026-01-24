@@ -129,7 +129,7 @@ SHOPS = {
         "software": "https://enter.online/programe-soft",
         "tehnicabirou": "https://enter.online/tehnica-de-birou",
         "cartielectronice": "https://enter.online/tablete/carti-electronice",
-        "climatizare": "https://enter.online/climatizare",
+        # "climatizare": "https://enter.online/climatizare",
     },
     "darwin": {
         "function": shop_crawler.fetch_darwin,

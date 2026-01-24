@@ -113,7 +113,7 @@ def run_translation():
     Each DB runs in parallel, and each batch within DB runs in parallel.
     """
     BATCH_SIZE = 500
-    MAX_BATCH_WORKERS = 8
+    MAX_BATCH_WORKERS = 16
 
     def run_db_translation(db):
         from products.models import Product
