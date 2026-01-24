@@ -242,6 +242,7 @@ CATEGORIES = {
         "laptop": "https://enter.online/laptopuri",
         "apple": "https://xstore.md/apple",
         "pentrulaptop": "https://enter.online/accesorii/pentru-laptop",
+        "minipc": "https://enter.online/calculatoare/unitate-pc/mini",
         "pentrutableta": "https://enter.online/accesorii/pentru-tableta",
         "mobilephone": "https://enter.online/telefoane",
         "perifericepc": "https://enter.online/periferice-pc",
@@ -336,7 +337,7 @@ CATEGORIES = {
 ) """
 
 items = fetch_enter_products(
-    CATEGORIES["enter"]["pc"],
+    CATEGORIES["enter"]["minipc"],
     max_pages=20,
 )
 
