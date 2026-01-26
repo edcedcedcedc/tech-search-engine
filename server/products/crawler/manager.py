@@ -5,7 +5,7 @@ from products.models import (
     Product,
 )
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
-from products.management.commands.shop_crawler_engine.config import PROD_DB, STAGE_DB
+from products.crawler.config import PROD_DB, STAGE_DB
 
 
 class ChangeTracker:

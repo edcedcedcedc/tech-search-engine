@@ -13,6 +13,13 @@ from products.search.identity import identity_resolution
 from products.search.config import LAYER1_LIMIT
 
 
+"""Search/Product Discovery based on ML and Levenshtein
+
+    Copyright (c) 2025-2026 Andro Ranogajec
+    All rights reserved.
+"""
+
+
 # ---------------- Layer 1: Search / Product Frames ----------------
 class SearchAPIView(APIView):
     throttle_classes = [Layer1Throttle]

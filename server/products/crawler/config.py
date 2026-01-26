@@ -43,8 +43,6 @@ PIPELINE_STEPS_ENABLED = {
     "load_embeddings_cache": False,
 }
 
-DRY_RUN = False
-
 
 @shared_task(name="run_full_pipeline")
 def run_full_pipeline():

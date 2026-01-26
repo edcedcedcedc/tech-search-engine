@@ -22,7 +22,7 @@ from products.utils.log.db_merge_pipeline_to_stage import db_merge_to_stage_log
 from products.utils.log.db_merge_pipeline_to_default import db_merge_to_default_log
 from products.services.normalize import normalize_category_for_product
 from products.utils.log.load_embeddings_cache_log import load_embeddings_cache_log
-from products.management.commands.shop_crawler_engine.config import (
+from products.crawler.config import (
     DRY_RUN,
     PAGES_TO_CRAWL,
     CRAWLER_DBS,
@@ -30,6 +30,7 @@ from products.management.commands.shop_crawler_engine.config import (
     PROD_DB,
     MAX_DB_WORKERS_AT_NORMALIZE,
 )
+from products.crawler.main import ShopCrawlerEngine
 
 
 # Load environment variables
@@ -41,18 +42,24 @@ client = OpenAI(api_key=env("OPENAI_API_KEY"))
 @shared_task(name="run_crawler")
 def run_crawler():
     """
-    Run the Django crawler command via Celery.
+    Run crawler engine directly (no Django command).
     """
     try:
         if DRY_RUN:
             call_command("reset")
-        call_command("crawl", pages=PAGES_TO_CRAWL)
-        shop_crawler_log("[TASK]Crawler finished successfully")
-        # Tests
+
+        engine = ShopCrawlerEngine()
+
+        engine.run(pages=PAGES_TO_CRAWL)
+
+        shop_crawler_log("[TASK] Crawler finished successfully")
+
+        # Existing post-crawl tests stay untouched
         call_command("count", in_stock=True)
         call_command("count")
+
     except Exception as e:
-        shop_crawler_log(f"[TASK]Crawler failed: {e}")
+        shop_crawler_log(f"[TASK] Crawler failed: {e}")
         raise
 
 

@@ -2,7 +2,7 @@ import html
 import json
 import re
 from bs4 import BeautifulSoup
-from products.management.commands.shop_crawler_engine.infra.http import RateLimiter
+from products.crawler.infra.http import RateLimiter
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
 
 
