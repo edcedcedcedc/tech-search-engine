@@ -9,11 +9,11 @@ class OfferSerializer(serializers.Serializer):
     t_name = serializers.JSONField()
     t_variant = serializers.JSONField()
     shop = serializers.CharField()
-    price = serializers.IntegerField()
+    price = serializers.FloatField()
     url = serializers.URLField()
     brand = serializers.CharField()
     in_stock = serializers.BooleanField(default=True)
-    offer_score = serializers.IntegerField()
+    offer_score = serializers.FloatField()
 
 
 class AggregatedProductSerializer(serializers.Serializer):
@@ -23,11 +23,11 @@ class AggregatedProductSerializer(serializers.Serializer):
     t_name = serializers.JSONField()
     t_variant = serializers.JSONField()
     brand = serializers.CharField()
-    category = serializers.CharField()
+    t_category = serializers.JSONField()
     offers = OfferSerializer(many=True)
-    lowest_price = serializers.IntegerField()
-    relevance = serializers.IntegerField()
-    product_score = serializers.IntegerField()
+    lowest_price = serializers.FloatField()
+    relevance = serializers.FloatField()
+    product_score = serializers.FloatField()
     image = serializers.URLField(allow_blank=True, required=False)
     shops = serializers.SerializerMethodField()
 
