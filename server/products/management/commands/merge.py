@@ -66,7 +66,8 @@ class Command(BaseCommand):
                     Product(
                         shop=src.shop,
                         external_id=src.external_id,
-                        canonical_id=src.canonical_id,
+                        similar_id=src.similar_id,
+                        identical_id=src.identical_id,
                         name=src.name,
                         variant=src.variant,
                         t_name=src.t_name,
@@ -79,7 +80,7 @@ class Command(BaseCommand):
                         image=src.image,
                         in_stock=src.in_stock,
                         embedding=src.embedding,
-                        dirty=False,
+                        dirty=True,
                     )
                 )
                 processed_ids.append(src.id)
@@ -110,9 +111,9 @@ class Command(BaseCommand):
         self._flush_batch(dest_db, to_create, to_update, update_fields_union)
 
         # Reset dirty flag in source DB
-        Product.objects.using(source_db).filter(id__in=processed_ids).update(
+        """ Product.objects.using(source_db).filter(id__in=processed_ids).update(
             dirty=False
-        )
+        ) """
 
         db_merge_log(
             f"[DIRTY] Merge completed. Created={len(to_create)}, Updated={len(to_update)} "

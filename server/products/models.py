@@ -304,7 +304,7 @@ class AutocompleteToken(models.Model):
         return f"{self.context} -> {self.next_token} ({self.count})"
 
 
-class ArchivedBrokenProduct(models.Model):
+class ArchivedProduct(models.Model):
     original_id = models.IntegerField(db_index=True, null=True)
     external_id = models.CharField(max_length=50, null=False)
     similar_id = models.CharField(max_length=40, null=True, blank=True)
@@ -333,7 +333,7 @@ class ArchivedBrokenProduct(models.Model):
         ]
 
 
-class ArchivedProduct(models.Model):
+class ArchivedBrokenProduct(models.Model):
     original_id = models.IntegerField(db_index=True, null=True)
     external_id = models.CharField(max_length=50, null=False)
     similar_id = models.CharField(max_length=40, null=True, blank=True)
@@ -383,6 +383,13 @@ class ProductPriceHistory(models.Model):
         blank=True,
         related_name="archived_price_history",
     )
+    archived_broken_product = models.ForeignKey(
+        ArchivedBrokenProduct,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="archived_broken_price_history",
+    )
     shop = models.CharField(
         max_length=50, db_index=True, null=True
     )  # <-- preserve shop
@@ -407,17 +414,24 @@ class ProductPriceHistory(models.Model):
         """
         history_qs.update(product=None, archived_product=archived)
 
+    @staticmethod
+    def link_to_broken(history_qs, broken):
+        history_qs.update(
+            product=None, archived_product=None, archived_broken_product=broken
+        )
+
     class Meta:
         indexes = [
             models.Index(fields=["shop", "recorded_at"]),
             models.Index(fields=["product", "recorded_at"]),
             models.Index(fields=["archived_product", "recorded_at"]),
+            models.Index(fields=["archived_broken_product", "recorded_at"]),
         ]
-        unique_together = (
-            "product",
-            "archived_product",
-            "recorded_at",
-        )
+        unique_together = [
+            ("product", "recorded_at"),
+            ("archived_product", "recorded_at"),
+            ("archived_broken_product", "recorded_at"),
+        ]
         ordering = ["-recorded_at"]
 
     def __str__(self):

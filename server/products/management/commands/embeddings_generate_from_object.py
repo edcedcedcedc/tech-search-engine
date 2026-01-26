@@ -24,7 +24,7 @@ def cosine_sim(a, b):
     return np.dot(a, b) / (norm(a) * norm(b))
 
 
-def test_semantics(batch, embeddings, texts, max_tests=2):
+def test_semantics(products, embeddings, texts, max_tests=2):
     if len(embeddings) < 2:
         return
 
@@ -231,7 +231,7 @@ class Command(BaseCommand):
                             product.save(update_fields=["embedding"])
 
                     # Test semantics on a few samples
-                    test_semantics(valid_products, embeddings, max_tests=2)
+                    test_semantics(valid_products, embeddings, valid_texts, max_tests=2)
 
                     processed += len(valid_products)
                     generate_embeddings_from_object_log(

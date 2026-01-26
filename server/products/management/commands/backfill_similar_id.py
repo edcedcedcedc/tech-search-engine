@@ -133,8 +133,8 @@ from numpy.linalg import norm
 from rapidfuzz import fuzz
 
 
-EMBEDDING_THRESHOLD = 0.80  # cosine similarity threshold
-FUZZY_THRESHOLD = 70  # fallback fuzzy threshold
+EMBEDDING_THRESHOLD = 0.85  # strong match, same product/brand
+FUZZY_THRESHOLD = 75
 
 
 # products/utils/similar.py
@@ -191,18 +191,16 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--batch_size", type=int, default=1000)
         parser.add_argument("--db", type=str, default="default")
-        parser.add_argument(
-            "--force", action="store_true", help="Recompute similar_id even if exists"
-        )
+        parser.add_argument("--dirty", default=False)
 
     def handle(self, *args, **options):
         batch_size = options["batch_size"]
         database = options["db"]
-        force = options["force"]
+        dirty = options["dirty"]
 
         qs = Product.objects.using(database).all()
-        if not force:
-            qs = qs.filter(similar_id__isnull=True)
+        if dirty:
+            qs = qs.filter(dirty=True)
 
         total = qs.count()
         backfill_similar_id_log(

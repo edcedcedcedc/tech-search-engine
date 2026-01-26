@@ -18,9 +18,9 @@ BROKEN_DB = "broken"
 if BROKEN:
     CRAWLER_DBS = BROKEN_DB
 else:
-    CRAWLER_DBS = ["enter", "darwin"]
+    CRAWLER_DBS = ["enter", "darwin", "xstore"]
 
-SHOPS_TO_CRAWL = ["darwin", "enter"]
+SHOPS_TO_CRAWL = ["darwin", "enter", "xstore"]
 
 STAGE_DB = "stage"
 

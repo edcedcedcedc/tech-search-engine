@@ -1,128 +1,4 @@
 # file: products/management/commands/backfill_identical_embeddings.py
-
-"""import json
-import numpy as np
-from numpy.linalg import norm
-from django.core.management.base import BaseCommand
-from django.db import transaction
-from products.models import Product
-from products.utils.generate_identical_id import generate_identical_id
-from rapidfuzz import fuzz
-from products.utils.backfill_identical_id_log import backfill_identical_id_log
-
-# Thresholds
-EMBEDDING_THRESHOLD = 0.92  # strong embedding match
-EMBEDDING_BORDERLINE = 0.85  # borderline match
-FUZZY_THRESHOLD = 70  # fallback fuzzy score
-
-
-def cosine_sim(a, b):
-    return np.dot(a, b) / (norm(a) * norm(b))
-
-
-class Command(BaseCommand):
-    help = "Backfill identical_id using embeddings + fuzzy hybrid"
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "--db",
-            type=str,
-            default="default",
-            help="Database alias (default, stage, etc.)",
-        )
-        parser.add_argument(
-            "--force",
-            action="store_true",
-            help="Recompute identical_id even if it already exists",
-        )
-        parser.add_argument(
-            "--batch-size",
-            type=int,
-            default=5000,
-            help="Process products in memory batches (for memory control)",
-        )
-
-    def handle(self, *args, **options):
-        db = options["db"]
-        force = options["force"]
-        batch_size = options["batch_size"]
-
-        # Load products
-        qs = Product.objects.using(db).all()
-        if not force:
-            qs = qs.filter(identical_id__isnull=True)
-
-        total = qs.count()
-        backfill_identical_id_log(f"START embeddings backfill db={db}, total={total}")
-
-        products = list(qs)
-
-        # Convert embeddings to numpy arrays
-        for p in products:
-            if not p.embedding:
-                raise ValueError(f"Product {p.id} has no embedding!")
-            p.vec = np.array(json.loads(p.embedding), dtype=np.float32)
-
-        # --------- Cluster products ---------
-        clusters = []
-
-        for p in products:
-            placed = False
-
-            for cluster in clusters:
-                rep = cluster[0]
-
-                # Only compare same category
-                if p.category != rep.category:
-                    continue
-
-                sim = cosine_sim(p.vec, rep.vec)
-
-                # Strong embedding match
-                if sim >= EMBEDDING_THRESHOLD:
-                    cluster.append(p)
-                    placed = True
-                    break
-
-                # Borderline embedding -> fallback fuzzy
-                elif sim >= EMBEDDING_BORDERLINE:
-                    full_name_p = f"{p.name} {p.variant}".lower()
-                    full_name_rep = f"{rep.name} {rep.variant}".lower()
-                    fuzzy_score = fuzz.token_set_ratio(full_name_p, full_name_rep)
-                    if fuzzy_score >= FUZZY_THRESHOLD:
-                        cluster.append(p)
-                        placed = True
-                        break
-
-            if not placed:
-                clusters.append([p])
-
-        backfill_identical_id_log(f"Clustering done, {len(clusters)} clusters formed")
-
-        # --------- Assign identical_id per cluster ---------
-        processed = 0
-        for cluster in clusters:
-            rep = cluster[0]
-            text_for_id = " ".join(filter(None, [rep.name, rep.variant, rep.brand]))
-            identical_id = generate_identical_id(text_for_id)
-
-            with transaction.atomic(using=db):
-                for p in cluster:
-                    p.identical_id = identical_id
-                    p.save(update_fields=["identical_id"])
-                    backfill_identical_id_log(
-                        f"SET identical_id={identical_id} db={db} product_id={p.id} "
-                        f"shop={p.shop} name='{p.name}' variant='{p.variant}' brand='{p.brand}'"
-                    )
-            processed += len(cluster)
-
-        backfill_identical_id_log(
-            f"END embeddings backfill db={db}, processed={processed}/{total}"
-        )
-"""
-
-
-# file: products/management/commands/backfill_identical_embeddings.py
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from products.models import Product
@@ -133,7 +9,7 @@ from numpy.linalg import norm
 from rapidfuzz import fuzz
 
 
-EMBEDDING_THRESHOLD = 0.90  # cosine identicality threshold
+EMBEDDING_THRESHOLD = 0.95  # cosine identicality threshold
 FUZZY_THRESHOLD = 80  # fallback fuzzy threshold
 
 
@@ -193,18 +69,16 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--batch_size", type=int, default=1000)
         parser.add_argument("--db", type=str, default="default")
-        parser.add_argument(
-            "--force", action="store_true", help="Recompute identical_id even if exists"
-        )
+        parser.add_argument("--dirty", default=False)
 
     def handle(self, *args, **options):
         batch_size = options["batch_size"]
         database = options["db"]
-        force = options["force"]
+        dirty = options["dirty"]
 
         qs = Product.objects.using(database).all()
-        if not force:
-            qs = qs.filter(identical_id__isnull=True)
+        if dirty:
+            qs = qs.filter(dirty=True)
 
         total = qs.count()
         backfill_identical_id_log(

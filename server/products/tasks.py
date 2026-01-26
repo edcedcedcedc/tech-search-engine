@@ -48,6 +48,9 @@ def run_crawler():
             call_command("reset")
         call_command("crawl", pages=PAGES_TO_CRAWL)
         shop_crawler_log("[TASK]Crawler finished successfully")
+        # Tests
+        call_command("count", in_stock=True)
+        call_command("count")
     except Exception as e:
         shop_crawler_log(f"[TASK]Crawler failed: {e}")
         raise
@@ -165,6 +168,7 @@ def run_translation():
                 except Exception as e:
                     translation_log(f"[{db}] Batch failed: {e}")
         translation_log(f"Finished translation for DB: {db}")
+        call_command("count", check_translations=True)
 
     # Run all DBs in parallel
     with ThreadPoolExecutor(max_workers=len(CRAWLER_DBS)) as db_executor:
@@ -225,7 +229,7 @@ def run_translation_libre():
 
     BATCH_SIZE = 500
     MAX_SHOP_WORKERS = 3  # parallel shops
-    MAX_BATCH_WORKERS = 12  # parallel batches per shop
+    MAX_BATCH_WORKERS = 16  # parallel batches per shop
     """ if BROKEN:
         CRAWLER_DBS = ["broken"] """
 
@@ -292,15 +296,11 @@ def run_embeddings():
             )
 
             call_command("embeddings_generate_from_object", source=db, dirty=True)
-
-            generate_embeddings_from_object_log(
-                f"[TASK][{db}] Starting embeddings generation"
-            )
-            (f"[TASK][{db}] Embeddings generation finished")
-
+            call_command("embeddings_test")
+            call_command("count", check_embeddings=True)
         except Exception as e:
             generate_embeddings_from_object_log(
-                f"[TASK][{db}] Starting embeddings generation"
+                f"[TASK][{db}] Embeddings generation failed {e}"
             )
             raise
 
@@ -314,18 +314,14 @@ def run_merge_pipeline_to_stage():
     """
     try:
         # Step 1: Prod -> Stage (force overwrite)
-        db_merge_to_stage_log("[TASK] Step 1: Prod -> Stage (force overwrite)")
-        call_command(
-            "merge",
-            source=PROD_DB,
-            dest=STAGE_DB,
-            force=True,
-        )
+        db_merge_to_stage_log("[TASK] Step 1: Prod -> Stage")
+        for db in CRAWLER_DBS:
+            call_command("merge", source=PROD_DB, dest=STAGE_DB, shop=db)
         db_merge_to_stage_log("[TASK] Step 1 finished: Stage now matches Prod")
 
         # Step 2: Merge crawler DBs -> Stage (dirty logic)
         for db in CRAWLER_DBS:
-            db_merge_to_stage_log(f"[TASK] Step 2: {db} -> Stage (dirty merge)")
+            db_merge_to_stage_log(f"[TASK] Step 2: {db} -> Stage")
             call_command(
                 "merge",
                 source=db,
@@ -376,7 +372,11 @@ def run_merge_pipeline_to_stage():
 
         # Call it once after Stage merge
         snapshot_crawl_stage()
+        from products.models import Product
 
+        db_merge_to_stage_log(
+            f"Total dirty=False count={Product.objects.using(STAGE_DB).filter(dirty=False).count()}"
+        )
         db_merge_to_stage_log("[TASK] Merge to stage + snapshots completed")
 
     except Exception as e:
@@ -387,25 +387,29 @@ def run_merge_pipeline_to_stage():
 @shared_task(
     name="run_similar_ids_stage",
 )
-def run_similar_ids_stage(batch_size=1000, force=True):
+def run_similar_ids_stage(batch_size=1000):
     """
     Generate similar_ids for all products in stage after merges.
     Mirrors backfill_similar_embeddings.py logic.
     """
     try:
         backfill_similar_id_log(
-            f"[TASK] Starting similar ID generation on stage | batch_size={batch_size} | force={force}"
+            f"[TASK] Starting similar ID generation on stage | batch_size={batch_size}"
         )
 
         call_command(
             "backfill_similar_id",
             db=STAGE_DB,
             batch_size=batch_size,
-            force=force,
+            dirty=True,
         )
 
         backfill_similar_id_log("[TASK] similar ID generation finished successfully")
+        from products.models import Product
 
+        backfill_similar_id_log(
+            f"[TASK] Total similar_id='' count={Product.objects.using(PROD_DB).filter(similar_id='').count()}"
+        )
     except Exception as e:
         backfill_similar_id_log(f"[TASK] similar ID generation failed: {e}")
         raise
@@ -414,23 +418,28 @@ def run_similar_ids_stage(batch_size=1000, force=True):
 @shared_task(
     name="run_identical_ids_stage",
 )
-def run_identical_ids_stage(batch_size=1000, force=True):
+def run_identical_ids_stage(batch_size=1000):
     """
-    Generate similar_ids for all products in stage after merges.
+    Generate identical_ids for all products in stage after merges.
     Mirrors backfill_identical_embeddings.py logic.
     """
     try:
         backfill_identical_id_log(
-            f"[TASK] Starting identical ID generation on stage | batch_size={batch_size} | force={force}"
+            f"[TASK] Starting identical ID generation on stage | batch_size={batch_size} "
         )
 
         call_command(
             "backfill_identical_id",
             db=STAGE_DB,
             batch_size=batch_size,
-            force=force,
+            dirty=True,
         )
 
+        from products.models import Product
+
+        backfill_similar_id_log(
+            f"[TASK] Total similar_id='' count={Product.objects.using(PROD_DB).filter(identical_id='').count()}"
+        )
         backfill_identical_id_log(
             "[TASK] identical ID generation finished successfully"
         )
@@ -438,6 +447,63 @@ def run_identical_ids_stage(batch_size=1000, force=True):
     except Exception as e:
         backfill_identical_id_log(f"[TASK] identical ID generation failed: {e}")
         raise
+
+
+def archive_missing_products(stage_ids_map, batch_size):
+    from products.models import Product, ArchivedProduct
+    from django.utils import timezone
+    from django.db import transaction
+
+    """
+        Archive products present in Prod but missing in Stage.
+        """
+    for shop_name, stage_ids in stage_ids_map.items():
+        prod_qs = (
+            Product.objects.using(PROD_DB)
+            .filter(shop=shop_name)
+            .exclude(external_id__in=stage_ids)
+        )
+        total_to_archive = prod_qs.count()
+        db_merge_to_default_log(
+            f"[COMPARE/ARCHIVE] Shop '{shop_name}' - {total_to_archive} products to archive"
+        )
+
+        offset = 0
+        archived_count = 0
+        while True:
+            batch_qs = prod_qs[offset : offset + batch_size]
+            if not batch_qs:
+                break
+
+            archived_objs = [
+                ArchivedProduct(
+                    original_id=p.id,
+                    external_id=p.external_id,
+                    similar_id=p.similar_id,
+                    name=p.name,
+                    variant=p.variant,
+                    price=p.price,
+                    in_stock=p.in_stock,
+                    shop=p.shop,
+                    archived_at=timezone.now(),
+                )
+                for p in batch_qs
+            ]
+
+            if archived_objs:
+                with transaction.atomic(using=PROD_DB):
+                    ArchivedProduct.objects.using(PROD_DB).bulk_create(
+                        archived_objs, batch_size=batch_size
+                    )
+                    batch_qs.delete()
+
+                archived_count += len(archived_objs)
+
+            offset += batch_size
+
+        db_merge_to_default_log(
+            f"[COMPARE/ARCHIVE] Shop '{shop_name}' - archived/deleted {archived_count} products"
+        )
 
 
 @shared_task(
@@ -448,9 +514,7 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=DRY_RUN, batch_siz
     """
     Final pipeline step with blazing fast Prod cleanup + Stage merge.
     """
-    from products.models import Product, ArchivedProduct
-    from django.utils import timezone
-    from django.db import transaction
+    from products.models import Product
 
     try:
         if not dry_run:
@@ -467,59 +531,13 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=DRY_RUN, batch_siz
                     f"[COMPARE] Stage snapshot for shop '{shop_name}' has {len(stage_ids_map[shop_name])} products"
                 )
 
-            # Step 1: Compare Prod → Stage and archive missing products in batches
-            for shop_name, stage_ids in stage_ids_map.items():
-                prod_qs = (
-                    Product.objects.using(PROD_DB)
-                    .filter(shop=shop_name)
-                    .exclude(external_id__in=stage_ids)
-                )
-                total_to_archive = prod_qs.count()
-                db_merge_to_default_log(
-                    f"[COMPARE/ARCHIVE] Shop '{shop_name}' - {total_to_archive} products to archive"
-                )
-
-                # Batch processing
-                offset = 0
-                archived_count = 0
-                while True:
-                    batch_qs = prod_qs[offset : offset + batch_size]
-                    if not batch_qs:
-                        break
-
-                    archived_objs = [
-                        ArchivedProduct(
-                            original_id=p.id,
-                            external_id=p.external_id,
-                            similar_id=p.similar_id,
-                            name=p.name,
-                            variant=p.variant,
-                            price=p.price,
-                            in_stock=p.in_stock,
-                            shop=p.shop,
-                            archived_at=timezone.now(),
-                        )
-                        for p in batch_qs
-                    ]
-
-                    if archived_objs:
-                        with transaction.atomic(using=PROD_DB):
-                            ArchivedProduct.objects.using(PROD_DB).bulk_create(
-                                archived_objs, batch_size=batch_size
-                            )
-                            batch_qs.delete()
-
-                        archived_count += len(archived_objs)
-
-                    offset += batch_size
-
-                db_merge_to_default_log(
-                    f"[COMPARE/ARCHIVE] Shop '{shop_name}' - archived/deleted {archived_count} products"
-                )
+            # Step 1: Archive missing products
+            archive_missing_products(stage_ids_map, batch_size)
 
             # Step 2: Merge Stage -> Prod
-            db_merge_to_default_log(f"[TASK] Starting Stage -> Prod merge | force=True")
-            call_command("merge", source=STAGE_DB, dest=PROD_DB, force=True)
+            db_merge_to_default_log(f"[TASK] Starting Stage -> Prod merge")
+            for db in CRAWLER_DBS:
+                call_command("merge", source=STAGE_DB, dest=PROD_DB, shop=db)
             db_merge_to_default_log("[TASK] Stage -> Prod merge finished successfully")
 
             # Step 3: Mark Prod products clean
@@ -539,15 +557,14 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=DRY_RUN, batch_siz
                 Product.objects.using(db).all().delete()
                 db_merge_to_default_log(f"[TASK] Crawler DB '{db}' cleared")
 
-        db_merge_to_default_log("[TASK] Pipeline finalization completed successfully")
+        db_merge_to_default_log("[TASK] Merge to Prod completed successfully")
 
     except Exception as e:
-        db_merge_to_default_log(f"[TASK] Finalize pipeline merge failed: {e}")
+        db_merge_to_default_log(f"[TASK] pipeline merge failed: {e}")
         raise
 
 
 @shared_task(
-    bind=True,
     name="run_price_history_default",
 )
 def run_price_history_default():
@@ -558,7 +575,6 @@ def run_price_history_default():
 
 
 @shared_task(
-    bind=True,
     name="run_load_embeddings_cache",
 )
 def run_load_embeddings_cache():
