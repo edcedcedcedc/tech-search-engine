@@ -110,7 +110,7 @@ The_application_is_in_the_MVP_stage: "Aplicația este în stadiu MVP.",
   Cookie_Reject_Button: "Respinge",
 
   //Meta 
-  Meta_Title: "Compară prețuri la electronice în Moldova",
+  Meta_Title: "Compară prețurile tech în Moldova",
 
   Meta_Description: "Găsește cele mai bune oferte din magazinele din Moldova și compară prețurile rapid.",
 

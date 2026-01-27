@@ -20,7 +20,7 @@ export default function Home() {
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
-        9999
+        Strugure
       </Typography>
 
       <Typography variant="body1" color="text.secondary">

@@ -51,7 +51,7 @@ function App() {
                   mt: 4,
                   maxWidth: 600,
                   mx: "auto",
-                  py: 1.2,
+                  py: 4,
                   fontSize: "1.05rem",
                 }}
               >

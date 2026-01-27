@@ -1,7 +1,8 @@
 import React from "react";
-import { Box, Typography, Link, useTheme, useMediaQuery } from "@mui/material";
+import { Box, useTheme, useMediaQuery } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import Icon from "./Icon";
 
 const Footer: React.FC = () => {
   const theme = useTheme();
@@ -23,7 +24,7 @@ const Footer: React.FC = () => {
     <Box
       component="footer"
       sx={{
-        py: 3,
+        py: 1,
         px: 2,
         backgroundColor: theme.palette.background.default,
         textAlign: "center",
@@ -63,14 +64,22 @@ const Footer: React.FC = () => {
       {/* All rights reserved */}
       <Box
         sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 0.5,
           fontSize,
           lineHeight: 1.2,
           fontWeight: 400,
-          textDecoration: "none",
           color: theme.palette.text.primary,
         }}
       >
-        © {new Date().getFullYear()} 9999. {t("All_rights_reserved")}
+        <Icon
+          size={20}
+          color="primary"
+          variant="logo"
+          sx={{ position: "relative", top: -1 }}
+        />
+        © {new Date().getFullYear()} Strugure™. {t("All_rights_reserved")}.
       </Box>
     </Box>
   );

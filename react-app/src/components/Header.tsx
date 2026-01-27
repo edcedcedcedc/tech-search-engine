@@ -2,9 +2,7 @@ import React from "react";
 import {
   AppBar,
   Toolbar,
-  Typography,
   Box,
-  Button,
   IconButton,
   Menu,
   MenuItem,
@@ -26,6 +24,7 @@ import { LANGAUGES, type LanguagesCodes } from "../i18n/languages";
 import { useStore } from "../store/store";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
+import GrapeIcon from "../components/Icon";
 
 const Header: React.FC = () => {
   const theme = useTheme();
@@ -60,6 +59,10 @@ const Header: React.FC = () => {
     handleLangMenuClose();
   };
 
+  const iconButtonSx = {
+    color: "text.secondary",
+  };
+
   return (
     <AppBar
       position="static"
@@ -81,21 +84,32 @@ const Header: React.FC = () => {
         }}
       >
         {/* Logo */}
-        <Typography variant="h5">9999</Typography>
-
+        <Box
+          component={RouterLink}
+          to="/"
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            cursor: "pointer",
+            color: "inherit",
+            textDecoration: "none",
+          }}
+        >
+          <GrapeIcon size={27} color="primary" variant="logo" />
+        </Box>
         {/* Desktop navigation */}
         {!isMobile && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <IconButton onClick={toggleMode}>
+            <IconButton onClick={toggleMode} sx={iconButtonSx}>
               {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
             </IconButton>
             {/* About & Contact Icons */}
-            <IconButton component={RouterLink} to="/about">
+            <IconButton component={RouterLink} to="/about" sx={iconButtonSx}>
               <InfoIcon />
             </IconButton>
 
             {/* Language */}
-            <IconButton onClick={handleLangMenuOpen} color="default">
+            <IconButton onClick={handleLangMenuOpen} sx={iconButtonSx}>
               <LanguageIcon />
             </IconButton>
             <Menu
@@ -111,24 +125,17 @@ const Header: React.FC = () => {
             </Menu>
 
             {/* Home Button (text) */}
-            <Button
-              component={RouterLink}
-              to="/"
-              sx={{ color: theme.palette.text.primary }}
-            >
-              {t("Home")}
-            </Button>
           </Box>
         )}
 
         {/* Mobile hamburger */}
         {isMobile && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <IconButton onClick={toggleMode}>
+            <IconButton onClick={toggleMode} sx={iconButtonSx}>
               {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
             </IconButton>
             {/* Language */}
-            <IconButton onClick={handleLangMenuOpen} color="default">
+            <IconButton onClick={handleLangMenuOpen} sx={iconButtonSx}>
               <LanguageIcon />
             </IconButton>
             <Menu
@@ -146,7 +153,7 @@ const Header: React.FC = () => {
             {/* Drawer */}
             <IconButton
               edge="end"
-              color="default"
+              sx={iconButtonSx}
               onClick={() => setDrawerOpen(true)}
             >
               <MenuIcon />

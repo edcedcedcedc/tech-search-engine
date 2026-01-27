@@ -262,7 +262,7 @@ export const SearchAutocomplete: React.FC = () => {
           setLoading(false);
         }
       }, 500),
-    [lang]
+    [lang],
   );
 
   React.useEffect(() => {
