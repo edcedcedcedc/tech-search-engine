@@ -63,6 +63,16 @@ class Product(models.Model):
     t_variant = models.JSONField(default=dict, null=True, blank=True)
     t_category = models.JSONField(default=dict, null=True, blank=True)
 
+    # ---- PRICE HISTORY ---- #
+    @property
+    def price_history_ordered(self):
+        return self.price_history.order_by("-recorded_at")
+
+    @property
+    def last_price_change(self):
+        last = self.price_history.order_by("-recorded_at").first()
+        return last.price if last else None
+
     # ---- PIPELINE CONTROL FIELDS ----
     dirty = models.BooleanField(default=False)  # "needs downstream processing"
 

@@ -12,9 +12,8 @@ from products.search.layer1 import SearchAPIView
 # ---------------- Layer 2: Offers (Preview / Full) ----------------
 class ProductOffersAPIView(SearchAPIView):
     """
-    Inherits from SearchAPIView.
     Returns offers for a product.
-    Only works if Layer1 has been called and aggregated_cache exists.
+    Works only if Layer1 has been called and aggregated_cache exists.
     """
 
     def get(self, request, product_id):
@@ -23,12 +22,10 @@ class ProductOffersAPIView(SearchAPIView):
             request.GET.get("limit", LAYER2_LIMIT if not full else LAYER3_LIMIT)
         )
 
-        if full:
-            self.throttle_classes = [Layer2FullThrottle]
-        else:
-            self.throttle_classes = [Layer2PreviewThrottle]
+        self.throttle_classes = (
+            [Layer2FullThrottle] if full else [Layer2PreviewThrottle]
+        )
 
-        # --- Index-based cursor like Layer1 ---
         cursor = request.GET.get("cursor")
         offset = int(cursor) if cursor and cursor.isdigit() else 0
 
@@ -40,28 +37,27 @@ class ProductOffersAPIView(SearchAPIView):
         if not product:
             return Response({"offers": [], "has_more": False, "next_cursor": None})
 
-        # --- Score offers relative to product ---
+        # Score offers internally
         score_offers_for_product(product)
 
+        # Grab offers from aggregated cluster
         offers = product["offers"]
 
-        # Filter below 55%
-        # offers = [o for o in offers if o.get("offer_score", 0) >= 0.55]
-
-        # Sort the filtered offers
+        # Sort offers by score descending
         offers = sorted(offers, key=lambda o: o.get("offer_score", 0), reverse=True)
 
-        # Slice offers according to index-based cursor
+        # Slice offers according to cursor/limit
         offers_slice = offers[offset : offset + limit]
 
-        result = (
-            offers_slice
-            if full
-            else [
+        # --- Prepare API response WITHOUT embeddings ---
+        if full:
+            result = offers_slice
+        else:
+            # Minimal preview
+            result = [
                 {"shop": o["shop"], "name": o["name"], "price": o["price"]}
                 for o in offers_slice
             ]
-        )
 
         next_cursor = str(offset + limit) if offset + limit < len(offers) else None
         has_more = next_cursor is not None

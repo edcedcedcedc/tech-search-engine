@@ -17,18 +17,18 @@ def identity_resolution(aggregated):
         # Precompute base info
         base_full_name = f"{base['name']} {base.get('variant', '')}".lower()
         base_emb = None
-        if base.get("embedding"):
+        if base.get("_embedding"):
             try:
-                base_emb = np.array(json.loads(base["embedding"]))
+                base_emb = np.array(json.loads(base["_embedding"]))
             except Exception as e:
                 search_engine_log(f"Error loading embedding for base {base['id']}: {e}")
 
         for other in aggregated[:]:
             other_full_name = f"{other['name']} {other.get('variant', '')}".lower()
             other_emb = None
-            if other.get("embedding"):
+            if other.get("_embedding"):
                 try:
-                    other_emb = np.array(json.loads(other["embedding"]))
+                    other_emb = np.array(json.loads(other["_embedding"]))
                 except Exception as e:
                     search_engine_log(
                         f"Error loading embedding for other {other['id']}: {e}"
