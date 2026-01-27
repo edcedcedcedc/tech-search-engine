@@ -6,12 +6,16 @@ const enUS = {
   Select_Language: "Select Language",
 
   // landing
-  Compare_prices_in_Moldova: "Compare prices in Moldova",
-  Find_the_best_price_for_your_favorite_products:
-    "Find the best price for your favorite products",
-  Compare_product_prices_from_multiple_online_stores_in_the_Republic_of_Moldova_in_one_place:
-    "Compare product prices from multiple online stores in the Republic of Moldova, in one place",
-  The_application_is_in_the_MVP_stage: "The application is in the MVP stage",
+Explore_prices_in_Moldova: 
+ "Explore tech products in Moldova",
+
+Discover_the_best_offers_for_your_favorite_products:
+  "Discover the best deals in one place",
+
+Track_product_prices_from_multiple_online_stores_in_Moldova:
+  "Track product prices from online stores in Moldova",
+
+The_application_is_in_the_MVP_stage: "The application is in the MVP stage",
 
   // Footer
   All_rights_reserved: "All rights reserved",

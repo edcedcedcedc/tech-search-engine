@@ -42,23 +42,6 @@ def require_valid_session(view_func):
     return wrapper
 
 
-# TODO
-def normalize_db(text: str) -> str:
-    if not text:
-        return ""
-
-    # Lowercase
-    text = text.lower()
-
-    # Replace literal backslashes
-    # text = text.replace("\\", "/")
-
-    # Collapse multiple spaces
-    text = re.sub(r"\s+", " ", text)
-
-    return text
-
-
 def normalize_text(text: str) -> str:
     if not text:
         return ""
@@ -66,3 +49,16 @@ def normalize_text(text: str) -> str:
     text = re.sub(r'"\s*([^\s])', r'" \1', text)
     text = re.sub(r'(\d+)\s+"', r'\1"', text)
     return text
+
+
+def normalize(text: str) -> str:
+    if not text:
+        return ""
+    text = text.lower()
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+def tokenize(text: str):
+    return normalize(text).split()

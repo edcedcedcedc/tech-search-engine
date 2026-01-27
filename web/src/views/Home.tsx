@@ -24,9 +24,7 @@ export default function Home() {
       </Typography>
 
       <Typography variant="body1" color="text.secondary">
-        {t(
-          "Compare_product_prices_from_multiple_online_stores_in_the_Republic_of_Moldova_in_one_place"
-        )}
+        {t("Track_product_prices_from_multiple_online_stores_in_Moldova")}
       </Typography>
 
       <Typography variant="body2" color="text.secondary">

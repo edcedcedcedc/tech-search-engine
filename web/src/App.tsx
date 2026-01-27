@@ -40,10 +40,10 @@ function App() {
               }}
             >
               <Typography variant="h3" component="h1" gutterBottom>
-                {t("Compare_prices_in_Moldova")}
+                {t("Explore_prices_in_Moldova")}
               </Typography>
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                {t("Find_the_best_price_for_your_favorite_products")}
+                {t("Discover_the_best_offers_for_your_favorite_products")}
               </Typography>
 
               <Box

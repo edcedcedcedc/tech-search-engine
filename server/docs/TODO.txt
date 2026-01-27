@@ -1,0 +1,13 @@
+
+refactor tasks.py(its a mess)
+
+refactor logs 
+
+
+you didn't get me, this is like so, we compare PRO_DB across all shops we compare 
+all DBS=SHOPS of the crawler and if the sum of newly crawled out of stock + prod_db shop out of stock is greater then 100 we need to 
+
+
+add tests to check how much out of stock in each shop before merging into prod
+add tests to check how many translated after translation
+add test to see how many objects are embedded (you have a test alreaady for cosine similarity testing)

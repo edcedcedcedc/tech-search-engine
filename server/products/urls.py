@@ -1,10 +1,12 @@
 # products/urls.py
 from django.urls import path
-from products.views.search_engine import (
-    SearchAPIView,
+from products.search.layer2 import (
     ProductOffersAPIView,
 )
-from products.views.autocomplete import (
+from products.search.layer1 import (
+    SearchAPIView,
+)
+from products.search.autocomplete import (
     AutocompleteAPIView,
 )
 

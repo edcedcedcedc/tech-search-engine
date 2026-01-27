@@ -1,19 +1,7 @@
 import json
 import numpy as np
 from django.db import close_old_connections
-from products.models import Product
-from products.utils.load_embeddings_cache_log import load_embeddings_cache_log
-
-PRODUCT_IDS = None
-PRODUCT_EMBEDDINGS = None
-EMBEDDINGS_NORM = None
-
-
-import json
-import numpy as np
-from django.db import close_old_connections
-from products.models import Product
-from products.utils.load_embeddings_cache_log import load_embeddings_cache_log
+from products.utils.log.load_embeddings_cache_log import load_embeddings_cache_log
 
 PRODUCT_IDS = None
 PRODUCT_EMBEDDINGS = None
@@ -21,6 +9,8 @@ EMBEDDINGS_NORM = None
 
 
 def load_embeddings_cache():
+    from products.models import Product
+
     global PRODUCT_IDS, PRODUCT_EMBEDDINGS, EMBEDDINGS_NORM
     close_old_connections()
 

@@ -24,7 +24,6 @@ if not SECRET_KEY:
         f"SECRET_KEY not set in environment, generate and set it to '.env'"
     )
 
-# Database from env
 DATABASES = {
     "default": env.db(),
     "stage": {
@@ -43,7 +42,20 @@ DATABASES = {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "shop_xstore.sqlite3",
     },
+    # ADD THIS for Celery Beat:
+    "celery_beat": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "celery_beat.sqlite3",
+    },
+    "broken": {  # ← NEW DATABASE
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "broken.sqlite3",
+    },
 }
+
+# Tell Celery Beat to use this database
+CELERY_BEAT_DB_ALIAS = "celery_beat"
+DATABASE_ROUTERS = ["products.db_router.CeleryBeatRouter"]
 
 # Allowed hosts
 ALLOWED_HOSTS = env.list(
@@ -61,6 +73,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "products.apps.ProductsConfig",
+    "django_celery_beat",
 ]
 
 MIDDLEWARE = [
@@ -169,3 +182,12 @@ CORS_EXPOSE_HEADERS = [
 ]
 
 ELASTICSEARCH_HOSTS = ["http://localhost:9200"]
+CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "visibility_timeout": 3600,
+    "fanout_prefix": True,
+    "fanout_patterns": True,
+    "queue_order_strategy": "priority",
+}
