@@ -1,0 +1,21 @@
+# Stop local Celery
+Ctrl+C in worker terminal
+Ctrl+C in beat terminal
+
+# Stop Redis
+docker stop redis
+
+# (Optional) Remove Redis container
+docker rm redis
+
+# Start Redis
+docker start redis
+
+# Start Django
+python manage.py runserver
+
+# Start Celery worker
+celery -A aggregator worker -l info -P solo
+
+# Start Celery beat
+celery -A aggregator beat -l info

@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./server/products/management/commands/shop_crawler_engine"
+    ]
+}
