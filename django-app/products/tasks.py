@@ -506,40 +506,6 @@ def run_similar_ids_stage(batch_size=1000):
         raise
 
 
-@shared_task(
-    name="run_identical_ids_stage",
-)
-def run_identical_ids_stage(batch_size=1000):
-    """
-    Generate identical_ids for all products in stage after merges.
-    Mirrors backfill_identical_embeddings.py logic.
-    """
-    try:
-        backfill_identical_id_log(
-            f"[TASK] Starting identical ID generation on stage | batch_size={batch_size} "
-        )
-
-        call_command(
-            "backfill_identical_id",
-            db=STAGE_DB,
-            batch_size=batch_size,
-            dirty=True,
-        )
-
-        from products.models import Product
-
-        backfill_similar_id_log(
-            f"[TASK] Total similar_id='' count={Product.objects.using(PROD_DB).filter(identical_id='').count()}"
-        )
-        backfill_identical_id_log(
-            "[TASK] identical ID generation finished successfully"
-        )
-
-    except Exception as e:
-        backfill_identical_id_log(f"[TASK] identical ID generation failed: {e}")
-        raise
-
-
 def archive_missing_products(stage_ids_map, batch_size):
     from products.models import Product
 
