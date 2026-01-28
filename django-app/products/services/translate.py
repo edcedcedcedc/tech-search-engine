@@ -2,20 +2,35 @@
 import os
 import random
 import signal
-
 import sys
 import time
 import builtins
-
+import argparse
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "aggregator.settings")
 import django
 
 django.setup()
 
-from django.db import OperationalError, models
+from django.db import OperationalError
 from products.models import Product
 from products.utils.log.translation_log import translation_log
+
+
+# =========================
+# Parse command line arguments
+# =========================
+def parse_product_ids(product_ids_str):
+    """Parse comma-separated product IDs string into list of integers"""
+    if not product_ids_str:
+        return []
+    try:
+        # Split by comma and convert to integers
+        return [int(pid.strip()) for pid in product_ids_str.split(",") if pid.strip()]
+    except ValueError as e:
+        translation_log(f"Error parsing product IDs: {e}")
+        return []
+
 
 # =========================
 # Block OpenAI import
@@ -52,9 +67,12 @@ def run_translation(
 ):
     """
     Translate products in the DB (optionally limited to product_ids)
+    product_ids can be: None, a list of integers, or a comma-separated string
     """
+    # Handle product_ids parameter - convert string to list if needed
+    if isinstance(product_ids, str):
+        product_ids = parse_product_ids(product_ids)
 
-    # Import translator
     try:
         from googletrans import Translator
     except ImportError:
@@ -89,17 +107,13 @@ def run_translation(
                     f"Translating '{text[:50]}...' {src}->{dest} attempt {attempt}"
                 )
                 result = translator.translate(text, src=src, dest=dest)
-
-                # Safe sleep to avoid Google Translate rate limits
+                # Safe sleep to avoid rate limits
                 sleep_time = 2**times + SLEEP_BETWEEN_REQUESTS + random.uniform(0.5, 1)
                 times += 1
                 time.sleep(sleep_time)
-
                 return normalize_text(result.text)
-
             except Exception as e:
                 translation_log(f"Translation failed: {e}, attempt={attempt}")
-                # Exponential backoff + random jitter
                 time.sleep(2 * attempt + random.uniform(0, 1))
 
         translation_log(
@@ -109,54 +123,54 @@ def run_translation(
 
     # ===== Fetch products =====
     qs = Product.objects.using(db).filter(dirty=True)
-    if product_ids:
+
+    # Log what we're doing
+    if product_ids and isinstance(product_ids, list) and len(product_ids) > 0:
+        translation_log(
+            f"Translating {len(product_ids)} explicit product IDs from DB '{db}'"
+        )
+        # Filter by the list of IDs
         qs = qs.filter(id__in=product_ids)
+    else:
+        translation_log(f"Translating all dirty products from DB '{db}'")
 
     total = qs.count()
     if total == 0:
         translation_log("No products found")
         return
 
-    # ===== Binary search to skip already translated products =====
+    # ===== Check if product is translated =====
     def is_translated(product: Product) -> bool:
         t_name = product.t_name or {}
         t_variant = product.t_variant or {}
-
         if product.name:
-            if not (t_name.get("ro") and t_name.get("en")):
+            if not t_name.get("ro") or not t_name.get("en"):
                 return False
-
         if product.variant:
-            if not (t_variant.get("ro") and t_variant.get("en")):
+            if not t_variant.get("ro") or not t_variant.get("en"):
                 return False
-
         return True
 
-    def binary_search_start(qs):
-        min_id = qs.aggregate(min_id=models.Min("id"))["min_id"]
-        max_id = qs.aggregate(max_id=models.Max("id"))["max_id"]
-        if not min_id or not max_id:
-            return None
-        while min_id < max_id:
-            mid = (min_id + max_id) // 2
-            mid_product = qs.filter(id=mid).first()
-            if not mid_product or is_translated(mid_product):
-                min_id = mid + 1
-            else:
-                max_id = mid
-        product = qs.filter(id=min_id).first()
-        return min_id if product and not is_translated(product) else None
-
-    start_id = binary_search_start(qs)
-    if start_id:
-        qs = qs.filter(id__gte=start_id)
-        translation_log(f"Starting from product ID {start_id}")
+    # ===== If no product_ids, find first untranslated product =====
+    if not product_ids:
+        start_id = None
+        for product in qs.order_by("id"):
+            if not is_translated(product):
+                start_id = product.id
+                break
+        if start_id:
+            qs = qs.filter(id__gte=start_id).order_by("id")
+            translation_log(f"Starting from product ID {start_id}")
+        else:
+            translation_log("All products already translated")
+            return
     else:
-        translation_log("All products already translated")
-        return
+        qs = qs.order_by("id")  # preserve order for logging
+
+    translation_log(f"Processing {qs.count()} products")
 
     # ===== Translate products =====
-    for idx, product in enumerate(qs.order_by("id"), 1):
+    for idx, product in enumerate(qs, 1):
         if STOP_TRANSLATION:
             translation_log(f"STOP requested at product {idx}/{qs.count()}")
             break
@@ -165,6 +179,7 @@ def run_translation(
         t_variant = product.t_variant or {}
 
         if is_translated(product) and not force:
+            translation_log(f"Skipping already translated product {product.id}")
             continue
 
         # Translate name
@@ -197,42 +212,38 @@ def run_translation(
                 time.sleep(DB_RETRY_SLEEP)
         if not saved:
             translation_log(f"FAILED to save product {product.id}")
-
-        translation_log(f"Translated product {product.id} ({idx}/{qs.count()})")
+        else:
+            translation_log(f"Translated product {product.id} ({idx}/{qs.count()})")
 
 
 # =========================
-# CLI ENTRYPOINT
+# Command line entry point
 # =========================
 if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Run product translation")
-    parser.add_argument("--db", default="default")
-    parser.add_argument("--shop-filter", dest="shop_filter", default=None)
-    parser.add_argument("--force", action="store_true")
-    parser.add_argument("--skip-ru", action="store_true")
-    parser.add_argument("--skip-category", action="store_true")
+    parser = argparse.ArgumentParser(description="Translate products")
+    parser.add_argument("--db", default="default", help="Database to use")
+    parser.add_argument("--product-ids", type=str, help="Comma-separated product IDs")
+    parser.add_argument("--force", action="store_true", help="Force retranslation")
     parser.add_argument(
-        "--product-ids",
-        default=None,
-        help="Comma-separated list of product IDs to translate",
+        "--skip-ru", action="store_true", default=True, help="Skip Russian translation"
+    )
+    parser.add_argument(
+        "--skip-category",
+        action="store_true",
+        default=True,
+        help="Skip category translation",
     )
 
     args = parser.parse_args()
 
-    # Parse product IDs into a list of ints, or None if not provided
-    product_ids = (
-        [int(x) for x in args.product_ids.split(",") if x.strip()]
-        if args.product_ids
-        else None
-    )
+    # Parse product IDs from command line
+    product_ids_list = parse_product_ids(args.product_ids)
 
+    # Run translation
     run_translation(
         db=args.db,
-        # shop_filter=args.shop_filter,
         force=args.force,
         skip_ru=True,
         skip_category=args.skip_category,
-        product_ids=product_ids,
+        product_ids=product_ids_list,
     )

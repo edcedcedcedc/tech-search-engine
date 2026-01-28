@@ -5,13 +5,13 @@ from products.throttles import (
     Layer1Throttle,
 )
 from products.utils.log.search_engine_log import search_engine_log
-from products.search.score_cluster import score_relevance
+from products.search.score_cluster import score_cluster_for_query
 from products.search.aggregator import aggregate_products
 from products.search.embeddings import semantic_filter_products
 from products.search.embeddings import get_query_embedding
 from products.search.identity import identity_resolution
 from products.search.config import LAYER1_LIMIT
-
+from products.serializers import AggregatedProductSerializer
 
 """Search/Product Discovery based on ML and Levenshtein
 
@@ -41,7 +41,7 @@ class SearchAPIView(APIView):
             top_products = semantic_filter_products(query_embedding)
             aggregated = aggregate_products(top_products)
             aggregated = identity_resolution(aggregated)
-            aggregated = score_relevance(aggregated, raw_query, query_embedding)
+            aggregated = score_cluster_for_query(aggregated, raw_query, query_embedding)
 
             # FILTER CLUSTERS BELOW 0.55
             # aggregated = [p for p in aggregated if p.get("product_score", 0) >= 0.55]
@@ -51,15 +51,21 @@ class SearchAPIView(APIView):
             # Slice using index-based cursor
             aggregated_slice = aggregated[offset : offset + limit]
 
-            # Save full sorted aggregated cache in session for Layer2
-            request.session["aggregated_cache"] = aggregated
+            # --- Serialize safely before caching ---
+            try:
+                serializer = AggregatedProductSerializer(aggregated, many=True)
+                serialized_aggregated = serializer.data
+                request.session["aggregated_cache"] = serialized_aggregated
+            except Exception as e:
+                search_engine_log(f"Error serializing aggregated clusters: {e}")
+                serialized_aggregated = aggregated  # fallback, unvalidated
+                request.session["aggregated_cache"] = serialized_aggregated
 
             probabilistic_clusters = [
                 {
                     "id": p["id"],
                     "name": p["name"],
                     "brand": p["brand"],
-                    "t_category": p.get("t_category", {}),
                     "variant": p["variant"],
                     "lowest_price": p["lowest_price"],
                     "offers": len(p["offers"]),
@@ -68,6 +74,7 @@ class SearchAPIView(APIView):
                     "image": p["image"],
                     "t_name": p.get("t_name", {}),
                     "t_variant": p.get("t_variant", {}),
+                    "t_category": p.get("t_category", {}),
                     "shops": p.get("shops", []),
                 }
                 for p in aggregated_slice

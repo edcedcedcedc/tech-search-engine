@@ -1,1 +1,1 @@
-from products.management.commands.shop_crawler_engine.config import run_full_pipeline
+from products.crawler.config import run_full_pipeline

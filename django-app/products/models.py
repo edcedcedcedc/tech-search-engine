@@ -63,6 +63,16 @@ class Product(models.Model):
     t_variant = models.JSONField(default=dict, null=True, blank=True)
     t_category = models.JSONField(default=dict, null=True, blank=True)
 
+    # ---- PRICE HISTORY ---- #
+    @property
+    def price_history_ordered(self):
+        return self.price_history.order_by("-recorded_at")
+
+    @property
+    def last_price_change(self):
+        last = self.price_history.order_by("-recorded_at").first()
+        return last.price if last else None
+
     # ---- PIPELINE CONTROL FIELDS ----
     dirty = models.BooleanField(default=False)  # "needs downstream processing"
 
@@ -152,6 +162,52 @@ class Product(models.Model):
         except Exception as e:
             shop_crawler_log(
                 f"ERROR archiving broken product {self.name} ({self.external_id}) in DB '{db}': {e}"
+            )
+            return None
+
+    def archive_missing(self, db=None):
+        """
+        Archive this product as 'missing', move all its price history to ArchivedProduct,
+        and remove the active Product row.
+        """
+        from products.models import ArchivedProduct, ProductPriceHistory
+
+        db = db or "default"
+        try:
+            with transaction.atomic(using=db):
+
+                # Remove old archive if exists
+                ArchivedProduct.objects.using(db).filter(
+                    shop=self.shop, external_id=self.external_id
+                ).delete()
+
+                # Create new archive snapshot
+                archived = ArchivedProduct.objects.using(db).create(
+                    original_id=self.id,
+                    external_id=self.external_id,
+                    similar_id=self.similar_id,
+                    identical_id=self.identical_id,
+                    name=self.name,
+                    variant=self.variant,
+                    price=self.price,
+                    in_stock=self.in_stock,
+                    shop=self.shop,
+                    archived_at=timezone.now(),
+                )
+
+                # Reassign price history
+                ProductPriceHistory.objects.using(db).filter(product=self).update(
+                    product=None, archived_product=archived
+                )
+
+                # Delete the active product
+                Product.objects.using(db).filter(id=self.id).delete()
+
+                return archived
+
+        except Exception as e:
+            shop_crawler_log(
+                f"ERROR archiving missing product {self.name} ({self.external_id}) in DB '{db}': {e}"
             )
             return None
 
