@@ -3,7 +3,7 @@ from django.db import transaction
 from products.models import Product
 import json
 from products.utils.log.category_log import category_log
-from products.management.commands.shop_crawler_engine.config import (
+from products.crawler.config import (
     BROKEN_DB,
     CRAWLER_DBS,
 )

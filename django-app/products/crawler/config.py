@@ -31,16 +31,15 @@ MAX_DB_WORKERS_AT_NORMALIZE = 3
 
 # --- Configurable switches ---
 PIPELINE_STEPS_ENABLED = {
-    "crawler": True,
-    "normalize": True,
+    "crawler": False,
+    "normalize": False,
     "translation": True,
-    "embeddings": False,
-    "merge_to_stage": False,
-    "similar_ids_stage": False,
-    "identical_ids_stage": False,
-    "merge_to_prod": False,
-    "price_history_prod": False,
-    "load_embeddings_cache": False,
+    "embeddings": True,
+    "merge_to_stage": True,
+    "similar_ids_stage": True,
+    "merge_to_prod": True,
+    "price_history_prod": True,
+    "load_embeddings_cache": True,
 }
 
 
@@ -90,9 +89,6 @@ def run_full_pipeline():
 
     if PIPELINE_STEPS_ENABLED.get("similar_ids_stage"):
         workflow_steps.append(run_similar_ids_stage.si(batch_size=1000))
-
-    if PIPELINE_STEPS_ENABLED.get("identical_ids_stage"):
-        workflow_steps.append(run_identical_ids_stage.si(batch_size=1000))
 
     if PIPELINE_STEPS_ENABLED.get("merge_to_prod"):
         workflow_steps.append(run_merge_pipeline_to_default.si(dry_run=DRY_RUN))

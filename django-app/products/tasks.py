@@ -90,6 +90,102 @@ def run_normalize(interval_minutes=None, max_db_workers=MAX_DB_WORKERS_AT_NORMAL
     category_log("[TESTING] Finished normalization for all DBs")
 
 
+def run_normalize_in_venv1(*args, **kwargs):
+    # 1. venv python
+    venv_path = Path("venv_normalize/Scripts/python.exe")
+
+    # 2. normalize.py script
+    script_path = Path(__file__).resolve().parent / "services" / "normalize.py"
+
+    # 3. project root for PYTHONPATH
+    project_root = Path(__file__).resolve().parent.parent
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(project_root) + os.pathsep + env.get("PYTHONPATH", "")
+
+    # 4. build command
+    cmd = [str(venv_path), str(script_path)]
+    for k, v in kwargs.items():
+        cmd.append(f"--{k.replace('_', '-')}")
+        if isinstance(v, bool):
+            if v:
+                continue
+        else:
+            cmd.append(str(v))
+
+    print("Running command:", " ".join(cmd))
+    subprocess.run(cmd, check=True, env=env)
+
+
+@shared_task(name="run_normalize1")
+def run_normalize1():
+    """
+    Run category normalization for all DBs.
+    DBs run in parallel, batches inside each DB run in parallel.
+    """
+    BATCH_SIZE = 500
+    MAX_BATCH_WORKERS = 16
+
+    def run_db_normalize(db):
+        from products.models import Product
+
+        category_log(f"Starting normalization for DB: {db}")
+
+        time.sleep(random.uniform(1, 3))
+
+        product_ids = list(
+            Product.objects.using(db).filter(dirty=True).values_list("id", flat=True)
+        )
+
+        if not product_ids:
+            category_log(f"[{db}] No products to normalize")
+            return
+
+        batches = [
+            product_ids[i : i + BATCH_SIZE]
+            for i in range(0, len(product_ids), BATCH_SIZE)
+        ]
+
+        def run_batch(batch, idx):
+            thread_name = f"{db}-batch-{idx}"
+            threading.current_thread().name = thread_name
+
+            category_log(
+                f"[{thread_name}] Normalizing batch {idx}/{len(batches)} "
+                f"IDs {batch[0]}-{batch[-1]}"
+            )
+
+            time.sleep(random.uniform(2, 5))
+
+            run_normalize_in_venv1(
+                db=db,
+                product_ids=",".join(map(str, batch)),
+            )
+
+            category_log(f"[{thread_name}] Finished batch {idx}")
+
+        with ThreadPoolExecutor(max_workers=MAX_BATCH_WORKERS) as batch_executor:
+            futures = [
+                batch_executor.submit(run_batch, batch, i + 1)
+                for i, batch in enumerate(batches)
+            ]
+            for f in as_completed(futures):
+                try:
+                    f.result()
+                except Exception as e:
+                    category_log(f"[{db}] Batch failed: {e}")
+
+        category_log(f"Finished normalization for DB: {db}")
+        call_command("normalize_test")
+
+    with ThreadPoolExecutor(max_workers=len(CRAWLER_DBS)) as db_executor:
+        futures = [db_executor.submit(run_db_normalize, db) for db in CRAWLER_DBS]
+        for f in as_completed(futures):
+            try:
+                f.result()
+            except Exception as e:
+                category_log(f"DB-level normalize failed: {e}")
+
+
 def run_translation_in_venv_translate(*args, **kwargs):
     # 1. venv python
     venv_path = Path("venv_translate/Scripts/python.exe")  # root-level venv
@@ -323,7 +419,7 @@ def run_merge_pipeline_to_stage():
         # Step 1: Prod -> Stage (force overwrite)
         db_merge_to_stage_log("[TASK] Step 1: Prod -> Stage")
         for db in CRAWLER_DBS:
-            call_command("merge", source=PROD_DB, dest=STAGE_DB, shop=db)
+            call_command("merge", source=PROD_DB, dest=STAGE_DB, shop=db, force=True)
         db_merge_to_stage_log("[TASK] Step 1 finished: Stage now matches Prod")
 
         # Step 2: Merge crawler DBs -> Stage (dirty logic)
@@ -379,11 +475,6 @@ def run_merge_pipeline_to_stage():
 
         # Call it once after Stage merge
         snapshot_crawl_stage()
-        from products.models import Product
-
-        db_merge_to_stage_log(
-            f"Total dirty=False count={Product.objects.using(STAGE_DB).filter(dirty=False).count()}"
-        )
         db_merge_to_stage_log("[TASK] Merge to stage + snapshots completed")
 
     except Exception as e:
@@ -405,18 +496,11 @@ def run_similar_ids_stage(batch_size=1000):
         )
 
         call_command(
-            "backfill_similar_id",
-            db=STAGE_DB,
-            batch_size=batch_size,
-            dirty=True,
+            "backfill_similar_id", db=STAGE_DB, batch_size=batch_size, force=True
         )
 
         backfill_similar_id_log("[TASK] similar ID generation finished successfully")
-        from products.models import Product
 
-        backfill_similar_id_log(
-            f"[TASK] Total similar_id='' count={Product.objects.using(PROD_DB).filter(similar_id='').count()}"
-        )
     except Exception as e:
         backfill_similar_id_log(f"[TASK] similar ID generation failed: {e}")
         raise
@@ -457,56 +541,25 @@ def run_identical_ids_stage(batch_size=1000):
 
 
 def archive_missing_products(stage_ids_map, batch_size):
-    from products.models import Product, ArchivedProduct
-    from django.utils import timezone
-    from django.db import transaction
+    from products.models import Product
 
-    """
-        Archive products present in Prod but missing in Stage.
-        """
     for shop_name, stage_ids in stage_ids_map.items():
         prod_qs = (
             Product.objects.using(PROD_DB)
             .filter(shop=shop_name)
             .exclude(external_id__in=stage_ids)
         )
+
         total_to_archive = prod_qs.count()
         db_merge_to_default_log(
             f"[COMPARE/ARCHIVE] Shop '{shop_name}' - {total_to_archive} products to archive"
         )
 
-        offset = 0
         archived_count = 0
-        while True:
-            batch_qs = prod_qs[offset : offset + batch_size]
-            if not batch_qs:
-                break
 
-            archived_objs = [
-                ArchivedProduct(
-                    original_id=p.id,
-                    external_id=p.external_id,
-                    similar_id=p.similar_id,
-                    name=p.name,
-                    variant=p.variant,
-                    price=p.price,
-                    in_stock=p.in_stock,
-                    shop=p.shop,
-                    archived_at=timezone.now(),
-                )
-                for p in batch_qs
-            ]
-
-            if archived_objs:
-                with transaction.atomic(using=PROD_DB):
-                    ArchivedProduct.objects.using(PROD_DB).bulk_create(
-                        archived_objs, batch_size=batch_size
-                    )
-                    batch_qs.delete()
-
-                archived_count += len(archived_objs)
-
-            offset += batch_size
+        for p in prod_qs.iterator(chunk_size=batch_size):
+            if p.archive_missing(PROD_DB):
+                archived_count += 1
 
         db_merge_to_default_log(
             f"[COMPARE/ARCHIVE] Shop '{shop_name}' - archived/deleted {archived_count} products"
@@ -544,7 +597,9 @@ def run_merge_pipeline_to_default(throttle_seconds=5, dry_run=DRY_RUN, batch_siz
             # Step 2: Merge Stage -> Prod
             db_merge_to_default_log(f"[TASK] Starting Stage -> Prod merge")
             for db in CRAWLER_DBS:
-                call_command("merge", source=STAGE_DB, dest=PROD_DB, shop=db)
+                call_command(
+                    "merge", source=STAGE_DB, dest=PROD_DB, shop=db, force=True
+                )
             db_merge_to_default_log("[TASK] Stage -> Prod merge finished successfully")
 
             # Step 3: Mark Prod products clean

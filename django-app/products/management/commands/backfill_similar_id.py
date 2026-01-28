@@ -192,15 +192,18 @@ class Command(BaseCommand):
         parser.add_argument("--batch_size", type=int, default=1000)
         parser.add_argument("--db", type=str, default="default")
         parser.add_argument("--dirty", default=False)
+        parser.add_argument("--force", default=False)
 
     def handle(self, *args, **options):
         batch_size = options["batch_size"]
         database = options["db"]
         dirty = options["dirty"]
+        force = options["force"]
 
-        qs = Product.objects.using(database).all()
-        if dirty:
-            qs = qs.filter(dirty=True)
+        if force:
+            qs = Product.objects.using(database).all()
+        else:
+            qs = Product.objects.using(database).filter(dirty=True)
 
         total = qs.count()
         backfill_similar_id_log(

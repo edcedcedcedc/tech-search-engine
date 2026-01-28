@@ -64,10 +64,13 @@ class ChangeTracker:
                 f"{', '.join(change_info['changed_fields'])}"
             )
             for field in change_info["changed_fields"]:
-                shop_crawler_log(
-                    f"  {field}: {change_info['old_values'].get(field)} → "
-                    f"{change_info['new_values'].get(field)}"
-                )
+                old_val = change_info["old_values"].get(field)
+                new_val = change_info["new_values"].get(field)
+                # Format Decimal nicely
+                if field == "price":
+                    old_val = Decimal(old_val)
+                    new_val = Decimal(new_val)
+                shop_crawler_log(f"  {field}: {old_val} → {new_val}")
 
 
 class DatabaseManager:
@@ -189,10 +192,16 @@ class DatabaseManager:
 
     @staticmethod
     def _maybe_restore(ctx, fetched_item, fields_to_track):
+        """
+        Restore an archived/broken product as a new object in Stage DB.
+        Copies all fields from archived/broken + changed fields from fetched_item.
+        Marks dirty=True so the pipeline can pick it up.
+        """
         for source, label in [(ctx["archived"], "archive"), (ctx["broken"], "broken")]:
             if not source:
                 continue
 
+            # Check which tracked fields changed
             change_info = ChangeTracker.get_changed_fields(
                 db_product=source,
                 fetched_data=fetched_item,
@@ -202,6 +211,7 @@ class DatabaseManager:
                 return None, False, {}
 
             try:
+                # Log the changes detected
                 ChangeTracker.log_changes(
                     fetched_item.get("name") or "",
                     fetched_item.get("external_id") or "",
@@ -211,16 +221,28 @@ class DatabaseManager:
             except Exception as e:
                 shop_crawler_log(f"ERROR logging changes for restore: {e}")
 
-            fetched_item["dirty"] = True
+            # --- Build restored data for Stage DB ---
+            restored_data = {
+                f.name: getattr(source, f.name)
+                for f in Product._meta.fields
+                if f.name not in ("id", "pk", "created_at", "updated_at")
+            }
+            # Overlay changed fields
+            restored_data.update(fetched_item)
+            # Mark dirty
+            restored_data["dirty"] = True
+
+            # --- Create new object in Stage DB ---
             restored = Product.objects.using(fetched_item.get("shop")).create(
-                **fetched_item
+                **restored_data
             )
+
             try:
                 shop_crawler_log(
-                    f"RESTORED {getattr(restored, 'name', '')} ({getattr(restored, 'external_id', '')})"
+                    f"RESTORED to Stage DB {getattr(restored, 'name', '')} ({getattr(restored, 'external_id', '')})"
                 )
             except Exception as e:
-                shop_crawler_log(f"ERROR logging RESTORED product: {e}")
+                shop_crawler_log(f"ERROR logging RESTORED product to Stage DB: {e}")
 
             return restored, False, change_info
 

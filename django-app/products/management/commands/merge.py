@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from products.models import Product
 from products.utils.log.db_merge_log import db_merge_log
-from products.management.commands.shop_crawler_engine.config import (
+from products.crawler.config import (
     ALLOWED_FIELDS_TO_WRITE_AND_TRACK,
 )
 
@@ -29,6 +29,11 @@ class Command(BaseCommand):
         parser.add_argument("--source", type=str, required=True)
         parser.add_argument("--dest", type=str, default="default")
         parser.add_argument("--shop", type=str, required=True)
+        parser.add_argument(
+            "--force",  # or --full
+            action="store_true",
+            help="Merge all products, ignore dirty flag",
+        )
 
     def handle(self, *args, **options):
         global STOP_MERGE
@@ -36,6 +41,7 @@ class Command(BaseCommand):
         source_db = options["source"]
         dest_db = options["dest"]
         shop = options["shop"].lower()
+        force_merge = options.get("force", False)
 
         start_time = time.time()
         db_merge_log(f"[DIRTY] Starting merge {source_db} → {dest_db} | shop={shop}")
@@ -46,7 +52,14 @@ class Command(BaseCommand):
             for p in Product.objects.using(dest_db).filter(shop__iexact=shop)
         }
 
-        src_qs = Product.objects.using(source_db).filter(shop__iexact=shop, dirty=True)
+        if force_merge:
+            # Ignore dirty → merge all products
+            src_qs = Product.objects.using(source_db).filter(shop__iexact=shop)
+        else:
+            # Dirty-only merge
+            src_qs = Product.objects.using(source_db).filter(
+                shop__iexact=shop, dirty=True
+            )
 
         to_create = []
         to_update = []
