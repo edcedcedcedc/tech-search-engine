@@ -64,7 +64,6 @@ def run_full_pipeline():
         run_embeddings,
         run_merge_pipeline_to_stage,
         run_similar_ids_stage,
-        run_identical_ids_stage,
         run_merge_pipeline_to_default,
         run_price_history_default,
         run_load_embeddings_cache,
