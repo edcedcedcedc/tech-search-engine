@@ -634,6 +634,7 @@ def run_price_history_default():
         "price_history", db=PROD_DB, include_archived=True, include_broken=True
     )
     call_command("price_history_test")
+    call_command("count")
 
 
 @shared_task(
