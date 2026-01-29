@@ -86,10 +86,10 @@ def run_full_pipeline():
     workflow_steps = []
 
     if PIPELINE_STEPS_ENABLED.get("log"):
-        workflow_steps.append(reset_logs.s())
+        workflow_steps.append(reset_logs.si())
 
     if PIPELINE_STEPS_ENABLED.get("crawler"):
-        workflow_steps.append(run_crawler.s())
+        workflow_steps.append(run_crawler.si())
 
     if PIPELINE_STEPS_ENABLED.get("normalize"):
         workflow_steps.append(run_normalize.si(interval_minutes=9999999))

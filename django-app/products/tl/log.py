@@ -1,7 +1,7 @@
 import os
 import shutil
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 LOGS_DIR = os.path.join(BASE_DIR, "logs")
 
 
