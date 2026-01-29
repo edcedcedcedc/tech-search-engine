@@ -17,7 +17,7 @@ class Command(BaseCommand):
         "Use --reset-t-category to reset t_category for ArchivedProduct and ArchivedBrokenProduct."
     )
 
-    CRAWLER_DBS = ["enter", "darwin"]
+    CRAWLER_DBS = ["enter", "darwin", "xstore"]
     BATCH_SIZE = 500
 
     def add_arguments(self, parser):

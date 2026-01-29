@@ -2049,6 +2049,17 @@
       "examples": [
         21057
       ]
+    },
+    "ceasuri \u0219i br\u0103\u021b\u0103ri inteligente": {
+      "normalized": {
+        "ro": "smartwatch",
+        "en": "Smartwatches",
+        "ru": "\u0443\u043c\u043d\u044b\u0435 \u0447\u0430\u0441\u044b"
+      },
+      "first_seen": "2026-01-28T21:11:08.424491+00:00",
+      "examples": [
+        21091
+      ]
     }
   }
 }

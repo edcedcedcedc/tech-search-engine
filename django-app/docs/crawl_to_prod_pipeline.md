@@ -253,5 +253,15 @@ This is a state machine with memory.
 
 
 
+# MERGE LOGIC
 
+Active / Stage DB → contains everything the crawler currently sees (including restored products).
+Production DB → only gets updates from Stage via the merge.
+If a product no longer exists in Stage, it simply isn’t touched in Production.
+If a product is restored/new in Stage, it fully merges into Production.
+If a product exists in Production, only the allowed fields are updated.
+So you never “delete” Production stuff accidentally, unless you explicitly build logic for that.
 
+New → full create
+Existing → only safe fields update
+Missing → untouched
