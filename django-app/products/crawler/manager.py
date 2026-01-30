@@ -7,92 +7,12 @@ from products.models import (
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
 from products.crawler.config import PROD_DB, STAGE_DB, UPDATE_DB
 from products.crawler.validate import (
+    is_product_enriched,
     validate_fetched_item_or_raise,
     InvalidFetchedProduct,
 )
 from products.crawler.config import MAX_VALIDATION_ERRORS
-
-
-class ChangeTracker:
-    """Track changes in product fields between fetched data and database"""
-
-    @staticmethod
-    def get_changed_fields(db_product, fetched_data, fields_to_track=None):
-        if fields_to_track is None:
-            fields_to_track = ["price", "name", "variant", "in_stock"]
-
-        changed_fields = []
-        old_values = {}
-        new_values = {}
-
-        for field in fields_to_track:
-            if field in fetched_data:
-                db_value = getattr(db_product, field, None)
-                fetched_value = fetched_data[field]
-
-                # --- Normalize numeric values ---
-                if field == "price":
-                    try:
-                        db_value = Decimal(db_value)
-                    except:
-                        db_value = Decimal(0)
-                    try:
-                        fetched_value = Decimal(fetched_value)
-                    except:
-                        fetched_value = Decimal(0)
-
-                # --- Boolean comparison ---
-                if isinstance(db_value, bool) or isinstance(fetched_value, bool):
-                    if bool(db_value) != bool(fetched_value):
-                        changed_fields.append(field)
-                        old_values[field] = db_value
-                        new_values[field] = fetched_value
-                # --- String/other comparison ---
-                elif db_value != fetched_value:
-                    changed_fields.append(field)
-                    old_values[field] = db_value
-                    new_values[field] = fetched_value
-
-        return {
-            "has_changes": len(changed_fields) > 0,
-            "changed_fields": changed_fields,
-            "old_values": old_values,
-            "new_values": new_values,
-        }
-
-    @staticmethod
-    def log_changes(
-        product_name, external_id, shop, change_info, *, action=None, source=None
-    ):
-        """
-        action: 'UPDATE' | 'RESTORE'
-        source: 'archived' | 'broken' | None
-        """
-        if not change_info["has_changes"]:
-            return
-
-        prefix = []
-        if action:
-            prefix.append(action)
-        if source:
-            prefix.append(f"from {source.upper()}")
-
-        prefix_str = f"[{' '.join(prefix)}] " if prefix else ""
-
-        shop_crawler_log(
-            f"{prefix_str}CHANGES for {product_name} ({external_id}) in {shop}: "
-            f"{', '.join(change_info['changed_fields'])}"
-        )
-
-        for field in change_info["changed_fields"]:
-            old_val = change_info["old_values"].get(field)
-            new_val = change_info["new_values"].get(field)
-
-            if field == "price":
-                old_val = f"{Decimal(old_val):.2f}"
-                new_val = f"{Decimal(new_val):.2f}"
-
-            shop_crawler_log(f"  {field}: {old_val} → {new_val}")
+from products.crawler.tracker import ChangeTracker
 
 
 class DatabaseManager:
@@ -114,7 +34,7 @@ class DatabaseManager:
             DatabaseManager._validation_error_count += 1
 
             shop_crawler_log(
-                f"[VALIDATION ERROR {DatabaseManager._validation_error_count}/{MAX_VALIDATION_ERRORS}] "
+                f"VALIDATION ERROR {DatabaseManager._validation_error_count}/{MAX_VALIDATION_ERRORS} "
                 f"{shop=} {external_id=} → {e}"
             )
             DatabaseManager._force_broken_from_validation(fetched_item, reason=str(e))
@@ -248,6 +168,7 @@ class DatabaseManager:
             if not change_info["has_changes"]:
                 return None, False, {}
 
+            # --- Log all field changes once ---
             try:
                 ChangeTracker.log_changes(
                     fetched_item.get("name") or "",
@@ -260,6 +181,7 @@ class DatabaseManager:
             except Exception as e:
                 shop_crawler_log(f"ERROR logging changes for restore: {e}")
 
+            # TODO This updates are redundant because Archived isnt a source of truth for now!!!
             # --- Build restored data from archived/broken ---
             restored_data = {
                 f.name: getattr(source, f.name)
@@ -279,13 +201,6 @@ class DatabaseManager:
             restored_data["dirty"] = True
 
             restored = Product.objects.using(shop).create(**restored_data)
-
-            try:
-                shop_crawler_log(
-                    f"RESTORED to Stage DB {restored.name} ({restored.external_id})"
-                )
-            except Exception as e:
-                shop_crawler_log(f"ERROR logging RESTORED product: {e}")
 
             return restored, False, change_info
 
@@ -323,9 +238,12 @@ class DatabaseManager:
         active.t_name = preserved_t_name
         active.t_variant = preserved_t_variant
         active.t_category = preserved_t_category
-
         active.dirty = True
-        active.save(using=UPDATE_DB)
+
+        if is_product_enriched(active):
+            active.save(using=UPDATE_DB)
+        else:
+            active.save(using=fetched_item.get("shop"))
 
         return active, False, change_info
 
@@ -343,14 +261,27 @@ class DatabaseManager:
 
     @staticmethod
     def _create_new(fetched_item):
-        fetched_item["dirty"] = True
-        product = Product.objects.using(fetched_item.get("shop")).create(**fetched_item)
+        product = None
         try:
-            shop_crawler_log(
-                f"CREATED {getattr(product, 'name', '')} ({getattr(product, 'external_id', '')} shop={getattr(product, 'shop', '')}"
+            fetched_item["dirty"] = True
+            product = Product.objects.using(fetched_item.get("shop")).create(
+                **fetched_item
+            )
+            change_info = ChangeTracker.get_creation_fields(
+                fetched_item,
+                fields_to_track=["price", "name", "variant", "in_stock"],
+            )
+
+            ChangeTracker.log_changes(
+                product_name=getattr(product, "name", ""),
+                external_id=getattr(product, "external_id", ""),
+                shop=getattr(product, "shop", ""),
+                change_info=change_info,
+                action="CREATE",
             )
         except Exception as e:
             shop_crawler_log(f"ERROR logging CREATED product: {e}")
+
         return product, True, {}
 
     @staticmethod

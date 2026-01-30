@@ -1,7 +1,7 @@
-from .crawler import Crawler
+from .fetch import Fetch
 from celery import chain, shared_task
 
-shop_crawler = Crawler()
+shop_crawler = Fetch()
 
 ALLOWED_FIELDS_TO_WRITE_AND_TRACK = ["price", "in_stock"]
 
@@ -43,13 +43,13 @@ MAX_DB_WORKERS_AT_NORMALIZE = 3
 
 # --- Configurable switches ---
 PIPELINE_STEPS_ENABLED = {
-    "log": True,
-    "crawler": True,
-    "normalize": True,
-    "translation": True,
-    "embeddings": True,
-    "merge_to_stage": True,
-    "similar_ids_stage": True,
+    "log": False,
+    "crawler": False,
+    "normalize": False,
+    "translation": False,
+    "embeddings": False,
+    "merge_to_stage": False,
+    "similar_ids_stage": False,
     "merge_to_prod": True,
     "price_history_prod": True,
     "load_embeddings_cache": True,
@@ -92,7 +92,7 @@ def run_full_pipeline():
         workflow_steps.append(run_crawler.si())
 
     if PIPELINE_STEPS_ENABLED.get("normalize"):
-        workflow_steps.append(run_normalize.si(interval_minutes=9999999))
+        workflow_steps.append(run_normalize.si())
 
     if PIPELINE_STEPS_ENABLED.get("translation"):
         workflow_steps.append(run_translation.si())
@@ -104,7 +104,7 @@ def run_full_pipeline():
         workflow_steps.append(run_merge_pipeline_to_stage.si())
 
     if PIPELINE_STEPS_ENABLED.get("similar_ids_stage"):
-        workflow_steps.append(run_similar_ids_stage.si(batch_size=1000))
+        workflow_steps.append(run_similar_ids_stage.si())
 
     if PIPELINE_STEPS_ENABLED.get("merge_to_prod"):
         workflow_steps.append(run_merge_pipeline_to_default.si())

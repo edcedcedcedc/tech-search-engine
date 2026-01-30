@@ -3,7 +3,7 @@ from typing import Tuple
 
 
 @dataclass
-class CrawlSettings:
+class FetchSettings:
     # threading
     max_threads: int = 5
     spawn_delay: Tuple[float, float] = (0.3, 1.0)

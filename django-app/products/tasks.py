@@ -146,7 +146,6 @@ def run_translation():
                 except Exception as e:
                     translation_log(f"[{db}] Batch failed: {e}")
         translation_log(f"Finished translation for DB: {db}")
-        call_command("count", check_translations=True)
 
     # Run all DBs in parallel
     with ThreadPoolExecutor(max_workers=len(CRAWLER_DBS)) as db_executor:
@@ -156,6 +155,7 @@ def run_translation():
                 f.result()
             except Exception as e:
                 translation_log(f"DB-level translation failed: {e}")
+    call_command("count", check_translations=True)
 
 
 @shared_task(
@@ -297,7 +297,7 @@ def run_merge_pipeline_to_stage():
 
 
 @shared_task(name="run_similar_ids_stage")
-def run_similar_ids_stage(batch_size=1000):
+def run_similar_ids_stage():
     """
     Generate similar_ids for all products in Stage DB after merges.
     Uses the class-based BackfillSimilarEmbeddings instead of management command.
@@ -310,12 +310,12 @@ def run_similar_ids_stage(batch_size=1000):
 
     try:
         backfill_similar_id_log(
-            f"[TASK] Starting similar ID generation on stage | batch_size={batch_size}"
+            f"[TASK] Starting similar ID generation on stage | batch_size=1000"
         )
 
         # Initialize the class and run
         backfiller = BackfillSimilarEmbeddings(
-            batch_size=batch_size,
+            batch_size=1000,
             db=STAGE_DB,
             force=True,  # mirror the original force=True behavior
         )
@@ -329,10 +329,9 @@ def run_similar_ids_stage(batch_size=1000):
 
 
 @shared_task(
-    bind=True,
     name="run_merge_pipeline_to_default",
 )
-def run_merge_pipeline_to_default(batch_size=5000):
+def run_merge_pipeline_to_default():
     """
     Final pipeline step with blazing fast Prod cleanup + Stage merge.
     Fully uses ProductDBMerger class instead of management command.
@@ -365,7 +364,7 @@ def run_merge_pipeline_to_default(batch_size=5000):
                 )
 
             # Step 1: Archive missing products
-            archive_missing_products(stage_ids_map, batch_size)
+            archive_missing_products(stage_ids_map, 5000)
 
             # Step 2: Merge Stage -> Prod using ProductDBMerger
             db_merge_to_default_log(f"[TASK] Starting Stage -> Prod merge")

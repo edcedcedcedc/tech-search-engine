@@ -1,12 +1,10 @@
 import html
-import json
 import re
 from bs4 import BeautifulSoup
 from products.crawler.infra.http import RateLimiter
-from products.utils.log.shop_crawler_engine_log import shop_crawler_log
 
 
-class Crawler:
+class Fetch:
     """Unified class for all shops."""
 
     def __init__(self):

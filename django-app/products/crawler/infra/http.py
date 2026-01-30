@@ -3,14 +3,14 @@ import requests
 import time
 import random
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
-from ..settings import CrawlSettings
+from ..settings import FetchSettings
 
 
 class RateLimiter:
     def __init__(self, shop, robotics_url):
         self.shop = shop
         self.robotics_url = robotics_url
-        self.settings = CrawlSettings()
+        self.settings = FetchSettings()
         self.min_delay = self.settings.min_delay
         self.max_delay = self.settings.max_delay
         self.last_request_ts = 0

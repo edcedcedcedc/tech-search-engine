@@ -18,7 +18,7 @@ class Command(BaseCommand):
         "Optionally count out-of-stock items, missing translations, or embeddings."
     )
 
-    ALL_DBS = ["xstore", "enter", "darwin", "stage", "default", "broken"]
+    ALL_DBS = ["xstore", "enter", "darwin", "stage", "default", "broken", "update"]
     STOCK_DBS = ["xstore", "enter", "darwin"]
 
     def add_arguments(self, parser):

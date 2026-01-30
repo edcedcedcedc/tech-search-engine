@@ -5,7 +5,7 @@ from threading import Thread
 from queue import Queue, Empty
 from collections import defaultdict
 from products.crawler.manager import DatabaseManager
-from products.crawler.settings import CrawlSettings
+from products.crawler.settings import FetchSettings
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
 from products.crawler.config import (
     ALLOWED_FIELDS_TO_WRITE_AND_TRACK,
@@ -22,7 +22,7 @@ class ShopCrawlerEngine:
     All rights reserved.
     """
 
-    settings = CrawlSettings()
+    settings = FetchSettings()
 
     MAX_THREADS = settings.max_threads
     SPAWN_DELAY = settings.spawn_delay
