@@ -42,14 +42,17 @@ DATABASES = {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "shop_xstore.sqlite3",
     },
-    # ADD THIS for Celery Beat:
     "celery_beat": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "celery_beat.sqlite3",
     },
-    "broken": {  # ← NEW DATABASE
+    "broken": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "broken.sqlite3",
+    },
+    "update": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "update.sqlite3",
     },
 }
 

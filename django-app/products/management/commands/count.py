@@ -18,7 +18,7 @@ class Command(BaseCommand):
         "Optionally count out-of-stock items, missing translations, or embeddings."
     )
 
-    ALL_DBS = ["xstore", "enter", "darwin", "stage", "default", "broken"]
+    ALL_DBS = ["xstore", "enter", "darwin", "stage", "default", "broken", "update"]
     STOCK_DBS = ["xstore", "enter", "darwin"]
 
     def add_arguments(self, parser):
@@ -172,18 +172,27 @@ class Command(BaseCommand):
             db_count_log(f"[{db}] ProductPriceHistory (archived): {ph_archived_count}")
             db_count_log("")
 
+        # DEFAULT DB summary
         archived_count = ArchivedProduct.objects.using("default").count()
         broken_count = ArchivedBrokenProduct.objects.using("default").count()
+
+        # Now sum both archived and broken price histories
         ph_archived_count = (
             ProductPriceHistory.objects.using("default")
             .filter(archived_product__isnull=False)
             .count()
         )
+        ph_broken_count = (
+            ProductPriceHistory.objects.using("default")
+            .filter(archived_broken_product__isnull=False)
+            .count()
+        )
+        ph_archived_broken_total = ph_archived_count + ph_broken_count
 
         db_count_log(f"[default] ArchivedProduct: {archived_count}")
         db_count_log(f"[default] ArchivedBrokenProduct: {broken_count}")
         db_count_log(
-            f"[default] ProductPriceHistory (archived/broken): " f"{ph_archived_count}"
+            f"[default] ProductPriceHistory (archived/broken): {ph_archived_broken_total}"
         )
 
         db_count_log("\nCounting completed.")

@@ -86,7 +86,7 @@ class Product(models.Model):
         """
         Archive this product, moving its price history to an ArchivedProduct.
         """
-        from products.models import ArchivedProduct, ProductPriceHistory
+        from products.models import ArchivedProduct
 
         db = db or "default"
 
@@ -117,6 +117,7 @@ class Product(models.Model):
                     in_stock=False,
                     shop=self.shop,
                     archived_at=timezone.now(),
+                    dirty=False,
                 )
 
                 return archived
@@ -130,7 +131,7 @@ class Product(models.Model):
         """
         Archive a product as broken (price=0) and create initial price history.
         """
-        from products.models import ArchivedBrokenProduct, ProductPriceHistory
+        from products.models import ArchivedBrokenProduct
 
         db = db or "default"
 
@@ -151,6 +152,7 @@ class Product(models.Model):
                     t_category=self.t_category,
                     url=self.url or "",
                     image=self.image or "",
+                    dirty=False,
                     price=0,
                     in_stock=False,  # I imply its false
                     shop=self.shop,
@@ -167,18 +169,20 @@ class Product(models.Model):
 
     def archive_missing(self, db=None):
         """
-        Archive this product as 'missing', move all its price history to ArchivedProduct,
-        and remove the active Product row.
+        Archive this product as 'missing', move all its data to ArchivedProduct,
+        and remove the active Product row using (shop, external_id) as source of truth.
         """
-        from products.models import ArchivedProduct, ProductPriceHistory
+        from products.models import ArchivedProduct, Product
 
         db = db or "default"
+
         try:
             with transaction.atomic(using=db):
 
-                # Remove old archive if exists
+                # Remove any previous archive snapshot
                 ArchivedProduct.objects.using(db).filter(
-                    shop=self.shop, external_id=self.external_id
+                    shop=self.shop,
+                    external_id=self.external_id,
                 ).delete()
 
                 # Create new archive snapshot
@@ -191,23 +195,23 @@ class Product(models.Model):
                     variant=self.variant,
                     price=self.price,
                     in_stock=self.in_stock,
+                    dirty=False,
                     shop=self.shop,
                     archived_at=timezone.now(),
                 )
 
-                # Reassign price history
-                ProductPriceHistory.objects.using(db).filter(product=self).update(
-                    product=None, archived_product=archived
-                )
-
-                # Delete the active product
-                Product.objects.using(db).filter(id=self.id).delete()
+                # Delete active product(s) by source-of-truth key
+                Product.objects.using(db).filter(
+                    shop=self.shop,
+                    external_id=self.external_id,
+                ).delete()
 
                 return archived
 
         except Exception as e:
             shop_crawler_log(
-                f"ERROR archiving missing product {self.name} ({self.external_id}) in DB '{db}': {e}"
+                f"ERROR archiving missing product "
+                f"{self.name} ({self.external_id}) in DB '{db}': {e}"
             )
             return None
 
@@ -217,7 +221,7 @@ class Product(models.Model):
         Archive a queryset of products in batches, moving their price history
         to ArchivedProduct reliably.
         """
-        from products.models import ArchivedProduct, ProductPriceHistory
+        from products.models import ArchivedProduct
 
         db = db or "default"
         archived_count = 0
@@ -248,15 +252,11 @@ class Product(models.Model):
                             image=p.image,
                             price=p.price,
                             in_stock=False,
+                            dirty=False,
                             shop=p.shop,
                             archived_at=timezone.now(),
                         )
                         archived_objs.append((p, archived))
-
-                    for p, archived in archived_objs:
-                        ProductPriceHistory.objects.using(db).filter(product=p).update(
-                            product=None, archived_product=archived
-                        )
 
                     archived_count += len(batch)
 
@@ -275,7 +275,7 @@ class Product(models.Model):
         Restore ArchivedProducts back to Product in batches.
         Moves price history back to Product.
         """
-        from products.models import Product, ProductPriceHistory
+        from products.models import Product
 
         db = db or "default"
         restored_count = 0
@@ -307,15 +307,11 @@ class Product(models.Model):
                             price=a.price,
                             in_stock=a.in_stock,
                             shop=a.shop,
+                            dirty=a.dirty,
                             created_at=timezone.now(),
                             updated_at=timezone.now(),
                         )
                         restored_objs.append((a, product))
-
-                    for archived, product in restored_objs:
-                        ProductPriceHistory.objects.using(db).filter(
-                            archived_product=archived
-                        ).update(product=product, archived_product=None)
 
                     restored_count += len(batch)
 
@@ -327,6 +323,52 @@ class Product(models.Model):
                     )
 
         return {"restored": restored_count, "failed": failed_count}
+
+    @classmethod
+    def unarchive(cls, archived_obj, db=None):
+        """
+        Restore a single ArchivedProduct back to active Product.
+        Moves price history back to Product.
+        """
+
+        db = db or "default"
+
+        try:
+            with transaction.atomic(using=db):
+                # Create new Product from ArchivedProduct fields
+                restored = cls.objects.using(db).create(
+                    external_id=archived_obj.external_id,
+                    similar_id=archived_obj.similar_id or "",
+                    identical_id=archived_obj.identical_id or "",
+                    name=archived_obj.name,
+                    variant=archived_obj.variant,
+                    embedding=archived_obj.embedding,
+                    brand=archived_obj.brand,
+                    category=archived_obj.category,
+                    t_name=archived_obj.t_name,
+                    t_variant=archived_obj.t_variant,
+                    t_category=archived_obj.t_category,
+                    url=archived_obj.url,
+                    image=archived_obj.image,
+                    price=archived_obj.price,
+                    in_stock=True,  # active again
+                    shop=archived_obj.shop,
+                    dirty=True,  # pick up downstream
+                    created_at=timezone.now(),
+                    updated_at=timezone.now(),
+                )
+
+                shop_crawler_log(
+                    f"UNARCHIVED {restored.name} ({restored.external_id}) from ArchivedProduct"
+                )
+
+                return restored
+
+        except Exception as e:
+            shop_crawler_log(
+                f"ERROR unarchiving {archived_obj.name} ({archived_obj.external_id}): {e}"
+            )
+            return None
 
 
 # store embeddings for user search queries
@@ -379,6 +421,7 @@ class ArchivedProduct(models.Model):
     in_stock = models.BooleanField(default=False)
     shop = models.CharField(max_length=50)
     archived_at = models.DateTimeField(auto_now_add=True)
+    dirty = models.BooleanField(default=False)  # "needs downstream processing"
 
     class Meta:
         unique_together = ("shop", "external_id")
@@ -408,6 +451,7 @@ class ArchivedBrokenProduct(models.Model):
     in_stock = models.BooleanField(default=False)
     shop = models.CharField(max_length=50)
     archived_at = models.DateTimeField(auto_now_add=True)
+    dirty = models.BooleanField(default=False)  # "needs downstream processing"
 
     class Meta:
         unique_together = ("shop", "external_id")

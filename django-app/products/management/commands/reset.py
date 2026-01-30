@@ -17,7 +17,7 @@ class Command(BaseCommand):
         "Use --reset-t-category to reset t_category for ArchivedProduct and ArchivedBrokenProduct."
     )
 
-    CRAWLER_DBS = ["enter", "darwin"]
+    DB_S = ["enter", "darwin", "xstore", "update"]
     BATCH_SIZE = 500
 
     def add_arguments(self, parser):
@@ -43,14 +43,14 @@ class Command(BaseCommand):
         reset_t_category = options.get("reset_t_category", False)
 
         shop_crawler_log("Resetting crawler databases...")
-        for db in self.CRAWLER_DBS:
+        for db in self.DB_S:
             shop_crawler_log(f"  - {db}")
 
         if delete_history:
             shop_crawler_log("Price history will also be deleted (--history)")
 
         # Delete Products and optionally their price history
-        for db in self.CRAWLER_DBS:
+        for db in self.DB_S:
             qs = Product.objects.using(db).all()
             count = qs.count()
             qs.delete()

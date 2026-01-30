@@ -1,18 +1,29 @@
-from .crawler import Crawler
+from .fetch import Fetch
 from celery import chain, shared_task
 
-shop_crawler = Crawler()
+shop_crawler = Fetch()
 
 ALLOWED_FIELDS_TO_WRITE_AND_TRACK = ["price", "in_stock"]
 
-PAGES_TO_CRAWL = 999
+REQUIRED_FIELDS_TO_VALIDATE = [
+    "name",
+    "price",
+    "in_stock",
+    "category",
+    "brand",
+    "external_id",
+    "shop",
+]
+
+MAX_VALIDATION_ERRORS = 20
+
+PAGES_TO_CRAWL = 1
 
 # If TRUE resets the CRAWLER_DBS and STAGE_DB and doesn't merge STAGE_DB to PROD_DB
 DRY_RUN = False
 
-CRAWLER_DBS = []
-
 BROKEN = False
+
 BROKEN_DB = "broken"
 
 if BROKEN:
@@ -25,18 +36,20 @@ SHOPS_TO_CRAWL = ["darwin", "enter", "xstore"]
 STAGE_DB = "stage"
 
 PROD_DB = "default"
-# uses broken db if something goes wrong with translation or normalization and then you can manually adjust
+
+UPDATE_DB = "update"
 
 MAX_DB_WORKERS_AT_NORMALIZE = 3
 
 # --- Configurable switches ---
 PIPELINE_STEPS_ENABLED = {
+    "log": False,
     "crawler": False,
     "normalize": False,
-    "translation": True,
-    "embeddings": True,
-    "merge_to_stage": True,
-    "similar_ids_stage": True,
+    "translation": False,
+    "embeddings": False,
+    "merge_to_stage": False,
+    "similar_ids_stage": False,
     "merge_to_prod": True,
     "price_history_prod": True,
     "load_embeddings_cache": True,
@@ -58,6 +71,7 @@ def run_full_pipeline():
         7. Merge Stage into Prod (finalize)
     """
     from products.tasks import (
+        reset_logs,
         run_crawler,
         run_normalize,
         run_translation,
@@ -71,11 +85,14 @@ def run_full_pipeline():
 
     workflow_steps = []
 
+    if PIPELINE_STEPS_ENABLED.get("log"):
+        workflow_steps.append(reset_logs.si())
+
     if PIPELINE_STEPS_ENABLED.get("crawler"):
-        workflow_steps.append(run_crawler.s())
+        workflow_steps.append(run_crawler.si())
 
     if PIPELINE_STEPS_ENABLED.get("normalize"):
-        workflow_steps.append(run_normalize.si(interval_minutes=9999999))
+        workflow_steps.append(run_normalize.si())
 
     if PIPELINE_STEPS_ENABLED.get("translation"):
         workflow_steps.append(run_translation.si())
@@ -87,10 +104,10 @@ def run_full_pipeline():
         workflow_steps.append(run_merge_pipeline_to_stage.si())
 
     if PIPELINE_STEPS_ENABLED.get("similar_ids_stage"):
-        workflow_steps.append(run_similar_ids_stage.si(batch_size=1000))
+        workflow_steps.append(run_similar_ids_stage.si())
 
     if PIPELINE_STEPS_ENABLED.get("merge_to_prod"):
-        workflow_steps.append(run_merge_pipeline_to_default.si(dry_run=DRY_RUN))
+        workflow_steps.append(run_merge_pipeline_to_default.si())
 
     if PIPELINE_STEPS_ENABLED.get("price_history_prod"):
         workflow_steps.append(run_price_history_default.si())
