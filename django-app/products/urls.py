@@ -9,8 +9,10 @@ from products.search.layer1 import (
 from products.search.autocomplete import (
     AutocompleteAPIView,
 )
+from products.views import CollectEmailAPIView, RootAPIView
 
 urlpatterns = [
+    path("", RootAPIView.as_view(), name="root"),
     path("api/search/", SearchAPIView.as_view(), name="search"),
     path(
         "api/product/<str:product_id>/offers/",
@@ -18,4 +20,5 @@ urlpatterns = [
         name="product-offers",
     ),
     path("api/autocomplete/", AutocompleteAPIView.as_view(), name="autocomplete"),
+    path("api/email/", CollectEmailAPIView.as_view(), name="collect-email"),
 ]

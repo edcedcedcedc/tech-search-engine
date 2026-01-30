@@ -17,7 +17,7 @@ REQUIRED_FIELDS_TO_VALIDATE = [
 
 MAX_VALIDATION_ERRORS = 20
 
-PAGES_TO_CRAWL = 1
+PAGES_TO_CRAWL = 999
 
 # If TRUE resets the CRAWLER_DBS and STAGE_DB and doesn't merge STAGE_DB to PROD_DB
 DRY_RUN = False
@@ -43,13 +43,13 @@ MAX_DB_WORKERS_AT_NORMALIZE = 3
 
 # --- Configurable switches ---
 PIPELINE_STEPS_ENABLED = {
-    "log": False,
-    "crawler": False,
-    "normalize": False,
-    "translation": False,
-    "embeddings": False,
-    "merge_to_stage": False,
-    "similar_ids_stage": False,
+    "log": True,
+    "crawler": True,
+    "normalize": True,
+    "translation": True,
+    "embeddings": True,
+    "merge_to_stage": True,
+    "similar_ids_stage": True,
     "merge_to_prod": True,
     "price_history_prod": True,
     "load_embeddings_cache": True,

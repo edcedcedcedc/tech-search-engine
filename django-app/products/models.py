@@ -592,3 +592,11 @@ class ProductAnalytics(models.Model):
     def __str__(self):
         target = self.product or self.archived_product
         return f"Analytics for {target.name} ({target.external_id})"
+
+
+class Email(models.Model):
+    email = models.EmailField(unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.email

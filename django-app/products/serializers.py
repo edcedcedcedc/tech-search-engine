@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from .models import Email
 
 
 class PriceHistoryPreviewSerializer(serializers.Serializer):
@@ -52,3 +53,9 @@ class AggregatedProductSerializer(serializers.Serializer):
                 seen.add(shop)
                 unique_shops.append(shop)
         return unique_shops
+
+
+class EmailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Email
+        fields = ["email"]
