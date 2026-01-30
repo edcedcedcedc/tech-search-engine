@@ -1,19 +1,18 @@
-from django.core.management.base import BaseCommand
 from elasticsearch import helpers
-
 from products.models import Product
 from products.utils.es_index import es, create_index
 from products.utils.log.autocomplete_log import autocomplete_log
 
-LANGUAGES = ["en", "ro"]
-BULK_SIZE = 1000
 
+class AutocompleteIndexer:
+    LANGUAGES = ["en", "ro"]
+    BULK_SIZE = 1000
 
-class Command(BaseCommand):
-    help = "Build Elasticsearch autocomplete index (product names only, deduplicated)"
+    def __init__(self):
+        pass
 
-    def handle(self, *args, **kwargs):
-        for lang in LANGUAGES:
+    def build_index(self):
+        for lang in self.LANGUAGES:
             create_index(lang)
             index_name = f"products_autocomplete_{lang}"
 
@@ -22,7 +21,7 @@ class Command(BaseCommand):
             es.delete_by_query(
                 index=index_name,
                 body={"query": {"match_all": {}}},
-                refresh=True,  # makes sure deletion is visible immediately
+                refresh=True,
             )
 
             autocomplete_log(f"Building index {index_name}...")
@@ -31,9 +30,9 @@ class Command(BaseCommand):
             total = 0
             qs = Product.objects.only("id", "t_name")
 
-            seen_names = set()  # keep track of already added names
+            seen_names = set()  # deduplicate
 
-            for p in qs.iterator(chunk_size=BULK_SIZE):
+            for p in qs.iterator(chunk_size=self.BULK_SIZE):
                 if not p.t_name:
                     continue
 
@@ -43,7 +42,7 @@ class Command(BaseCommand):
 
                 normalized_name = name.lower().strip()
                 if normalized_name in seen_names:
-                    continue  # skip duplicates
+                    continue
                 seen_names.add(normalized_name)
 
                 actions.append(
@@ -57,7 +56,7 @@ class Command(BaseCommand):
                     }
                 )
 
-                if len(actions) >= BULK_SIZE:
+                if len(actions) >= self.BULK_SIZE:
                     helpers.bulk(es, actions)
                     total += len(actions)
                     actions.clear()

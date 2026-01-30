@@ -63,11 +63,7 @@ DATABASE_ROUTERS = ["products.db_router.CeleryBeatRouter"]
 # Allowed hosts
 ALLOWED_HOSTS = env.list(
     "ALLOWED_HOSTS",
-    default=(
-        ["localhost", "127.0.0.1", "b1cd2d2c354e.ngrok-free.app"]
-        if DJANGO_ENV == "development"
-        else ["your-production-domain.com"]
-    ),
+    default=([] if DJANGO_ENV == "development" else ["your-production-domain.com"]),
 )
 
 # Applications
