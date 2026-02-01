@@ -6,8 +6,8 @@ const enUS = {
   Select_Language: "Select Language",
 
   // Hero
-Explore_prices_in_Moldova: 
- "Explore tech products in Moldova",
+Explore_tech_in_Moldova: 
+ "Strugure, explore tech products",
 
 Discover_the_best_offers_for_your_favorite_products:
   "Discover the best deals in one place",
@@ -71,12 +71,13 @@ Be:
 Happy_searching:
   "Happy searching",
 
-
+Home_subject: "Computers",
  //Home
   Smart_price_comparison_across_multiple_online_stores_in_Moldova:
   "Smart product discovery and price comparison across multiple online stores in Moldova.",
   Search_using_almost: "Search using almost natural language, product names, or even copy-paste titles directly from shops like enter.md, darwin.md or xstore.md.",
   Results_are_grouped: "Results are grouped by similarity and meaning - not just exact text matches. Each group contains multiple offers, price history and stock availability.",
+Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Components • Peripherals • Mobile Phones • Tablets • Gadgets • Consoles & Games • Smartwatches & Fitness Bands • Software • Photo & Video Equipment • Televisions • Office Equipment",  
   Mvp_stage: " MVP stage, things will(maybe) improve fast",
   // Footer
   All_rights_reserved: "All rights reserved",
@@ -87,7 +88,7 @@ Happy_searching:
   Sources: "Sources",
 
   // About us description
- About_Us_description: "This platform is a web tech aggregator that allows you to compare offers from multiple online stores in the Republic of Moldova. As of February 1, 2026, we specialize in computers, gaming, and everything related to them, as well as mobile phones. We do not sell products and do not guarantee the availability or accuracy of prices.",
+ About_Us_description: "This platform is a web tech aggregator that allows you to discover and compare offers from multiple online stores in the Republic of Moldova. As of February 1, 2026, we specialize in computers, gaming, and everything related to them, as well as mobile phones. We do not sell products and do not guarantee the availability or accuracy of prices.",
  About_Us_description_secondary: `All data is taken from public sources and may be modified by stores without notice.`,
 
   // Contact page

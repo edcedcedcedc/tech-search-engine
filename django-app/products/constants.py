@@ -365,4 +365,29 @@ categories = [
         "ru": "кнопочные телефоны",
     },
     {"ro": "televizor", "en": "Televisions", "ru": "телевизоры"},
+    {
+        "ro": "drona, echipament aerian",
+        "en": "Drones and aerial equipment",
+        "ru": "дроны и аэрооборудование",
+    },
+    {
+        "ro": "accesorii smart home, automatizare",
+        "en": "Smart home accessories and automation",
+        "ru": "умные аксессуары для дома и автоматизация",
+    },
+    {
+        "ro": "radiouri portabile, echipamente comunicare",
+        "en": "Portable radios and communication equipment",
+        "ru": "портативные рации и оборудование связи",
+    },
+    {
+        "ro": "trepied, accesorii foto video",
+        "en": "Tripods and photo/video accessories",
+        "ru": "штативы и фото/видео аксессуары",
+    },
+    {
+        "ro": "stabilizator, accesorii video",
+        "en": "Stabilizers and video accessories",
+        "ru": "стабилизаторы и видео аксессуары",
+    },
 ]

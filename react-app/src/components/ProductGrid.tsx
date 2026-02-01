@@ -10,14 +10,15 @@ import {
   IconButton,
   Pagination,
   Stack,
-  CircularProgress,
+  Button,
 } from "@mui/material";
 
 import { useTranslation } from "react-i18next";
 import type { AggregatedProduct } from "../types/AggregatedProduct";
 import { useStore } from "../store/store";
-import ListAltIcon from "@mui/icons-material/ListAlt";
-import { useEffect } from "react";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+
+import CachedOutlinedIcon from "@mui/icons-material/CachedOutlined";
 interface Props {}
 
 const bull = (
@@ -87,8 +88,15 @@ const ProductGrid: React.FC<Props> = () => {
         sx={{
           mt: 0,
           display: "grid",
-          gap: isVerySmall ? "1rem" : 3,
-          gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
+          gap: 3,
+          gridTemplateColumns: {
+            xs: "1fr", // 0+
+            sm: "1fr ", // 375+
+            md: "1fr", // 425+ keep 2 columns
+            lg: "1fr 1fr 1fr", // 768+ 3 columns
+            xl: "1fr 1fr 1fr ", // 1024+ 4 columns
+            xxl: "1fr 1fr 1fr ", // 1440+ 5 columns
+          },
         }}
       >
         {aggregated_products.map((product: AggregatedProduct) => {
@@ -150,7 +158,7 @@ const ProductGrid: React.FC<Props> = () => {
                   onClick={() => onOpenProduct(product.id)}
                   disabled={isLoading}
                 >
-                  <ListAltIcon />
+                  <VisibilityOutlinedIcon />
                 </IconButton>
               </CardActions>
             </Card>
@@ -163,8 +171,10 @@ const ProductGrid: React.FC<Props> = () => {
           sx={{
             display: "flex",
             justifyContent: "center",
+            alignItems: "center",
             mt: 4,
             mb: 2,
+            gap: 1.5, // spacing between pagination and icon button
           }}
         >
           <Stack spacing={2}>
@@ -180,24 +190,6 @@ const ProductGrid: React.FC<Props> = () => {
         </Box>
       )}
       {/* Loading overlay for page changes */}
-      {isLoading && aggregated_products.length > 0 && (
-        <Box
-          sx={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "rgba(0, 0, 0, 0.1)",
-            zIndex: 9999,
-          }}
-        >
-          <CircularProgress />
-        </Box>
-      )}
     </> // Close the fragment
   );
 };

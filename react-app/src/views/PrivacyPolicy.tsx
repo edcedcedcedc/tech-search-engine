@@ -7,7 +7,7 @@ export default function PrivacyPolicy() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         {t("Privacy_Title")}
       </Typography>
 

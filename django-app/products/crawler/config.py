@@ -145,6 +145,10 @@ SHOPS = {
         "tehnicabirou": "https://enter.online/tehnica-de-birou",
         "cartielectronice": "https://enter.online/tablete/carti-electronice",
         # "climatizare": "https://enter.online/climatizare",
+        "smartwatch": "https://enter.online/gadgeturi/smartwatch",
+        "bratarifitness": "https://enter.online/gadgeturi/bratari-fitness",
+        "smartwatchkids": "https://enter.online/gadgeturi/smartwatch-pentru-copii",
+        "smartwatchaccess": "https://enter.online/accesorii/pentru-ceasuri-si-bratari",
     },
     "darwin": {
         "function": shop_crawler.fetch_darwin,
@@ -173,6 +177,8 @@ SHOPS = {
         "gaming6": "https://darwin.md/gadgets/ochelari-vr",
         "router": "https://darwin.md/retelistica/routere",
         "switch": "https://darwin.md/retelistica/switch",
+        "smartwatch": "https://darwin.md/gadgets/ceasuri-inteligente",
+        "smartwatch2": "https://darwin.md/gadgets/bratari-inteligente",
     },
     "xstore": {
         "function": shop_crawler.fetch_xstore,

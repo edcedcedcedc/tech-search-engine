@@ -7,7 +7,7 @@ export default function TermsOfUse() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         {t("Terms_Title")}
       </Typography>
 

@@ -6,7 +6,7 @@ export default function Contact() {
   const { t } = useTranslation();
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         {t("Contact_Title")}
       </Typography>
 

@@ -7,7 +7,7 @@ export default function Source() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         {t("Source_Title")}
       </Typography>
 

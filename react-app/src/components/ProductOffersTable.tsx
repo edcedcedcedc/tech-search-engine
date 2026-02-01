@@ -97,9 +97,40 @@ export default function ProductOffersTable() {
           width: isSmallScreen ? "100vw" : 800,
           p: isLargeScreen ? 1 : isSmallScreen ? 1 : 0.5,
           maxHeight: "100vh",
-          overflow: "hidden",
           display: "flex",
           flexDirection: "column",
+
+          // Enable vertical scroll for large screens
+          overflowY: isLargeScreen ? "auto" : "hidden",
+          overflowX: "auto", // horizontal scroll if table too wide
+
+          // Scrollbar styles for WebKit (Chrome, Edge, Safari)
+          "&::-webkit-scrollbar": {
+            width: theme.spacing(0.5), // thin scrollbar
+          },
+          "&::-webkit-scrollbar-thumb": {
+            backgroundColor:
+              theme.palette.mode === "dark"
+                ? "rgba(255,255,255,0.2)"
+                : "rgba(0,0,0,0.3)",
+            borderRadius: theme.shape.borderRadius,
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            backgroundColor:
+              theme.palette.mode === "dark"
+                ? "rgba(255,255,255,0.4)"
+                : "rgba(0,0,0,0.5)",
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "transparent",
+          },
+
+          // Scrollbar styles for Firefox
+          scrollbarWidth: "thin",
+          scrollbarColor:
+            theme.palette.mode === "dark"
+              ? "rgba(255,255,255,0.2) transparent"
+              : "rgba(0,0,0,0.3) transparent",
         }}
       >
         {/* Header */}

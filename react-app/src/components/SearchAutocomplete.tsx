@@ -19,17 +19,14 @@ import { autocomplete } from "../api/searchApi";
 import { useStore } from "../store/store";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-type Suggestion = {
-  name: string;
-  id: number;
-};
+import type { Suggestion } from "../types/Suggestion";
 
 export const SearchAutocomplete: React.FC = () => {
   const setQuery = useStore((s) => s.setQuery);
   const searchProducts = useStore((s) => s.searchProducts);
 
   const [value, setValue] = React.useState("");
-  const [suggestions, setSuggestions] = React.useState<string[]>([]);
+  const [suggestions, setSuggestions] = React.useState<Suggestion[]>([]);
   const [loading, setLoading] = React.useState(false);
   const anchorRef = React.useRef<HTMLInputElement | null>(null);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
@@ -47,7 +44,7 @@ export const SearchAutocomplete: React.FC = () => {
     () =>
       debounce(async (q: string) => {
         if (q.length === 0) {
-          setSuggestions([]); // return empty array
+          setSuggestions([]);
           setLoading(false);
           return;
         }

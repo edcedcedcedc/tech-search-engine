@@ -44,24 +44,10 @@ export const searchProducts = async (
     params.cursor = offset.toString();
   }
   
-  const { data } = await api.get<SearchResponse>("/search", { params });
+  const { data } = await api.get<SearchResponse>("/search/", { params });
   return data;
 };
 
-/**
- * Autocomplete suggestions
- * @param query User input string
- */
-export const autocomplete = async (
-  query: string,
-  lang?: string // <-- new
-): Promise<AutocompleteResponse> => {
-  const params: Record<string, any> = { q: query };
-  if (lang) params.lang = lang;
-
-  const { data } = await api.get<AutocompleteResponse>("/autocomplete", { params });
-  return data;
-};
 
 /**
  * Layer 2: Product offers (full or preview)
@@ -85,3 +71,19 @@ export const getProductOffers = async (
 };
 
 export default api;
+
+
+/**
+ * Autocomplete suggestions
+ * @param query User input string
+ */
+export const autocomplete = async (
+  query: string,
+  lang?: string
+): Promise<AutocompleteResponse> => {
+  const params: Record<string, any> = { q: query };
+  if (lang) params.lang = lang;
+
+  const { data } = await api.get<AutocompleteResponse>("/autocomplete", { params });
+  return data;
+};

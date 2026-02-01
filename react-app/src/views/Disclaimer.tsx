@@ -7,7 +7,7 @@ export default function Disclaimer() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         {t("Disclaimer_Title")}
       </Typography>
 

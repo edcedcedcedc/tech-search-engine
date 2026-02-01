@@ -15,7 +15,7 @@ environ.Env.read_env()
 client = OpenAI(api_key=env("OPENAI_API_KEY"))
 
 
-def semantic_filter_products(query_embedding, top_n=1000):
+def semantic_filter_products(query_embedding, top_n=500):
     """Retrieve top products by cosine similarity using preloaded embeddings.
     Only considers in-stock products to prevent polluting top results.
     """

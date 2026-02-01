@@ -7,16 +7,21 @@ const roMD = {
   Manage_Products: "Gestionează produsele",
 
   // Hero
-  Explore_prices_in_Moldova: 
-  "Explorează produsele tech în Moldova",
+  Explore_tech_in_Moldova: 
+  "Strugure, explorează produsele tech",
 
   Discover_the_best_offers_for_your_favorite_products:
   "Descoperă cele mai bune oferte, într-un singur loc",
 
+  Home_subject: "Calculatoare",
+  
   //Home
   Smart_price_comparison_across_multiple_online_stores_in_Moldova:"Descoperire inteligentă de produse și comparare a prețurilor în mai multe magazine online din Moldova.",
 Search_using_almost: "Căutați folosind limbaj aproape natural, nume de produse sau chiar titluri copiate direct din magazine precum enter.md, darwin.md sau xstore.md.",
 Results_are_grouped: "Rezultatele sunt grupate după similaritate și semnificație - nu doar după potriviri exacte de text. Fiecare grup conține mai multe oferte, istoricul prețurilor și disponibilitatea stocului.",
+
+  Categories: "Calculatoare • Laptopuri • Monitoare • Plăci video • Componente PC • Periferice • Telefoane mobile • Tablete • Gadgeturi • Console și jocuri • Smartwatch și brățări fitness • Software • Echipamente foto-video • Televizoare • Echipamente de birou",
+
 Mvp_stage: "Etapa MVP, lucrurile se vor (poate) îmbunătăți rapid",
  
 // Landing
@@ -116,8 +121,8 @@ Happy_searching:
   Sources: "Surse",
 
   // About us description
-  About_Us_description: "Această platformă este un agregator web de tehnologie care îți permite să compari oferte din mai multe magazine online din Republica Moldova. Începând cu 1 februarie 2026, ne specializăm în calculatoare, gaming și tot ce ține de acestea, precum și în telefoane mobile. Nu vindem produse și nu garantăm disponibilitatea sau exactitatea prețurilor.",
-  About_Us_description_secondary: `Toate datele sunt preluate din surse publice și pot fi modificate de magazine fără notificare.`,
+  About_Us_description: "Această platformă este un web tech agregator care permite să descoperi și să compari oferte de la mai multe magazine online din Republica Moldova. Începând cu 1 februarie 2026, ne specializăm în computere, jocuri și tot ce ține de acestea, precum și telefoane mobile. Nu vindem produse și nu garantăm disponibilitatea sau acuratețea prețurilor",
+  About_Us_description_secondary: "Toate datele sunt preluate din surse publice și pot fi modificate de magazine fără notificare.",
 
   // Contact Page
   Contact_Title: "Contact",
