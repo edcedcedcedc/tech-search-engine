@@ -25,7 +25,8 @@ import { useStore } from "../store/store";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import GrapeIcon from "../components/Icon";
-
+import HomeIcon from "@mui/icons-material/Home";
+import ManageSearchIcon from "@mui/icons-material/ManageSearch";
 const Header: React.FC = () => {
   const theme = useTheme();
   const mode = useStore((s) => s.mode);
@@ -36,6 +37,14 @@ const Header: React.FC = () => {
   const [langMenuAnchor, setLangMenuAnchor] =
     React.useState<null | HTMLElement>(null);
 
+  // Get store actions
+  const setQuery = useStore((s) => s.setQuery);
+  const clearProducts = useStore((s) => s.clearProducts);
+  const setCurrentPage = useStore((s) => s.setCurrentPage);
+  const setTotalPages = useStore((s) => s.setTotalPages);
+  const setTotalResults = useStore((s) => s.setTotalResults);
+  const clearCache = useStore((s) => s.clearCache); // If you added this to store
+
   const navLinks = [
     { path: "/", label: t("Home") },
     { path: "/about", label: t("About"), icon: <InfoIcon /> },
@@ -44,6 +53,7 @@ const Header: React.FC = () => {
     { path: "/terms-of-use", label: t("Terms_and_conditions") },
     { path: "/privacy-policy", label: t("Privacy_Policy") },
     { path: "/source", label: t("Sources") },
+    { path: "/products", label: t("Manage_Products") },
   ];
 
   const handleLangMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -63,6 +73,16 @@ const Header: React.FC = () => {
     color: "text.secondary",
   };
 
+  // Function to reset everything when clicking logo
+  const handleLogoClick = () => {
+    /*    setQuery(""); // reset the search query
+    clearProducts(); // clear aggregated products
+    setCurrentPage(1); // reset to page 1
+    setTotalPages(0); // reset total pages
+    setTotalResults(0); // reset total results
+    clearCache?.(); // clear cache if function exists */
+  };
+
   return (
     <AppBar
       position="static"
@@ -80,13 +100,14 @@ const Header: React.FC = () => {
           width: "100%",
           borderBottom: 1,
           borderColor: "divider",
-          px: { xs: 2, sm: 3, md: 4 }, // padding inside toolbar
+          px: { xs: 2, sm: 3, md: 4 },
         }}
       >
         {/* Logo */}
         <Box
           component={RouterLink}
           to="/"
+          onClick={handleLogoClick}
           sx={{
             display: "inline-flex",
             alignItems: "center",
@@ -97,15 +118,23 @@ const Header: React.FC = () => {
         >
           <GrapeIcon size={27} color="primary" variant="logo" />
         </Box>
+
         {/* Desktop navigation */}
         {!isMobile && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <IconButton onClick={toggleMode} sx={iconButtonSx}>
               {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
             </IconButton>
+
             {/* About & Contact Icons */}
             <IconButton component={RouterLink} to="/about" sx={iconButtonSx}>
               <InfoIcon />
+            </IconButton>
+            <IconButton component={RouterLink} to="/products" sx={iconButtonSx}>
+              <ManageSearchIcon />
+            </IconButton>
+            <IconButton component={RouterLink} to="/" sx={iconButtonSx}>
+              <HomeIcon />
             </IconButton>
 
             {/* Language */}
@@ -123,8 +152,6 @@ const Header: React.FC = () => {
                 </MenuItem>
               ))}
             </Menu>
-
-            {/* Home Button (text) */}
           </Box>
         )}
 
@@ -134,6 +161,7 @@ const Header: React.FC = () => {
             <IconButton onClick={toggleMode} sx={iconButtonSx}>
               {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
             </IconButton>
+
             {/* Language */}
             <IconButton onClick={handleLangMenuOpen} sx={iconButtonSx}>
               <LanguageIcon />
@@ -171,7 +199,13 @@ const Header: React.FC = () => {
                       <ListItemButton
                         component={RouterLink}
                         to={link.path}
-                        onClick={() => setDrawerOpen(false)}
+                        onClick={() => {
+                          setDrawerOpen(false);
+                          // Reset state when navigating home
+                          if (link.path === "/") {
+                            handleLogoClick();
+                          }
+                        }}
                       >
                         <ListItemText primary={link.label} />
                       </ListItemButton>

@@ -14,6 +14,10 @@ import { useTranslation } from "react-i18next";
 function App() {
   const theme = useTheme();
   const { t } = useTranslation();
+  const aggregatedProducts = useStore((s) => s.aggregatedProducts);
+  const query = useStore((s) => s.query);
+  const hasResults = query && aggregatedProducts.length > 0;
+
   return (
     <>
       <Meta />
@@ -48,10 +52,10 @@ function App() {
 
               <Box
                 sx={{
-                  mt: 4,
+                  mt: 2,
                   maxWidth: 600,
                   mx: "auto",
-                  py: 4,
+                  py: 2,
                   fontSize: "1.05rem",
                 }}
               >
@@ -86,7 +90,14 @@ function App() {
                   : "rgba(0,0,0,0.3) transparent",
             }}
           >
-            <Container sx={{ maxWidth: "800px", mx: "auto" }}>
+            <Container
+              disableGutters
+              sx={{
+                maxWidth: "800px",
+                mx: "auto",
+                pt: 0, // 👈 kill top padding
+              }}
+            >
               <AppRoutes />
             </Container>
           </Box>
@@ -102,12 +113,12 @@ function App() {
             }}
           >
             <Cookie />
-            <Button
+            {/* <Button
               onClick={() => console.log(useStore.getState().cookie.consent)}
             >
               Get
             </Button>
-            <ResetCookieButton />
+            <ResetCookieButton /> */}
             <Footer />
           </Box>
         </Box>

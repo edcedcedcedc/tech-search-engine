@@ -41,18 +41,6 @@ const Icon: React.FC<IconProps> = ({
         mask: `url(${GrapeIcon}) no-repeat center / contain`,
         WebkitMask: `url(${GrapeIcon}) no-repeat center / contain`,
         display: "inline-block",
-
-        ...(variant === "logo" && {
-          transition: "transform 0.25s ease, filter 0.25s ease 0.05s",
-          "&:hover": {
-            transform: " scale(1.03)",
-            filter:
-              theme.palette.mode === "dark"
-                ? "drop-shadow(0 0 6px rgba(37,116,235,0.6))"
-                : "drop-shadow(0 0 4px rgba(37,116,235,0.35))",
-          },
-        }),
-
         ...sx,
       }}
     />

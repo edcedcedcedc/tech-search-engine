@@ -50,7 +50,7 @@ class SearchAPIView(APIView):
 
             # Slice using index-based cursor
             aggregated_slice = aggregated[offset : offset + limit]
-
+            total_count = len(aggregated)  # Get total count
             # --- Serialize safely before caching ---
             try:
                 serializer = AggregatedProductSerializer(aggregated, many=True)
@@ -82,9 +82,14 @@ class SearchAPIView(APIView):
 
             next_cursor = self.get_next_cursor(aggregated, limit, offset=offset)
             return Response(
-                {"products": probabilistic_clusters, "next_cursor": next_cursor}
+                {
+                    "products": probabilistic_clusters,
+                    "next_cursor": next_cursor,
+                    "total_count": total_count,  # Add this
+                    "limit": limit,
+                    "offset": offset,
+                }
             )
-
         except Exception as e:
             trace = traceback.format_exc()
             search_engine_log(f"Error in SearchAPIView: {e}\n{trace}")

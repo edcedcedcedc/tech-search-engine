@@ -4,7 +4,7 @@ type ThemeMode = "light" | "dark";
 import type { AggregatedProduct } from "../types/AggregatedProduct";
 import { getProductOffers as apiGetProductOffers } from "../api/searchApi";
 import { searchProducts as apiSearchProducts } from "../api/searchApi";
-import { useTranslation } from "react-i18next";
+
 interface CookieState {
   consent: boolean | null; // null = not answered yet
   accept: () => void;
@@ -13,12 +13,33 @@ interface CookieState {
 
 interface State {
 
+
+  currentPage: number;
+  totalPages: number;
+  totalResults: number;
+  nextCursor: string | null;
+  setCurrentPage: (page: number) => void;
+  setTotalPages: (pages: number) => void;
+  setTotalResults: (count: number) => void;
+  setNextCursor: (cursor: string | null) => void;
+
+  
+  pageCache: Record<number, AggregatedProduct[]>; // Cache for loaded pages
+  queryCacheKey: string; // To track current search query for cache invalidation
+  
+  
+  isLoading: boolean;   // new
+  setIsLoading: (value: boolean) => void; // new
+
   closeProduct: any;
   mode: ThemeMode;
   toggleMode: () => void;
   setMode: (mode: ThemeMode) => void;
   cookie: CookieState;
-  searchProducts: (query?: string, lang?: string) => Promise<void>;
+
+  clearCache: () => void;
+
+  searchProducts: (query?: string, lang?: string, page?: number) => Promise<void>;
 
   aggregatedProducts: AggregatedProduct[];
   setAggregatedProducts: (products: AggregatedProduct[]) => void;
@@ -35,6 +56,11 @@ interface State {
 }
 
 const COOKIE_NAME = "myAppCookieConsent";
+
+// Helper to generate cache key
+const generateCacheKey = (query: string, lang?: string) => {
+  return `${query}-${lang || 'en'}`;
+};
 
 export const useStore = create<State>((set, get) => ({
   mode: (typeof window !== "undefined" ? (localStorage.getItem("theme") as ThemeMode) : null) || "dark",
@@ -125,17 +151,99 @@ export const useStore = create<State>((set, get) => ({
     }));
   },
   closeProduct: () => set({ selectedProductId: null }),
-  searchProducts: async (query?: string, lang?: string) => {
-    const q = query ?? get().query; // use argument or fallback to current query
+  
+  isLoading: false,
+  setIsLoading: (value: boolean) => set({ isLoading: value }),
+  
+ 
+  // UPDATED: searchProducts with caching
+  searchProducts: async (query?: string, lang?: string, page: number = 1) => {
+    const q = query ?? get().query;
     
     if (!q) return;
+    
+    const currentCacheKey = generateCacheKey(q, lang);
+    const { pageCache, queryCacheKey } = get();
+    
+    // Check if query changed - clear cache if it did
+    if (currentCacheKey !== queryCacheKey) {
+      set({ pageCache: {}, queryCacheKey: currentCacheKey });
+    }
+    
+    // Check cache first
+    const cachedPage = pageCache[page];
+    if (cachedPage) {
+      // Use cached data
+      set({ 
+        aggregatedProducts: cachedPage,
+        currentPage: page,
+        isLoading: false 
+      });
+      return;
+    }
+    
     try {
-      set({ aggregatedProducts: [] }); // optional: clear old results
-      const data = await apiSearchProducts(q,lang);
-      console.log(data.products)
-      set({ aggregatedProducts: data.products });
+      set({ isLoading: true });
+      
+      const limit = 20;
+      let cursor: string | undefined;
+      
+      if (page > 1) {
+        const offset = (page - 1) * limit;
+        cursor = offset.toString();
+      }
+      
+      const data = await apiSearchProducts(q, lang, limit, cursor);
+      const totalCount = data.total_count;
+      
+      // Cache this page
+      const newCache = { ...pageCache, [page]: data.products };
+
+
+      // Limit cache size (optional - keep last 10 pages)
+      if (Object.keys(newCache).length > 10) {
+        // Remove oldest page (lowest page number)
+        const oldestPage = Math.min(...Object.keys(newCache).map(Number));
+        delete newCache[oldestPage];
+      }
+      
+      set({
+        aggregatedProducts: data.products,
+        currentPage: page,
+        nextCursor: data.next_cursor || null,
+        totalResults: totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        pageCache: newCache,
+        queryCacheKey: currentCacheKey,
+        isLoading: false
+      });
+      
     } catch (err) {
       console.error("Search error:", err);
+      set({ isLoading: false });
     }
   },
+
+
+   // Pagination state initialization
+  currentPage: 1,
+  totalPages: 0,
+  totalResults: 0,
+  nextCursor: null,
+  
+  // Pagination actions
+  setCurrentPage: (page) => set({ currentPage: page }),
+  setTotalPages: (pages) => set({ totalPages: pages }),
+  setTotalResults: (count) => set({ totalResults: count }),
+  setNextCursor: (cursor) => set({ nextCursor: cursor }),
+  
+  pageCache: {},
+  queryCacheKey: '',
+  clearCache: () => set({ 
+  pageCache: {}, 
+  queryCacheKey: '',
+  currentPage: 1,
+  totalPages: 0,
+  totalResults: 0
+}),
 }));

@@ -18,6 +18,11 @@ import ClickAwayListener from "@mui/material/ClickAwayListener";
 import { autocomplete } from "../api/searchApi";
 import { useStore } from "../store/store";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+type Suggestion = {
+  name: string;
+  id: number;
+};
 
 export const SearchAutocomplete: React.FC = () => {
   const setQuery = useStore((s) => s.setQuery);
@@ -37,12 +42,12 @@ export const SearchAutocomplete: React.FC = () => {
   const closeSuggestions = () => {
     setSuggestions([]);
   };
-
+  const navigate = useNavigate();
   const fetchSuggestions = React.useMemo(
     () =>
       debounce(async (q: string) => {
         if (q.length === 0) {
-          setSuggestions([]);
+          setSuggestions([]); // return empty array
           setLoading(false);
           return;
         }
@@ -85,6 +90,7 @@ export const SearchAutocomplete: React.FC = () => {
     setQuery(q);
     setSuggestions([]);
     searchProducts(q, lang);
+    navigate("/products");
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,9 +108,9 @@ export const SearchAutocomplete: React.FC = () => {
     }
   };
 
-  const handleSelect = (q: string) => {
-    setValue(q);
-    submitSearch(q);
+  const handleSelect = (q: Suggestion) => {
+    setValue(q.name);
+    submitSearch(q.name);
   };
 
   return (
@@ -122,7 +128,7 @@ export const SearchAutocomplete: React.FC = () => {
         }}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        placeholder={`${t("Search_product")}...`}
+        placeholder={`${t("Search_product")}`}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
@@ -146,13 +152,13 @@ export const SearchAutocomplete: React.FC = () => {
                 />
                 {!delayedLoading && (
                   <IconButton
-                    size="small"
+                    size="medium"
                     onClick={() => submitSearch(value)}
                     style={{
                       position: "absolute",
                     }}
                   >
-                    <SearchIcon fontSize="small" />
+                    <SearchIcon fontSize="medium" />
                   </IconButton>
                 )}
               </div>
@@ -217,7 +223,7 @@ export const SearchAutocomplete: React.FC = () => {
             })}
           >
             <List dense disablePadding>
-              {suggestions.map((s, idx) => (
+              {suggestions.map((s: any, idx: Number) => (
                 <ListItemButton
                   key={`${s}-${idx}`}
                   onClick={() => handleSelect(s)}
@@ -230,7 +236,7 @@ export const SearchAutocomplete: React.FC = () => {
                   }}
                 >
                   <ListItemText
-                    primary={s}
+                    primary={s.name}
                     primaryTypographyProps={{
                       noWrap: true,
                       style: { overflow: "hidden", textOverflow: "ellipsis" },

@@ -9,7 +9,7 @@ import type { AutocompleteResponse } from "../types/AutocompleteResponse";
 // Using Vite proxy: baseURL points to the proxy /api
 const api = axios.create({
   baseURL: "/api", // proxy in vite.config.ts will forward to Django
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     "Accept": "application/json",
   },
@@ -26,15 +26,24 @@ const api = axios.create({
  */
 export const searchProducts = async (
   query: string,
-  lang?: string, // <-- new
+  lang?: string,
   limit?: number,
-  cursor?: string
+  cursor?: string, // Your backend uses cursor for offset
+  offset?: number // Keep as alternative
 ): Promise<SearchResponse> => {
   const params: Record<string, any> = { q: query };
-  if (cursor) params.cursor = cursor;
+  
+  if (lang) params.lang = lang;
   if (limit) params.limit = limit;
-  if (lang) params.lang = lang; // send lang to backend
-
+  
+  // Your backend expects 'cursor' parameter which is actually an offset number
+  if (cursor !== undefined) {
+    params.cursor = cursor;
+  } else if (offset !== undefined) {
+    // If offset is provided, convert it to cursor string
+    params.cursor = offset.toString();
+  }
+  
   const { data } = await api.get<SearchResponse>("/search", { params });
   return data;
 };

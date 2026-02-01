@@ -8,16 +8,12 @@ class AutocompleteIndexer:
     LANGUAGES = ["en", "ro"]
     BULK_SIZE = 1000
 
-    def __init__(self):
-        pass
-
     def build_index(self):
         for lang in self.LANGUAGES:
             create_index(lang)
             index_name = f"products_autocomplete_{lang}"
 
             autocomplete_log(f"Clearing existing documents in {index_name}...")
-            # Delete all existing documents
             es.delete_by_query(
                 index=index_name,
                 body={"query": {"match_all": {}}},
@@ -30,7 +26,7 @@ class AutocompleteIndexer:
             total = 0
             qs = Product.objects.only("id", "t_name")
 
-            seen_names = set()  # deduplicate
+            seen_names = set()  # deduplicate identical names
 
             for p in qs.iterator(chunk_size=self.BULK_SIZE):
                 if not p.t_name:
@@ -41,6 +37,9 @@ class AutocompleteIndexer:
                     continue
 
                 normalized_name = name.lower().strip()
+                if not normalized_name:
+                    continue
+
                 if normalized_name in seen_names:
                     continue
                 seen_names.add(normalized_name)
@@ -50,7 +49,7 @@ class AutocompleteIndexer:
                         "_index": index_name,
                         "_id": p.id,
                         "_source": {
-                            "suggest": {"input": [normalized_name]},
+                            "name": normalized_name,
                             "product_id": p.id,
                         },
                     }

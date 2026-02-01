@@ -1,3 +1,4 @@
+import * as React from "react";
 import {
   Box,
   Drawer,
@@ -8,35 +9,76 @@ import {
   TableRow,
   CircularProgress,
   Typography,
-  Button,
   useTheme,
   useMediaQuery,
   IconButton,
+  TablePagination,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close"; // Import close icon
-import OpenInNewIcon from "@mui/icons-material/OpenInNew"; // Optional: for link icon
+import CloseIcon from "@mui/icons-material/Close";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import InventoryIcon from "@mui/icons-material/Inventory";
+import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { useStore } from "../store/store";
-import AddIcCallIcon from "@mui/icons-material/AddIcCall";
+import { useTranslation } from "react-i18next";
 
 export default function ProductOffersTable() {
   const selectedProductId = useStore((s) => s.selectedProductId);
   const isLoading = useStore((s) => s.isOffersLoading);
   const offers = useStore((s) =>
-    selectedProductId ? s.productOffers[selectedProductId] : null
+    selectedProductId ? s.productOffers[selectedProductId] : null,
   );
   const close = useStore((s) => s.closeProduct);
   const theme = useTheme();
+  const { t } = useTranslation();
 
-  // Simplify breakpoints
   const isSmallScreen = useMediaQuery("(max-width:768px)");
   const isVerySmallScreen = useMediaQuery("(max-width:425px)");
   const isTinyScreen = useMediaQuery("(max-width:320px)");
-  const isLargeScreen = useMediaQuery("(min-width:1024px)"); // NEW: For 1024px and above
+  const isLargeScreen = useMediaQuery("(min-width:1024px)");
 
   const open = Boolean(selectedProductId);
 
-  // Function to truncate text for small screens
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [priceArrowUp, setPriceArrowUp] = React.useState(true); // UI toggle only
+
+  const handleChangePage = (
+    event: React.MouseEvent<HTMLButtonElement> | null,
+    newPage: number,
+  ) => setPage(newPage);
+
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handlePriceClick = () => {
+    setPriceArrowUp((prev) => !prev);
+  };
+
+  const getColumns = () => {
+    const baseColumns = [
+      t("Shop"),
+      t("Price") + " MDL",
+      t("Name"),
+      t("Variant"),
+      "",
+    ];
+    if (isTinyScreen) return baseColumns;
+    return [
+      t("Shop"),
+      t("Price") + " MDL",
+      t("InStock"),
+      t("Name"),
+      t("Variant"),
+      "",
+    ];
+  };
+  const columns = getColumns();
+
   const truncateText = (text: string, maxLength: number) => {
     if (!text || !isSmallScreen) return text;
     return text.length > maxLength
@@ -44,38 +86,31 @@ export default function ProductOffersTable() {
       : text;
   };
 
-  // Define columns based on screen size
-  const getColumns = () => {
-    const baseColumns = ["Shop", "Price", "Name", "Variant", ""];
-    if (isTinyScreen) {
-      return baseColumns; // 320px and below - no "In Stock" column
-    }
-    // After 320px - add "In Stock" column before the link column
-    return ["Shop", "Price", "In Stock", "Name", "Variant", ""];
-  };
-
-  const columns = getColumns();
+  const paginatedOffers = offers
+    ? offers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+    : [];
 
   return (
     <Drawer anchor="right" open={open} onClose={close}>
       <Box
         sx={{
           width: isSmallScreen ? "100vw" : 800,
-          p: isLargeScreen ? 0.5 : isSmallScreen ? 0.5 : 0.25, // CHANGED: 8px (0.5) for 1024px and above
+          p: isLargeScreen ? 1 : isSmallScreen ? 1 : 0.5,
           maxHeight: "100vh",
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
         }}
       >
-        {/* Header - Optimized for small screens */}
+        {/* Header */}
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            mb: 1,
+            mb: 2,
             flexShrink: 0,
+            px: isVerySmallScreen ? 1 : 2,
           }}
         >
           <Typography
@@ -85,12 +120,12 @@ export default function ProductOffersTable() {
               fontWeight: 600,
             }}
           >
-            Offers
+            {t("Offers")}
           </Typography>
           <IconButton
             onClick={close}
             size="small"
-            sx={{ p: isVerySmallScreen ? 0.5 : 1 }}
+            sx={{ p: isVerySmallScreen ? 1 : 1.5 }}
           >
             <CloseIcon fontSize={isVerySmallScreen ? "small" : "medium"} />
           </IconButton>
@@ -110,7 +145,6 @@ export default function ProductOffersTable() {
           </Box>
         )}
 
-        {/* Table - Optimized for 425px */}
         {!isLoading && offers && (
           <Box
             sx={{
@@ -118,11 +152,7 @@ export default function ProductOffersTable() {
               overflowY: "auto",
               flexGrow: 1,
               "& .MuiTable-root": {
-                minWidth: isVerySmallScreen
-                  ? isTinyScreen
-                    ? "280px"
-                    : "340px"
-                  : "100%",
+                minWidth: isTinyScreen ? "280px" : "100%",
               },
             }}
           >
@@ -132,28 +162,39 @@ export default function ProductOffersTable() {
                   {columns.map((col) => (
                     <TableCell
                       key={col}
-                      align={col === "Price" ? "center" : "left"}
+                      align={col === "Price MDL" ? "center" : "left"}
                       sx={{
                         fontSize: isVerySmallScreen ? "0.7rem" : "0.75rem",
                         fontWeight: 600,
                         whiteSpace: "nowrap",
-                        px: isVerySmallScreen ? 0.3 : 1,
-                        py: isVerySmallScreen ? 0.5 : 1,
+                        px: isVerySmallScreen ? 0.5 : 1.5,
+                        py: isVerySmallScreen ? 0.7 : 1.2,
+                        cursor: col === "Price MDL" ? "pointer" : "default",
                         display:
-                          col === "In Stock" && isTinyScreen
+                          col === "InStock" && isTinyScreen
                             ? "none"
                             : "table-cell",
                       }}
+                      onClick={
+                        col === "Price MDL" ? handlePriceClick : undefined
+                      }
                     >
-                      {col === "Price" ? (
-                        <div style={{ lineHeight: 1.1 }}>
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                            Price{" "}
-                            <Box style={{ fontSize: "0.65rem", opacity: 0.8 }}>
-                              MDL
-                            </Box>
-                          </Box>
-                        </div>
+                      {col === "Price MDL" ? (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 0.3,
+                          }}
+                        >
+                          {col}
+                          {priceArrowUp ? (
+                            <ArrowDropUpIcon fontSize="small" />
+                          ) : (
+                            <ArrowDropDownIcon fontSize="small" />
+                          )}
+                        </Box>
                       ) : (
                         col
                       )}
@@ -161,66 +202,53 @@ export default function ProductOffersTable() {
                   ))}
                 </TableRow>
               </TableHead>
+
               <TableBody>
-                {offers.map((offer: any) => (
+                {paginatedOffers.map((offer: any) => (
                   <TableRow key={offer.id} hover>
-                    {/* Shop */}
                     <TableCell
                       sx={{
                         fontSize: isVerySmallScreen ? "0.7rem" : "0.75rem",
                         whiteSpace: "nowrap",
-                        px: isVerySmallScreen ? 0.3 : 1,
-                        py: isVerySmallScreen ? 0.5 : 1,
+                        px: isVerySmallScreen ? 0.5 : 1.5,
+                        py: isVerySmallScreen ? 0.7 : 1.2,
                       }}
                     >
                       {truncateText(offer.shop, 8)}
                     </TableCell>
 
-                    {/* Price - CHANGED: align="left" instead of "right" */}
                     <TableCell
                       align={isVerySmallScreen ? "center" : "left"}
                       sx={{
                         fontSize: isVerySmallScreen ? "0.7rem" : "0.75rem",
                         fontWeight: 600,
                         whiteSpace: "nowrap",
-                        px: isVerySmallScreen ? 0.3 : 1,
-                        py: isVerySmallScreen ? 0.5 : 1,
+                        px: isVerySmallScreen ? 0.5 : 1.5,
+                        py: isVerySmallScreen ? 0.7 : 1.2,
                       }}
                     >
                       {offer.price.toLocaleString()}
                     </TableCell>
 
-                    {/* In Stock column - hidden on 320px and below */}
                     {!isTinyScreen && (
                       <TableCell
                         align="left"
                         sx={{
                           fontSize: isVerySmallScreen ? "0.7rem" : "0.75rem",
                           whiteSpace: "nowrap",
-                          px: isVerySmallScreen ? 0.3 : 1,
-                          py: isVerySmallScreen ? 0.5 : 1,
+                          px: isVerySmallScreen ? 0.5 : 1.5,
+                          py: isVerySmallScreen ? 0.7 : 1.2,
                         }}
                       >
-                        <InventoryIcon
-                          sx={{
-                            fontSize: isVerySmallScreen ? "0.6rem" : "0.7rem",
-                            height: "24px",
-                            color: offer.in_stock
-                              ? theme.palette.success.main // Green for in stock
-                              : theme.palette.error.main, // Red for out of stock
-                            minWidth: "40px",
-                          }}
-                        />
-                        <AddIcCallIcon />
+                        {offer.in_stock ? t("Yes") : t("No")}
                       </TableCell>
                     )}
 
-                    {/* Name */}
                     <TableCell
                       sx={{
                         fontSize: isVerySmallScreen ? "0.7rem" : "0.75rem",
-                        px: isVerySmallScreen ? 0.3 : 1,
-                        py: isVerySmallScreen ? 0.5 : 1,
+                        px: isVerySmallScreen ? 0.5 : 1.5,
+                        py: isVerySmallScreen ? 0.7 : 1.2,
                         maxWidth: isVerySmallScreen ? "70px" : "120px",
                         whiteSpace: "normal",
                         wordWrap: "break-word",
@@ -230,12 +258,11 @@ export default function ProductOffersTable() {
                       {offer.name}
                     </TableCell>
 
-                    {/* Variant */}
                     <TableCell
                       sx={{
                         fontSize: isVerySmallScreen ? "0.7rem" : "0.75rem",
-                        px: isVerySmallScreen ? 0.3 : 1,
-                        py: isVerySmallScreen ? 0.5 : 1,
+                        px: isVerySmallScreen ? 0.5 : 1.5,
+                        py: isVerySmallScreen ? 0.7 : 1.2,
                         maxWidth: isVerySmallScreen ? "50px" : "80px",
                         whiteSpace: "normal",
                         wordWrap: "break-word",
@@ -245,41 +272,60 @@ export default function ProductOffersTable() {
                       {offer.variant || "—"}
                     </TableCell>
 
-                    {/* Link */}
                     <TableCell
                       align="center"
                       sx={{
-                        px: isVerySmallScreen ? 0.3 : 1,
-                        py: isVerySmallScreen ? 0.5 : 1,
+                        px: isVerySmallScreen ? 0.5 : 1.5,
+                        py: isVerySmallScreen ? 0.7 : 1.2,
                       }}
                     >
-                      <Button
-                        size={isVerySmallScreen ? "small" : "medium"}
-                        variant="outlined"
+                      <IconButton
                         href={offer.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        startIcon={
-                          isVerySmallScreen ? (
-                            <OpenInNewIcon fontSize="small" />
-                          ) : null
-                        }
-                        sx={{
-                          minWidth: "auto",
-                          px: isVerySmallScreen ? 0.5 : 1,
-                        }}
+                        size={isVerySmallScreen ? "small" : "medium"}
                       >
-                        {isVerySmallScreen ? (
-                          ""
-                        ) : (
-                          <OpenInNewIcon fontSize="small" />
-                        )}
-                      </Button>
+                        <OpenInNewIcon fontSize="small" />
+                      </IconButton>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+
+            {/* Pagination */}
+            <TablePagination
+              component="div"
+              count={offers.length}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[5, 10, 25]}
+              sx={{
+                mt: 1,
+                fontSize: isTinyScreen
+                  ? "0.6rem"
+                  : isVerySmallScreen
+                    ? "0.65rem"
+                    : "0.875rem",
+                "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows":
+                  {
+                    fontSize: isTinyScreen
+                      ? "0.6rem"
+                      : isVerySmallScreen
+                        ? "0.65rem"
+                        : "0.875rem",
+                  },
+                "& .MuiIconButton-root": {
+                  padding: isTinyScreen
+                    ? 0.2
+                    : isVerySmallScreen
+                      ? 0.25
+                      : undefined,
+                },
+              }}
+            />
           </Box>
         )}
       </Box>

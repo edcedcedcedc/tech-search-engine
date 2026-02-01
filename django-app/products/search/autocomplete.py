@@ -3,14 +3,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from products.utils.es_index import es, INDEX_NAME
 
-LIMIT = 10
+
 MAX_BACKOFF = 3  # how many tokens back to check
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from products.utils.es_index import es, INDEX_NAME
-
-LIMIT = 10
+LIMIT = 15
 
 
 class AutocompleteAPIView(APIView):
@@ -21,42 +16,33 @@ class AutocompleteAPIView(APIView):
         if not raw:
             return Response({"suggestions": []})
 
-        tokens = raw.split()
-        if raw.endswith(" "):
-            context_tokens = tokens
-            prefix = ""
-        else:
-            context_tokens = tokens[:-1]
-            prefix = tokens[-1] if tokens else ""
-
-        suggestions = self._lookup(context_tokens, prefix, lang=lang)
+        suggestions = self._lookup(raw, lang=lang)
         return Response({"suggestions": suggestions})
 
-    def _lookup(self, context_tokens, prefix, lang="en"):
+    def _lookup(self, user_input, lang="en"):
         """
-        Use Elasticsearch completion suggester to get multi-word sequences
-        that logically follow the typed context.
+        Use Elasticsearch search_as_you_type field for autocomplete.
         """
         index_name = f"{INDEX_NAME}_{lang}" if lang in ["en", "ro"] else INDEX_NAME
-
-        # Build the input string for the suggester
-        user_input = " ".join(context_tokens)
-        if prefix:
-            user_input = f"{user_input} {prefix}".strip()
+        query = user_input.lower().strip()
 
         body = {
-            "suggest": {
-                "product-suggest": {
-                    "prefix": user_input,
-                    "completion": {"field": "suggest", "size": LIMIT},
+            "size": LIMIT,
+            "query": {
+                "multi_match": {
+                    "query": query,
+                    "type": "bool_prefix",
+                    "fields": ["name", "name._2gram", "name._3gram"],
                 }
-            }
+            },
         }
 
         res = es.search(index=index_name, body=body)
-        options = (
-            res.get("suggest", {}).get("product-suggest", [])[0].get("options", [])
-        )
+        hits = res.get("hits", {}).get("hits", [])
 
-        # Return the suggested sequences
-        return [opt["text"] for opt in options]
+        # Return product_id + name
+        suggestions = [
+            {"id": hit["_source"]["product_id"], "name": hit["_source"]["name"]}
+            for hit in hits
+        ]
+        return suggestions
