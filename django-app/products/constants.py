@@ -390,4 +390,9 @@ categories = [
         "en": "Stabilizers and video accessories",
         "ru": "стабилизаторы и видео аксессуары",
     },
+    {
+        "ro": "curele smartwatch, brățări wearable",
+        "en": "Smartwatch straps and wearable bands",
+        "ru": "ремни для умных часов и носимые браслеты",
+    },
 ]
