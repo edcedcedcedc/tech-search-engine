@@ -5,7 +5,7 @@ from products.utils.log.search_engine_log import search_engine_log
 import numpy as np
 from openai import OpenAI
 import environ
-
+from products.search.config import STEEPNESS, CUT_OFF, BASE_FRACTION
 
 from unidecode import unidecode
 
@@ -120,7 +120,9 @@ import math
 from products.utils.log.search_engine_log import search_engine_log
 
 
-def apply_relevance_cutoff_sigmoid(aggregated, base_fraction=0.4, steepness=10):
+def apply_relevance_cutoff_sigmoid(
+    aggregated, base_fraction=BASE_FRACTION, steepness=STEEPNESS
+):
     """
     Smooth cutoff using a sigmoid curve instead of exponential.
 
@@ -139,7 +141,7 @@ def apply_relevance_cutoff_sigmoid(aggregated, base_fraction=0.4, steepness=10):
     for i, cluster in enumerate(aggregated):
         # Compute a smooth fraction using sigmoid
         x = i / n  # position 0..1
-        sigmoid = 1 / (1 + math.exp(steepness * (x - 0.5)))  # sigmoid drop-off
+        sigmoid = 1 / (1 + math.exp(steepness * (x - CUT_OFF)))  # sigmoid drop-off
         fraction = base_fraction * sigmoid
 
         threshold = top_relevance * fraction
@@ -153,3 +155,15 @@ def apply_relevance_cutoff_sigmoid(aggregated, base_fraction=0.4, steepness=10):
             )
 
     return filtered
+
+
+def ascii_folding(text: str) -> str:
+    """
+    Normalize a string for fuzzy matching:
+    - Remove diacritics (ă -> a, ș -> s, ț -> t)
+    - Lowercase
+    - Strip extra spaces
+    """
+    if not text:
+        return ""
+    return unidecode(text)

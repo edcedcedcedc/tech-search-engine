@@ -15,6 +15,7 @@ from products.serializers import AggregatedProductSerializer
 from django.core.cache import cache
 import hashlib
 from products.search.identity import identity_resolution
+from products.search.config import CACHE_TTL_LAYER1
 
 """Search/Product Discovery based on ML and Levenshtein
 
@@ -32,7 +33,6 @@ def get_layer1_cache_key(query: str) -> str:
 # ---------------- Layer 1: Search / Product Frames ----------------
 class SearchAPIView(APIView):
     throttle_classes = [Layer1Throttle]
-    CACHE_TTL_LAYER1 = 60 * 5  # 5 minutes
 
     def get(self, request):
         try:
@@ -68,11 +68,10 @@ class SearchAPIView(APIView):
                 aggregated.sort(
                     key=lambda x: -x.get("product_score", x.get("relevance", 0))
                 )
-                aggregated = apply_relevance_cutoff_sigmoid(
-                    aggregated, base_fraction=0.4, steepness=10
-                )
+                aggregated = apply_relevance_cutoff_sigmoid(aggregated)
+
                 # --- Store in Layer1 cache before session ---
-                cache.set(cache_key, aggregated, self.CACHE_TTL_LAYER1)
+                cache.set(cache_key, aggregated, CACHE_TTL_LAYER1)
 
             # --- Now update the session for Layer2 ---
             try:

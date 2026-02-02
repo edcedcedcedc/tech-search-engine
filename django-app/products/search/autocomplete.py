@@ -2,10 +2,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from products.utils.es_index import es, INDEX_NAME
-
-
-MAX_BACKOFF = 3  # how many tokens back to check
-LIMIT = 15
+from products.search.config import AUTOCOMPLETE_LIMIT
 
 
 class AutocompleteAPIView(APIView):
@@ -27,7 +24,7 @@ class AutocompleteAPIView(APIView):
         query = user_input.lower().strip()
 
         body = {
-            "size": LIMIT,
+            "size": AUTOCOMPLETE_LIMIT,
             "query": {
                 "multi_match": {
                     "query": query,

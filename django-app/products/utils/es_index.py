@@ -11,13 +11,28 @@ def create_index(lang: str):
     index_name = f"{INDEX_NAME}_{lang}"
 
     if es.indices.exists(index=index_name):
-        return
+        es.indices.delete(index=index_name)
 
     body = {
-        "settings": {"index": {"knn": True}},
+        "settings": {
+            # "index": {"knn": True}, till 100k products O(n) then will be O(n log n)
+            "analysis": {
+                "analyzer": {
+                    "ro_autocomplete": {
+                        "tokenizer": "standard",
+                        "filter": ["lowercase", "asciifolding"],
+                    }
+                }
+            },
+        },
         "mappings": {
             "properties": {
-                "name": {"type": "search_as_you_type"},
+                "name": {
+                    "type": "search_as_you_type",
+                    "analyzer": "ro_autocomplete",
+                    "search_analyzer": "ro_autocomplete",
+                },
+                "name_raw": {"type": "keyword"},
                 "embedding": {
                     "type": "dense_vector",
                     "dims": 1536,

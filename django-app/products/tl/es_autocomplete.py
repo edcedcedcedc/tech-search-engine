@@ -77,7 +77,7 @@ class AutocompleteIndexBuilder:
         if not name:
             return None
 
-        normalized_name = name.lower().strip()
+        normalized_name = name.strip()
         if not normalized_name or normalized_name in seen_names:
             return None
 

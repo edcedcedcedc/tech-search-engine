@@ -3,7 +3,7 @@ from rapidfuzz import fuzz
 from products.utils.log.search_engine_log import search_engine_log
 import json
 import numpy as np
-from products.search.utils import cosine_similarity
+from products.search.utils import ascii_folding, cosine_similarity
 
 
 def score_cluster_for_query(aggregated, query: str, query_embedding=None):
@@ -15,10 +15,10 @@ def score_cluster_for_query(aggregated, query: str, query_embedding=None):
     - Price influence (smaller price gives small boost)
     """
     query_lower = query.lower()
-
+    query_lower = ascii_folding(query_lower)
     for item in aggregated:
         # --- Fuzzy match: name + variant ---
-        product_text = f"{item['name']} {item.get('variant', '')}".lower()
+        product_text = f"{ascii_folding(item['name'])} {ascii_folding(item.get('variant', ''))}".lower()
         fuzzy_score = fuzz.token_set_ratio(query_lower, product_text) / 100.0
 
         # --- Optional brand boost ---
