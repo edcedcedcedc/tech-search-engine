@@ -62,7 +62,7 @@ const getTheme = (mode: "light" | "dark") => {
     },
 
     typography: {
-    fontFamily: "Inter, Arial, sans-serif",
+    fontFamily: "Roboto, Arial, sans-serif",
 
     h1: {
       fontWeight: 700,

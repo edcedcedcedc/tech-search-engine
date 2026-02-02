@@ -437,10 +437,10 @@ def run_load_embeddings_cache():
 @shared_task(name="run_build_autocomplete_index")
 def run_build_autocomplete_index():
     from products.utils.log.autocomplete_log import autocomplete_log
-    from products.tl.es_autocomplete import AutocompleteIndexer
+    from products.tl.es_autocomplete import AutocompleteIndexBuilder
 
     autocomplete_log("[TASK] Starting autocomplete index rebuild...")
-    indexer = AutocompleteIndexer()
+    indexer = AutocompleteIndexBuilder()
     indexer.build_index()
     autocomplete_log("[TASK] Autocomplete index rebuild finished.")
 

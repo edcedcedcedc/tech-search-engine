@@ -3,6 +3,7 @@ import { Box, useTheme, useMediaQuery } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Icon from "./Icon";
+import { useStore } from "../store/store";
 
 const Footer: React.FC = () => {
   const theme = useTheme();
@@ -10,6 +11,9 @@ const Footer: React.FC = () => {
 
   const isExtraSmall = useMediaQuery("(max-width:375px)"); // custom 375px breakpoint
   const fontSize = isExtraSmall ? "0.65rem" : theme.typography.body2.fontSize;
+
+  const query = useStore((state) => state.query);
+  const aggregatedProducts = useStore((state) => state.aggregatedProducts);
 
   const navLinks = [
     { path: "/disclaimer", label: t("Responsibility_Statement") },
@@ -19,6 +23,8 @@ const Footer: React.FC = () => {
     { path: "/contact", label: t("Contact") },
     { path: "/source", label: t("Sources") },
   ];
+
+  if (query && aggregatedProducts.length > 0) return null;
 
   return (
     <Box

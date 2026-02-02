@@ -220,6 +220,8 @@ Happy_searching:
   Variant: "Variantă",
   Yes: "Da",
   No: "Nu",
+  rows_per_view: "Rânduri per vizare",
+  of: "din",
 
   Search_For_Products: "Caută produse",
   Enter_A_Product_Name_To_Start_Searching: "Introdu numele produsului pentru a căuta",

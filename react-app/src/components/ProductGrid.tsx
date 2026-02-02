@@ -10,7 +10,6 @@ import {
   IconButton,
   Pagination,
   Stack,
-  Button,
 } from "@mui/material";
 
 import { useTranslation } from "react-i18next";
@@ -18,7 +17,6 @@ import type { AggregatedProduct } from "../types/AggregatedProduct";
 import { useStore } from "../store/store";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 
-import CachedOutlinedIcon from "@mui/icons-material/CachedOutlined";
 interface Props {}
 
 const bull = (
@@ -156,6 +154,7 @@ const ProductGrid: React.FC<Props> = () => {
               <CardActions sx={{ mt: "auto" }}>
                 <IconButton
                   onClick={() => onOpenProduct(product.id)}
+                  size="small"
                   disabled={isLoading}
                 >
                   <VisibilityOutlinedIcon />

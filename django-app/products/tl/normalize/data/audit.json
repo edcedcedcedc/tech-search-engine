@@ -406,6 +406,28 @@
       "examples": [
         12637
       ]
+    },
+    "ceasuri inteligente": {
+      "normalized": {
+        "ro": "smartwatch",
+        "en": "Smartwatches",
+        "ru": "\u0443\u043c\u043d\u044b\u0435 \u0447\u0430\u0441\u044b"
+      },
+      "first_seen": "2026-02-02T00:28:02.777300+00:00",
+      "examples": [
+        13110
+      ]
+    },
+    "br\u0103\u021b\u0103ri inteligente": {
+      "normalized": {
+        "ro": "smartwatch",
+        "en": "Smartwatches",
+        "ru": "\u0443\u043c\u043d\u044b\u0435 \u0447\u0430\u0441\u044b"
+      },
+      "first_seen": "2026-02-02T00:29:27.532902+00:00",
+      "examples": [
+        13366
+      ]
     }
   },
   "enter": {
@@ -1419,6 +1441,61 @@
       "first_seen": "2026-01-24T15:02:00.671357+00:00",
       "examples": [
         24304
+      ]
+    },
+    "\u0443\u043c\u043d\u044b\u0435 \u0447\u0430\u0441\u044b": {
+      "normalized": {
+        "ro": "smartwatch",
+        "en": "Smartwatches",
+        "ru": "\u0443\u043c\u043d\u044b\u0435 \u0447\u0430\u0441\u044b"
+      },
+      "first_seen": "2026-02-02T00:28:01.150535+00:00",
+      "examples": [
+        24840
+      ]
+    },
+    "\u0440\u0435\u043c\u0435\u0448\u043a\u0438": {
+      "normalized": {
+        "ro": "curele smartwatch, br\u0103\u021b\u0103ri wearable",
+        "en": "Smartwatch straps and wearable bands",
+        "ru": "\u0440\u0435\u043c\u043d\u0438 \u0434\u043b\u044f \u0443\u043c\u043d\u044b\u0445 \u0447\u0430\u0441\u043e\u0432 \u0438 \u043d\u043e\u0441\u0438\u043c\u044b\u0435 \u0431\u0440\u0430\u0441\u043b\u0435\u0442\u044b"
+      },
+      "first_seen": "2026-02-02T00:29:25.772825+00:00",
+      "examples": [
+        25097
+      ]
+    },
+    "\u0430\u043a\u0441\u0435\u0441\u0441\u0443\u0430\u0440\u044b \u0434\u043b\u044f \u0447\u0430\u0441\u043e\u0432 \u0438 \u0431\u0440\u0430\u0441\u043b\u0435\u0442\u043e\u0432": {
+      "normalized": {
+        "ro": "accesorii apple",
+        "en": "Apple accessories",
+        "ru": "\u0430\u043a\u0441\u0435\u0441\u0441\u0443\u0430\u0440\u044b Apple"
+      },
+      "first_seen": "2026-02-02T00:30:05.059146+00:00",
+      "examples": [
+        25244
+      ]
+    },
+    "\u0444\u0438\u0442\u043d\u0435\u0441-\u0442\u0440\u0435\u043a\u0435\u0440\u044b": {
+      "normalized": {
+        "ro": "smartwatch",
+        "en": "Smartwatches",
+        "ru": "\u0443\u043c\u043d\u044b\u0435 \u0447\u0430\u0441\u044b"
+      },
+      "first_seen": "2026-02-02T00:30:13.938615+00:00",
+      "examples": [
+        25261
+      ]
+    },
+    "\u0443\u043c\u043d\u044b\u0435 \u0447\u0430\u0441\u044b \u0434\u043b\u044f \u0434\u0435\u0442\u0435\u0439": {
+      "normalized": {
+        "ro": "smartwatch",
+        "en": "Smartwatches",
+        "ru": "\u0443\u043c\u043d\u044b\u0435 \u0447\u0430\u0441\u044b"
+      },
+      "first_seen": "2026-02-02T00:30:26.261644+00:00",
+      "examples": [
+        25305
       ]
     }
   },

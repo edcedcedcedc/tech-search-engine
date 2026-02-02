@@ -16,7 +16,6 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import InventoryIcon from "@mui/icons-material/Inventory";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { useStore } from "../store/store";
@@ -30,7 +29,11 @@ export default function ProductOffersTable() {
   );
   const close = useStore((s) => s.closeProduct);
   const theme = useTheme();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const isOffersLoading = useStore((s) => s.isOffersLoading);
+  const hasOffers = Boolean(selectedProductId && offers && offers.length > 0);
+  const showSpinner = isOffersLoading && !hasOffers;
 
   const isSmallScreen = useMediaQuery("(max-width:768px)");
   const isVerySmallScreen = useMediaQuery("(max-width:425px)");
@@ -89,6 +92,15 @@ export default function ProductOffersTable() {
   const paginatedOffers = offers
     ? offers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
     : [];
+
+  const getTranslated = (
+    tObj: Record<string, string> | undefined,
+    fallback: string,
+  ) => {
+    if (!tObj) return fallback;
+    const lang = i18n.language || "en";
+    return tObj[lang] || fallback;
+  };
 
   return (
     <Drawer anchor="right" open={open} onClose={close}>
@@ -163,7 +175,7 @@ export default function ProductOffersTable() {
         </Box>
 
         {/* Loading */}
-        {isLoading && (
+        {showSpinner && (
           <Box
             sx={{
               display: "flex",
@@ -236,7 +248,7 @@ export default function ProductOffersTable() {
 
               <TableBody>
                 {paginatedOffers.map((offer: any) => (
-                  <TableRow key={offer.id} hover>
+                  <TableRow key={offer.id}>
                     <TableCell
                       sx={{
                         fontSize: isVerySmallScreen ? "0.7rem" : "0.75rem",
@@ -286,7 +298,7 @@ export default function ProductOffersTable() {
                         lineHeight: 1.2,
                       }}
                     >
-                      {offer.name}
+                      {getTranslated(offer.t_name, offer.name)}
                     </TableCell>
 
                     <TableCell
@@ -300,7 +312,7 @@ export default function ProductOffersTable() {
                         lineHeight: 1.2,
                       }}
                     >
-                      {offer.variant || "—"}
+                      {getTranslated(offer.t_variant, offer.variant)}
                     </TableCell>
 
                     <TableCell
@@ -333,27 +345,34 @@ export default function ProductOffersTable() {
               rowsPerPage={rowsPerPage}
               onRowsPerPageChange={handleChangeRowsPerPage}
               rowsPerPageOptions={[5, 10, 25]}
+              labelRowsPerPage={t("rows_per_view")}
+              labelDisplayedRows={({ from, to, count }) =>
+                isTinyScreen
+                  ? `${from}-${to}/${count}`
+                  : `${from}–${to} ${t("of")} ${count !== -1 ? count : `>${to}`}`
+              }
               sx={{
                 mt: 1,
                 fontSize: isTinyScreen
-                  ? "0.6rem"
+                  ? "0.60rem"
                   : isVerySmallScreen
                     ? "0.65rem"
                     : "0.875rem",
                 "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows":
                   {
                     fontSize: isTinyScreen
-                      ? "0.6rem"
+                      ? "0.60rem"
                       : isVerySmallScreen
                         ? "0.65rem"
                         : "0.875rem",
                   },
-                "& .MuiIconButton-root": {
-                  padding: isTinyScreen
-                    ? 0.2
-                    : isVerySmallScreen
-                      ? 0.25
-                      : undefined,
+                "& .MuiTablePagination-actions .MuiButtonBase-root": {
+                  padding: isTinyScreen ? "2px 4px" : "4px 8px",
+                  minWidth: isTinyScreen ? 24 : 36,
+                },
+                "& .MuiTablePagination-select": {
+                  marginRight: isTinyScreen ? 0.5 : 1,
+                  minWidth: isTinyScreen ? 32 : 56,
                 },
               }}
             />

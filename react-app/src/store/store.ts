@@ -14,6 +14,12 @@ interface CookieState {
 interface State {
 
 
+  //offers
+  offersSortColumn: "price" | "shop" | null;
+  offersSortAscending: boolean;
+  setOffersSort: (column: "price" | "shop") => void;
+
+
   currentPage: number;
   totalPages: number;
   totalResults: number;
@@ -139,6 +145,9 @@ export const useStore = create<State>((set, get) => ({
       return;
     }
     set({ isOffersLoading: true, selectedProductId: productId });
+    
+    //natural delay for smooth trans in first prod open
+    //await new Promise((resolve) => setTimeout(resolve, 300));
 
     const data = await apiGetProductOffers(productId, true);
 
@@ -246,4 +255,13 @@ export const useStore = create<State>((set, get) => ({
   totalPages: 0,
   totalResults: 0
 }),
+  //offers sorting 
+offersSortColumn: "price", // default sorting
+offersSortAscending: true,
+setOffersSort: (column) =>
+  set((state) => ({
+    offersSortColumn: column,
+    offersSortAscending:
+      state.offersSortColumn === column ? !state.offersSortAscending : true,
+  })),
 }));

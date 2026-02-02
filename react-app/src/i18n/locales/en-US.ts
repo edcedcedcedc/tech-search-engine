@@ -181,8 +181,8 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Variant: "Variant",
   Yes: "Yes",
   No: "No",
-
-
+  rows_per_view: "Rows per view",
+  of: "of",
 
   //No Products Found 
   Search_For_Products: "Search for products",
@@ -192,6 +192,7 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
 
 
   Manage_Products: "Manage products"
+
 };
 
 export default enUS;
