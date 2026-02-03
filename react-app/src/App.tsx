@@ -15,6 +15,7 @@ import { Meta } from "./components/Meta";
 import ResetCookieButton from "./tests/components/ResetCookieButton";
 import { SearchAutocomplete } from "./components/SearchAutocomplete";
 import { useTranslation } from "react-i18next";
+import Bottom from "./components/Bottom";
 
 function App() {
   const theme = useTheme();
@@ -151,7 +152,7 @@ function App() {
             }}
           >
             <Cookie />
-            <Footer />
+            <Bottom />
           </Box>
         </Box>
       </BrowserRouter>

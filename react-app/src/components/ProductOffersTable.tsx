@@ -13,6 +13,7 @@ import {
   useMediaQuery,
   IconButton,
   TablePagination,
+  Divider,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -23,17 +24,14 @@ import { useTranslation } from "react-i18next";
 
 export default function ProductOffersTable() {
   const selectedProductId = useStore((s) => s.selectedProductId);
-  const isLoading = useStore((s) => s.isOffersLoading);
   const offers = useStore((s) =>
     selectedProductId ? s.productOffers[selectedProductId] : null,
   );
   const close = useStore((s) => s.closeProduct);
+  const isLoading = useStore((s) => s.isOffersLoading);
+
   const theme = useTheme();
   const { t, i18n } = useTranslation();
-
-  const isOffersLoading = useStore((s) => s.isOffersLoading);
-  const hasOffers = Boolean(selectedProductId && offers && offers.length > 0);
-  const showSpinner = isOffersLoading && !hasOffers;
 
   const isSmallScreen = useMediaQuery("(max-width:768px)");
   const isVerySmallScreen = useMediaQuery("(max-width:425px)");
@@ -42,25 +40,44 @@ export default function ProductOffersTable() {
 
   const open = Boolean(selectedProductId);
 
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  // --- Per-product pagination state ---
+  const [pages, setPages] = React.useState<Record<string, number>>({});
+  const [rowsPerPages, setRowsPerPages] = React.useState<
+    Record<string, number>
+  >({});
   const [priceArrowUp, setPriceArrowUp] = React.useState(true); // UI toggle only
 
   const handleChangePage = (
     event: React.MouseEvent<HTMLButtonElement> | null,
     newPage: number,
-  ) => setPage(newPage);
+  ) => {
+    if (selectedProductId) {
+      setPages((prev) => ({ ...prev, [selectedProductId]: newPage }));
+    }
+  };
 
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+    const value = parseInt(event.target.value, 10);
+    if (selectedProductId) {
+      setRowsPerPages((prev) => ({ ...prev, [selectedProductId]: value }));
+      setPages((prev) => ({ ...prev, [selectedProductId]: 0 })); // reset page
+    }
   };
 
   const handlePriceClick = () => {
     setPriceArrowUp((prev) => !prev);
   };
+
+  // Get current page and rowsPerPage for selected product
+  const page = selectedProductId ? pages[selectedProductId] || 0 : 0;
+  const rowsPerPage = selectedProductId
+    ? rowsPerPages[selectedProductId] || 5
+    : 5;
+
+  const hasOffers = Boolean(selectedProductId && offers && offers.length > 0);
+  const showSpinner = isLoading && !hasOffers;
 
   const getColumns = () => {
     const baseColumns = [
@@ -111,14 +128,10 @@ export default function ProductOffersTable() {
           maxHeight: "100vh",
           display: "flex",
           flexDirection: "column",
-
-          // Enable vertical scroll for large screens
           overflowY: isLargeScreen ? "auto" : "hidden",
-          overflowX: "auto", // horizontal scroll if table too wide
-
-          // Scrollbar styles for WebKit (Chrome, Edge, Safari)
+          overflowX: "auto",
           "&::-webkit-scrollbar": {
-            width: theme.spacing(0.5), // thin scrollbar
+            width: theme.spacing(0.5),
           },
           "&::-webkit-scrollbar-thumb": {
             backgroundColor:
@@ -133,11 +146,7 @@ export default function ProductOffersTable() {
                 ? "rgba(255,255,255,0.4)"
                 : "rgba(0,0,0,0.5)",
           },
-          "&::-webkit-scrollbar-track": {
-            background: "transparent",
-          },
-
-          // Scrollbar styles for Firefox
+          "&::-webkit-scrollbar-track": { background: "transparent" },
           scrollbarWidth: "thin",
           scrollbarColor:
             theme.palette.mode === "dark"
@@ -194,9 +203,7 @@ export default function ProductOffersTable() {
               overflowX: "auto",
               overflowY: "auto",
               flexGrow: 1,
-              "& .MuiTable-root": {
-                minWidth: isTinyScreen ? "280px" : "100%",
-              },
+              "& .MuiTable-root": { minWidth: isTinyScreen ? "280px" : "100%" },
             }}
           >
             <Table size={isVerySmallScreen ? "small" : "medium"}>
@@ -259,7 +266,6 @@ export default function ProductOffersTable() {
                     >
                       {truncateText(offer.shop, 8)}
                     </TableCell>
-
                     <TableCell
                       align={isVerySmallScreen ? "center" : "left"}
                       sx={{
@@ -272,7 +278,6 @@ export default function ProductOffersTable() {
                     >
                       {offer.price.toLocaleString()}
                     </TableCell>
-
                     {!isTinyScreen && (
                       <TableCell
                         align="left"
@@ -286,7 +291,6 @@ export default function ProductOffersTable() {
                         {offer.in_stock ? t("Yes") : t("No")}
                       </TableCell>
                     )}
-
                     <TableCell
                       sx={{
                         fontSize: isVerySmallScreen ? "0.7rem" : "0.75rem",
@@ -300,7 +304,6 @@ export default function ProductOffersTable() {
                     >
                       {getTranslated(offer.t_name, offer.name)}
                     </TableCell>
-
                     <TableCell
                       sx={{
                         fontSize: isVerySmallScreen ? "0.7rem" : "0.75rem",
@@ -314,7 +317,6 @@ export default function ProductOffersTable() {
                     >
                       {getTranslated(offer.t_variant, offer.variant)}
                     </TableCell>
-
                     <TableCell
                       align="center"
                       sx={{
@@ -367,8 +369,11 @@ export default function ProductOffersTable() {
                         : "0.875rem",
                   },
                 "& .MuiTablePagination-actions .MuiButtonBase-root": {
-                  padding: isTinyScreen ? "2px 4px" : "4px 8px",
-                  minWidth: isTinyScreen ? 24 : 36,
+                  padding: 0,
+                  minWidth: 32,
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
                 },
                 "& .MuiTablePagination-select": {
                   marginRight: isTinyScreen ? 0.5 : 1,

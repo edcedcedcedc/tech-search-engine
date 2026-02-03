@@ -113,10 +113,10 @@ Happy_searching:
   "Spor la căutări",
 
   // Footer
-  All_rights_reserved: "Toate drepturile rezervate",
-  Responsibility_Statement: "Declarație de responsabilitate",
-  Terms_and_conditions: "Termeni și condiții",
-  Privacy_Policy: "Politica de confidențialitate",
+  All_rights_reserved: "Toate Drepturile Rezervate",
+  Responsibility_Statement: "Declarație de Responsabilitate",
+  Terms_and_conditions: "Termeni și Condiții",
+  Privacy_Policy: "Politica de Confidențialitate",
   About_Us: "Despre noi",
   Sources: "Surse",
 
@@ -134,7 +134,7 @@ Happy_searching:
     "Nu oferim suport pentru comenzi sau livrări. Pentru achiziții, vă rugăm să contactați magazinul de unde doriți să cumpărați produsul.",
 
   // Disclaimer (responsibiity statement)
-  Disclaimer_Title: "Declarație de responsabilitate",
+  Disclaimer_Title: "Declarație de Responsabilitate",
   Disclaimer_Intro:
     "Informațiile afișate pe acest site, inclusiv prețurile produselor, sunt oferite exclusiv în scop informativ.",
   Disclaimer_Accuracy:
@@ -146,7 +146,7 @@ Happy_searching:
   Disclaimer_Risk: "Utilizarea acestui site se face pe propria răspundere.",
 
   // Terms and Conditions
-  Terms_Title: "Termeni și condiții",
+  Terms_Title: "Termeni și Condiții",
   Terms_Intro: "Prin utilizarea acestui site, sunteți de acord cu următoarele:",
   Terms_AsIs: "Platforma este oferită „așa cum este”, fără garanții.",
   Terms_NoLiability:
@@ -158,7 +158,7 @@ Happy_searching:
     "Ne rezervăm dreptul de a modifica sau suspenda serviciul fără notificare.",
 
   // Source
-  Source_Title: "Surse de date",
+  Source_Title: "Surse de Date",
   Source_Intro:
     "Datele despre produse sunt colectate automat din surse publice ale magazinelor online, inclusiv (dar fără a se limita la):",
   Source_Example: "– Darwin.md,– Enter.online,– XStore.md",
@@ -166,7 +166,7 @@ Happy_searching:
     "Mărcile comerciale, logo-urile și denumirile produselor aparțin proprietarilor respectivi. Platforma noastră nu este afiliată cu aceste magazine.",
 
   // privacy policy
-  Privacy_Title: "Politica de confidențialitate",
+  Privacy_Title: "Politica de Confidențialitate",
   Privacy_Intro:
     "Această aplicație este un agregator de prețuri care afișează informații publice preluate din magazine online terțe.",
   Privacy_DataCollection_Title: "Colectarea datelor",
@@ -223,13 +223,28 @@ Happy_searching:
   rows_per_view: "Rânduri per vizare",
   of: "din",
 
-  Search_For_Products: "Caută produse",
-  Enter_A_Product_Name_To_Start_Searching: "Introdu numele produsului pentru a căuta",
-  Try_Diff_Keyword_Or_Check_Spelling: "Încearcă alte cuvinte-cheie sau verifică ortografia",
-  No_Results_For: "Nu sunt rezultate pentru",
+
+  //Drawer+Modal
+Close: "Închide",
+Settings: "Setări",
+Theme: "Temă",
+Dark_mode: "Mod întunecat",
+Light_mode: "Mod luminos",
+Language: "Limba",
+
+No_Products_Found: "Nu s-au găsit produse",
+
+//Tooltip
+
+Search_Tooltip: "Caută",
+Menu_Tooltip: "Meniu",
+Offers_Tooltip: "Oferte",
 
 
-
+Search_For_Products_Empty: "Caută produse",
+Try_Typing_Product_Or_Brand_Empty: "Încearcă să tastezi un produs sau un brand",
+No_Products_Found_Empty: "Nu au fost găsite produse",
+No_Results_For_Empty: "Niciun rezultat pentru",
 };
 
 export default roMD;

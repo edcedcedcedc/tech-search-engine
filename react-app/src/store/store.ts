@@ -28,10 +28,13 @@ interface State {
   setTotalPages: (pages: number) => void;
   setTotalResults: (count: number) => void;
   setNextCursor: (cursor: string | null) => void;
-
+  
   
   pageCache: Record<number, AggregatedProduct[]>; // Cache for loaded pages
   queryCacheKey: string; // To track current search query for cache invalidation
+
+  itemsPerPage: number;
+  setItemsPerPage: (count: number) => void;
   
   
   isLoading: boolean;   // new
@@ -194,7 +197,8 @@ export const useStore = create<State>((set, get) => ({
     try {
       set({ isLoading: true });
       
-      const limit = 20;
+      const limit = get().itemsPerPage || 20;
+      
       let cursor: string | undefined;
       
       if (page > 1) {
@@ -255,6 +259,11 @@ export const useStore = create<State>((set, get) => ({
   totalPages: 0,
   totalResults: 0
 }),
+
+itemsPerPage: 20, // default
+setItemsPerPage: (count: number) => {
+  set({ itemsPerPage: count, currentPage: 1 });
+},
   //offers sorting 
 offersSortColumn: "price", // default sorting
 offersSortAscending: true,

@@ -11,23 +11,23 @@ export default function Disclaimer() {
         {t("Disclaimer_Title")}
       </Typography>
 
-      <Typography variant="body1" gutterBottom>
+      <Typography variant="body2" gutterBottom>
         {t("Disclaimer_Intro")}
       </Typography>
 
-      <Typography variant="body1" gutterBottom>
+      <Typography variant="body2" gutterBottom>
         {t("Disclaimer_Accuracy")}
       </Typography>
 
-      <Typography variant="body1" gutterBottom>
+      <Typography variant="body2" gutterBottom>
         {t("Disclaimer_Affiliation")}
       </Typography>
 
-      <Typography variant="body1" gutterBottom color="text.secondary">
+      <Typography variant="body2" gutterBottom color="text.secondary">
         {t("Disclaimer_Trademarks")}
       </Typography>
 
-      <Typography variant="body1" gutterBottom>
+      <Typography variant="body2" gutterBottom>
         {t("Disclaimer_Risk")}
       </Typography>
     </Box>

@@ -80,10 +80,10 @@ Home_subject: "Computers",
 Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Components • Peripherals • Mobile Phones • Tablets • Gadgets • Consoles & Games • Smartwatches & Fitness Bands • Software • Photo & Video Equipment • Televisions • Office Equipment",  
   Mvp_stage: " MVP stage, things will(maybe) improve fast",
   // Footer
-  All_rights_reserved: "All rights reserved",
-  Responsibility_Statement: "Responsibility statement",
-  Terms_and_conditions: "Terms and conditions",
-  Privacy_Policy: "Privacy policy",
+  All_rights_reserved: "All Rights Reserved",
+  Responsibility_Statement: "Responsibility Statement",
+  Terms_and_conditions: "Terms and Conditions",
+  Privacy_Policy: "Privacy Policy",
   About_Us: "About us",
   Sources: "Sources",
 
@@ -101,7 +101,7 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
     "We do not provide support for orders or deliveries. For purchases, please contact the store from which you wish to buy the product.",
 
   // Disclaimer (responsibiity statement)
-  Disclaimer_Title: "Responsibility statement",
+  Disclaimer_Title: "Responsibility Statement",
   Disclaimer_Intro:
     "The information displayed on this site, including product prices, is provided for informational purposes only.",
   Disclaimer_Accuracy:
@@ -113,7 +113,7 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Disclaimer_Risk: "Use of this site is at your own risk.",
 
   // Terms and Conditions
-  Terms_Title: "Terms and conditions",
+  Terms_Title: "Terms and Conditions",
   Terms_Intro: "By using this site, you agree to the following:",
   Terms_AsIs:
     'The platform is provided "as is", without warranties of any kind.',
@@ -184,14 +184,28 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   rows_per_view: "Rows per view",
   of: "of",
 
-  //No Products Found 
-  Search_For_Products: "Search for products",
-  Enter_A_Product_Name_To_Start_Searching: "Enter a product name to start searching",
-  Try_Diff_Keyword_Or_Check_Spelling: "Try different keywords or check spelling",
-  No_Results_For: "No results for",
 
+  Manage_Products: "Manage Products",
 
-  Manage_Products: "Manage products"
+  //Drawer+Modal
+  Close: "Close",
+  Settings: "Settings",
+  Theme: "Theme",
+  Dark_mode: "Dark mode",
+  Light_mode: "Light mode",
+  Language: "Language",
+ 
+
+  //Tooltip
+  Search_Tooltip: "Search",
+  Menu_Tooltip: "Menu",
+  Offers_Tooltip: "Offers",
+
+  //Empty Search State
+  Search_For_Products_Empty: "Search for products",
+  Try_Typing_Product_Or_Brand_Empty: "Try typing a product name or brand",
+  No_Products_Found_Empty: "No products found",
+  No_Results_For_Empty: "No results for",
 
 };
 

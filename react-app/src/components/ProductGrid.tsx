@@ -6,10 +6,8 @@ import {
   CardActions,
   Typography,
   useMediaQuery,
-  useTheme,
   IconButton,
-  Pagination,
-  Stack,
+  Tooltip,
 } from "@mui/material";
 
 import { useTranslation } from "react-i18next";
@@ -35,28 +33,21 @@ const bull = (
 
 const ProductGrid: React.FC<Props> = () => {
   const { i18n } = useTranslation();
-  const theme = useTheme();
   const isVerySmall = useMediaQuery("(max-width:320px)");
   const aggregated_products = useStore((state) => state.aggregatedProducts);
-
   const currentPage = useStore((state) => state.currentPage);
-  const totalPages = useStore((state) => state.totalPages);
-  const totalResults = useStore((state) => state.totalResults);
   const isLoading = useStore((state) => state.isLoading);
   const onOpenProduct = useStore((state) => state.openProduct);
-  const searchProducts = useStore((state) => state.searchProducts);
-  const setCurrentPage = useStore((state) => state.setCurrentPage);
-
+  const { t } = useTranslation();
   useLayoutEffect(() => {
     const main = document.querySelector("main");
     if (!main) return;
-
     main.scrollTo({
       top: 0,
       behavior: "smooth",
     });
   }, [currentPage]);
-  // Helper: get translation for name or variant
+
   const getTranslated = (
     tObj: Record<string, string> | undefined,
     fallback: string,
@@ -64,17 +55,6 @@ const ProductGrid: React.FC<Props> = () => {
     if (!tObj) return fallback;
     const lang = i18n.language || "en";
     return tObj[lang] || fallback;
-  };
-
-  const handlePageChange = (
-    event: React.ChangeEvent<unknown>,
-    page: number,
-  ) => {
-    if (page !== currentPage && !isLoading) {
-      // Then update state and load products
-      setCurrentPage(page);
-      searchProducts(undefined, undefined, page);
-    }
   };
 
   return (
@@ -152,43 +132,20 @@ const ProductGrid: React.FC<Props> = () => {
               </CardContent>
 
               <CardActions sx={{ mt: "auto" }}>
-                <IconButton
-                  onClick={() => onOpenProduct(product.id)}
-                  size="small"
-                  disabled={isLoading}
-                >
-                  <VisibilityOutlinedIcon />
-                </IconButton>
+                <Tooltip title={t("Offers_Tooltip")} enterDelay={1}>
+                  <IconButton
+                    onClick={() => onOpenProduct(product.id)}
+                    size="small"
+                    disabled={isLoading}
+                  >
+                    <VisibilityOutlinedIcon />
+                  </IconButton>
+                </Tooltip>
               </CardActions>
             </Card>
           );
         })}
       </Box>
-      {/* Pagination - Added below the grid */}
-      {totalPages > 1 && aggregated_products.length > 0 && (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            mt: 4,
-            mb: 2,
-            gap: 1.5, // spacing between pagination and icon button
-          }}
-        >
-          <Stack spacing={2}>
-            <Pagination
-              count={totalPages}
-              page={currentPage}
-              onChange={handlePageChange}
-              variant="outlined"
-              color="primary"
-              disabled={isLoading}
-            />
-          </Stack>
-        </Box>
-      )}
-      {/* Loading overlay for page changes */}
     </> // Close the fragment
   );
 };

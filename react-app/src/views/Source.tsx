@@ -11,11 +11,11 @@ export default function Source() {
         {t("Source_Title")}
       </Typography>
 
-      <Typography variant="body1">{t("Source_Intro")}</Typography>
+      <Typography variant="body2">{t("Source_Intro")}</Typography>
 
-      <Typography variant="body1">{t("Source_Example")}</Typography>
+      <Typography variant="body2">{t("Source_Example")}</Typography>
 
-      <Typography variant="body1" color="text.secondary">
+      <Typography variant="body2" color="text.secondary">
         {t("Source_Disclaimer")}
       </Typography>
     </Box>

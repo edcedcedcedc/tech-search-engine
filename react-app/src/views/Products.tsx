@@ -1,9 +1,9 @@
 import React from "react";
-import { Box, Fade } from "@mui/material";
+import { Box } from "@mui/material";
 import { useStore } from "../store/store";
 import ProductGrid from "../components/ProductGrid";
 import ProductOffersTable from "../components/ProductOffersTable";
-import NoProductsFound from "../components/NoProductsFound";
+import EmptySearchState from "../components/EmptySearchState";
 
 const ProductsPage: React.FC = () => {
   const query = useStore((s) => s.query);
@@ -14,7 +14,9 @@ const ProductsPage: React.FC = () => {
   const showNoProducts = !isLoading && query && aggregatedProducts.length === 0;
 
   if (showNoProducts) {
-    return <NoProductsFound query={query} />;
+    return <EmptySearchState query={query} />;
+  } else {
+    return <EmptySearchState />;
   }
 
   // During loading, or if products exist, show the normal grid with fade

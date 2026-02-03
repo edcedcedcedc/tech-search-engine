@@ -131,7 +131,7 @@ const getTheme = (mode: "light" | "dark") => {
     },
 
     body1: {
-      fontSize: "0.7875rem",
+      fontSize: "0.75rem",
       "@media (min-width:375px)": { fontSize: "0.81rem" },
       "@media (min-width:425px)": { fontSize: "0.855rem" },
       "@media (min-width:768px)": { fontSize: "0.9rem" },
@@ -140,7 +140,7 @@ const getTheme = (mode: "light" | "dark") => {
     },
 
     body2: {
-      fontSize: "0.675rem",
+      fontSize: "0.625rem",
       "@media (min-width:375px)": { fontSize: "0.72rem" },
       "@media (min-width:425px)": { fontSize: "0.765rem" },
       "@media (min-width:768px)": { fontSize: "0.81rem" },

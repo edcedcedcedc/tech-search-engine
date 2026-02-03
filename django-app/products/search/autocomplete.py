@@ -18,28 +18,46 @@ class AutocompleteAPIView(APIView):
 
     def _lookup(self, user_input, lang="en"):
         """
-        Use Elasticsearch search_as_you_type field for autocomplete.
+        Hybrid Elasticsearch autocomplete:
+        Combines prefix matching with all-token matching + boosts
+        to ensure relevant terms like '4K' rank higher.
         """
         index_name = f"{INDEX_NAME}_{lang}" if lang in ["en", "ro"] else INDEX_NAME
         query = user_input.lower().strip()
 
-        body = {
+        hybrid_query = {
             "size": AUTOCOMPLETE_LIMIT,
             "query": {
-                "multi_match": {
-                    "query": query,
-                    "type": "bool_prefix",
-                    "fields": ["name", "name._2gram", "name._3gram"],
+                "bool": {
+                    "should": [
+                        {
+                            # All tokens must appear somewhere, boost exact name matches
+                            "multi_match": {
+                                "query": query,
+                                "fields": ["name^3", "name._2gram^2", "name._3gram"],
+                                "type": "best_fields",
+                                "operator": "and",
+                                "fuzziness": "AUTO",
+                            }
+                        },
+                        {
+                            # Prefix matches for fast autocomplete feel
+                            "multi_match": {
+                                "query": query,
+                                "fields": ["name", "name._2gram", "name._3gram"],
+                                "type": "bool_prefix",
+                            }
+                        },
+                    ]
                 }
             },
         }
 
-        res = es.search(index=index_name, body=body)
-        hits = res.get("hits", {}).get("hits", [])
-
-        # Return product_id + name
-        suggestions = [
+        resp = es.search(index=index_name, body=hybrid_query)
+        results = [
             {"id": hit["_source"]["product_id"], "name": hit["_source"]["name"]}
-            for hit in hits
+            for hit in resp.get("hits", {}).get("hits", [])
         ]
-        return suggestions
+
+        # Return top N
+        return results[:AUTOCOMPLETE_LIMIT]

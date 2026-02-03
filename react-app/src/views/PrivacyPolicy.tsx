@@ -7,42 +7,53 @@ export default function PrivacyPolicy() {
 
   return (
     <Box>
+      {/* Page title */}
       <Typography variant="h5" gutterBottom>
         {t("Privacy_Title")}
       </Typography>
 
-      <Typography variant="body1">{t("Privacy_Intro")}</Typography>
+      {/* Intro */}
+      <Typography variant="body2" paragraph>
+        {t("Privacy_Intro")}
+      </Typography>
 
-      <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+      {/* Data collection */}
+      <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
         {t("Privacy_DataCollection_Title")}
       </Typography>
-      <Typography variant="body1">
+      <Typography variant="body2" paragraph>
         {t("Privacy_DataCollection_Body")}
       </Typography>
 
-      <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+      {/* Cookies */}
+      <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
         {t("Privacy_Cookies_Title")}
       </Typography>
-      <Typography variant="body1">{t("Privacy_Cookies_Body")}</Typography>
+      <Typography variant="body2" paragraph>
+        {t("Privacy_Cookies_Body")}
+      </Typography>
 
-      <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+      {/* External sources */}
+      <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
         {t("Privacy_ExternalSources_Title")}
       </Typography>
-      <Typography variant="body1" paragraph>
+      <Typography variant="body2" paragraph>
         {t("Privacy_ExternalSources_Body")}
       </Typography>
 
-      <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+      {/* Advertising */}
+      <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
         {t("Privacy_Advertising_Title")}
       </Typography>
-      <Typography variant="body1" paragraph>
+      <Typography variant="body2" paragraph>
         {t("Privacy_Advertising_Body")}
       </Typography>
 
-      <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+      {/* Contact */}
+      <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
         {t("Privacy_Contact_Title")}
       </Typography>
-      <Typography variant="body1">{t("Privacy_Contact_Body")}</Typography>
+      <Typography variant="body2">{t("Privacy_Contact_Body")}</Typography>
     </Box>
   );
 }

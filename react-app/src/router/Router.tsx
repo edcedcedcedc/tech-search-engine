@@ -19,19 +19,17 @@ const AppRoutes: React.FC<any> = () => {
   return (
     <Box sx={{ position: "relative" }}>
       <Fade in={isLoading} timeout={300} unmountOnExit={false}>
-        <Box
+        <LinearProgress
+          variant="query"
           sx={{
-            width: "100%",
-            position: "absolute",
+            position: "static", // fixed to viewport
             top: 0,
             left: 0,
-            zIndex: 1500,
+            width: "100%",
+            zIndex: (theme) => theme.zIndex.appBar + 1, // above AppBar but below Drawer
           }}
-        >
-          <LinearProgress variant="query" />
-        </Box>
+        />
       </Fade>
-
       <Suspense
         fallback={
           <Box

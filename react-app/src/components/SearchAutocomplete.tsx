@@ -10,6 +10,7 @@ import {
   InputAdornment,
   IconButton,
   Box,
+  Tooltip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import debounce from "lodash.debounce";
@@ -155,7 +156,13 @@ export const SearchAutocomplete: React.FC = () => {
                       position: "absolute",
                     }}
                   >
-                    <SearchIcon fontSize="medium" />
+                    <Tooltip
+                      title={t("Search_Tooltip")}
+                      enterDelay={500}
+                      leaveDelay={0}
+                    >
+                      <SearchIcon fontSize="medium" />
+                    </Tooltip>
                   </IconButton>
                 )}
               </div>
