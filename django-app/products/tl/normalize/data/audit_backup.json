@@ -2159,6 +2159,28 @@
       "examples": [
         21342
       ]
+    },
+    "apple mac mini": {
+      "normalized": {
+        "ro": "mini pc, apple",
+        "en": "Apple Mac mini",
+        "ru": "\u043c\u0438\u043d\u0438-\u041f\u041a Apple"
+      },
+      "first_seen": "2026-02-03T23:13:24.190647+00:00",
+      "examples": [
+        21439
+      ]
+    },
+    "mini pc": {
+      "normalized": {
+        "ro": "mini pc, desktop",
+        "en": "Mini PCs",
+        "ru": "\u043c\u0438\u043d\u0438-\u041f\u041a \u0438 \u043d\u0430\u0441\u0442\u043e\u043b\u044c\u043d\u044b\u0435 \u043a\u043e\u043c\u043f\u044c\u044e\u0442\u0435\u0440\u044b"
+      },
+      "first_seen": "2026-02-03T23:13:37.132019+00:00",
+      "examples": [
+        21447
+      ]
     }
   }
 }

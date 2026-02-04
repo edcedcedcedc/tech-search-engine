@@ -15,8 +15,6 @@ const ProductsPage: React.FC = () => {
 
   if (showNoProducts) {
     return <EmptySearchState query={query} />;
-  } else {
-    return <EmptySearchState />;
   }
 
   // During loading, or if products exist, show the normal grid with fade

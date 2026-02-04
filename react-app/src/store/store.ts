@@ -1,5 +1,6 @@
-import { create } from "zustand";
 
+import { create } from "zustand";
+import { uiLog } from "../webhook/client/sender";
 type ThemeMode = "light" | "dark";
 import type { AggregatedProduct } from "../types/AggregatedProduct";
 import { getProductOffers as apiGetProductOffers } from "../api/searchApi";
@@ -168,74 +169,81 @@ export const useStore = create<State>((set, get) => ({
   setIsLoading: (value: boolean) => set({ isLoading: value }),
   
  
-  // UPDATED: searchProducts with caching
-  searchProducts: async (query?: string, lang?: string, page: number = 1) => {
-    const q = query ?? get().query;
-    
-    if (!q) return;
-    
-    const currentCacheKey = generateCacheKey(q, lang);
-    const { pageCache, queryCacheKey } = get();
-    
-    // Check if query changed - clear cache if it did
-    if (currentCacheKey !== queryCacheKey) {
-      set({ pageCache: {}, queryCacheKey: currentCacheKey });
-    }
-    
-    // Check cache first
-    const cachedPage = pageCache[page];
-    if (cachedPage) {
-      // Use cached data
-      set({ 
-        aggregatedProducts: cachedPage,
-        currentPage: page,
-        isLoading: false 
-      });
-      return;
-    }
-    
-    try {
-      set({ isLoading: true });
-      
-      const limit = get().itemsPerPage || 20;
-      
-      let cursor: string | undefined;
-      
-      if (page > 1) {
-        const offset = (page - 1) * limit;
-        cursor = offset.toString();
-      }
-      
-      const data = await apiSearchProducts(q, lang, limit, cursor);
-      const totalCount = data.total_count;
-      
-      // Cache this page
-      const newCache = { ...pageCache, [page]: data.products };
+searchProducts: async (query?: string, lang?: string, page: number = 1) => {
+  const q = query ?? get().query;
+  if (!q) return;
 
+  // Start search
+  uiLog(`searchProducts | start | query=${q} | lang=${lang} | page=${page}`);
 
-      // Limit cache size (optional - keep last 10 pages)
-      if (Object.keys(newCache).length > 10) {
-        // Remove oldest page (lowest page number)
-        const oldestPage = Math.min(...Object.keys(newCache).map(Number));
-        delete newCache[oldestPage];
-      }
-      
-      set({
-        aggregatedProducts: data.products,
-        currentPage: page,
-        nextCursor: data.next_cursor || null,
-        totalResults: totalCount,
-        totalPages: Math.ceil(totalCount / limit),
-        pageCache: newCache,
-        queryCacheKey: currentCacheKey,
-        isLoading: false
-      });
-      
-    } catch (err) {
-      console.error("Search error:", err);
-      set({ isLoading: false });
+  const currentCacheKey = generateCacheKey(q, lang);
+  const prevCacheKey = get().queryCacheKey;
+
+  // Invalidate cache if query/lang changed
+  if (currentCacheKey !== prevCacheKey) {
+    uiLog(`searchProducts | invalidate_cache | prev=${prevCacheKey} | current=${currentCacheKey}`);
+    set({
+      pageCache: {},
+      queryCacheKey: currentCacheKey,
+      currentPage: 1,
+    });
+  }
+
+  const { pageCache } = get();
+  const cachedPage = pageCache[page];
+
+  // Load from cache
+  if (cachedPage) {
+    uiLog(`searchProducts | load_from_cache | page=${page} | cachedCount=${cachedPage.length}`);
+    set({
+      aggregatedProducts: cachedPage,
+      currentPage: page,
+      isLoading: false,
+    });
+    return;
+  }
+
+  try {
+    set({ isLoading: true });
+
+    const limit = get().itemsPerPage || 20;
+    const cursor = page > 1 ? ((page - 1) * limit).toString() : undefined;
+
+    // Call API
+    uiLog(`searchProducts | call_api | query=${q} | lang=${lang} | page=${page} | limit=${limit} | cursor=${cursor}`);
+
+    const data = await apiSearchProducts(q, lang, limit, cursor);
+    const totalCount = data.total_count;
+
+    // Cache page
+    const newCache = { ...get().pageCache, [page]: data.products };
+    uiLog(`searchProducts | cache_page | page=${page} | productsCount=${data.products.length}`);
+
+    // Optional LRU trim
+    if (Object.keys(newCache).length > 10) {
+      const oldestPage = Math.min(...Object.keys(newCache).map(Number));
+      delete newCache[oldestPage];
+      uiLog(`searchProducts | trim_lru_cache | removedPage=${oldestPage}`);
     }
-  },
+
+    set({
+      aggregatedProducts: data.products,
+      currentPage: page,
+      nextCursor: data.next_cursor || null,
+      totalResults: totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      pageCache: newCache,
+      isLoading: false,
+    });
+
+    // Search complete
+    uiLog(`searchProducts | complete | totalResults=${totalCount} | totalPages=${Math.ceil(totalCount / limit)}`);
+
+  } catch (err) {
+    set({ isLoading: false });
+    uiLog(`searchProducts | error | ${(err as any)?.message}`);
+  }
+},
 
 
    // Pagination state initialization

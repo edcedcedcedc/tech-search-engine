@@ -1,60 +1,57 @@
-// src/api/searchApi.ts
 import axios from "axios";
+import { uiLog } from "../webhook/client/sender"; // <-- import logger
+
 // ---------------- Types ----------------
 import type { AggregatedProduct } from "../types/AggregatedProduct";
 import type { SearchResponse } from "../types/SearchResponse";
 import type { AutocompleteResponse } from "../types/AutocompleteResponse";
 
 // ---------------- Axios instance ----------------
-// Using Vite proxy: baseURL points to the proxy /api
 const api = axios.create({
-  baseURL: "/api", // proxy in vite.config.ts will forward to Django
+  baseURL: "/api",
   timeout: 30000,
   headers: {
-    "Accept": "application/json",
+    Accept: "application/json",
   },
-  withCredentials: true, // keep credentials for sessions/cookies
+  withCredentials: true,
 });
 
 // ---------------- API functions ----------------
 
 /**
  * Layer 1: Search products
- * @param query Search query string
- * @param limit Number of products to fetch
- * @param cursor Optional cursor for pagination
  */
 export const searchProducts = async (
   query: string,
   lang?: string,
   limit?: number,
-  cursor?: string, // Your backend uses cursor for offset
-  offset?: number // Keep as alternative
+  cursor?: string,
+  offset?: number
 ): Promise<SearchResponse> => {
   const params: Record<string, any> = { q: query };
-  
   if (lang) params.lang = lang;
   if (limit) params.limit = limit;
-  
-  // Your backend expects 'cursor' parameter which is actually an offset number
+
   if (cursor !== undefined) {
     params.cursor = cursor;
   } else if (offset !== undefined) {
-    // If offset is provided, convert it to cursor string
     params.cursor = offset.toString();
   }
-  
-  const { data } = await api.get<SearchResponse>("/search/", { params });
-  return data;
-};
 
+  uiLog(`api | searchProducts | request | query=${query} | lang=${lang} | limit=${limit} | cursor=${params.cursor}`);
+
+  try {
+    const { data } = await api.get<SearchResponse>("/search/", { params });
+    uiLog(`api | searchProducts | response | query=${query} | results=${data.products.length} | total_count=${data.total_count}`);
+    return data;
+  } catch (err) {
+    uiLog(`api | searchProducts | error | query=${query} | err=${(err as any)?.message}`);
+    throw err;
+  }
+};
 
 /**
  * Layer 2: Product offers (full or preview)
- * @param productId Aggregated product ID
- * @param full Whether to fetch full offer data
- * @param limit Number of offers to fetch
- * @param cursor Optional cursor for pagination
  */
 export const getProductOffers = async (
   productId: string,
@@ -66,16 +63,22 @@ export const getProductOffers = async (
   if (limit) params.limit = limit;
   if (cursor) params.cursor = cursor;
 
-  const { data } = await api.get(`/product/${productId}/offers`, { params });
-  return data;
+  uiLog(`api | getProductOffers | request | productId=${productId} | full=${full} | limit=${limit} | cursor=${cursor}`);
+
+  try {
+    const { data } = await api.get(`/product/${productId}/offers/`, { params });
+    uiLog(`api | getProductOffers | response | productId=${productId} | offers=${data.offers.length} | has_more=${data.has_more}`);
+    return data;
+  } catch (err) {
+    uiLog(`api | getProductOffers | error | productId=${productId} | err=${(err as any)?.message}`);
+    throw err;
+  }
 };
 
 export default api;
 
-
 /**
  * Autocomplete suggestions
- * @param query User input string
  */
 export const autocomplete = async (
   query: string,
@@ -84,6 +87,14 @@ export const autocomplete = async (
   const params: Record<string, any> = { q: query };
   if (lang) params.lang = lang;
 
-  const { data } = await api.get<AutocompleteResponse>("/autocomplete", { params });
-  return data;
+  uiLog(`api | autocomplete | request | query=${query} | lang=${lang}`);
+
+  try {
+    const { data } = await api.get<AutocompleteResponse>("/autocomplete/", { params });
+    uiLog(`api | autocomplete | response | query=${query} | suggestions=${data.suggestions.length}`);
+    return data;
+  } catch (err) {
+    uiLog(`api | autocomplete | error | query=${query} | err=${(err as any)?.message}`);
+    throw err;
+  }
 };

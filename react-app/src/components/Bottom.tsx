@@ -6,6 +6,7 @@ interface BottomProps {
   isLoading?: boolean;
 }
 import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 const Bottom: React.FC<BottomProps> = ({ isLoading }) => {
   const currentPage = useStore((state) => state.currentPage);
   const totalPages = useStore((state) => state.totalPages);
@@ -13,6 +14,8 @@ const Bottom: React.FC<BottomProps> = ({ isLoading }) => {
   const setCurrentPage = useStore((state) => state.setCurrentPage);
   const searchProducts = useStore((state) => state.searchProducts);
   const location = useLocation();
+  const { i18n } = useTranslation();
+  const lang = i18n.language.slice(0, 2); // always 2-letter code
 
   if (location.pathname !== "/products") return null;
 
@@ -22,7 +25,7 @@ const Bottom: React.FC<BottomProps> = ({ isLoading }) => {
   ) => {
     if (page !== currentPage && !isLoading) {
       setCurrentPage(page);
-      searchProducts(undefined, undefined, page);
+      searchProducts(undefined, lang, page);
     }
   };
 
@@ -34,7 +37,7 @@ const Bottom: React.FC<BottomProps> = ({ isLoading }) => {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        mt: 4,
+        mt: 0, // removed top margin
         mb: 2,
         gap: 1.5,
       }}

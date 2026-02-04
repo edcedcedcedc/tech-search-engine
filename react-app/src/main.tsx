@@ -20,7 +20,6 @@ const Root = () => {
   );
 };
 
-// ❌ Do not export Root
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Root />

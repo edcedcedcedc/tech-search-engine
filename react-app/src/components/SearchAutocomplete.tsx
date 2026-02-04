@@ -21,6 +21,7 @@ import { useStore } from "../store/store";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import type { Suggestion } from "../types/Suggestion";
+import { uiLog } from "../webhook/client/sender";
 
 export const SearchAutocomplete: React.FC = () => {
   const setQuery = useStore((s) => s.setQuery);
@@ -37,67 +38,87 @@ export const SearchAutocomplete: React.FC = () => {
   const loadingTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+
   const closeSuggestions = () => {
+    uiLog(`autocomplete | closeSuggestions`);
     setSuggestions([]);
   };
+
   const navigate = useNavigate();
-  const fetchSuggestions = React.useMemo(
-    () =>
-      debounce(async (q: string) => {
-        if (q.length === 0) {
-          setSuggestions([]);
-          setLoading(false);
-          return;
-        }
 
-        setLoading(true);
-        // show spinner after 100ms delay
-        if (!loadingTimerRef.current) {
-          loadingTimerRef.current = setTimeout(
-            () => setDelayedLoading(true),
-            100,
+  const fetchSuggestions = React.useCallback(
+    debounce(async (q: string) => {
+      uiLog(`autocomplete | fetchSuggestions | start | query=${q}`);
+      if (q.length === 0) {
+        uiLog(`autocomplete | fetchSuggestions | empty query`);
+        setSuggestions([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      if (!loadingTimerRef.current) {
+        loadingTimerRef.current = setTimeout(() => {
+          setDelayedLoading(true);
+          uiLog(
+            `autocomplete | fetchSuggestions | delayed loading=true | query=${q}`,
           );
-        }
+        }, 100);
+      }
 
-        try {
-          const res = await autocomplete(q, lang);
-          setSuggestions(res.suggestions);
-        } finally {
-          setLoading(false);
-          // keep spinner visible for at least 300ms to avoid flicker
-          setTimeout(() => {
-            setDelayedLoading(false);
-            if (loadingTimerRef.current) {
-              clearTimeout(loadingTimerRef.current);
-              loadingTimerRef.current = null;
-            }
-          }, 300);
-        }
-      }, 500),
+      try {
+        const res = await autocomplete(q, lang);
+        setSuggestions(res.suggestions);
+        uiLog(
+          `autocomplete | fetchSuggestions | success | query=${q} | results=${res.suggestions.length}`,
+        );
+      } catch (err) {
+        uiLog(
+          `autocomplete | fetchSuggestions | error | query=${q} | err=${(err as any)?.message}`,
+        );
+      } finally {
+        setLoading(false);
+        setTimeout(() => {
+          setDelayedLoading(false);
+          uiLog(
+            `autocomplete | fetchSuggestions | delayed loading=false | query=${q}`,
+          );
+          if (loadingTimerRef.current) {
+            clearTimeout(loadingTimerRef.current);
+            loadingTimerRef.current = null;
+          }
+        }, 300);
+      }
+    }, 500),
     [lang],
   );
 
   React.useEffect(() => {
     return () => {
       fetchSuggestions.cancel();
+      uiLog(`autocomplete | fetchSuggestions | cancelled`);
     };
   }, [fetchSuggestions]);
 
   const submitSearch = (q: string) => {
-    if (!q) return;
+    uiLog(`autocomplete | submitSearch | query=${q}`);
     setQuery(q);
-    setSuggestions([]);
     searchProducts(q, lang);
     navigate("/products");
+    setSuggestions([]);
+    setLoading(false);
+    setDelayedLoading(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const q = e.target.value;
+    uiLog(`autocomplete | handleChange | value=${q}`);
     setValue(q);
     fetchSuggestions(q);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    uiLog(`autocomplete | handleKeyDown | key=${e.key}`);
     if (e.key === "Enter") {
       submitSearch(value);
     }
@@ -106,9 +127,10 @@ export const SearchAutocomplete: React.FC = () => {
     }
   };
 
-  const handleSelect = (q: Suggestion) => {
-    setValue(q.name);
-    submitSearch(q.name);
+  const handleSelect = (s: Suggestion) => {
+    uiLog(`autocomplete | handleSelect | suggestion=${s.name}`);
+    submitSearch(s.name); // trigger search immediately
+    setSuggestions([]); // close dropdown
   };
 
   return (
@@ -118,12 +140,6 @@ export const SearchAutocomplete: React.FC = () => {
         variant="outlined"
         inputRef={anchorRef}
         value={value}
-        onBlur={() => {
-          // delay allows click on suggestion to register first
-          setTimeout(() => {
-            setSuggestions([]);
-          }, 100);
-        }}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         placeholder={`${t("Search_product")}`}
@@ -151,7 +167,12 @@ export const SearchAutocomplete: React.FC = () => {
                 {!delayedLoading && (
                   <IconButton
                     size="medium"
-                    onClick={() => submitSearch(value)}
+                    onClick={() => {
+                      uiLog(
+                        `autocomplete | search icon clicked | value=${value}`,
+                      );
+                      submitSearch(value);
+                    }}
                     style={{
                       position: "absolute",
                     }}
@@ -231,6 +252,7 @@ export const SearchAutocomplete: React.FC = () => {
                 <ListItemButton
                   key={`${s}-${idx}`}
                   onClick={() => handleSelect(s)}
+                  onMouseDown={(e) => e.preventDefault()}
                   sx={{
                     py: 1,
                     px: 2,
