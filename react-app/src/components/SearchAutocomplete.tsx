@@ -104,7 +104,9 @@ export const SearchAutocomplete: React.FC = () => {
     uiLog(`autocomplete | submitSearch | query=${q}`);
     setQuery(q);
     searchProducts(q, lang);
-    navigate("/products");
+    if (q) {
+      navigate("/products");
+    }
     setSuggestions([]);
     setLoading(false);
     setDelayedLoading(false);

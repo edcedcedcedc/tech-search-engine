@@ -6,6 +6,64 @@ import type { AggregatedProduct } from "../types/AggregatedProduct";
 import { getProductOffers as apiGetProductOffers } from "../api/searchApi";
 import { searchProducts as apiSearchProducts } from "../api/searchApi";
 
+
+// ---- ADD THIS AT THE TOP, BEFORE useStore ----
+
+// Load session cache if available
+let multiQueryCache: Record<string, { pageCache: Record<number, AggregatedProduct[]>; totalResults: number }> = {};
+const cached = typeof window !== "undefined" ? sessionStorage.getItem("searchCache") : null;
+
+let initialCache = {};
+let initialQueryKey = '';
+
+if (cached) {
+  try {
+    const parsed = JSON.parse(cached);
+    multiQueryCache = parsed || {};
+    // pick the first query as initial (or keep empty)
+    initialQueryKey = Object.keys(multiQueryCache)[0] || '';
+    uiLog(`useStore | loaded multi-query cache | queries=${Object.keys(multiQueryCache).length} | initialQuery=${initialQueryKey}`);
+  } catch (err) {
+    uiLog(`useStore | failed to parse sessionStorage cache | error=${(err as any)?.message}`);
+  }
+} else {
+  uiLog("useStore | no sessionStorage cache found");
+}
+
+
+// Helper: estimate sessionStorage usage in bytes
+const getSessionStorageSize = () => {
+  let total = 0;
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
+    if (!key) continue;
+    const value = sessionStorage.getItem(key) || "";
+    total += key.length + value.length;
+  }
+  return total * 2; // approx bytes (UTF-16)
+};
+
+// Max sessionStorage we allow (5MB limit)
+const SESSION_STORAGE_LIMIT = 5 * 1024 * 1024; // 5MB
+
+// Helper: trim oldest queries if we're near limit
+const trimSessionCacheIfNeeded = () => {
+  let size = getSessionStorageSize();
+  while (size > SESSION_STORAGE_LIMIT) {
+    const oldestQuery = Object.keys(multiQueryCache)[0];
+    if (!oldestQuery) break;
+    delete multiQueryCache[oldestQuery];
+    uiLog(`trimSessionCacheIfNeeded | removed oldest query=${oldestQuery} | newSize=${size}`);
+    try {
+      sessionStorage.setItem("searchCache", JSON.stringify(multiQueryCache));
+    } catch {}
+    size = getSessionStorageSize();
+  }
+};
+
+
+
+
 interface CookieState {
   consent: boolean | null; // null = not answered yet
   accept: () => void;
@@ -171,10 +229,14 @@ export const useStore = create<State>((set, get) => ({
  
 searchProducts: async (query?: string, lang?: string, page: number = 1) => {
   const q = query ?? get().query;
+   // Start search
+  uiLog(`searchProducts | start | query=${q} | lang=${lang} | page=${page}`);
   if (!q) return;
 
-  // Start search
-  uiLog(`searchProducts | start | query=${q} | lang=${lang} | page=${page}`);
+ 
+
+
+ 
 
   const currentCacheKey = generateCacheKey(q, lang);
   const prevCacheKey = get().queryCacheKey;
@@ -189,15 +251,23 @@ searchProducts: async (query?: string, lang?: string, page: number = 1) => {
     });
   }
 
-  const { pageCache } = get();
+   // Get cached data for this specific query
+  let cachedQueryData = multiQueryCache[currentCacheKey];
+  let pageCache = cachedQueryData?.pageCache || {};
+  let totalCount = cachedQueryData?.totalResults || 0;
+
   const cachedPage = pageCache[page];
 
-  // Load from cache
   if (cachedPage) {
-    uiLog(`searchProducts | load_from_cache | page=${page} | cachedCount=${cachedPage.length}`);
-    set({
+  uiLog(`searchProducts | load_from_multi_query_cache | query=${currentCacheKey} | page=${page} | cachedCount=${cachedPage.length} | totalResults=${totalCount}`);
+
+  set({
       aggregatedProducts: cachedPage,
       currentPage: page,
+      totalResults: totalCount,
+      totalPages: Math.ceil(totalCount / (get().itemsPerPage || 20)),
+      pageCache,
+      queryCacheKey: currentCacheKey,
       isLoading: false,
     });
     return;
@@ -224,6 +294,15 @@ searchProducts: async (query?: string, lang?: string, page: number = 1) => {
       const oldestPage = Math.min(...Object.keys(newCache).map(Number));
       delete newCache[oldestPage];
       uiLog(`searchProducts | trim_lru_cache | removedPage=${oldestPage}`);
+    }
+    multiQueryCache[currentCacheKey] = { pageCache: newCache, totalResults: totalCount };
+    // Save to sessionStorage with auto-trim
+    try {
+      trimSessionCacheIfNeeded(); // trim if over 5MB
+      sessionStorage.setItem("searchCache", JSON.stringify(multiQueryCache));
+      uiLog(`searchProducts | saved_multi_query_cache | query=${currentCacheKey} | page=${page} | totalCachedPages=${Object.keys(newCache).length} | totalQueries=${Object.keys(multiQueryCache).length}`);
+    } catch (err) {
+      uiLog(`searchProducts | failed_to_save_multi_query_cache | error=${(err as any)?.message}`);
     }
 
     set({
@@ -258,8 +337,11 @@ searchProducts: async (query?: string, lang?: string, page: number = 1) => {
   setTotalResults: (count) => set({ totalResults: count }),
   setNextCursor: (cursor) => set({ nextCursor: cursor }),
   
-  pageCache: {},
-  queryCacheKey: '',
+
+  //Cache 
+  pageCache: initialCache,
+  queryCacheKey: initialQueryKey,
+  
   clearCache: () => set({ 
   pageCache: {}, 
   queryCacheKey: '',

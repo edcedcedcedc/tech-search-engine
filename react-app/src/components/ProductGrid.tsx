@@ -134,6 +134,7 @@ const ProductGrid: React.FC<Props> = () => {
               <CardActions sx={{ mt: "auto" }}>
                 <Tooltip title={t("Offers_Tooltip")} enterDelay={1}>
                   <IconButton
+                    sx={{ pt: 0, mt: 0 }}
                     onClick={() => onOpenProduct(product.id)}
                     size="small"
                     disabled={isLoading}
