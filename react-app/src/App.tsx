@@ -1,14 +1,8 @@
-import {
-  Box,
-  Container,
-  Typography,
-  useTheme,
-  useMediaQuery,
-} from "@mui/material";
+import { Box, Container, Typography, useTheme } from "@mui/material";
 import { BrowserRouter } from "react-router-dom";
 
 import Header from "./components/Header";
-import Footer from "./components/Footer";
+
 import AppRoutes from "./router/Router";
 import { Cookie } from "./components/Cookie";
 import { Meta } from "./components/Meta";

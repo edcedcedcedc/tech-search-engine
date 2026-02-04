@@ -9,27 +9,49 @@ import { searchProducts as apiSearchProducts } from "../api/searchApi";
 
 // ---- ADD THIS AT THE TOP, BEFORE useStore ----
 
-// Load session cache if available
-let multiQueryCache: Record<string, { pageCache: Record<number, AggregatedProduct[]>; totalResults: number }> = {};
-const cached = typeof window !== "undefined" ? sessionStorage.getItem("searchCache") : null;
 
+
+const SESSION_STORAGE_LIMIT = 5 * 1024 * 1024; // 5MB
+const CACHE_TIMESTAMP_KEY = "searchCacheTimestamp";
+const CACHE_MAX_AGE = 3 * 60 * 60 * 1000; // 3 hours in ms
+
+let multiQueryCache: Record<string, { pageCache: Record<number, AggregatedProduct[]>; totalResults: number }> = {};
 let initialCache = {};
 let initialQueryKey = '';
 
-if (cached) {
-  try {
-    const parsed = JSON.parse(cached);
-    multiQueryCache = parsed || {};
-    // pick the first query as initial (or keep empty)
-    initialQueryKey = Object.keys(multiQueryCache)[0] || '';
-    uiLog(`useStore | loaded multi-query cache | queries=${Object.keys(multiQueryCache).length} | initialQuery=${initialQueryKey}`);
-  } catch (err) {
-    uiLog(`useStore | failed to parse sessionStorage cache | error=${(err as any)?.message}`);
-  }
-} else {
-  uiLog("useStore | no sessionStorage cache found");
-}
+if (typeof window !== "undefined") {
+  const cached = sessionStorage.getItem("searchCache");
+  const ts = sessionStorage.getItem(CACHE_TIMESTAMP_KEY);
+  const now = Date.now();
+  let expired = false;
 
+  if (cached && ts) {
+    if (now - parseInt(ts, 10) > CACHE_MAX_AGE) {
+      expired = true;
+      uiLog(`useStore | session cache expired after 3h`);
+    } else {
+      try {
+        multiQueryCache = JSON.parse(cached) || {};
+        initialQueryKey = Object.keys(multiQueryCache)[0] || '';
+        uiLog(`useStore | loaded multi-query cache | queries=${Object.keys(multiQueryCache).length} | initialQuery=${initialQueryKey}`);
+      } catch (err) {
+        uiLog(`useStore | failed to parse sessionStorage cache | error=${(err as any)?.message}`);
+        expired = true;
+      }
+    }
+  } else {
+    uiLog("useStore | no sessionStorage cache found");
+  }
+
+  if (expired) {
+    multiQueryCache = {};
+    initialCache = {};
+    initialQueryKey = '';
+    sessionStorage.removeItem("searchCache");
+    sessionStorage.removeItem(CACHE_TIMESTAMP_KEY);
+    uiLog("useStore | cleared expired session cache");
+  }
+}
 
 // Helper: estimate sessionStorage usage in bytes
 const getSessionStorageSize = () => {
@@ -43,8 +65,6 @@ const getSessionStorageSize = () => {
   return total * 2; // approx bytes (UTF-16)
 };
 
-// Max sessionStorage we allow (5MB limit)
-const SESSION_STORAGE_LIMIT = 5 * 1024 * 1024; // 5MB
 
 // Helper: trim oldest queries if we're near limit
 const trimSessionCacheIfNeeded = () => {
@@ -300,7 +320,8 @@ searchProducts: async (query?: string, lang?: string, page: number = 1) => {
     try {
       trimSessionCacheIfNeeded(); // trim if over 5MB
       sessionStorage.setItem("searchCache", JSON.stringify(multiQueryCache));
-      uiLog(`searchProducts | saved_multi_query_cache | query=${currentCacheKey} | page=${page} | totalCachedPages=${Object.keys(newCache).length} | totalQueries=${Object.keys(multiQueryCache).length}`);
+      sessionStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString()); // <-- set timestamp
+      uiLog(`searchProducts | saved_multi_query_cache with timestamp | totalQueries=${Object.keys(multiQueryCache).length}`);
     } catch (err) {
       uiLog(`searchProducts | failed_to_save_multi_query_cache | error=${(err as any)?.message}`);
     }
