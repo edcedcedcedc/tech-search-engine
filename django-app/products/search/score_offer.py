@@ -1,135 +1,128 @@
 import math
 from rapidfuzz import fuzz
+from products.utils.log.search_engine_log import search_engine_log
 import json
 import numpy as np
-from products.search.utils import ascii_folding, cosine_similarity
-from products.utils.log.search_engine_log import search_engine_log
+from products.search.utils import cosine_similarity
+import numpy as np
 
 
-def score_offers_for_product(product):
+""" def score_offers_for_product(product, query_embedding=None):
+   
     min_price = product["lowest_price"]
-    product_relevance = product.get("relevance", 0)
+    product_relevance = product["relevance"]
 
-    # --- Prepare cluster embedding ---
-    try:
-        product_emb = (
-            np.array(json.loads(product["embedding"]))
-            if product.get("embedding")
-            else None
+    def offer_fuzzy_score(offer, product):
+       
+        name_score = (
+            fuzz.token_set_ratio(offer["name"].lower(), product["name"].lower()) / 100
         )
-    except Exception as e:
-        product_emb = None
-        search_engine_log(f"[EmbeddingError] Failed to load product embedding: {e}")
-
-    if product_emb is not None:
-        search_engine_log(
-            f"[Debug] Product embedding shape={product_emb.shape}, first5={product_emb[:5]}"
+        variant_score = (
+            fuzz.token_set_ratio(
+                (offer.get("variant") or "").lower(),
+                (product.get("variant") or "").lower(),
+            )
+            / 100
         )
-    else:
-        search_engine_log(f"[Debug] Product embedding is None")
+        return 0.7 * name_score + 0.3 * variant_score
 
-    # --- Prepare query embedding ---
-    try:
-        query_emb = (
-            np.array(json.loads(product["query_embedding"]))
-            if product.get("query_embedding")
-            else None
-        )
-    except Exception as e:
-        query_emb = None
-        search_engine_log(f"[EmbeddingError] Failed to load query embedding: {e}")
+    def price_score(price, min_price):
+     
+        if price <= 0 or min_price <= 0:
+            return 0.0
+        return 1 / math.log(price / min_price + 1.2)
 
-    if query_emb is not None:
-        search_engine_log(
-            f"[Debug] Query embedding shape={query_emb.shape}, first5={query_emb[:5]}"
-        )
-    else:
-        search_engine_log(f"[Debug] Query embedding is None")
-
-    raw_query = product.get("query", "")
-    shop_seen = set()
+    # Convert product embedding once
+    product_emb = None
+    if product.get("_embedding"):
+        try:
+            product_emb = np.array(json.loads(product["_embedding"]))
+        except Exception as e:
+            search_engine_log(
+                f"Error loading product embedding for cluster {product['id']}: {e}"
+            )
 
     for o in product["offers"]:
         if not o["in_stock"]:
             o["offer_score"] = 0.0
             continue
 
-        # --- Load offer embedding ---
-        offer_emb = None
-        if o.get("embedding"):
+        # --- Base score: semantic similarity product -> offer ---
+        product_semantic = 0.0
+        if product_emb is not None and o.get("_embedding"):
             try:
-                if o["embedding"].strip() == "":
-                    offer_emb = None
-                else:
-                    offer_emb = np.array(json.loads(o["embedding"]))
-                if offer_emb is not None:
-                    search_engine_log(
-                        f"[Debug] Offer '{o['name']}' embedding shape={offer_emb.shape}, first5={offer_emb[:5]}"
-                    )
-                else:
-                    search_engine_log(f"[Debug] Offer '{o['name']}' embedding is None")
+                offer_emb = np.array(json.loads(o["_embedding"]))
+                product_semantic = cosine_similarity(product_emb, offer_emb)
             except Exception as e:
                 search_engine_log(
-                    f"[OfferEmbeddingError] Offer '{o['name']}' failed to load embedding: {e}"
+                    f"Error computing semantic similarity for offer {o['id']}: {e}"
                 )
-                offer_emb = None
-        else:
-            search_engine_log(
-                f"[OfferEmbeddingMissing] Offer '{o['name']}' has no _embedding"
-            )
 
-        # --- Identity match (fuzzy) with product ---
+        # --- Minor factors ---
+        levenshtein = offer_fuzzy_score(o, product)  # fuzzy match name+variant
+        price_component = price_score(o["price"], min_price)  # soft price
+        query_semantic = 0.0
+        if query_embedding is not None and o.get("_embedding"):
+            try:
+                offer_emb = np.array(json.loads(o["_embedding"]))
+                query_semantic = cosine_similarity(query_embedding, offer_emb)
+            except:
+                pass
+
+        # --- Final combined score ---
+        o["offer_score"] = round(
+            0.55 * levenshtein  # strong identity match
+            + 0.30 * product_semantic  # semantic embedding as secondary
+            + 0.14 * product_relevance  # cluster relevance
+            + 0.01 * query_semantic,
+            4,
+        )
+
+ """
+
+
+def score_offers_for_product(product, query_embedding=None):
+    min_price = product["lowest_price"]
+    product_relevance = product["relevance"]
+
+    # Prepare cluster embedding
+    product_emb = (
+        np.array(json.loads(product["_embedding"]))
+        if product.get("_embedding")
+        else None
+    )
+
+    shop_seen = set()
+    for o in product["offers"]:
+        if not o["in_stock"]:
+            o["offer_score"] = 0.0
+            continue
+
+        # --- Identity match (fuzzy) ---
         name_score = (
-            fuzz.token_set_ratio(
-                ascii_folding(o["name"].lower()), ascii_folding(product["name"].lower())
-            )
-            / 100
+            fuzz.token_set_ratio(o["name"].lower(), product["name"].lower()) / 100
         )
         variant_score = (
             fuzz.token_set_ratio(
-                ascii_folding((o.get("variant") or "").lower()),
-                ascii_folding((product.get("variant") or "").lower()),
+                (o.get("variant") or "").lower(), (product.get("variant") or "").lower()
             )
             / 100
         )
         identity_score = 0.7 * name_score + 0.3 * variant_score
 
-        # --- Identity match (fuzzy) with query ---
-        query_name_score = (
-            fuzz.token_set_ratio(
-                ascii_folding(o["name"].lower()), ascii_folding(raw_query.lower())
-            )
-            / 100
-        )
-        query_variant_score = (
-            fuzz.token_set_ratio(
-                ascii_folding((o.get("variant") or "").lower()),
-                ascii_folding(raw_query.lower()),
-            )
-            / 100
-        )
-        query_identity_score = 0.7 * query_name_score + 0.3 * query_variant_score
-
-        # --- Semantic similarity ---
+        # --- Semantic similarity: offer -> cluster ---
         semantic_score = 0.0
-        if product_emb is not None and offer_emb is not None:
-            try:
-                semantic_score = cosine_similarity(product_emb, offer_emb)
-            except Exception as e:
-                search_engine_log(
-                    f"[SemanticError] Offer '{o['name']}' failed cluster semantic: {e}"
-                )
+        if product_emb is not None and o.get("_embedding"):
+            offer_emb = np.array(json.loads(o["_embedding"]))
+            semantic_score = cosine_similarity(product_emb, offer_emb)
 
+        # --- Semantic similarity: offer -> query ---
         query_semantic = 0.0
-        if query_emb is not None and offer_emb is not None:
-            try:
-                query_semantic = cosine_similarity(query_emb, offer_emb)
-            except Exception as e:
-                search_engine_log(
-                    f"[SemanticError] Offer '{o['name']}' failed query semantic: {e}"
-                )
+        if query_embedding is not None and o.get("_embedding"):
+            offer_emb = np.array(json.loads(o["_embedding"]))
+            query_semantic = cosine_similarity(query_embedding, offer_emb)
 
-        # --- Price factor ---
+        # --- Price factor: cheaper is better ---
         if o["price"] > 0 and min_price > 0:
             price_score = 1 / math.log(o["price"] / min_price + 1.1)
             price_score = min(price_score, 1.0)
@@ -137,30 +130,21 @@ def score_offers_for_product(product):
             price_score = 0.0
 
         # --- Shop diversity factor ---
-        diversity_factor = 0.9 if o["shop"] in shop_seen else 1.0
-        shop_seen.add(o["shop"])
+        if o["shop"] in shop_seen:
+            diversity_factor = 0.9
+        else:
+            diversity_factor = 1.0
+            shop_seen.add(o["shop"])
 
-        # --- Final score ---
-        final_score = round(
+        # --- Final weighted score ---
+        o["offer_score"] = round(
             (
-                0.05 * identity_score
-                + 0.55 * query_identity_score
-                + 0.20 * semantic_score
-                + 0.15 * query_semantic
-                + 0.04 * product_relevance
+                0.55 * identity_score
+                + 0.25 * semantic_score
+                + 0.10 * product_relevance
+                + 0.09 * query_semantic
                 + 0.01 * price_score
             )
             * diversity_factor,
             4,
-        )
-
-        o["offer_score"] = final_score
-
-        # --- Debug log for scoring ---
-        search_engine_log(
-            f"[OfferScore] Product '{product['name']}' | Offer '{o['name']}' | "
-            f"identity={identity_score:.3f}, semantic={semantic_score:.3f}, "
-            f"product_relevance={product_relevance:.3f}, "
-            f"query_identity={query_identity_score:.3f}, query_semantic={query_semantic:.3f}, "
-            f"price={price_score:.3f}, diversity={diversity_factor:.2f} => score={final_score}"
         )

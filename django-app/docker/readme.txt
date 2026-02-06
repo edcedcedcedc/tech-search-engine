@@ -2,8 +2,6 @@
 cd server/docker
 docker-compose -f docker-compose-redis.yml up
 
-
-
 # Stop all services
 docker-compose -f docker-compose-redis.yml down
 

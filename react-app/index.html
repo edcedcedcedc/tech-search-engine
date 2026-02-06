@@ -2,93 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Standard favicon -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="Strugure" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Inject theme color before paint -->
-   <script>
-    (function() {
-      const savedTheme = localStorage.getItem('theme');
-      let theme = 'light';
-      if (savedTheme === 'dark' || savedTheme === 'light') {
-        theme = savedTheme;
-      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        theme = 'dark';
-      }
-
-      const colors = { light: '#fafafa', dark: '#0d1117' };
-      const bg = colors[theme] || '#0d1117';
-
-      // Inject a <style> for html and #preloader immediately
-      const style = document.createElement('style');
-      style.innerHTML = `
-        html, #preloader {
-          background-color: ${bg} !important;
-        }
-      `;
-      document.head.appendChild(style);
-
-      // Set data-theme on html only
-      document.documentElement.setAttribute('data-theme', theme);
-    })();
-  </script>
-
-    <style>
-      html, body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-      }
-
-      #preloader {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-      }
-
-      #preloader-icon {
-        width: 120px;
-        height: 120px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      #preloader-icon img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        filter: brightness(0) saturate(100%) invert(38%) sepia(82%) saturate(1736%) hue-rotate(200deg) brightness(97%) contrast(101%);
-        animation: pulse 1s ease-in-out infinite;
-      }
-
-      @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-        100% { transform: scale(1); }
-      }
-    </style>
+    <meta name="viewport" content="initial-scale=1, width=device-width" />
   </head>
-
   <body>
-    <div id="preloader">
-      <div id="preloader-icon">
-        <img src="src/assets/icon.png" alt="Strugure Icon" />
-      </div>
-    </div>
-
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

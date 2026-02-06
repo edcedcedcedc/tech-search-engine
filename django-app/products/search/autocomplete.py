@@ -1,63 +1,64 @@
 # api/views/autocomplete.py
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.conf import settings
 from products.utils.es_index import es, INDEX_NAME
-from products.search.config import AUTOCOMPLETE_LIMIT
+
+LIMIT = 10
+MAX_BACKOFF = 3  # how many tokens back to check
 
 
 class AutocompleteAPIView(APIView):
     def get(self, request):
         raw = request.GET.get("q", "")
-        lang = request.GET.get("lang", "en")
-
         if not raw:
             return Response({"suggestions": []})
 
-        suggestions = self._lookup(raw, lang=lang)
+        tokens = raw.split()
+        if raw.endswith(" "):
+            context_tokens = tokens
+            prefix = ""
+        else:
+            context_tokens = tokens[:-1]
+            prefix = tokens[-1] if tokens else ""
+
+        suggestions = self._lookup(context_tokens, prefix)
         return Response({"suggestions": suggestions})
 
-    def _lookup(self, user_input, lang="en"):
-        """
-        Hybrid Elasticsearch autocomplete:
-        Combines prefix matching with all-token matching + boosts
-        to ensure relevant terms like '4K' rank higher.
-        """
-        index_name = f"{INDEX_NAME}_{lang}" if lang in ["en", "ro"] else INDEX_NAME
-        query = user_input.lower().strip()
+    def _lookup(self, context_tokens, prefix):
+        results = {}
+        for drop in range(0, min(len(context_tokens), MAX_BACKOFF) + 1):
+            context = " ".join(context_tokens[drop:])
 
-        hybrid_query = {
-            "size": AUTOCOMPLETE_LIMIT,
-            "query": {
-                "bool": {
-                    "should": [
-                        {
-                            # All tokens must appear somewhere, boost exact name matches
-                            "multi_match": {
-                                "query": query,
-                                "fields": ["name^3", "name._2gram^2", "name._3gram"],
-                                "type": "best_fields",
-                                "operator": "and",
-                                "fuzziness": "AUTO",
-                            }
-                        },
-                        {
-                            # Prefix matches for fast autocomplete feel
-                            "multi_match": {
-                                "query": query,
-                                "fields": ["name", "name._2gram", "name._3gram"],
-                                "type": "bool_prefix",
-                            }
-                        },
-                    ]
-                }
-            },
-        }
+            query = {
+                "size": LIMIT,
+                "query": {
+                    "bool": {
+                        "must": [
+                            (
+                                {"match": {"context": context}}
+                                if context
+                                else {"match_all": {}}
+                            ),
+                            (
+                                {"prefix": {"next_token": prefix}}
+                                if prefix
+                                else {"match_all": {}}
+                            ),
+                        ]
+                    }
+                },
+                "sort": [{"count": {"order": "desc"}}],
+            }
 
-        resp = es.search(index=index_name, body=hybrid_query)
-        results = [
-            {"id": hit["_source"]["product_id"], "name": hit["_source"]["name"]}
-            for hit in resp.get("hits", {}).get("hits", [])
-        ]
+            res = es.search(index=INDEX_NAME, body=query)
+            for hit in res["hits"]["hits"]:
+                token = hit["_source"]["next_token"]
+                results[token] = results.get(token, 0) + hit["_source"]["count"]
 
-        # Return top N
-        return results[:AUTOCOMPLETE_LIMIT]
+            if results:
+                break  # stop backing off if we found results
+
+        # sort by frequency
+        sorted_suggestions = sorted(results.items(), key=lambda x: -x[1])
+        return [token for token, _ in sorted_suggestions[:LIMIT]]

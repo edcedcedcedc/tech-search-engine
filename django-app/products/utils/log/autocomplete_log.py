@@ -4,7 +4,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 LOGS_DIR = os.path.join(BASE_DIR, "logs")  # singular
 os.makedirs(LOGS_DIR, exist_ok=True)
-LOG_FILE = os.path.join(LOGS_DIR, "11autocomplete.log")
+LOG_FILE = os.path.join(LOGS_DIR, "autocomplete.log")
 
 
 def autocomplete_log(msg: str):

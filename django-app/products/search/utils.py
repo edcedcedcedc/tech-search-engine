@@ -5,7 +5,7 @@ from products.utils.log.search_engine_log import search_engine_log
 import numpy as np
 from openai import OpenAI
 import environ
-from products.search.config import STEEPNESS, CUT_OFF, BASE_FRACTION
+
 
 from unidecode import unidecode
 
@@ -114,56 +114,3 @@ def translate_query(raw_query: str) -> str:
     except Exception as e:
         search_engine_log(f"Query translation failed '{raw_query}': {e}")
         return raw_query
-
-
-import math
-from products.utils.log.search_engine_log import search_engine_log
-
-
-def apply_relevance_cutoff_sigmoid(
-    aggregated, base_fraction=BASE_FRACTION, steepness=STEEPNESS
-):
-    """
-    Smooth cutoff using a sigmoid curve instead of exponential.
-
-    :param aggregated: list of clusters sorted by 'product_score' descending
-    :param base_fraction: fraction of top relevance to start soft cutoff
-    :param steepness: higher = sharper drop, lower = smoother
-    """
-    if not aggregated:
-        return []
-
-    top_relevance = aggregated[0].get("relevance", 0.0)
-    filtered = []
-
-    n = len(aggregated)
-
-    for i, cluster in enumerate(aggregated):
-        # Compute a smooth fraction using sigmoid
-        x = i / n  # position 0..1
-        sigmoid = 1 / (1 + math.exp(steepness * (x - CUT_OFF)))  # sigmoid drop-off
-        fraction = base_fraction * sigmoid
-
-        threshold = top_relevance * fraction
-
-        if cluster.get("relevance", 0) >= threshold:
-            filtered.append(cluster)
-        else:
-            search_engine_log(
-                f"[Sigmoid Cut] Cluster '{cluster['name']}' cut off. "
-                f"relevance={cluster['relevance']:.4f}, threshold={threshold:.4f}"
-            )
-
-    return filtered
-
-
-def ascii_folding(text: str) -> str:
-    """
-    Normalize a string for fuzzy matching:
-    - Remove diacritics (ă -> a, ș -> s, ț -> t)
-    - Lowercase
-    - Strip extra spaces
-    """
-    if not text:
-        return ""
-    return unidecode(text)

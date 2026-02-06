@@ -7,29 +7,29 @@ export default function TermsOfUse() {
 
   return (
     <Box>
-      <Typography variant="h5" gutterBottom>
+      <Typography variant="h4" gutterBottom>
         {t("Terms_Title")}
       </Typography>
 
-      <Typography variant="body2">{t("Terms_Intro")}</Typography>
+      <Typography variant="body1">{t("Terms_Intro")}</Typography>
 
       <Box component="ul" sx={{ pl: 3 }}>
-        <Typography component="li" variant="body2">
+        <Typography component="li" variant="body1">
           {t("Terms_AsIs")}
         </Typography>
-        <Typography component="li" variant="body2">
+        <Typography component="li" variant="body1">
           {t("Terms_NoLiability")}
         </Typography>
-        <Typography component="li" variant="body2">
+        <Typography component="li" variant="body1">
           {t("Terms_NoSales")}
         </Typography>
-        <Typography component="li" variant="body2">
+        <Typography component="li" variant="body1">
           {t("Terms_IntellectualProperty")}
         </Typography>
-        <Typography component="li" variant="body2">
+        <Typography component="li" variant="body1">
           {t("Terms_DataUsage")}
         </Typography>
-        <Typography component="li" variant="body2">
+        <Typography component="li" variant="body1">
           {t("Terms_Modifications")}
         </Typography>
       </Box>

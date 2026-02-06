@@ -1,30 +1,26 @@
 {
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
-
-    /* Node runtime */
-    "target": "ES2022",
-    "lib": ["ES2022"],
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    
-    /* Types */
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "ESNext",
     "types": ["node"],
-    "esModuleInterop": true,
-
-    /* TS behavior */
-    "strict": true,
     "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
     "noEmit": true,
 
     /* Linting */
+    "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
   },
-
-  "include": [
-  "scripts/**/*.ts",
-  "webhook/server/receiver.ts",
-  ]
+  "include": ["vite.config.ts"]
 }

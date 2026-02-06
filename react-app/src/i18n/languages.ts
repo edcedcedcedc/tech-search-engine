@@ -16,7 +16,7 @@ export const LANGAUGES: Record<LanguagesCodes, I18nLanguage> = {
     file: enUS,
   },
   "ro": {
-    label: "Română (Moldova)",
+    label: "Romanian (Moldova)",
     value: "ro-MD",
     file: roMD,
   },

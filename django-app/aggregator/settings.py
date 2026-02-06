@@ -63,7 +63,11 @@ DATABASE_ROUTERS = ["products.db_router.CeleryBeatRouter"]
 # Allowed hosts
 ALLOWED_HOSTS = env.list(
     "ALLOWED_HOSTS",
-    default=([] if DJANGO_ENV == "development" else ["your-production-domain.com"]),
+    default=(
+        ["localhost", "127.0.0.1", "b1cd2d2c354e.ngrok-free.app"]
+        if DJANGO_ENV == "development"
+        else ["your-production-domain.com"]
+    ),
 )
 
 # Applications
@@ -103,7 +107,7 @@ REST_FRAMEWORK = {
         "layer1": "20/min",  # Layer1 clusters
         "layer2_preview": "20/min",  # Layer2 full=false
         "layer2_full": "20/min",  # Layer2 full=true
-        "autocomplete": "120/min",
+        "autocomplete": "60/min",
     },
 }
 

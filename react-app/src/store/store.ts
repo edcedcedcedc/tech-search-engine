@@ -1,11 +1,10 @@
-
 import { create } from "zustand";
-import { uiLog } from "../webhook/client/sender";
+
 type ThemeMode = "light" | "dark";
 import type { AggregatedProduct } from "../types/AggregatedProduct";
 import { getProductOffers as apiGetProductOffers } from "../api/searchApi";
 import { searchProducts as apiSearchProducts } from "../api/searchApi";
-
+import { useTranslation } from "react-i18next";
 interface CookieState {
   consent: boolean | null; // null = not answered yet
   accept: () => void;
@@ -14,42 +13,12 @@ interface CookieState {
 
 interface State {
 
-
-  //offers
-  offersSortColumn: "price" | "shop" | null;
-  offersSortAscending: boolean;
-  setOffersSort: (column: "price" | "shop") => void;
-
-
-  currentPage: number;
-  totalPages: number;
-  totalResults: number;
-  nextCursor: string | null;
-  setCurrentPage: (page: number) => void;
-  setTotalPages: (pages: number) => void;
-  setTotalResults: (count: number) => void;
-  setNextCursor: (cursor: string | null) => void;
-  
-  
-  pageCache: Record<number, AggregatedProduct[]>; // Cache for loaded pages
-  queryCacheKey: string; // To track current search query for cache invalidation
-
-  itemsPerPage: number;
-  setItemsPerPage: (count: number) => void;
-  
-  
-  isLoading: boolean;   // new
-  setIsLoading: (value: boolean) => void; // new
-
   closeProduct: any;
   mode: ThemeMode;
   toggleMode: () => void;
   setMode: (mode: ThemeMode) => void;
   cookie: CookieState;
-
-  clearCache: () => void;
-
-  searchProducts: (query?: string, lang?: string, page?: number) => Promise<void>;
+  searchProducts: (query?: string, lang?: string) => Promise<void>;
 
   aggregatedProducts: AggregatedProduct[];
   setAggregatedProducts: (products: AggregatedProduct[]) => void;
@@ -66,11 +35,6 @@ interface State {
 }
 
 const COOKIE_NAME = "myAppCookieConsent";
-
-// Helper to generate cache key
-const generateCacheKey = (query: string, lang?: string) => {
-  return `${query}-${lang || 'en'}`;
-};
 
 export const useStore = create<State>((set, get) => ({
   mode: (typeof window !== "undefined" ? (localStorage.getItem("theme") as ThemeMode) : null) || "dark",
@@ -149,9 +113,6 @@ export const useStore = create<State>((set, get) => ({
       return;
     }
     set({ isOffersLoading: true, selectedProductId: productId });
-    
-    //natural delay for smooth trans in first prod open
-    //await new Promise((resolve) => setTimeout(resolve, 300));
 
     const data = await apiGetProductOffers(productId, true);
 
@@ -164,121 +125,17 @@ export const useStore = create<State>((set, get) => ({
     }));
   },
   closeProduct: () => set({ selectedProductId: null }),
-  
-  isLoading: false,
-  setIsLoading: (value: boolean) => set({ isLoading: value }),
-  
- 
-searchProducts: async (query?: string, lang?: string, page: number = 1) => {
-  const q = query ?? get().query;
-  if (!q) return;
-
-  // Start search
-  uiLog(`searchProducts | start | query=${q} | lang=${lang} | page=${page}`);
-
-  const currentCacheKey = generateCacheKey(q, lang);
-  const prevCacheKey = get().queryCacheKey;
-
-  // Invalidate cache if query/lang changed
-  if (currentCacheKey !== prevCacheKey) {
-    uiLog(`searchProducts | invalidate_cache | prev=${prevCacheKey} | current=${currentCacheKey}`);
-    set({
-      pageCache: {},
-      queryCacheKey: currentCacheKey,
-      currentPage: 1,
-    });
-  }
-
-  const { pageCache } = get();
-  const cachedPage = pageCache[page];
-
-  // Load from cache
-  if (cachedPage) {
-    uiLog(`searchProducts | load_from_cache | page=${page} | cachedCount=${cachedPage.length}`);
-    set({
-      aggregatedProducts: cachedPage,
-      currentPage: page,
-      isLoading: false,
-    });
-    return;
-  }
-
-  try {
-    set({ isLoading: true });
-
-    const limit = get().itemsPerPage || 20;
-    const cursor = page > 1 ? ((page - 1) * limit).toString() : undefined;
-
-    // Call API
-    uiLog(`searchProducts | call_api | query=${q} | lang=${lang} | page=${page} | limit=${limit} | cursor=${cursor}`);
-
-    const data = await apiSearchProducts(q, lang, limit, cursor);
-    const totalCount = data.total_count;
-
-    // Cache page
-    const newCache = { ...get().pageCache, [page]: data.products };
-    uiLog(`searchProducts | cache_page | page=${page} | productsCount=${data.products.length}`);
-
-    // Optional LRU trim
-    if (Object.keys(newCache).length > 10) {
-      const oldestPage = Math.min(...Object.keys(newCache).map(Number));
-      delete newCache[oldestPage];
-      uiLog(`searchProducts | trim_lru_cache | removedPage=${oldestPage}`);
+  searchProducts: async (query?: string, lang?: string) => {
+    const q = query ?? get().query; // use argument or fallback to current query
+    
+    if (!q) return;
+    try {
+      set({ aggregatedProducts: [] }); // optional: clear old results
+      const data = await apiSearchProducts(q,lang);
+      console.log(data.products)
+      set({ aggregatedProducts: data.products });
+    } catch (err) {
+      console.error("Search error:", err);
     }
-
-    set({
-      aggregatedProducts: data.products,
-      currentPage: page,
-      nextCursor: data.next_cursor || null,
-      totalResults: totalCount,
-      totalPages: Math.ceil(totalCount / limit),
-      pageCache: newCache,
-      isLoading: false,
-    });
-
-    // Search complete
-    uiLog(`searchProducts | complete | totalResults=${totalCount} | totalPages=${Math.ceil(totalCount / limit)}`);
-
-  } catch (err) {
-    set({ isLoading: false });
-    uiLog(`searchProducts | error | ${(err as any)?.message}`);
-  }
-},
-
-
-   // Pagination state initialization
-  currentPage: 1,
-  totalPages: 0,
-  totalResults: 0,
-  nextCursor: null,
-  
-  // Pagination actions
-  setCurrentPage: (page) => set({ currentPage: page }),
-  setTotalPages: (pages) => set({ totalPages: pages }),
-  setTotalResults: (count) => set({ totalResults: count }),
-  setNextCursor: (cursor) => set({ nextCursor: cursor }),
-  
-  pageCache: {},
-  queryCacheKey: '',
-  clearCache: () => set({ 
-  pageCache: {}, 
-  queryCacheKey: '',
-  currentPage: 1,
-  totalPages: 0,
-  totalResults: 0
-}),
-
-itemsPerPage: 20, // default
-setItemsPerPage: (count: number) => {
-  set({ itemsPerPage: count, currentPage: 1 });
-},
-  //offers sorting 
-offersSortColumn: "price", // default sorting
-offersSortAscending: true,
-setOffersSort: (column) =>
-  set((state) => ({
-    offersSortColumn: column,
-    offersSortAscending:
-      state.offersSortColumn === column ? !state.offersSortAscending : true,
-  })),
+  },
 }));

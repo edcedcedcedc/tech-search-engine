@@ -434,17 +434,6 @@ def run_load_embeddings_cache():
     load_embeddings_cache_log("[TASK] Embeddings cache reloaded.")
 
 
-@shared_task(name="run_build_autocomplete_index")
-def run_build_autocomplete_index():
-    from products.utils.log.autocomplete_log import autocomplete_log
-    from products.tl.es_autocomplete import AutocompleteIndexBuilder
-
-    autocomplete_log("[TASK] Starting autocomplete index rebuild...")
-    indexer = AutocompleteIndexBuilder()
-    indexer.build_index()
-    autocomplete_log("[TASK] Autocomplete index rebuild finished.")
-
-
 @shared_task(name="debug_test_task")
 def debug_test_task(message="Hello from debug task!"):
     """

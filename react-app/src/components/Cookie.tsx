@@ -10,7 +10,7 @@ export function Cookie() {
   const isSmall = useMediaQuery("(min-width:321px) and (max-width:375px)");
   const isMedium = useMediaQuery("(min-width:376px) and (max-width:425px)");
   const isLargeMobile = useMediaQuery(
-    "(min-width:426px) and (max-width:768px)",
+    "(min-width:426px) and (max-width:768px)"
   );
 
   let fontSize = "0.875rem";

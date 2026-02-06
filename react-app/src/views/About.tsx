@@ -1,5 +1,5 @@
 // src/views/About.tsx
-import { Box, Fade, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
 export default function About() {
@@ -7,7 +7,7 @@ export default function About() {
 
   return (
     <Box>
-      <Typography variant="h5" gutterBottom>
+      <Typography variant="h4" gutterBottom>
         {t("About_Us")}
       </Typography>
 

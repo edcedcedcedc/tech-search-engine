@@ -1,3 +1,218 @@
+/*  
+
+---
+
+# **Autocomplete Guide for Your React + Django App**
+
+### **1️⃣ Backend: Autocomplete API**
+
+* **Endpoint:** `/api/autocomplete`
+* **Throttle:** limit requests per IP (Layer1Throttle)
+* **Logic:**
+
+  1. Cache canonical product cluster names.
+  2. Use `RapidFuzz` to match query against names.
+  3. Apply `FUZZY_THRESHOLD_AUTOCOMPLETE` to filter suggestions.
+  4. Return top N suggestions (`AUTOCOMPLETE_LIMIT`).
+
+**Example response:**
+
+```json
+{
+  "suggestions": ["iPhone 14", "iPhone 14 Pro"],
+  "raw_matches": [...]
+}
+```
+
+---
+
+### **2️⃣ Frontend: `SearchAutocomplete` Component**
+
+* **Imports:**
+
+  * `TextField`, `Popper`, `Paper`, `List`, `ListItemButton`, `ListItemText` from MUI
+  * `SearchIcon` for the button
+  * `ClickAwayListener` to detect clicks outside
+  * `lodash.debounce` to throttle requests
+  * `autocomplete` API function
+  * `useStore` for global query state
+
+---
+
+### **3️⃣ State Management**
+
+```ts
+const [value, setValue] = React.useState("");        // input value
+const [suggestions, setSuggestions] = React.useState<string[]>([]); // autocomplete results
+const [loading, setLoading] = React.useState(false); // show spinner
+```
+
+---
+
+### **4️⃣ Ref for positioning Popper**
+
+```ts
+const anchorRef = React.useRef<HTMLInputElement | null>(null);
+```
+
+* Needed to position the suggestion dropdown under the input.
+
+---
+
+### **5️⃣ Debounced API Call**
+
+```ts
+const fetchSuggestions = React.useMemo(
+  () =>
+    debounce(async (q: string) => {
+      if (q.length < 2) return setSuggestions([]);
+      setLoading(true);
+      const res = await autocomplete(q);
+      setSuggestions(res.suggestions);
+      setLoading(false);
+    }, 250), // adjust delay for UX
+  []
+);
+```
+
+* **Why debounce?** Avoid sending API requests on every keystroke.
+* **Tip:** Increase delay to 400–500ms for smoother feel.
+
+---
+
+### **6️⃣ Handle Input Change**
+
+```ts
+const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const q = e.target.value;
+  setValue(q);
+  fetchSuggestions(q);
+};
+```
+
+* Updates `value` and triggers debounced API call.
+
+---
+
+### **7️⃣ Handle Search Submit**
+
+```ts
+const submitSearch = (q: string) => {
+  if (!q) return;
+  setQuery(q);          // save to Zustand
+  setSuggestions([]);   // hide dropdown
+  searchProducts(q);    // trigger search results
+};
+```
+
+* Triggered on Enter key or clicking the search icon.
+
+---
+
+### **8️⃣ Handle Selection**
+
+```ts
+const handleSelect = (q: string) => {
+  setValue(q);
+  submitSearch(q); // same as pressing Enter
+};
+```
+
+* Clicking a suggestion sets the input and runs search.
+
+---
+
+### **9️⃣ Handle Keyboard**
+
+```ts
+const handleKeyDown = (e: React.KeyboardEvent) => {
+  if (e.key === "Enter") submitSearch(value);
+  if (e.key === "Escape") setSuggestions([]); // hide dropdown
+};
+```
+
+---
+
+### **🔟 Handle Outside Click**
+
+```ts
+const closeSuggestions = () => setSuggestions([]);
+```
+
+* Wrap the Popper in `ClickAwayListener` to close suggestions if user clicks elsewhere.
+
+---
+
+### **1️⃣1️⃣ Render Input + Dropdown**
+
+```tsx
+<TextField
+  fullWidth
+  variant="outlined"
+  inputRef={anchorRef}
+  value={value}
+  onChange={handleChange}
+  onKeyDown={handleKeyDown}
+  placeholder="Search products…"
+  InputProps={{
+    endAdornment: (
+      <InputAdornment position="end">
+        {loading ? <CircularProgress size={18} /> : 
+          <IconButton onClick={() => submitSearch(value)}>
+            <SearchIcon />
+          </IconButton>}
+      </InputAdornment>
+    ),
+  }}
+/>
+
+<Popper open={suggestions.length > 0} anchorEl={anchorRef.current} placement="bottom-start">
+  <ClickAwayListener onClickAway={closeSuggestions}>
+    <Paper sx={{ width: anchorRef.current?.offsetWidth }}>
+      <List dense>
+        {suggestions.map((s) => (
+          <ListItemButton key={s} onClick={() => handleSelect(s)}>
+            <ListItemText primary={s} />
+          </ListItemButton>
+        ))}
+      </List>
+    </Paper>
+  </ClickAwayListener>
+</Popper>
+```
+
+* `TextField` is the input
+* `Popper` shows suggestions
+* `ClickAwayListener` closes dropdown on outside click
+* `CircularProgress` shows loading state
+* `IconButton` triggers search manually
+
+---
+
+### **1️⃣2️⃣ Optional Tuning**
+
+* Debounce delay: 250–500ms
+* Fuzzy threshold: 60+
+* Minimum characters before search: 2
+* Max suggestions: 10
+
+---
+
+###  **Flow Summary**
+
+1. User types → `handleChange` → triggers `fetchSuggestions`.
+2. `fetchSuggestions` calls backend via debounce → sets `suggestions`.
+3. Dropdown appears (`Popper`) under input.
+4. User selects suggestion → `handleSelect` → sets input & triggers search.
+5. User clicks outside → `ClickAwayListener` → closes suggestions.
+6. User presses Enter → triggers `submitSearch`.
+7. User presses Escape → closes suggestions.
+
+---
+
+
+ */
+
 import React from "react";
 import {
   TextField,
@@ -9,8 +224,6 @@ import {
   CircularProgress,
   InputAdornment,
   IconButton,
-  Box,
-  Tooltip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import debounce from "lodash.debounce";
@@ -19,106 +232,59 @@ import ClickAwayListener from "@mui/material/ClickAwayListener";
 import { autocomplete } from "../api/searchApi";
 import { useStore } from "../store/store";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import type { Suggestion } from "../types/Suggestion";
-import { uiLog } from "../webhook/client/sender";
 
 export const SearchAutocomplete: React.FC = () => {
   const setQuery = useStore((s) => s.setQuery);
   const searchProducts = useStore((s) => s.searchProducts);
 
   const [value, setValue] = React.useState("");
-  const [suggestions, setSuggestions] = React.useState<Suggestion[]>([]);
+  const [suggestions, setSuggestions] = React.useState<string[]>([]);
   const [loading, setLoading] = React.useState(false);
   const anchorRef = React.useRef<HTMLInputElement | null>(null);
-  const containerRef = React.useRef<HTMLDivElement | null>(null);
   const { t, i18n } = useTranslation();
   const lang = i18n.language.slice(0, 2);
-  const [delayedLoading, setDelayedLoading] = React.useState(false);
-  const loadingTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
-
   const closeSuggestions = () => {
-    uiLog(`autocomplete | closeSuggestions`);
     setSuggestions([]);
   };
 
-  const navigate = useNavigate();
-
-  const fetchSuggestions = React.useCallback(
-    debounce(async (q: string) => {
-      uiLog(`autocomplete | fetchSuggestions | start | query=${q}`);
-      if (q.length === 0) {
-        uiLog(`autocomplete | fetchSuggestions | empty query`);
-        setSuggestions([]);
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      if (!loadingTimerRef.current) {
-        loadingTimerRef.current = setTimeout(() => {
-          setDelayedLoading(true);
-          uiLog(
-            `autocomplete | fetchSuggestions | delayed loading=true | query=${q}`,
-          );
-        }, 100);
-      }
-
-      try {
-        const res = await autocomplete(q, lang);
-        setSuggestions(res.suggestions);
-        uiLog(
-          `autocomplete | fetchSuggestions | success | query=${q} | results=${res.suggestions.length}`,
-        );
-      } catch (err) {
-        uiLog(
-          `autocomplete | fetchSuggestions | error | query=${q} | err=${(err as any)?.message}`,
-        );
-      } finally {
-        setLoading(false);
-        setTimeout(() => {
-          setDelayedLoading(false);
-          uiLog(
-            `autocomplete | fetchSuggestions | delayed loading=false | query=${q}`,
-          );
-          if (loadingTimerRef.current) {
-            clearTimeout(loadingTimerRef.current);
-            loadingTimerRef.current = null;
-          }
-        }, 300);
-      }
-    }, 500),
+  const fetchSuggestions = React.useMemo(
+    () =>
+      debounce(async (q: string) => {
+        if (q.length < 2) {
+          setSuggestions([]);
+          return;
+        }
+        setLoading(true);
+        try {
+          const res = await autocomplete(q, lang);
+          setSuggestions(res.suggestions);
+        } finally {
+          setLoading(false);
+        }
+      }, 500),
     [lang],
   );
 
   React.useEffect(() => {
     return () => {
       fetchSuggestions.cancel();
-      uiLog(`autocomplete | fetchSuggestions | cancelled`);
     };
   }, [fetchSuggestions]);
 
   const submitSearch = (q: string) => {
-    uiLog(`autocomplete | submitSearch | query=${q}`);
+    if (!q) return;
     setQuery(q);
-    searchProducts(q, lang);
-    navigate("/products");
     setSuggestions([]);
-    setLoading(false);
-    setDelayedLoading(false);
+    searchProducts(q, lang);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const q = e.target.value;
-    uiLog(`autocomplete | handleChange | value=${q}`);
     setValue(q);
     fetchSuggestions(q);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    uiLog(`autocomplete | handleKeyDown | key=${e.key}`);
     if (e.key === "Enter") {
       submitSearch(value);
     }
@@ -127,73 +293,39 @@ export const SearchAutocomplete: React.FC = () => {
     }
   };
 
-  const handleSelect = (s: Suggestion) => {
-    uiLog(`autocomplete | handleSelect | suggestion=${s.name}`);
-    submitSearch(s.name); // trigger search immediately
-    setSuggestions([]); // close dropdown
+  const handleSelect = (q: string) => {
+    setValue(q);
+    submitSearch(q);
   };
 
   return (
-    <Box ref={containerRef} sx={{ width: "100%", position: "relative" }}>
+    <>
       <TextField
         fullWidth
         variant="outlined"
         inputRef={anchorRef}
         value={value}
+        onBlur={() => {
+          // delay allows click on suggestion to register first
+          setTimeout(() => {
+            setSuggestions([]);
+          }, 100);
+        }}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        placeholder={`${t("Search_product")}`}
+        placeholder={`${t("Search_product")}...`}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
-              <div
-                style={{
-                  position: "relative",
-                  width: 48,
-                  height: 48,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <CircularProgress
-                  size={24}
-                  style={{
-                    opacity: delayedLoading ? 1 : 0,
-                    transition: "opacity 0.5s ease",
-                    position: "absolute",
-                  }}
-                />
-                {!delayedLoading && (
-                  <IconButton
-                    size="medium"
-                    onClick={() => {
-                      uiLog(
-                        `autocomplete | search icon clicked | value=${value}`,
-                      );
-                      submitSearch(value);
-                    }}
-                    style={{
-                      position: "absolute",
-                    }}
-                  >
-                    <Tooltip
-                      title={t("Search_Tooltip")}
-                      enterDelay={500}
-                      leaveDelay={0}
-                    >
-                      <SearchIcon fontSize="medium" />
-                    </Tooltip>
-                  </IconButton>
-                )}
-              </div>
+              {loading ? (
+                <CircularProgress size={18} />
+              ) : (
+                <IconButton onClick={() => submitSearch(value)}>
+                  <SearchIcon />
+                </IconButton>
+              )}
             </InputAdornment>
           ),
-        }}
-        sx={{
-          "& .MuiOutlinedInput-root": {
-            paddingRight: "4px", // Adjust this if needed
-          },
         }}
       />
 
@@ -201,79 +333,24 @@ export const SearchAutocomplete: React.FC = () => {
         open={suggestions.length > 0}
         anchorEl={anchorRef.current}
         placement="bottom-start"
-        sx={{
-          zIndex: 1300,
-          width: containerRef.current
-            ? `${containerRef.current.offsetWidth}px`
-            : "auto",
-          maxWidth: "100%",
-        }}
-        modifiers={[
-          {
-            name: "offset",
-            options: {
-              offset: [0, 8], // 8px gap between input and dropdown
-            },
-          },
-        ]}
+        sx={{ zIndex: 1300 }}
       >
         <ClickAwayListener onClickAway={closeSuggestions}>
-          <Paper
-            sx={(theme) => ({
-              width: "100%",
-              maxHeight: 300,
-              overflowY: "auto",
-              boxShadow: 3,
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: 1,
-
-              // Use theme background instead of default white
-              bgcolor: theme.palette.background.paper, // <-- dynamic based on light/dark mode
-              // Scrollbar styles
-              "&::-webkit-scrollbar": { width: theme.spacing(1) },
-              "&::-webkit-scrollbar-thumb": {
-                backgroundColor: theme.palette.background.default, // dark thumb for light mode
-                borderRadius: theme.shape.borderRadius,
-              },
-              "&::-webkit-scrollbar-thumb:hover": {
-                backgroundColor: theme.palette.background.default,
-              },
-              "&::-webkit-scrollbar-track": { background: "transparent" },
-              scrollbarWidth: "thin", // Firefox
-              scrollbarColor:
-                theme.palette.mode === "dark"
-                  ? "rgba(255,255,255,0.2) transparent"
-                  : "rgba(0,0,0,0.3) transparent",
-            })}
-          >
-            <List dense disablePadding>
-              {suggestions.map((s: any, idx: Number) => (
+          <Paper sx={{ width: anchorRef.current?.offsetWidth }}>
+            <List dense>
+              {suggestions.map((s, idx) => (
                 <ListItemButton
                   key={`${s}-${idx}`}
                   onClick={() => handleSelect(s)}
-                  onMouseDown={(e) => e.preventDefault()}
-                  sx={{
-                    py: 1,
-                    px: 2,
-                    "&:hover": {
-                      backgroundColor: "action.hover",
-                    },
-                  }}
+                  onDoubleClick={() => {}}
                 >
-                  <ListItemText
-                    primary={s.name}
-                    primaryTypographyProps={{
-                      noWrap: true,
-                      style: { overflow: "hidden", textOverflow: "ellipsis" },
-                    }}
-                  />
+                  <ListItemText primary={s} />
                 </ListItemButton>
               ))}
             </List>
           </Paper>
         </ClickAwayListener>
       </Popper>
-    </Box>
+    </>
   );
 };

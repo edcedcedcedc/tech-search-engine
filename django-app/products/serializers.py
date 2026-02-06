@@ -25,9 +25,7 @@ class OfferSerializer(serializers.Serializer):
     price_history = PriceHistoryPreviewSerializer(
         many=True, required=False, default=list
     )
-    embedding = serializers.CharField(allow_blank=True, required=False)
-    query = serializers.CharField(allow_blank=True, required=False)
-    query_embedding = serializers.CharField(allow_blank=True, required=False)
+    embedding = serializers.CharField(allow_blank=True, required=False, write_only=True)
 
 
 class AggregatedProductSerializer(serializers.Serializer):
@@ -44,9 +42,7 @@ class AggregatedProductSerializer(serializers.Serializer):
     product_score = serializers.FloatField(default=0.0)
     image = serializers.URLField(allow_blank=True, required=False)
     shops = serializers.SerializerMethodField()
-    embedding = serializers.CharField(allow_blank=True, required=False)
-    query = serializers.CharField(allow_blank=True, required=False)
-    query_embedding = serializers.CharField(allow_blank=True, required=False)
+    embedding = serializers.CharField(allow_blank=True, required=False, write_only=True)
 
     def get_shops(self, obj):
         seen = set()
