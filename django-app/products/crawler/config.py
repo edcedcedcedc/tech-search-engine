@@ -1,18 +1,29 @@
-from .crawler import Crawler
+from .fetch import Fetch
 from celery import chain, shared_task
 
-shop_crawler = Crawler()
+shop_crawler = Fetch()
 
 ALLOWED_FIELDS_TO_WRITE_AND_TRACK = ["price", "in_stock"]
+
+REQUIRED_FIELDS_TO_VALIDATE = [
+    "name",
+    "price",
+    "in_stock",
+    "category",
+    "brand",
+    "external_id",
+    "shop",
+]
+
+MAX_VALIDATION_ERRORS = 20
 
 PAGES_TO_CRAWL = 999
 
 # If TRUE resets the CRAWLER_DBS and STAGE_DB and doesn't merge STAGE_DB to PROD_DB
 DRY_RUN = False
 
-CRAWLER_DBS = []
-
 BROKEN = False
+
 BROKEN_DB = "broken"
 
 if BROKEN:
@@ -25,22 +36,24 @@ SHOPS_TO_CRAWL = ["darwin", "enter", "xstore"]
 STAGE_DB = "stage"
 
 PROD_DB = "default"
-# uses broken db if something goes wrong with translation or normalization and then you can manually adjust
+
+UPDATE_DB = "update"
 
 MAX_DB_WORKERS_AT_NORMALIZE = 3
 
 # --- Configurable switches ---
 PIPELINE_STEPS_ENABLED = {
+    "log": True,
     "crawler": True,
     "normalize": True,
     "translation": True,
-    "embeddings": False,
-    "merge_to_stage": False,
-    "similar_ids_stage": False,
-    "identical_ids_stage": False,
-    "merge_to_prod": False,
-    "price_history_prod": False,
-    "load_embeddings_cache": False,
+    "embeddings": True,
+    "merge_to_stage": True,
+    "similar_ids_stage": True,
+    "merge_to_prod": True,
+    "price_history_prod": True,
+    "load_embeddings_cache": True,
+    "es_autocomplete_index": True,
 }
 
 
@@ -59,25 +72,29 @@ def run_full_pipeline():
         7. Merge Stage into Prod (finalize)
     """
     from products.tasks import (
+        reset_logs,
         run_crawler,
         run_normalize,
         run_translation,
         run_embeddings,
         run_merge_pipeline_to_stage,
         run_similar_ids_stage,
-        run_identical_ids_stage,
         run_merge_pipeline_to_default,
         run_price_history_default,
         run_load_embeddings_cache,
+        run_build_autocomplete_index,
     )
 
     workflow_steps = []
 
+    if PIPELINE_STEPS_ENABLED.get("log"):
+        workflow_steps.append(reset_logs.si())
+
     if PIPELINE_STEPS_ENABLED.get("crawler"):
-        workflow_steps.append(run_crawler.s())
+        workflow_steps.append(run_crawler.si())
 
     if PIPELINE_STEPS_ENABLED.get("normalize"):
-        workflow_steps.append(run_normalize.si(interval_minutes=9999999))
+        workflow_steps.append(run_normalize.si())
 
     if PIPELINE_STEPS_ENABLED.get("translation"):
         workflow_steps.append(run_translation.si())
@@ -89,19 +106,19 @@ def run_full_pipeline():
         workflow_steps.append(run_merge_pipeline_to_stage.si())
 
     if PIPELINE_STEPS_ENABLED.get("similar_ids_stage"):
-        workflow_steps.append(run_similar_ids_stage.si(batch_size=1000))
-
-    if PIPELINE_STEPS_ENABLED.get("identical_ids_stage"):
-        workflow_steps.append(run_identical_ids_stage.si(batch_size=1000))
+        workflow_steps.append(run_similar_ids_stage.si())
 
     if PIPELINE_STEPS_ENABLED.get("merge_to_prod"):
-        workflow_steps.append(run_merge_pipeline_to_default.si(dry_run=DRY_RUN))
+        workflow_steps.append(run_merge_pipeline_to_default.si())
 
     if PIPELINE_STEPS_ENABLED.get("price_history_prod"):
         workflow_steps.append(run_price_history_default.si())
 
     if PIPELINE_STEPS_ENABLED.get("load_embeddings_cache"):
         workflow_steps.append(run_load_embeddings_cache.si())
+
+    if PIPELINE_STEPS_ENABLED.get("es_autocomplete_index"):
+        workflow_steps.append(run_build_autocomplete_index.si())
 
     if not workflow_steps:
         return "No pipeline steps enabled. Nothing queued."
@@ -128,6 +145,10 @@ SHOPS = {
         "tehnicabirou": "https://enter.online/tehnica-de-birou",
         "cartielectronice": "https://enter.online/tablete/carti-electronice",
         # "climatizare": "https://enter.online/climatizare",
+        "smartwatch": "https://enter.online/gadgeturi/smartwatch",
+        "bratarifitness": "https://enter.online/gadgeturi/bratari-fitness",
+        "smartwatchkids": "https://enter.online/gadgeturi/smartwatch-pentru-copii",
+        "smartwatchaccess": "https://enter.online/accesorii/pentru-ceasuri-si-bratari",
     },
     "darwin": {
         "function": shop_crawler.fetch_darwin,
@@ -156,6 +177,8 @@ SHOPS = {
         "gaming6": "https://darwin.md/gadgets/ochelari-vr",
         "router": "https://darwin.md/retelistica/routere",
         "switch": "https://darwin.md/retelistica/switch",
+        "smartwatch": "https://darwin.md/gadgets/ceasuri-inteligente",
+        "smartwatch2": "https://darwin.md/gadgets/bratari-inteligente",
     },
     "xstore": {
         "function": shop_crawler.fetch_xstore,

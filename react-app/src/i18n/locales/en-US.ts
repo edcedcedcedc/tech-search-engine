@@ -5,29 +5,91 @@ const enUS = {
   Contact: "Contact",
   Select_Language: "Select Language",
 
-  // landing
-Explore_prices_in_Moldova: 
- "Explore tech products in Moldova",
+  // Hero
+Explore_tech_in_Moldova: 
+ "Strugure, explore tech products",
 
 Discover_the_best_offers_for_your_favorite_products:
   "Discover the best deals in one place",
 
-Track_product_prices_from_multiple_online_stores_in_Moldova:
-  "Track product prices from online stores in Moldova",
+// Landing
+Welcome_to: "Welcome to Strugure",
+Smart_price_com:
+  "Intelligent product discovery and price comparison powered by machine learning",
+How_search_works: "How it works",
+Strugure_uses_start: "Strugure uses a",
+Strugure_uses_highlight: "semantic search powered by ML",
+Strugure_uses_end:
+  ". This means you don’t need to be very precise — the system understands meaning, similarity, and intent.",
+You_can_start_start: "• You can start very general — for example:",
+You_can_start_highlight: "monitor",
+Or_be_more_specific_start: "• Or be more specific —",
+Or_be_more_specific_highlight: "Acer monitor",
+Or_paste_full_name:
+  "• Or you can paste the full product name directly from a store like",
+Not_just_exact: "Not just exact matches",
+Exact_identical:
+  "Products that are exactly identical are actually a special case.",
+Strugure_focuses_start: "Strugure focuses on",
+Strugure_focuses_highlight: "similarity and meaning",
+Strugure_focuses_end: ", not just text matching.",
+This_means:
+  "This means you’ll often see products that are:",
+Same_mode:
+  "• The same model from different stores",
+Slightly_diff:
+  "• Slightly different variants",
+Technically_equiv:
+  "• Technically equivalent alternatives",
+Prod_clust:
+  "Products, clusters, and offers",
+Cluster_start:
+  "Each result you see is a",
+Cluster_highlight:
+  "cluster",
+Cluster_end: ".",
+Offers1_start:
+  "A cluster groups multiple",
+Offers1_highlight:
+  "offers",
+Offers1_end:
+  " — each offer may come from a different store.",
+Offers2:
+  "• Offers can be identical or slightly different",
+Offers3_start:
+  "• Each offer has a",
+Offers3_highlight:
+  "price history",
+Offers4_start:
+  "• Each offer tracks",
+Offers4_highlight:
+  "stock availability",
+Thats_it:
+  "That’s it. Just search.",
+Be:
+  "Be general. Be specific. Copy-Paste names. Explore.",
+Happy_searching:
+  "Happy searching",
 
-The_application_is_in_the_MVP_stage: "The application is in the MVP stage",
-
+Home_subject: "Computers",
+ //Home
+  Smart_price_comparison_across_multiple_online_stores_in_Moldova:
+  "Smart product discovery and price comparison across multiple online stores in Moldova.",
+  Search_using_almost: "Search using almost natural language, product names, or even copy-paste titles directly from shops like enter.md, darwin.md or xstore.md.",
+  Results_are_grouped: "Results are grouped by similarity and meaning - not just exact text matches. Each group contains multiple offers, price history and stock availability.",
+Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Components • Peripherals • Mobile Phones • Tablets • Gadgets • Consoles & Games • Smartwatches & Fitness Bands • Software • Photo & Video Equipment • Televisions • Office Equipment",  
+  Mvp_stage: " MVP stage, things will(maybe) improve fast",
   // Footer
-  All_rights_reserved: "All rights reserved",
-  Responsibility_Statement: "Responsibility statement",
-  Terms_and_conditions: "Terms and conditions",
-  Privacy_Policy: "Privacy policy",
+  All_rights_reserved: "All Rights Reserved",
+  Responsibility_Statement: "Responsibility Statement",
+  Terms_and_conditions: "Terms and Conditions",
+  Privacy_Policy: "Privacy Policy",
   About_Us: "About us",
   Sources: "Sources",
 
   // About us description
-  About_Us_description: `This platform is a price aggregator that allows you to compare offers from multiple online stores in the Republic of Moldova. We do not sell products and do not guarantee the availability or accuracy of prices.`,
-  About_Us_description_secondary: `All data is taken from public sources and may be modified by stores without notice.`,
+ About_Us_description: "This platform is a web tech aggregator that allows you to discover and compare offers from multiple online stores in the Republic of Moldova. As of February 1, 2026, we specialize in computers, gaming, and everything related to them, as well as mobile phones. We do not sell products and do not guarantee the availability or accuracy of prices.",
+ About_Us_description_secondary: `All data is taken from public sources and may be modified by stores without notice.`,
 
   // Contact page
   Contact_Title: "Contact",
@@ -39,7 +101,7 @@ The_application_is_in_the_MVP_stage: "The application is in the MVP stage",
     "We do not provide support for orders or deliveries. For purchases, please contact the store from which you wish to buy the product.",
 
   // Disclaimer (responsibiity statement)
-  Disclaimer_Title: "Responsibility statement",
+  Disclaimer_Title: "Responsibility Statement",
   Disclaimer_Intro:
     "The information displayed on this site, including product prices, is provided for informational purposes only.",
   Disclaimer_Accuracy:
@@ -51,7 +113,7 @@ The_application_is_in_the_MVP_stage: "The application is in the MVP stage",
   Disclaimer_Risk: "Use of this site is at your own risk.",
 
   // Terms and Conditions
-  Terms_Title: "Terms and conditions",
+  Terms_Title: "Terms and Conditions",
   Terms_Intro: "By using this site, you agree to the following:",
   Terms_AsIs:
     'The platform is provided "as is", without warranties of any kind.',
@@ -67,7 +129,7 @@ The_application_is_in_the_MVP_stage: "The application is in the MVP stage",
   Source_Title: "Data sources",
   Source_Intro:
     "Product data is automatically collected from public sources of online stores, including (but not limited to):",
-  Source_Example: "– Darwin.md",
+  Source_Example: "– Darwin.md,– Enter.online,– XStore.md",
   Source_Disclaimer:
     "Trademarks, logos, and product names belong to their respective owners. Our platform is not affiliated with these stores.",
 
@@ -95,7 +157,7 @@ The_application_is_in_the_MVP_stage: "The application is in the MVP stage",
   See_product: "See product",
 
   // search
-  Search_product: "Search product",
+  Search_product: "Search Strugure",
 
   //   auth
   Login: "login",
@@ -108,7 +170,43 @@ The_application_is_in_the_MVP_stage: "The application is in the MVP stage",
   
   Cookie_Accept_Button: "Accept",
 
-  Cookie_Reject_Button: "Reject"
+  Cookie_Reject_Button: "Reject",
+
+  //Offers 
+  Offers: "Offers",
+  Shop: "Retailer",
+  Price: "Price",
+  InStock: "In Stock",
+  Name: "Name",
+  Variant: "Variant",
+  Yes: "Yes",
+  No: "No",
+  rows_per_view: "Rows per view",
+  of: "of",
+
+
+  Manage_Products: "Manage Products",
+
+  //Drawer+Modal
+  Close: "Close",
+  Settings: "Settings",
+  Theme: "Theme",
+  Dark_mode: "Dark mode",
+  Light_mode: "Light mode",
+  Language: "Language",
+ 
+
+  //Tooltip
+  Search_Tooltip: "Search",
+  Menu_Tooltip: "Menu",
+  Offers_Tooltip: "Offers",
+
+  //Empty Search State
+  Search_For_Products_Empty: "Search for products",
+  Try_Typing_Product_Or_Brand_Empty: "Try typing a product name or brand",
+  No_Products_Found_Empty: "No products found",
+  No_Results_For_Empty: "No results for",
+
 };
 
 export default enUS;

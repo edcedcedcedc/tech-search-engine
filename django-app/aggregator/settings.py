@@ -42,14 +42,17 @@ DATABASES = {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "shop_xstore.sqlite3",
     },
-    # ADD THIS for Celery Beat:
     "celery_beat": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "celery_beat.sqlite3",
     },
-    "broken": {  # ← NEW DATABASE
+    "broken": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "broken.sqlite3",
+    },
+    "update": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "update.sqlite3",
     },
 }
 
@@ -60,7 +63,7 @@ DATABASE_ROUTERS = ["products.db_router.CeleryBeatRouter"]
 # Allowed hosts
 ALLOWED_HOSTS = env.list(
     "ALLOWED_HOSTS",
-    default=[] if DJANGO_ENV == "development" else ["your-production-domain.com"],
+    default=([] if DJANGO_ENV == "development" else ["your-production-domain.com"]),
 )
 
 # Applications
@@ -74,6 +77,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "products.apps.ProductsConfig",
     "django_celery_beat",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
@@ -89,6 +93,9 @@ MIDDLEWARE = [
 ]
 
 REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ],
     "DEFAULT_THROTTLE_CLASSES": [
         "products.throttles.Layer1Throttle",
     ],
@@ -96,7 +103,7 @@ REST_FRAMEWORK = {
         "layer1": "20/min",  # Layer1 clusters
         "layer2_preview": "20/min",  # Layer2 full=false
         "layer2_full": "20/min",  # Layer2 full=true
-        "autocomplete": "60/min",
+        "autocomplete": "120/min",
     },
 }
 

@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from products.utils.log.shop_crawler_engine_log import shop_crawler_log
+from products.utils.log.count_log import db_count_log
 from products.utils.log.translation_log import translation_log
 from products.utils.log.generate_embeddings_from_object_log import (
     generate_embeddings_from_object_log,
@@ -18,7 +18,7 @@ class Command(BaseCommand):
         "Optionally count out-of-stock items, missing translations, or embeddings."
     )
 
-    ALL_DBS = ["xstore", "enter", "darwin", "stage", "default", "broken"]
+    ALL_DBS = ["xstore", "enter", "darwin", "stage", "default", "broken", "update"]
     STOCK_DBS = ["xstore", "enter", "darwin"]
 
     def add_arguments(self, parser):
@@ -51,7 +51,7 @@ class Command(BaseCommand):
         # --in_stock MODE
         # -------------------------------
         if options["in_stock"]:
-            shop_crawler_log("Counting OUT-OF-STOCK products...\n")
+            db_count_log("Counting OUT-OF-STOCK products...\n")
             total_out_of_stock = 0
 
             for db in self.STOCK_DBS:
@@ -59,18 +59,18 @@ class Command(BaseCommand):
                 count = qs.count()
                 total_out_of_stock += count
 
-                shop_crawler_log(f"[{db}] Out of stock products: {count}")
+                db_count_log(f"[{db}] Out of stock products: {count}")
 
                 for p in qs.only("name", "variant", "price", "url")[:limit]:
-                    shop_crawler_log(
+                    db_count_log(
                         f"  - {p.name}"
                         f"{f' | {p.variant}' if p.variant else ''}"
                         f" | {p.price} | {p.url}"
                     )
 
-                shop_crawler_log("")
+                db_count_log("")
 
-            shop_crawler_log(
+            db_count_log(
                 f"TOTAL out of stock across {', '.join(self.STOCK_DBS)}: "
                 f"{total_out_of_stock}\n"
             )
@@ -152,7 +152,7 @@ class Command(BaseCommand):
         # -------------------------------
         # DEFAULT MODE
         # -------------------------------
-        shop_crawler_log("Counting all objects across databases...\n")
+        db_count_log("Counting all objects across databases...\n")
 
         for db in self.ALL_DBS:
             product_count = Product.objects.using(db).count()
@@ -167,25 +167,32 @@ class Command(BaseCommand):
                 .count()
             )
 
-            shop_crawler_log(f"[{db}] Products: {product_count}")
-            shop_crawler_log(f"[{db}] ProductPriceHistory (active): {ph_active_count}")
-            shop_crawler_log(
-                f"[{db}] ProductPriceHistory (archived): {ph_archived_count}"
-            )
-            shop_crawler_log("")
+            db_count_log(f"[{db}] Products: {product_count}")
+            db_count_log(f"[{db}] ProductPriceHistory (active): {ph_active_count}")
+            db_count_log(f"[{db}] ProductPriceHistory (archived): {ph_archived_count}")
+            db_count_log("")
 
+        # DEFAULT DB summary
         archived_count = ArchivedProduct.objects.using("default").count()
         broken_count = ArchivedBrokenProduct.objects.using("default").count()
+
+        # Now sum both archived and broken price histories
         ph_archived_count = (
             ProductPriceHistory.objects.using("default")
             .filter(archived_product__isnull=False)
             .count()
         )
+        ph_broken_count = (
+            ProductPriceHistory.objects.using("default")
+            .filter(archived_broken_product__isnull=False)
+            .count()
+        )
+        ph_archived_broken_total = ph_archived_count + ph_broken_count
 
-        shop_crawler_log(f"[default] ArchivedProduct: {archived_count}")
-        shop_crawler_log(f"[default] ArchivedBrokenProduct: {broken_count}")
-        shop_crawler_log(
-            f"[default] ProductPriceHistory (archived/broken): " f"{ph_archived_count}"
+        db_count_log(f"[default] ArchivedProduct: {archived_count}")
+        db_count_log(f"[default] ArchivedBrokenProduct: {broken_count}")
+        db_count_log(
+            f"[default] ProductPriceHistory (archived/broken): {ph_archived_broken_total}"
         )
 
-        shop_crawler_log("\nCounting completed.")
+        db_count_log("\nCounting completed.")

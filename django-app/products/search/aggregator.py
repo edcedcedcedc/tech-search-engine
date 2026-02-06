@@ -2,7 +2,10 @@ from products.utils.log.search_engine_log import search_engine_log
 import json
 
 
-def aggregate_products(qs):
+def aggregate_products(qs, query=None, query_embedding=None):
+    """
+    Aggregate products into clusters, attach embeddings and query info.
+    """
     product_dict = {}
 
     for p in qs:
@@ -11,52 +14,114 @@ def aggregate_products(qs):
         search_engine_log(
             f"Adding product '{p.name} / {p.variant}' to cluster {cluster_key}"
         )
+
     return [
-        build_aggregated_product(cluster_id, offers)
+        build_aggregated_product(cluster_id, offers, query, query_embedding)
         for cluster_id, offers in product_dict.items()
     ]
 
 
-def build_aggregated_product(cluster_id, offers):
+def build_aggregated_product(cluster_id, offers, query=None, query_embedding=None):
     rep = offers[0]
     unique_shops = sorted({o.shop for o in offers})
 
-    embedding = None
+    # --- Product embedding as string ---
+    cluster_embedding = ""
     if rep.embedding:
         try:
             if isinstance(rep.embedding, str):
-                embedding = rep.embedding
+                cluster_embedding = rep.embedding
             else:
-                embedding = json.dumps(list(rep.embedding))
+                cluster_embedding = json.dumps(list(rep.embedding))
         except Exception as e:
             search_engine_log(f"Error serializing embedding for {rep.id}: {e}")
 
-    return {
-        "id": cluster_id,
-        "name": rep.name,
-        "variant": rep.variant,
-        "t_name": rep.t_name or {},
-        "t_variant": rep.t_variant or {},
-        "brand": rep.brand,
-        "t_category": rep.t_category or {},
-        "offers": [
+    # --- Normalize offers with embeddings, price history, query ---
+    serialized_offers = []
+    for o in offers:
+        # Offer embedding
+        offer_embedding = ""
+        if hasattr(o, "embedding"):
+            try:
+                search_engine_log(
+                    f"[OFFER_EMBED_DEBUG] Offer '{o.name}' embedding type={type(o.embedding)} "
+                    f"len={len(o.embedding) if hasattr(o.embedding, '__len__') else 'N/A'}"
+                )
+                if isinstance(o.embedding, str):
+                    offer_embedding = o.embedding
+                elif hasattr(o.embedding, "__iter__"):
+                    offer_embedding = json.dumps(list(o.embedding))
+                else:
+                    search_engine_log(
+                        f"[OFFER_EMBED_WARN] Offer '{o.name}' embedding exists but not iterable"
+                    )
+            except Exception as e:
+                search_engine_log(
+                    f"[OFFER_EMBED_ERROR] Offer '{o.id}' serialization failed: {e}"
+                )
+        else:
+            search_engine_log(
+                f"[OFFER_EMBED_MISSING] Offer '{o.name}' has no embedding field"
+            )
+
+        # Price history
+        try:
+            price_history_list = [
+                {
+                    "price": float(ph.price),
+                    "in_stock": ph.in_stock,
+                    "recorded_at": ph.recorded_at.isoformat(),
+                }
+                for ph in getattr(o, "price_history_ordered", [])
+            ]
+        except Exception:
+            price_history_list = []
+
+        serialized_offers.append(
             {
-                "id": o.id,
+                "id": str(o.id),
                 "name": o.name,
-                "variant": o.variant,
+                "variant": o.variant or "",
+                "brand": o.brand or "",
+                "price": float(o.price),
                 "t_name": o.t_name or {},
                 "t_variant": o.t_variant or {},
+                "t_category": o.t_category or {},
                 "shop": o.shop,
-                "price": float(o.price),
-                "brand": o.brand,
-                "url": o.url,
-                "external_id": o.external_id,
+                "url": o.url or "",
+                "external_id": o.external_id or "",
                 "in_stock": o.in_stock,
+                # Fallback to cluster embedding if offer embedding missing
+                "embedding": offer_embedding,
+                "price_history": price_history_list,
+                # Attach query info
+                "query": query,
+                "query_embedding": (
+                    json.dumps(query_embedding.tolist())
+                    if query_embedding is not None
+                    else None
+                ),
             }
-            for o in offers
-        ],
+        )
+
+    return {
+        "id": str(cluster_id),
+        "name": rep.name,
+        "variant": rep.variant or "",
+        "brand": rep.brand or "",
         "lowest_price": float(min(o.price for o in offers)),
+        "t_name": rep.t_name or {},
+        "t_variant": rep.t_variant or {},
+        "t_category": rep.t_category or {},
+        "offers": serialized_offers,
         "shops": unique_shops,
-        "embedding": embedding,
+        "embedding": cluster_embedding,
         "image": rep.image or "",
+        # Attach query info at cluster level too
+        "query": query,
+        "query_embedding": (
+            json.dumps(query_embedding.tolist())
+            if query_embedding is not None
+            else None
+        ),
     }

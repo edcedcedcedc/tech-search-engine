@@ -1,19 +1,26 @@
-import { Box, Button, Container, Typography, useTheme } from "@mui/material";
+import {
+  Box,
+  Container,
+  Typography,
+  useTheme,
+  useMediaQuery,
+} from "@mui/material";
 import { BrowserRouter } from "react-router-dom";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import AppRoutes from "./router/Router";
-import { useStore } from "./store/store";
 import { Cookie } from "./components/Cookie";
 import { Meta } from "./components/Meta";
-
 import ResetCookieButton from "./tests/components/ResetCookieButton";
 import { SearchAutocomplete } from "./components/SearchAutocomplete";
 import { useTranslation } from "react-i18next";
+import Bottom from "./components/Bottom";
+
 function App() {
   const theme = useTheme();
   const { t } = useTranslation();
+
   return (
     <>
       <Meta />
@@ -39,19 +46,53 @@ function App() {
                 px: { xs: 2, sm: 3, md: 4 },
               }}
             >
-              <Typography variant="h3" component="h1" gutterBottom>
-                {t("Explore_prices_in_Moldova")}
+              <Typography
+                variant="h3"
+                component="h1"
+                gutterBottom
+                sx={(theme) => ({
+                  fontWeight: 600,
+                  lineHeight: 1.3,
+                  textAlign: "center",
+
+                  // Proportional scaling across breakpoints
+                  fontSize: "0.9rem", // 320px
+                  [theme.breakpoints.up("sm")]: { fontSize: "1.1rem" }, // 375px
+                  [theme.breakpoints.up("md")]: { fontSize: "1.2rem" }, // 425px
+                  [theme.breakpoints.up("lg")]: { fontSize: "1.4rem" }, // 768px
+                  [theme.breakpoints.up("xl")]: { fontSize: "1.8rem" }, // 1024px
+                  [theme.breakpoints.up("xxl")]: { fontSize: "2rem" }, // 1440px
+                })}
+              >
+                {t("Explore_tech_in_Moldova")}
               </Typography>
-              <Typography variant="h6" color="text.secondary" gutterBottom>
+
+              <Typography
+                variant="h6"
+                color="text.secondary"
+                gutterBottom
+                sx={(theme) => ({
+                  lineHeight: 1.4,
+                  textAlign: "center",
+
+                  // Proportional scaling across breakpoints
+                  fontSize: "0.65rem", // 320px
+                  [theme.breakpoints.up("sm")]: { fontSize: "0.8rem" }, // 375px
+                  [theme.breakpoints.up("md")]: { fontSize: "0.85rem" }, // 425px
+                  [theme.breakpoints.up("lg")]: { fontSize: "0.95rem" }, // 768px
+                  [theme.breakpoints.up("xl")]: { fontSize: "1rem" }, // 1024px
+                  [theme.breakpoints.up("xxl")]: { fontSize: "1.1rem" }, // 1440px
+                })}
+              >
                 {t("Discover_the_best_offers_for_your_favorite_products")}
               </Typography>
 
               <Box
                 sx={{
-                  mt: 4,
+                  mt: 2,
                   maxWidth: 600,
                   mx: "auto",
-                  py: 4,
+                  py: 2,
                   fontSize: "1.05rem",
                 }}
               >
@@ -72,7 +113,7 @@ function App() {
               // Scrollbar styles
               "&::-webkit-scrollbar": { width: theme.spacing(1) },
               "&::-webkit-scrollbar-thumb": {
-                backgroundColor: theme.palette.background.default, // dark thumb for light mode
+                backgroundColor: theme.palette.background.default,
                 borderRadius: theme.shape.borderRadius,
               },
               "&::-webkit-scrollbar-thumb:hover": {
@@ -86,7 +127,16 @@ function App() {
                   : "rgba(0,0,0,0.3) transparent",
             }}
           >
-            <Container sx={{ maxWidth: "800px", mx: "auto" }}>
+            <Container
+              disableGutters
+              maxWidth={false} // <-- ignore default breakpoints
+              sx={{
+                maxWidth: 800, // container stays 800px on large screens
+                width: "100%", // takes full width on smaller screens
+                mx: "auto", // centers container
+                pt: 0, // remove top padding
+              }}
+            >
               <AppRoutes />
             </Container>
           </Box>
@@ -102,13 +152,7 @@ function App() {
             }}
           >
             <Cookie />
-            <Button
-              onClick={() => console.log(useStore.getState().cookie.consent)}
-            >
-              Get
-            </Button>
-            <ResetCookieButton />
-            <Footer />
+            <Bottom />
           </Box>
         </Box>
       </BrowserRouter>

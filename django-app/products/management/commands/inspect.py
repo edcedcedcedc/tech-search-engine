@@ -138,6 +138,8 @@ class Command(BaseCommand):
                 db_inspect_products_log(
                     f"\n"
                     f"id={p.id}\n"
+                    f"external_id={p.external_id}\n"
+                    f"external_id={p.shop}\n"
                     f"name={p.name}\n"
                     f"t_name={p.t_name}\n"
                     f"t_variant={p.t_variant}\n"

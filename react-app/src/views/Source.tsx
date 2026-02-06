@@ -7,15 +7,15 @@ export default function Source() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         {t("Source_Title")}
       </Typography>
 
-      <Typography variant="body1">{t("Source_Intro")}</Typography>
+      <Typography variant="body2">{t("Source_Intro")}</Typography>
 
-      <Typography variant="body1">{t("Source_Example")}</Typography>
+      <Typography variant="body2">{t("Source_Example")}</Typography>
 
-      <Typography variant="body1" color="text.secondary">
+      <Typography variant="body2" color="text.secondary">
         {t("Source_Disclaimer")}
       </Typography>
     </Box>

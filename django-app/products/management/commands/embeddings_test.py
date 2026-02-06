@@ -41,6 +41,7 @@ class Command(BaseCommand):
         db = options["source"]
         check_translations = options["check_translations"]
         compare_languages = options["compare_languages"]
+        translation_stats = defaultdict(int)
 
         # Get products with embeddings
         products_with_embeddings = Product.objects.using(db).exclude(
@@ -118,8 +119,6 @@ class Command(BaseCommand):
         # 2. Check for translation completeness if requested
         if check_translations:
             generate_embeddings_from_object_log("\n=== TRANSLATION COMPLETENESS ===")
-
-            translation_stats = defaultdict(int)
 
             for p in sample_products:
                 t_name = p.t_name or {}

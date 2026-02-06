@@ -4,7 +4,6 @@ import json
 import numpy as np
 from products.search.config import COSINE_THRESHOLD_CLUSTER, FUZZY_THRESHOLD_CLUSTER
 from products.search.utils import cosine_similarity
-import numpy as np
 
 
 def identity_resolution(aggregated):
