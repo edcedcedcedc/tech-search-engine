@@ -6,21 +6,21 @@ export default function Contact() {
   const { t } = useTranslation();
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         {t("Contact_Title")}
       </Typography>
 
-      <Typography variant="body1">{t("Contact_Intro")}</Typography>
+      <Typography variant="body2">{t("Contact_Intro")}</Typography>
 
       <Box sx={{ mt: 3 }}>
-        <Typography variant="body1">
+        <Typography variant="body2">
           {t("Contact_Email_Label")}{" "}
           <Link href="mailto:contact@price-aggregator.md">
             contact@price-aggregator.md
           </Link>
         </Typography>
 
-        <Typography variant="body1" sx={{ mt: 1 }}>
+        <Typography variant="body2" sx={{ mt: 1 }}>
           {t("Contact_Platform_Info")}
         </Typography>
       </Box>

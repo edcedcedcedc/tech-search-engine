@@ -1,63 +1,80 @@
-# products/management/commands/autocomplete_es_build.py
-from collections import defaultdict
 from django.core.management.base import BaseCommand
 from elasticsearch import helpers
+import json
 from products.models import Product
-from products.utils.es_index import es, INDEX_NAME, create_index
-from products.utils.utils import tokenize
+from products.utils.es_index import es, create_index
 from products.utils.log.autocomplete_log import autocomplete_log
 
-MAX_CONTEXT = 3
+
+LANGUAGES = ["en", "ro"]
 BULK_SIZE = 1000
 
 
 class Command(BaseCommand):
-    help = "Build Elasticsearch autocomplete index (FAST)"
+    help = "Build hybrid autocomplete index (search_as_you_type + embeddings)"
 
     def handle(self, *args, **kwargs):
-        create_index()
+        for lang in LANGUAGES:
+            create_index(lang)
+            index_name = f"products_autocomplete_{lang}"
 
-        counter = defaultdict(int)
-
-        qs = Product.objects.all().only("name", "variant", "brand", "category")
-
-        for p in qs.iterator(chunk_size=1000):
-            for text in (p.name, p.variant, p.brand, p.category):
-                tokens = tokenize(text)
-                for i in range(1, len(tokens)):
-                    for ctx_len in range(0, MAX_CONTEXT + 1):
-                        start = max(0, i - ctx_len)
-                        context = " ".join(tokens[start:i])
-                        next_token = tokens[i]
-                        counter[(context, next_token)] += 1
-
-        actions = []
-        total = 0
-
-        for (context, next_token), count in counter.items():
-            actions.append(
-                {
-                    "_index": INDEX_NAME,
-                    "_source": {
-                        "context": context,
-                        "next_token": next_token,
-                        "count": count,
-                    },
-                }
+            autocomplete_log(f"Clearing existing documents in {index_name}...")
+            es.delete_by_query(
+                index=index_name,
+                body={"query": {"match_all": {}}},
+                refresh=True,
             )
 
-            if len(actions) >= BULK_SIZE:
+            autocomplete_log(f"Building index {index_name}...")
+
+            actions = []
+            total = 0
+            seen_names = set()
+
+            qs = Product.objects.only("id", "t_name", "embedding")
+
+            for p in qs.iterator(chunk_size=BULK_SIZE):
+                if not p.t_name or not p.embedding:
+                    continue
+
+                name = p.t_name.get(lang)
+                if not name:
+                    continue
+
+                normalized_name = name.strip()
+                if not normalized_name or normalized_name in seen_names:
+                    continue
+
+                # 🔑 convert ["0.123", "-0.44", ...] → [0.123, -0.44]
+                try:
+                    raw = json.loads(p.embedding)  # TextField → Python list
+                    embedding = [float(x) for x in raw]
+
+                    if len(embedding) != 1536:
+                        continue
+                except (TypeError, ValueError, json.JSONDecodeError):
+                    continue
+                seen_names.add(normalized_name)
+
+                actions.append(
+                    {
+                        "_index": index_name,
+                        "_id": p.id,
+                        "_source": {
+                            "name": normalized_name,
+                            "embedding": embedding,
+                            "product_id": p.id,
+                        },
+                    }
+                )
+
+                if len(actions) >= BULK_SIZE:
+                    helpers.bulk(es, actions)
+                    total += len(actions)
+                    actions.clear()
+
+            if actions:
                 helpers.bulk(es, actions)
                 total += len(actions)
-                actions.clear()
 
-        if actions:
-            helpers.bulk(es, actions)
-            total += len(actions)
-
-        # 🔁 re-enable refresh
-        es.indices.put_settings(
-            index=INDEX_NAME, body={"index": {"refresh_interval": "1s"}}
-        )
-
-        autocomplete_log(f"Indexed {total} autocomplete rows into Elasticsearch.")
+            autocomplete_log(f"Indexed {total} products into {index_name}.")

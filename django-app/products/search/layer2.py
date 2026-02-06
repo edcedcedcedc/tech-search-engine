@@ -30,8 +30,12 @@ class ProductOffersAPIView(SearchAPIView):
         offset = int(cursor) if cursor and cursor.isdigit() else 0
 
         aggregated = request.session.get("aggregated_cache")
-        if not aggregated or not request.session.session_key:
+
+        if not aggregated:
+            search_engine_log("Layer2 session cache MISS")
             return Response({"error": "invalid session"}, status=403)
+
+        search_engine_log(f"Layer2 session cache HIT: {len(aggregated)} clusters")
 
         product = next((p for p in aggregated if p["id"] == product_id), None)
         if not product:
@@ -40,25 +44,50 @@ class ProductOffersAPIView(SearchAPIView):
         # Score offers internally
         score_offers_for_product(product)
 
-        # Grab offers from aggregated cluster
-        offers = product["offers"]
-
-        # Sort offers by score descending
-        offers = sorted(offers, key=lambda o: o.get("offer_score", 0), reverse=True)
-
-        # Slice offers according to cursor/limit
+        # Grab offers from aggregated cluster and sort by score descending
+        offers = sorted(
+            product["offers"], key=lambda o: o.get("offer_score", 0), reverse=True
+        )
         offers_slice = offers[offset : offset + limit]
 
-        # --- Prepare API response WITHOUT embeddings ---
+        # Prepare API response
         if full:
-            result = offers_slice
-        else:
-            # Minimal preview
+            # Return full offer objects including embeddings
             result = [
-                {"shop": o["shop"], "name": o["name"], "price": o["price"]}
+                {
+                    "id": o["id"],
+                    "external_id": o.get("external_id", ""),
+                    "name": o["name"],
+                    "variant": o.get("variant", ""),
+                    "t_name": o.get("t_name", {}),
+                    "t_variant": o.get("t_variant", {}),
+                    "t_category": o.get("t_category", {}),
+                    "shop": o["shop"],
+                    "price": o["price"],
+                    "url": o.get("url", ""),
+                    "brand": o.get("brand", ""),
+                    "in_stock": o.get("in_stock", True),
+                    "offer_score": o.get("offer_score", 0.0),
+                    "price_history": o.get("price_history", []),
+                }
                 for o in offers_slice
             ]
-
+        else:
+            # Return minimal offer object excluding embedding, query, query_embedding
+            result = [
+                {
+                    "id": o["id"],
+                    "external_id": o.get("external_id", ""),
+                    "name": o["name"],
+                    "variant": o.get("variant", ""),
+                    "t_name": o.get("t_name", {}),
+                    "t_variant": o.get("t_variant", {}),
+                    "shop": o["shop"],
+                    "price": o["price"],
+                    "offer_score": o.get("offer_score", 0.0),
+                }
+                for o in offers_slice
+            ]
         next_cursor = str(offset + limit) if offset + limit < len(offers) else None
         has_more = next_cursor is not None
 

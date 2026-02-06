@@ -53,6 +53,7 @@ PIPELINE_STEPS_ENABLED = {
     "merge_to_prod": True,
     "price_history_prod": True,
     "load_embeddings_cache": True,
+    "es_autocomplete_index": True,
 }
 
 
@@ -81,6 +82,7 @@ def run_full_pipeline():
         run_merge_pipeline_to_default,
         run_price_history_default,
         run_load_embeddings_cache,
+        run_build_autocomplete_index,
     )
 
     workflow_steps = []
@@ -115,6 +117,9 @@ def run_full_pipeline():
     if PIPELINE_STEPS_ENABLED.get("load_embeddings_cache"):
         workflow_steps.append(run_load_embeddings_cache.si())
 
+    if PIPELINE_STEPS_ENABLED.get("es_autocomplete_index"):
+        workflow_steps.append(run_build_autocomplete_index.si())
+
     if not workflow_steps:
         return "No pipeline steps enabled. Nothing queued."
 
@@ -140,6 +145,10 @@ SHOPS = {
         "tehnicabirou": "https://enter.online/tehnica-de-birou",
         "cartielectronice": "https://enter.online/tablete/carti-electronice",
         # "climatizare": "https://enter.online/climatizare",
+        "smartwatch": "https://enter.online/gadgeturi/smartwatch",
+        "bratarifitness": "https://enter.online/gadgeturi/bratari-fitness",
+        "smartwatchkids": "https://enter.online/gadgeturi/smartwatch-pentru-copii",
+        "smartwatchaccess": "https://enter.online/accesorii/pentru-ceasuri-si-bratari",
     },
     "darwin": {
         "function": shop_crawler.fetch_darwin,
@@ -168,6 +177,8 @@ SHOPS = {
         "gaming6": "https://darwin.md/gadgets/ochelari-vr",
         "router": "https://darwin.md/retelistica/routere",
         "switch": "https://darwin.md/retelistica/switch",
+        "smartwatch": "https://darwin.md/gadgets/ceasuri-inteligente",
+        "smartwatch2": "https://darwin.md/gadgets/bratari-inteligente",
     },
     "xstore": {
         "function": shop_crawler.fetch_xstore,
