@@ -182,9 +182,9 @@ def run_translation(
             translation_log(f"Skipping already translated product {product.id}")
             continue
 
-        # Translate name
         if product.name and (force or not t_name.get("en")):
             t_name["en"] = translate_text(product.name, "ro", "en")
+            t_name["ro"] = product.name
         if not skip_ru and t_name.get("en"):
             t_name["ru"] = translate_text(t_name["en"], "en", "ru")
         product.t_name = t_name

@@ -29,3 +29,19 @@ def interleave_tasks(tasks_by_shop: dict, shuffle_within_shop: bool = True):
                 interleaved.append(dq.popleft())
 
     return interleaved
+
+
+def normalize_text(value: str | None) -> str:
+    """
+    Normalize product text for comparison:
+    - Convert None → empty string
+    - Replace escaped slashes \/ with /
+    - Replace multiple whitespace/newlines with single space
+    - Strip leading/trailing spaces
+    """
+    if not isinstance(value, str):
+        return ""
+    value = value.replace(r"\/", "/")
+    value = value.replace("\n", " ").replace("\r", "")
+    value = " ".join(value.split())  # collapse multiple spaces
+    return value.strip()

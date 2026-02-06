@@ -2,6 +2,8 @@ from django.core.management.base import BaseCommand
 from products.models import Product, ArchivedProduct, ArchivedBrokenProduct
 from products.utils.log.db_inspect_products_log import db_inspect_products_log
 from django.db.models import Q
+import os
+from django.conf import settings
 
 
 class Command(BaseCommand):
@@ -61,6 +63,13 @@ class Command(BaseCommand):
         list_categories = options["categories"]
         list_tcategories = options["tcategories"]
         all_tables = options["all_tables"]
+
+        BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+        LOG_FILE = os.path.join(BASE_DIR, "logs", "999inspect.log")
+
+        if os.path.exists(LOG_FILE):
+            os.remove(LOG_FILE)
 
         db_inspect_products_log(f"Using database: {db}")
 
@@ -130,7 +139,6 @@ class Command(BaseCommand):
 
         total = qs.count()
         db_inspect_products_log(f"Total products to inspect: {total}")
-
         start = 0
         while start < total:
             batch = qs[start : start + batch_size]
@@ -139,11 +147,19 @@ class Command(BaseCommand):
                     f"\n"
                     f"id={p.id}\n"
                     f"external_id={p.external_id}\n"
-                    f"external_id={p.shop}\n"
                     f"name={p.name}\n"
+                    f"variant={p.variant}\n"
+                    f"price={p.price}\n"
+                    f"shop={p.shop}\n"
+                    f"in_stock={p.in_stock}\n"
+                    f"category={p.category}\n"
                     f"t_name={p.t_name}\n"
                     f"t_variant={p.t_variant}\n"
                     f"t_category={p.t_category}\n"
-                    f"category={p.category}\n"
+                    f"embedding={p.embedding if db != 'default' else 'embedding hidden for default db'}\n"
+                    f"brand={p.brand}\n"
+                    f"updated_at={p.updated_at}\n"
+                    f"created_at={p.created_at}\n"
+                    f"url={p.url}\n"
                 )
             start += batch_size

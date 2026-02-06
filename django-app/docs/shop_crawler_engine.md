@@ -66,3 +66,6 @@ Worker threads per shop/category
 * Safe DB writes via single-threaded batch processing.
 * Flexible: supports multiple shops, categories, pages, and track fields.
 
+
+
+![alt text](image.png)

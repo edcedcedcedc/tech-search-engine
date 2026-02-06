@@ -8,7 +8,7 @@ from products.crawler.manager import DatabaseManager
 from products.crawler.settings import FetchSettings
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
 from products.crawler.config import (
-    ALLOWED_FIELDS_TO_WRITE_AND_TRACK,
+    ALLOWED_FIELDS_TO_TRACK,
     SHOPS_TO_CRAWL,
     SHOPS,
 )
@@ -40,7 +40,7 @@ class ShopCrawlerEngine:
             crawl_shops = [shop] if shop else SHOPS_TO_CRAWL
             filter_category = category
             max_pages = pages
-            track_fields = track_fields or ALLOWED_FIELDS_TO_WRITE_AND_TRACK
+            track_fields = track_fields or ALLOWED_FIELDS_TO_TRACK
 
             shop_crawler_log("START shop_crawler_engine orchestrator")
 

@@ -63,68 +63,84 @@ def score_cluster_for_query(aggregated, query: str, query_embedding=None):
     - Brand presence
     - Semantic similarity (query -> product embedding)
     - Price influence (smaller price gives small boost)
-    - GPT-5 mini re-ranking (small adjustment)
     """
     query_lower = ascii_folding(query.lower())
 
     for item in aggregated:
-        # --- Fuzzy match ---
-        product_text = f"{ascii_folding(item['name'])} {ascii_folding(item.get('variant', ''))}".lower()
-        fuzzy_score = fuzz.token_set_ratio(query_lower, product_text) / 100.0
+        try:
+            # --- Fuzzy match ---
+            product_text = f"{ascii_folding(item['name'])} {ascii_folding(item.get('variant', ''))}".lower()
+            fuzzy_score = fuzz.token_set_ratio(query_lower, product_text) / 100.0
 
-        # --- Brand boost ---
-        brand_score = 1.0 if item.get("brand", "").lower() in query_lower else 0.0
+            # --- Brand boost ---
+            brand_score = 1.0 if item.get("brand", "").lower() in query_lower else 0.0
 
-        # --- Semantic similarity ---
-        semantic_similarity = 0.0
-        if query_embedding is not None and item.get("embedding"):
-            try:
-                product_emb = np.array(json.loads(item["embedding"]))
-                semantic_similarity = cosine_similarity(query_embedding, product_emb)
-            except Exception as e:
-                search_engine_log(
-                    f"Error computing semantic similarity for '{item['name']}': {e}"
+            # --- Semantic similarity ---
+            semantic_similarity = 0.0
+            if query_embedding is not None and item.get("embedding"):
+                try:
+                    product_emb = np.array(json.loads(item["embedding"]))
+                    semantic_similarity = cosine_similarity(
+                        query_embedding, product_emb
+                    )
+                except Exception as e:
+                    search_engine_log(
+                        f"[SEMANTIC_ERROR] Error computing semantic similarity for '{item['name']}': {e}"
+                    )
+
+            # --- Variant boost ---
+            variant_score = 0.0
+            if item.get("variant"):
+                variant_tokens = item["variant"].lower().split()
+                variant_hits = sum(
+                    1 for t in query_lower.split() if t in variant_tokens
                 )
+                variant_score = variant_hits / max(len(query_lower.split()), 1)
 
-        # --- Variant boost ---
-        variant_score = 0.0
-        if item.get("variant"):
-            variant_tokens = item["variant"].lower().split()
-            variant_hits = sum(1 for t in query_lower.split() if t in variant_tokens)
-            variant_score = variant_hits / max(len(query_lower.split()), 1)
+            # --- Token overlap ---
+            query_tokens = query_lower.split()
+            product_tokens = (
+                ascii_folding(item["name"]).lower().split()
+                + ascii_folding(item.get("variant", "")).lower().split()
+            )
+            query_token_hits = sum(1 for t in query_tokens if t in product_tokens)
+            query_token_score = query_token_hits / max(len(query_tokens), 1)
 
-        # --- Token overlap ---
-        query_tokens = query_lower.split()
-        product_tokens = (
-            ascii_folding(item["name"]).lower().split()
-            + ascii_folding(item.get("variant", "")).lower().split()
-        )
-        query_token_hits = sum(1 for t in query_tokens if t in product_tokens)
-        query_token_score = query_token_hits / max(len(query_tokens), 1)
+            # --- Hybrid relevance ---
+            relevance = (
+                0.5 * fuzzy_score
+                + 0.4 * semantic_similarity
+                + 0.05 * variant_score
+                + 0.01 * brand_score
+                + 0.04 * query_token_score
+            )
+            item["relevance"] = round(relevance, 4)
 
-        # --- Hybrid relevance ---
-        relevance = (
-            0.4 * fuzzy_score
-            + 0.5 * semantic_similarity
-            + 0.05 * variant_score
-            + 0.01 * brand_score
-            + 0.04 * query_token_hits
-        )
-        item["relevance"] = round(relevance, 4)
+            # --- Hybrid product score including price ---
+            price_factor = (
+                0.5
+                / math.log(item.get("lowest_price", 2) + 2)  # fallback to 2 if missing
+                if item.get("lowest_price", 0) > 0
+                else 0
+            )
+            item["product_score"] = round(0.9 * relevance + 0.1 * price_factor, 4)
 
-        # --- Hybrid product score including price ---
-        price_factor = (
-            0.5 / math.log(item["lowest_price"] + 2) if item["lowest_price"] > 0 else 0
-        )
-        item["product_score"] = round(0.9 * relevance + 0.1 * price_factor, 4)
+            # --- Debug log ---
+            search_engine_log(
+                f"[SCORE_DEBUG] Product '{item.get('name', 'UNKNOWN')}' -> "
+                f"fuzzy={fuzzy_score:.3f}, variant={variant_score:.3f}, "
+                f"brand={brand_score:.1f}, semantic={semantic_similarity:.4f}, "
+                f"query_token_score={query_token_score:.4f}, "
+                f"lowest_price={item.get('lowest_price')}, "
+                f"relevance={item['relevance']}, product_score={item['product_score']}"
+            )
 
-        search_engine_log(
-            f"Product '{item['name']}' -> fuzzy={fuzzy_score:.3f}, "
-            f"variant={variant_score:.3f}, brand={brand_score:.1f}, "
-            f"semantic={semantic_similarity:.4f}, relevance={item['relevance']}"
-        )
+        except Exception as e:
+            search_engine_log(
+                f"[SCORE_ERROR] Failed scoring product '{item.get('name', 'UNKNOWN')}': {e}"
+            )
 
-    # --- GPT-5 mini smoothing ---
+    # --- GPT-5 mini smoothing (optional) ---
     # aggregated = gpt_rerank_top_cluster_items(aggregated, query)
 
     return aggregated

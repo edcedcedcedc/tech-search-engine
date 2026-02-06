@@ -82,6 +82,36 @@ const trimSessionCacheIfNeeded = () => {
 };
 
 
+const OFFERS_CACHE_KEY = "offersCache";
+const OFFERS_CACHE_TTL = 30 * 60 * 1000; // 30 min
+
+let offersSessionCache: Record<
+  string,
+  { offers: any[]; fetchedAt: number }
+> = {};
+
+
+if (typeof window !== "undefined") {
+  try {
+    const raw = sessionStorage.getItem(OFFERS_CACHE_KEY);
+    if (raw) offersSessionCache = JSON.parse(raw);
+  } catch {
+    offersSessionCache = {};
+  }
+}
+
+
+const getCachedOffers = (productId: string) => {
+  const entry = offersSessionCache[productId];
+  if (!entry) return null;
+
+  if (Date.now() - entry.fetchedAt > OFFERS_CACHE_TTL) {
+    delete offersSessionCache[productId];
+    return null;
+  }
+
+  return entry.offers;
+};
 
 
 interface CookieState {
@@ -215,32 +245,101 @@ export const useStore = create<State>((set, get) => ({
         return { aggregatedProducts: [...state.aggregatedProducts, product] };
       }
     }),
-  clearProducts: () => set({ aggregatedProducts: [] }),
+  
+    clearProducts: () => set({ aggregatedProducts: [] }),
+  
   query: "",
   setQuery: (q) => set({ query: q }),
 
   openProduct: async (productId) => {
     const { productOffers } = get();
-    // cache: don’t refetch if already loaded
+    uiLog(`offers | open_start | productId=${productId}`);
+
+    // memory: don’t refetch if already loaded
     if (productOffers[productId]) {
+      uiLog(
+        `offers | memory_cache_hit | productId=${productId} | offersLoaded=${productOffers[productId].length}`
+      );
       set({ selectedProductId: productId });
       return;
     }
+
+    // Session cache (second layer)
+    const cached = getCachedOffers(productId);
+    if (cached) {
+      uiLog(`offers | load_from_session_cache | productId=${productId} | offers=${cached.length}`);
+      set((state) => ({
+        selectedProductId: productId,
+        productOffers: {
+          ...state.productOffers,
+          [productId]: cached,
+        },
+      }));
+      return;
+    }
+
+    uiLog(`offers | fetch_start | productId=${productId}`);
     set({ isOffersLoading: true, selectedProductId: productId });
-    
-    //natural delay for smooth trans in first prod open
-    //await new Promise((resolve) => setTimeout(resolve, 300));
 
-    const data = await apiGetProductOffers(productId, true);
+    try {
+      const data = await apiGetProductOffers(productId, true);
+      uiLog(
+        `offers | fetch_success | productId=${productId} | offers=${data.offers.length}`
+      );
 
-    set((state) => ({
-      productOffers: {
-        ...state.productOffers,
-        [productId]: data.offers,
-      },
-      isOffersLoading: false,
-    }));
+      // update memory cache
+      offersSessionCache[productId] = {
+        offers: data.offers,
+        fetchedAt: Date.now(),
+      };
+      uiLog(
+        `offers | memory_cache_write | productId=${productId} | cacheSize=${Object.keys(
+          offersSessionCache
+        ).length}`
+      );
+
+      // update sessionStorage
+      try {
+        sessionStorage.setItem(
+          OFFERS_CACHE_KEY,
+          JSON.stringify(offersSessionCache)
+        );
+        uiLog(
+          `offers | sessionStorage_write_success | productId=${productId} | bytes=${
+            JSON.stringify(offersSessionCache[productId]).length * 2
+          }`
+        );
+      } catch (err) {
+        uiLog(
+          `offers | sessionStorage_write_failed | productId=${productId} | error=${
+            (err as any)?.message
+          }`
+        );
+      }
+
+      // update store
+      set((state) => {
+        uiLog(
+          `offers | store_update | productId=${productId} | prevOffers=${state.productOffers[productId]?.length ?? 0} | newOffers=${data.offers.length}`
+        );
+        return {
+          productOffers: {
+            ...state.productOffers,
+            [productId]: data.offers,
+          },
+          isOffersLoading: false,
+        };
+      });
+    } catch (err) {
+      uiLog(
+        `offers | fetch_error | productId=${productId} | error=${(err as any)?.message}`
+      );
+      set({ isOffersLoading: false });
+    }
+
+    uiLog(`offers | open_end | productId=${productId}`);
   },
+  
   closeProduct: () => set({ selectedProductId: null }),
   
   isLoading: false,

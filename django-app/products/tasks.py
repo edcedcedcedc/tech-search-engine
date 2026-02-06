@@ -31,12 +31,10 @@ def run_crawler():
     from products.crawler.main import ShopCrawlerEngine
 
     try:
-        if DRY_RUN:
-            call_command("reset")
+        call_command("reset")
         engine = ShopCrawlerEngine()
         engine.run(pages=PAGES_TO_CRAWL)
         shop_crawler_log("[TASK] Crawler finished successfully")
-
         call_command("count", in_stock=True)
         call_command("count")
 
@@ -78,6 +76,40 @@ def run_normalize():
     category_log("[TASK] Finished normalization for all DBs")
     call_command("normalize_test")
     category_log("[TESTING] Finished normalization for all DBs")
+
+
+""" @shared_task(name="run_tag_generation")
+def run_tag_generation():
+   
+    from products.tl.tags.tag_generator import TagGenerator
+    from products.utils.log.tag_log import tag_log
+    from products.crawler.config import CRAWLER_DBS
+
+    try:
+        generator = TagGenerator()
+        generator.set_client_from_env()
+
+        tag_log(f"Starting tag generation for {len(CRAWLER_DBS)} databases")
+
+        # PRODUCTION SETTINGS:
+        stats = generator.process_multiple_databases(
+            databases=CRAWLER_DBS,
+            max_tags=8,
+            lang="ro",
+            use_cache=True,
+            force_regenerate=False,  # Skip products with existing tags (save $$$)
+            max_workers=5,  # Adjust based on your API limits
+            batch_size=50,  # Reasonable batch size
+            test_mode=False,
+        )
+
+        tag_log(f"[TASK] Tag generation completed: {stats}")
+        return stats
+
+    except Exception as e:
+        tag_log(f"[TASK] Error in tag generation: {str(e)}", "error")
+        raise
+"""
 
 
 @shared_task(name="run_translation")

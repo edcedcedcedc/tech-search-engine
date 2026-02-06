@@ -77,7 +77,7 @@ def normalize_category_for_product(
 
     # Only save if ro and en are populated
     if t_category.get("ro") and t_category.get("en"):
-        product.category = t_category["ro"]
+        # product.category = t_category["ro"]
         product.t_category = t_category
         product.save(using=db)
         set_cached(shop, raw_category, t_category, product.id)

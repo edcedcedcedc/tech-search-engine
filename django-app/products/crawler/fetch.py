@@ -68,12 +68,12 @@ class Fetch:
                     "external_id": add_btn.get("data-id"),
                     "name": name_text,
                     "variant": variant_text,
-                    "t_name": {"ro": name_text, "en": "", "ru": ""},
-                    "t_variant": {"ro": variant_text, "en": "", "ru": ""},
+                    "t_name": {},
+                    "t_variant": {},
                     "price": int(add_btn.get("data-price") or 0),
                     "brand": add_btn.get("data-brand") or "",
                     "category": category_text,
-                    "t_category": {"ro": category_text, "en": "", "ru": ""},
+                    "t_category": {},
                     "url": link_tag.get("href") if link_tag else None,
                     "image": img_tag.get("src") if img_tag else None,
                     "shop": "xstore",
@@ -129,16 +129,8 @@ class Fetch:
                     "external_id": self.safe_re_search(r'"item_id":"(.*?)"', decoded),
                     "name": self.safe_re_search(r'"item_name":"(.*?)"', decoded),
                     "variant": variant,
-                    "t_name": {
-                        "ro": self.safe_re_search(r'"item_name":"(.*?)"', decoded),
-                        "en": "",
-                        "ru": "",
-                    },
-                    "t_variant": {
-                        "ro": variant,
-                        "en": "",
-                        "ru": "",
-                    },
+                    "t_name": {},
+                    "t_variant": {},
                     "price": int(
                         self.safe_re_search(r'"price":(\d+)', decoded, default="0")
                     ),
@@ -146,7 +138,7 @@ class Fetch:
                     "category": self.safe_re_search(
                         r'"item_category":"(.*?)"', decoded
                     ),
-                    "t_category": {"ro": "", "en": "", "ru": ""},
+                    "t_category": {},
                     "url": link.get("href") or "",
                     "in_stock": in_stock,
                     "shop": "darwin",
@@ -196,8 +188,8 @@ class Fetch:
                     "external_id": self.safe_re_search(r'"item_id":"(.*?)"', decoded),
                     "name": title,
                     "variant": variant,
-                    "t_name": {"ro": title, "en": "", "ru": ""},
-                    "t_variant": {"ro": variant, "en": "", "ru": ""},
+                    "t_name": {},
+                    "t_variant": {},
                     "price": int(
                         self.safe_re_search(r'"price":(\d+)', decoded, default="0")
                     ),
@@ -205,7 +197,7 @@ class Fetch:
                     "category": self.safe_re_search(
                         r'"item_category":"(.*?)"', decoded
                     ),
-                    "t_category": {"ro": "", "en": "", "ru": ""},
+                    "t_category": {},
                     "url": (
                         node.select_one(".stretched-link")["href"]
                         if node.select_one(".stretched-link")

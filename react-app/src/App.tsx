@@ -6,7 +6,7 @@ import Header from "./components/Header";
 import AppRoutes from "./router/Router";
 import { Cookie } from "./components/Cookie";
 import { Meta } from "./components/Meta";
-import ResetCookieButton from "./tests/components/ResetCookieButton";
+/* import ResetCookieButton from "./tests/components/ResetCookieButton"; */
 import { SearchAutocomplete } from "./components/SearchAutocomplete";
 import { useTranslation } from "react-i18next";
 import Bottom from "./components/Bottom";

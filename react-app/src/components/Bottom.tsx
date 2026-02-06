@@ -18,7 +18,7 @@ const Bottom: React.FC = () => {
   if (location.pathname !== "/products") return null;
 
   const handlePageChange = (
-    event: React.ChangeEvent<unknown>,
+    _event: React.ChangeEvent<unknown>,
     page: number,
   ) => {
     if (page !== currentPage && !isLoading) {

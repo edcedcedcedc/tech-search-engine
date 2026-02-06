@@ -29,7 +29,7 @@ export const SearchAutocomplete: React.FC = () => {
 
   const [value, setValue] = React.useState("");
   const [suggestions, setSuggestions] = React.useState<Suggestion[]>([]);
-  const [loading, setLoading] = React.useState(false);
+  const [_loading, setLoading] = React.useState(false);
   const anchorRef = React.useRef<HTMLInputElement | null>(null);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const { t, i18n } = useTranslation();

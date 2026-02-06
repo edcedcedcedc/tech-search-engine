@@ -1,0 +1,264 @@
+{
+  "darwin": {
+    "ghostrunner 2 playstation 5|jocuri|one more level|action / 17+": {
+      "tags": [
+        "Ghostrunner 2",
+        "PlayStation 5",
+        "One More Level",
+        "jocuri video",
+        "actiune",
+        "17+",
+        "console",
+        "PS5"
+      ],
+      "first_seen": "2026-02-05T04:56:25.633289+00:00",
+      "examples": [
+        8191
+      ]
+    },
+    "mini pc asrock 470\\/b\\/bb black|sisteme pc|asrock|intel |": {
+      "tags": [
+        "Mini PC",
+        "ASRock",
+        "470/B/BB Black",
+        "Intel",
+        "Sisteme PC",
+        "compact",
+        "performanta",
+        "tehnologie"
+      ],
+      "first_seen": "2026-02-05T05:19:15.368208+00:00",
+      "examples": [
+        11330
+      ]
+    },
+    "all-in-one pc lenovo thinkcentre neo 50a gen 5 black|all in one pc|lenovo|23.8\" full hd ips intel core i7 13620h 16 gb 512 gb": {
+      "tags": [
+        "```json",
+        "All-in-One PC\"",
+        "\"Lenovo\"",
+        "\"ThinkCentre neo 50a Gen 5\"",
+        "\"23.8 inch\"",
+        "\"Full HD IPS\"",
+        "\"Intel Core i7 13620H\"",
+        "\"16 GB RAM\""
+      ],
+      "first_seen": "2026-02-05T05:19:17.475784+00:00",
+      "examples": [
+        13682
+      ]
+    },
+    "calculator personal navigator 11265 black|sisteme pc|navigator|amd ryzen 5 5600gt 16 gb | 500 gb": {
+      "tags": [
+        "calculator personal",
+        "Navigator",
+        "AMD Ryzen 5",
+        "16 GB RAM",
+        "500 GB stocare",
+        "PC",
+        "sisteme PC",
+        "gaming"
+      ],
+      "first_seen": "2026-02-05T05:19:18.553764+00:00",
+      "examples": [
+        13683
+      ]
+    },
+    "calculator de jocuri navigator 11258 black|sisteme pc gaming|navigator|intel core i5 14400f 32 gb 1 tb geforce rtx 5060 8 gb": {
+      "tags": [
+        "```json",
+        "Calculator de jocuri\"",
+        "\"Navigator\"",
+        "\"PC Gaming\"",
+        "\"Intel Core i5\"",
+        "\"32 GB RAM\"",
+        "\"1 TB\"",
+        "\"GeForce RTX 5060\""
+      ],
+      "first_seen": "2026-02-05T05:19:22.020599+00:00",
+      "examples": [
+        13684
+      ]
+    },
+    "calculator de jocuri navigator 11257 black|sisteme pc gaming|navigator|intel core i5 12400f 16 gb 1 tb geforce rtx 5050 8 gb": {
+      "tags": [
+        "Calculator de jocuri",
+        "Navigator 11257 Black",
+        "Navigator",
+        "Intel Core i5",
+        "16 GB RAM",
+        "1 TB stocare",
+        "GeForce RTX 5050",
+        "PC Gaming"
+      ],
+      "first_seen": "2026-02-05T05:19:23.651808+00:00",
+      "examples": [
+        13685
+      ]
+    }
+  },
+  "enter": {
+    "panasonic kx-tg1611uah|стационарные телефоны|panasonic|gray": {
+      "tags": [
+        "Panasonic",
+        "KX-TG1611UAH",
+        "telefon fix",
+        "gri",
+        "telefon de birou",
+        "telefon acasa",
+        "Panasonic stacionar",
+        "telefon cablu"
+      ],
+      "first_seen": "2026-02-05T05:19:05.449821+00:00",
+      "examples": [
+        1744
+      ]
+    },
+    "apple iphone 17 pro|смартфоны|apple|12 gb/ 256 gb/ single sim/ orange cosmic": {
+      "tags": [
+        "Apple iPhone 17 Pro",
+        "Apple",
+        "smartphone",
+        "12 GB RAM",
+        "256 GB",
+        "Single SIM",
+        "Orange Cosmic",
+        "telefon mobil"
+      ],
+      "first_seen": "2026-02-05T05:19:05.772709+00:00",
+      "examples": [
+        1680
+      ]
+    },
+    "apple iphone 17 pro|||12 gb/ 1 tb/ single sim/ orange cosmic": {
+      "tags": [
+        "Apple",
+        "iPhone 17 Pro",
+        "12 GB RAM",
+        "1 TB stocare",
+        "Single SIM",
+        "Orange Cosmic",
+        "smartphone",
+        "tehnologie avansata"
+      ],
+      "first_seen": "2026-02-05T05:19:10.086461+00:00",
+      "examples": [
+        25864
+      ]
+    },
+    "husa p/u apple watch safe by panzerglass transparent 46 mm|аксессуары для часов и браслетов|panzerglass|": {
+      "tags": [
+        "husa Apple Watch",
+        "PanzerGlass",
+        "transparent",
+        "46 mm",
+        "protectie ceas",
+        "accesorii ceas",
+        "rezistent la zgarieturi",
+        "carcasa de protectie"
+      ],
+      "first_seen": "2026-02-05T05:19:10.283711+00:00",
+      "examples": [
+        21826
+      ]
+    },
+    "oneplus 15|смартфоны|oneplus|16 gb/ 512 gb/ dual sim/ sand storm": {
+      "tags": [
+        "OnePlus 15",
+        "OnePlus",
+        "smartphone",
+        "16 GB",
+        "512 GB",
+        "Dual SIM",
+        "Sand Storm",
+        "telefon mobil"
+      ],
+      "first_seen": "2026-02-05T05:19:13.630796+00:00",
+      "examples": [
+        25865
+      ]
+    }
+  },
+  "xstore": {
+    "televizor xiaomi a pro 55\" 2025|televizoare|xiaomi|55″ (139.7 cm) / 4k uhd / smart tv (google)": {
+      "tags": [
+        "televizor",
+        "Xiaomi",
+        "55 inch",
+        "4K UHD",
+        "Smart TV",
+        "Google TV",
+        "2025",
+        "ecran mare"
+      ],
+      "first_seen": "2026-02-05T05:19:25.334704+00:00",
+      "examples": [
+        21819
+      ]
+    },
+    "televizor lg 43nano81a6a|televizoare|lg|43″ (109.2 cm) / 4k uhd / smart tv (web)": {
+      "tags": [
+        "televizor",
+        "LG",
+        "43 inch",
+        "4K UHD",
+        "Smart TV",
+        "WebOS",
+        "43NANO81A6A",
+        "electronice"
+      ],
+      "first_seen": "2026-02-05T05:19:26.387218+00:00",
+      "examples": [
+        21820
+      ]
+    },
+    "televizor lg oled77c54la|televizoare|lg|77″ (195.6 cm) / 4k uhd / smart tv (web)": {
+      "tags": [
+        "televizor",
+        "LG",
+        "OLED",
+        "77 inch",
+        "4K UHD",
+        "Smart TV",
+        "WebOS",
+        "electrocasnice"
+      ],
+      "first_seen": "2026-02-05T05:19:29.208426+00:00",
+      "examples": [
+        21822
+      ]
+    },
+    "televizor hisense 65e7q  pro|televizoare|hisense|65″ (165.1 cm) / 4k uhd / smart tv (vidaa)": {
+      "tags": [
+        "```json",
+        "televizor\"",
+        "\"Hisense\"",
+        "\"65E7Q PRO\"",
+        "\"65 inch\"",
+        "\"4K UHD\"",
+        "\"Smart TV\"",
+        "\"VIDAA\""
+      ],
+      "first_seen": "2026-02-05T05:19:29.521238+00:00",
+      "examples": [
+        21821
+      ]
+    },
+    "televizor lg oled77g54lw|televizoare|lg|77″ (195.6 cm) / 4k uhd / smart tv (web)": {
+      "tags": [
+        "televizor",
+        "LG",
+        "OLED",
+        "77 inch",
+        "4K UHD",
+        "Smart TV",
+        "WebOS",
+        "OLED77G54LW"
+      ],
+      "first_seen": "2026-02-05T05:19:31.930883+00:00",
+      "examples": [
+        21823
+      ]
+    }
+  }
+}
