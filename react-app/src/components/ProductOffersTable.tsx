@@ -13,7 +13,6 @@ import {
   useMediaQuery,
   IconButton,
   TablePagination,
-  Divider,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -48,7 +47,7 @@ export default function ProductOffersTable() {
   const [priceArrowUp, setPriceArrowUp] = React.useState(true); // UI toggle only
 
   const handleChangePage = (
-    event: React.MouseEvent<HTMLButtonElement> | null,
+    _event: React.MouseEvent<HTMLButtonElement> | null,
     newPage: number,
   ) => {
     if (selectedProductId) {

@@ -1,5 +1,5 @@
 // ✅ main.tsx for Vite
-import { StrictMode, useMemo } from "react";
+import { useMemo } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 
@@ -20,11 +20,7 @@ const Root = () => {
   );
 };
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <Root />
-  </StrictMode>,
-);
+createRoot(document.getElementById("root")!).render(<Root />);
 
 const preloader = document.getElementById("preloader");
 if (preloader) {

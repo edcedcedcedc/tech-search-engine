@@ -5,15 +5,21 @@ const LOG_ENDPOINT = "http://localhost:5179/log";
  * Safe for browser, will not block UI if server is down.
  */
 export function uiLog(msg: string) {
-  try {
-    fetch(LOG_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ msg }),
-      keepalive: true, // survives page unload
-    });
-  } catch (err) {
-    // fail silently, do not break UI
-    console.warn("Failed to send UI log", err);
-  }
+  fetch(LOG_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ msg }),
+    keepalive: true,
+  }).catch((err) => {
+    if (
+      !navigator.onLine ||
+      err?.name === "TypeError" // fetch network error
+    ) {
+      return;
+    }
+
+    if (import.meta.env.DEV) {
+      console.warn("uiLog unexpected error:", err);
+    }
+  });
 }

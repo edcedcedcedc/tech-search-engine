@@ -23,8 +23,7 @@ def aggregate_products(qs, query=None, query_embedding=None):
 
 def build_aggregated_product(cluster_id, offers, query=None, query_embedding=None):
     rep = offers[0]
-    unique_shops = sorted({o.shop for o in offers})
-
+    unique_shops = sorted({o.shop for o in offers if hasattr(o, "shop") and o.shop})
     # --- Product embedding as string ---
     cluster_embedding = ""
     if rep.embedding:

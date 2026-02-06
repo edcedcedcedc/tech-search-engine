@@ -1,43 +1,75 @@
 from decimal import Decimal
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
+from products.crawler.utils import normalize_text
+from rapidfuzz import fuzz
 
 
 class ChangeTracker:
     """Track changes in product fields between fetched data and database"""
 
     @staticmethod
-    def get_changed_fields(db_product, fetched_data, fields_to_track=None):
+    def get_changed_fields(
+        db_product, fetched_data, fields_to_track=None, string_threshold=95
+    ):
+        """
+        Compare db_product vs fetched_data.
+        - Numbers: exact match (Decimal)
+        - Booleans: exact match
+        - Strings: fuzzy match with rapidfuzz, threshold by similarity score
+        """
         if fields_to_track is None:
-            fields_to_track = ["price", "name", "variant", "in_stock"]
+            fields_to_track = [
+                "price",
+                "in_stock",
+                "name",
+                "variant",
+                "url",
+                "category",
+                "brand",
+            ]
 
         changed_fields = []
         old_values = {}
         new_values = {}
 
         for field in fields_to_track:
-            if field in fetched_data:
-                db_value = getattr(db_product, field, None)
-                fetched_value = fetched_data[field]
+            if field not in fetched_data:
+                continue
 
-                # --- Normalize numeric values ---
-                if field == "price":
-                    try:
-                        db_value = Decimal(db_value)
-                    except:
-                        db_value = Decimal(0)
-                    try:
-                        fetched_value = Decimal(fetched_value)
-                    except:
-                        fetched_value = Decimal(0)
+            db_value = getattr(db_product, field, None)
+            fetched_value = fetched_data[field]
 
-                # --- Boolean comparison ---
-                if isinstance(db_value, bool) or isinstance(fetched_value, bool):
-                    if bool(db_value) != bool(fetched_value):
-                        changed_fields.append(field)
-                        old_values[field] = db_value
-                        new_values[field] = fetched_value
-                # --- String/other comparison ---
-                elif db_value != fetched_value:
+            # --- Numeric comparison ---
+            if field == "price":
+                try:
+                    db_value = Decimal(db_value)
+                except:
+                    db_value = Decimal(0)
+                try:
+                    fetched_value = Decimal(fetched_value)
+                except:
+                    fetched_value = Decimal(0)
+
+                if db_value != fetched_value:
+                    changed_fields.append(field)
+                    old_values[field] = db_value
+                    new_values[field] = fetched_value
+
+            # --- Boolean comparison ---
+            elif isinstance(db_value, bool) or isinstance(fetched_value, bool):
+                if bool(db_value) != bool(fetched_value):
+                    changed_fields.append(field)
+                    old_values[field] = db_value
+                    new_values[field] = fetched_value
+
+            # --- String comparison (fuzzy) ---
+            else:
+                db_str = normalize_text(str(db_value))
+                fetched_str = normalize_text(str(fetched_value))
+
+                similarity = fuzz.ratio(db_str, fetched_str)
+
+                if similarity < string_threshold:
                     changed_fields.append(field)
                     old_values[field] = db_value
                     new_values[field] = fetched_value

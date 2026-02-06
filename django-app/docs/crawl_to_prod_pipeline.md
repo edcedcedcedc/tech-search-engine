@@ -265,3 +265,12 @@ So you never “delete” Production stuff accidentally, unless you explicitly b
 New → full create
 Existing → only safe fields update
 Missing → untouched
+
+`_update_active` `_maybe_restore`
+| Name Changed | Variant Changed | Preserved Translations Non-Empty? | Resulting Action                                            | Notes                                                                           |
+| ------------ | --------------- | --------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| No           | No              | Yes                               | Preserve translations, keep embeddings                      | Only price/stock/other fields changed → save normally (`UPDATE_DB` if enriched) |
+| No           | No              | No                                | Clear embeddings, preserve translations as `{}`             | Price/stock updated, but translations empty → embeddings cleared                |
+| Yes          | No              | Irrelevant                        | Clear `t_name`, `t_variant`, `t_category`, clear embeddings | Name changed → translations reset, embeddings wiped, save to shop DB            |
+| No           | Yes             | Irrelevant                        | Clear `t_name`, `t_variant`, `t_category`, clear embeddings | Variant changed → translations reset, embeddings wiped, save to shop DB         |
+| Yes          | Yes             | Irrelevant                        | Clear `t_name`, `t_variant`, `t_category`, clear embeddings | Both changed → translations reset, embeddings wiped, save to shop DB            |

@@ -2,17 +2,15 @@ import React from "react";
 import { Box, Stack, Pagination } from "@mui/material";
 import { useStore } from "../store/store";
 
-interface BottomProps {
-  isLoading?: boolean;
-}
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-const Bottom: React.FC<BottomProps> = ({ isLoading }) => {
+const Bottom: React.FC = () => {
   const currentPage = useStore((state) => state.currentPage);
   const totalPages = useStore((state) => state.totalPages);
   const aggregatedProducts = useStore((state) => state.aggregatedProducts);
   const setCurrentPage = useStore((state) => state.setCurrentPage);
   const searchProducts = useStore((state) => state.searchProducts);
+  const isLoading = useStore((state) => state.isLoading);
   const location = useLocation();
   const { i18n } = useTranslation();
   const lang = i18n.language.slice(0, 2); // always 2-letter code
@@ -20,7 +18,7 @@ const Bottom: React.FC<BottomProps> = ({ isLoading }) => {
   if (location.pathname !== "/products") return null;
 
   const handlePageChange = (
-    event: React.ChangeEvent<unknown>,
+    _event: React.ChangeEvent<unknown>,
     page: number,
   ) => {
     if (page !== currentPage && !isLoading) {

@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import type { AggregatedProduct } from "../types/AggregatedProduct";
 import { useStore } from "../store/store";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import { NavIcon } from "./NavIcons";
 
 interface Props {}
 
@@ -131,14 +132,16 @@ const ProductGrid: React.FC<Props> = () => {
                 </Typography>
               </CardContent>
 
-              <CardActions sx={{ mt: "auto" }}>
+              <CardActions sx={{ mt: 0, pt: 0 }}>
                 <Tooltip title={t("Offers_Tooltip")} enterDelay={1}>
                   <IconButton
                     onClick={() => onOpenProduct(product.id)}
                     size="small"
                     disabled={isLoading}
                   >
-                    <VisibilityOutlinedIcon />
+                    <NavIcon>
+                      <VisibilityOutlinedIcon />
+                    </NavIcon>
                   </IconButton>
                 </Tooltip>
               </CardActions>

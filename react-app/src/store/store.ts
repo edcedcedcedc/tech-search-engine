@@ -6,6 +6,114 @@ import type { AggregatedProduct } from "../types/AggregatedProduct";
 import { getProductOffers as apiGetProductOffers } from "../api/searchApi";
 import { searchProducts as apiSearchProducts } from "../api/searchApi";
 
+
+// ---- ADD THIS AT THE TOP, BEFORE useStore ----
+
+
+
+const SESSION_STORAGE_LIMIT = 5 * 1024 * 1024; // 5MB
+const CACHE_TIMESTAMP_KEY = "searchCacheTimestamp";
+const CACHE_MAX_AGE = 3 * 60 * 60 * 1000; // 3 hours in ms
+
+let multiQueryCache: Record<string, { pageCache: Record<number, AggregatedProduct[]>; totalResults: number }> = {};
+let initialCache = {};
+let initialQueryKey = '';
+
+if (typeof window !== "undefined") {
+  const cached = sessionStorage.getItem("searchCache");
+  const ts = sessionStorage.getItem(CACHE_TIMESTAMP_KEY);
+  const now = Date.now();
+  let expired = false;
+
+  if (cached && ts) {
+    if (now - parseInt(ts, 10) > CACHE_MAX_AGE) {
+      expired = true;
+      uiLog(`useStore | session cache expired after 3h`);
+    } else {
+      try {
+        multiQueryCache = JSON.parse(cached) || {};
+        initialQueryKey = Object.keys(multiQueryCache)[0] || '';
+        uiLog(`useStore | loaded multi-query cache | queries=${Object.keys(multiQueryCache).length} | initialQuery=${initialQueryKey}`);
+      } catch (err) {
+        uiLog(`useStore | failed to parse sessionStorage cache | error=${(err as any)?.message}`);
+        expired = true;
+      }
+    }
+  } else {
+    uiLog("useStore | no sessionStorage cache found");
+  }
+
+  if (expired) {
+    multiQueryCache = {};
+    initialCache = {};
+    initialQueryKey = '';
+    sessionStorage.removeItem("searchCache");
+    sessionStorage.removeItem(CACHE_TIMESTAMP_KEY);
+    uiLog("useStore | cleared expired session cache");
+  }
+}
+
+// Helper: estimate sessionStorage usage in bytes
+const getSessionStorageSize = () => {
+  let total = 0;
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
+    if (!key) continue;
+    const value = sessionStorage.getItem(key) || "";
+    total += key.length + value.length;
+  }
+  return total * 2; // approx bytes (UTF-16)
+};
+
+
+// Helper: trim oldest queries if we're near limit
+const trimSessionCacheIfNeeded = () => {
+  let size = getSessionStorageSize();
+  while (size > SESSION_STORAGE_LIMIT) {
+    const oldestQuery = Object.keys(multiQueryCache)[0];
+    if (!oldestQuery) break;
+    delete multiQueryCache[oldestQuery];
+    uiLog(`trimSessionCacheIfNeeded | removed oldest query=${oldestQuery} | newSize=${size}`);
+    try {
+      sessionStorage.setItem("searchCache", JSON.stringify(multiQueryCache));
+    } catch {}
+    size = getSessionStorageSize();
+  }
+};
+
+
+const OFFERS_CACHE_KEY = "offersCache";
+const OFFERS_CACHE_TTL = 30 * 60 * 1000; // 30 min
+
+let offersSessionCache: Record<
+  string,
+  { offers: any[]; fetchedAt: number }
+> = {};
+
+
+if (typeof window !== "undefined") {
+  try {
+    const raw = sessionStorage.getItem(OFFERS_CACHE_KEY);
+    if (raw) offersSessionCache = JSON.parse(raw);
+  } catch {
+    offersSessionCache = {};
+  }
+}
+
+
+const getCachedOffers = (productId: string) => {
+  const entry = offersSessionCache[productId];
+  if (!entry) return null;
+
+  if (Date.now() - entry.fetchedAt > OFFERS_CACHE_TTL) {
+    delete offersSessionCache[productId];
+    return null;
+  }
+
+  return entry.offers;
+};
+
+
 interface CookieState {
   consent: boolean | null; // null = not answered yet
   accept: () => void;
@@ -137,32 +245,101 @@ export const useStore = create<State>((set, get) => ({
         return { aggregatedProducts: [...state.aggregatedProducts, product] };
       }
     }),
-  clearProducts: () => set({ aggregatedProducts: [] }),
+  
+    clearProducts: () => set({ aggregatedProducts: [] }),
+  
   query: "",
   setQuery: (q) => set({ query: q }),
 
   openProduct: async (productId) => {
     const { productOffers } = get();
-    // cache: don’t refetch if already loaded
+    uiLog(`offers | open_start | productId=${productId}`);
+
+    // memory: don’t refetch if already loaded
     if (productOffers[productId]) {
+      uiLog(
+        `offers | memory_cache_hit | productId=${productId} | offersLoaded=${productOffers[productId].length}`
+      );
       set({ selectedProductId: productId });
       return;
     }
+
+    // Session cache (second layer)
+    const cached = getCachedOffers(productId);
+    if (cached) {
+      uiLog(`offers | load_from_session_cache | productId=${productId} | offers=${cached.length}`);
+      set((state) => ({
+        selectedProductId: productId,
+        productOffers: {
+          ...state.productOffers,
+          [productId]: cached,
+        },
+      }));
+      return;
+    }
+
+    uiLog(`offers | fetch_start | productId=${productId}`);
     set({ isOffersLoading: true, selectedProductId: productId });
-    
-    //natural delay for smooth trans in first prod open
-    //await new Promise((resolve) => setTimeout(resolve, 300));
 
-    const data = await apiGetProductOffers(productId, true);
+    try {
+      const data = await apiGetProductOffers(productId, true);
+      uiLog(
+        `offers | fetch_success | productId=${productId} | offers=${data.offers.length}`
+      );
 
-    set((state) => ({
-      productOffers: {
-        ...state.productOffers,
-        [productId]: data.offers,
-      },
-      isOffersLoading: false,
-    }));
+      // update memory cache
+      offersSessionCache[productId] = {
+        offers: data.offers,
+        fetchedAt: Date.now(),
+      };
+      uiLog(
+        `offers | memory_cache_write | productId=${productId} | cacheSize=${Object.keys(
+          offersSessionCache
+        ).length}`
+      );
+
+      // update sessionStorage
+      try {
+        sessionStorage.setItem(
+          OFFERS_CACHE_KEY,
+          JSON.stringify(offersSessionCache)
+        );
+        uiLog(
+          `offers | sessionStorage_write_success | productId=${productId} | bytes=${
+            JSON.stringify(offersSessionCache[productId]).length * 2
+          }`
+        );
+      } catch (err) {
+        uiLog(
+          `offers | sessionStorage_write_failed | productId=${productId} | error=${
+            (err as any)?.message
+          }`
+        );
+      }
+
+      // update store
+      set((state) => {
+        uiLog(
+          `offers | store_update | productId=${productId} | prevOffers=${state.productOffers[productId]?.length ?? 0} | newOffers=${data.offers.length}`
+        );
+        return {
+          productOffers: {
+            ...state.productOffers,
+            [productId]: data.offers,
+          },
+          isOffersLoading: false,
+        };
+      });
+    } catch (err) {
+      uiLog(
+        `offers | fetch_error | productId=${productId} | error=${(err as any)?.message}`
+      );
+      set({ isOffersLoading: false });
+    }
+
+    uiLog(`offers | open_end | productId=${productId}`);
   },
+  
   closeProduct: () => set({ selectedProductId: null }),
   
   isLoading: false,
@@ -171,10 +348,14 @@ export const useStore = create<State>((set, get) => ({
  
 searchProducts: async (query?: string, lang?: string, page: number = 1) => {
   const q = query ?? get().query;
+   // Start search
+  uiLog(`searchProducts | start | query=${q} | lang=${lang} | page=${page}`);
   if (!q) return;
 
-  // Start search
-  uiLog(`searchProducts | start | query=${q} | lang=${lang} | page=${page}`);
+ 
+
+
+ 
 
   const currentCacheKey = generateCacheKey(q, lang);
   const prevCacheKey = get().queryCacheKey;
@@ -189,15 +370,23 @@ searchProducts: async (query?: string, lang?: string, page: number = 1) => {
     });
   }
 
-  const { pageCache } = get();
+   // Get cached data for this specific query
+  let cachedQueryData = multiQueryCache[currentCacheKey];
+  let pageCache = cachedQueryData?.pageCache || {};
+  let totalCount = cachedQueryData?.totalResults || 0;
+
   const cachedPage = pageCache[page];
 
-  // Load from cache
   if (cachedPage) {
-    uiLog(`searchProducts | load_from_cache | page=${page} | cachedCount=${cachedPage.length}`);
-    set({
+  uiLog(`searchProducts | load_from_multi_query_cache | query=${currentCacheKey} | page=${page} | cachedCount=${cachedPage.length} | totalResults=${totalCount}`);
+
+  set({
       aggregatedProducts: cachedPage,
       currentPage: page,
+      totalResults: totalCount,
+      totalPages: Math.ceil(totalCount / (get().itemsPerPage || 20)),
+      pageCache,
+      queryCacheKey: currentCacheKey,
       isLoading: false,
     });
     return;
@@ -224,6 +413,16 @@ searchProducts: async (query?: string, lang?: string, page: number = 1) => {
       const oldestPage = Math.min(...Object.keys(newCache).map(Number));
       delete newCache[oldestPage];
       uiLog(`searchProducts | trim_lru_cache | removedPage=${oldestPage}`);
+    }
+    multiQueryCache[currentCacheKey] = { pageCache: newCache, totalResults: totalCount };
+    // Save to sessionStorage with auto-trim
+    try {
+      trimSessionCacheIfNeeded(); // trim if over 5MB
+      sessionStorage.setItem("searchCache", JSON.stringify(multiQueryCache));
+      sessionStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString()); // <-- set timestamp
+      uiLog(`searchProducts | saved_multi_query_cache with timestamp | totalQueries=${Object.keys(multiQueryCache).length}`);
+    } catch (err) {
+      uiLog(`searchProducts | failed_to_save_multi_query_cache | error=${(err as any)?.message}`);
     }
 
     set({
@@ -258,8 +457,11 @@ searchProducts: async (query?: string, lang?: string, page: number = 1) => {
   setTotalResults: (count) => set({ totalResults: count }),
   setNextCursor: (cursor) => set({ nextCursor: cursor }),
   
-  pageCache: {},
-  queryCacheKey: '',
+
+  //Cache 
+  pageCache: initialCache,
+  queryCacheKey: initialQueryKey,
+  
   clearCache: () => set({ 
   pageCache: {}, 
   queryCacheKey: '',

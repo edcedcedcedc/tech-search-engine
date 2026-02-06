@@ -9,12 +9,7 @@ interface IconProps {
   variant?: "logo" | "default";
 }
 
-const Icon: React.FC<IconProps> = ({
-  size = 25,
-  color = "text",
-  variant = "default",
-  sx,
-}) => {
+const Icon: React.FC<IconProps> = ({ size = 25, color = "text", sx }) => {
   const theme = useTheme();
 
   const resolvedColor = (() => {

@@ -2,7 +2,8 @@ import time
 import signal
 from products.models import Product
 from products.utils.log.db_merge_log import db_merge_log
-from products.crawler.config import ALLOWED_FIELDS_TO_WRITE_AND_TRACK
+from products.crawler.config import ALLOWED_FIELDS_TO_WRITE
+from django.utils import timezone
 
 BATCH_SIZE = 2000
 STOP_MERGE = False
@@ -93,13 +94,22 @@ class ProductDBMerger:
             # Existing product → compare allowed fields
             changed_fields = [
                 f
-                for f in ALLOWED_FIELDS_TO_WRITE_AND_TRACK
+                for f in ALLOWED_FIELDS_TO_WRITE
                 if getattr(src, f) != getattr(dest, f)
             ]
             if changed_fields:
+                # Copy only the allowed changed fields
                 for field in changed_fields:
                     setattr(dest, field, getattr(src, field))
+
+                # Manually update the timestamp
+                dest.updated_at = timezone.now()
+
+                # Include all changed fields + updated_at for bulk_update
                 update_fields_union |= set(changed_fields)
+                update_fields_union.add("updated_at")
+
+                # Queue this object for batch update
                 to_update.append(dest)
 
             processed_ids.append(src.id)

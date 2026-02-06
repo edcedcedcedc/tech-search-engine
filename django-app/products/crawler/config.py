@@ -3,7 +3,29 @@ from celery import chain, shared_task
 
 shop_crawler = Fetch()
 
-ALLOWED_FIELDS_TO_WRITE_AND_TRACK = ["price", "in_stock"]
+ALLOWED_FIELDS_TO_TRACK = [
+    "price",
+    "in_stock",
+    "name",
+    "variant",
+    "url",
+    "category",
+    "brand",
+]
+
+ALLOWED_FIELDS_TO_WRITE = [
+    "price",
+    "in_stock",
+    "name",
+    "variant",
+    "embedding",
+    "url",
+    "category",
+    "brand",
+    "t_name",
+    "t_variant",
+    "t_category",
+]
 
 REQUIRED_FIELDS_TO_VALIDATE = [
     "name",
@@ -11,6 +33,7 @@ REQUIRED_FIELDS_TO_VALIDATE = [
     "in_stock",
     "category",
     "brand",
+    "url",
     "external_id",
     "shop",
 ]

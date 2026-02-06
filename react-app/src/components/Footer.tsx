@@ -72,7 +72,7 @@ const Footer: React.FC = () => {
               </Box>
             )}
 
-            {index < navLinks.length - 1 && (
+            {index < navLinks.length - 2 && (
               <Box
                 component="span"
                 sx={{ mx: 0, color: "text.primary", opacity: 0.8 }}

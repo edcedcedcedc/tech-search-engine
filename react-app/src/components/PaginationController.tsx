@@ -28,7 +28,7 @@ const PaginationController: React.FC<PaginationControllerProps> = ({
   );
   const endItem = Math.min(currentPage * itemsPerPage, totalResults);
 
-  const handleChange = (event: React.ChangeEvent<unknown>, page: number) => {
+  const handleChange = (_event: React.ChangeEvent<unknown>, page: number) => {
     if (page !== currentPage && !disabled) {
       onPageChange(page);
     }

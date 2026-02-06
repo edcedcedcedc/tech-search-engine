@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography, Stack, Fade } from "@mui/material";
+import { Box, Typography, Stack } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
 const LandingPage: React.FC = () => {

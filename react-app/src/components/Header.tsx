@@ -40,6 +40,7 @@ import { LANGAUGES, type LanguagesCodes } from "../i18n/languages";
 import { useStore } from "../store/store";
 import GrapeIcon from "../components/Icon";
 import Footer from "./Footer";
+import { NavIcon } from "./NavIcons";
 
 const ICON_SIZE = 22;
 const iconSx = { fontSize: ICON_SIZE };
@@ -62,17 +63,29 @@ const Header: React.FC = () => {
     {
       path: "/products",
       label: t("Manage_Products"),
-      icon: <ManageSearchOutlinedIcon sx={iconSx} />,
+      icon: (
+        <NavIcon>
+          <ManageSearchOutlinedIcon />
+        </NavIcon>
+      ),
     },
     {
       path: "/about",
       label: t("About"),
-      icon: <InfoOutlinedIcon sx={iconSx} />,
+      icon: (
+        <NavIcon>
+          <InfoOutlinedIcon />
+        </NavIcon>
+      ),
     },
     {
       path: "/contact",
       label: t("Contact"),
-      icon: <ContactMailIcon sx={iconSx} />,
+      icon: (
+        <NavIcon>
+          <ContactMailIcon />
+        </NavIcon>
+      ),
     },
   ];
 
@@ -120,7 +133,9 @@ const Header: React.FC = () => {
                 textDecoration: "none",
               }}
             >
-              <GrapeIcon size={27} color="primary" variant="logo" />
+              <NavIcon>
+                <GrapeIcon color="primary" variant="logo" />
+              </NavIcon>
             </Box>
           </Tooltip>
 
@@ -160,7 +175,9 @@ const Header: React.FC = () => {
                 sx={iconButtonSx}
                 onClick={() => setDrawerOpen(true)}
               >
-                <MenuOutlinedIcon sx={iconSx} />
+                <NavIcon>
+                  <MenuOutlinedIcon />
+                </NavIcon>
               </IconButton>
             </Tooltip>
           </Box>
@@ -252,7 +269,9 @@ const Header: React.FC = () => {
                             color: "text.secondary",
                           }}
                         >
-                          <SettingsOutlinedIcon sx={iconSx} />
+                          <NavIcon>
+                            <SettingsOutlinedIcon />
+                          </NavIcon>
                         </ListItemIcon>
                         <ListItemText
                           primary={t("Settings")}
