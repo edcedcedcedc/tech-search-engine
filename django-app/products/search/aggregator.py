@@ -63,7 +63,7 @@ def build_aggregated_product(cluster_id, offers, query=None, query_embedding=Non
                 f"[OFFER_EMBED_MISSING] Offer '{o.name}' has no embedding field"
             )
 
-        # Price history
+        MAX_HISTORY_TREND = 10
         try:
             price_history_list = [
                 {
@@ -72,9 +72,16 @@ def build_aggregated_product(cluster_id, offers, query=None, query_embedding=Non
                     "recorded_at": ph.recorded_at.isoformat(),
                 }
                 for ph in getattr(o, "price_history_ordered", [])
-            ]
+            ][:MAX_HISTORY_TREND]
+
+            free_price_trend = price_history_list[:2]  # Take first 2 items
+            # Everything after position 1 is hidden
+            hidden_price_trend_count = max(len(price_history_list) - 2, 0)
+
         except Exception:
             price_history_list = []
+            free_price_trend = []
+            hidden_price_trend_count = 0
 
         serialized_offers.append(
             {
@@ -90,10 +97,12 @@ def build_aggregated_product(cluster_id, offers, query=None, query_embedding=Non
                 "url": o.url or "",
                 "external_id": o.external_id or "",
                 "in_stock": o.in_stock,
-                # Fallback to cluster embedding if offer embedding missing
                 "embedding": offer_embedding,
                 "price_history": price_history_list,
-                # Attach query info
+                "price_trend_preview": {
+                    "free_price_trend": free_price_trend,
+                    "hidden_price_trend_count": hidden_price_trend_count,
+                },
                 "query": query,
                 "query_embedding": (
                     json.dumps(query_embedding.tolist())
@@ -116,7 +125,6 @@ def build_aggregated_product(cluster_id, offers, query=None, query_embedding=Non
         "shops": unique_shops,
         "embedding": cluster_embedding,
         "image": rep.image or "",
-        # Attach query info at cluster level too
         "query": query,
         "query_embedding": (
             json.dumps(query_embedding.tolist())

@@ -13,12 +13,20 @@
     <!-- Inject theme color before paint -->
    <script>
     (function() {
-      const savedTheme = localStorage.getItem('theme');
       let theme = 'light';
-      if (savedTheme === 'dark' || savedTheme === 'light') {
-        theme = savedTheme;
-      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        theme = 'dark';
+
+      try {
+        const saved = localStorage.getItem('theme');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed?.state?.mode === 'dark' || parsed?.state?.mode === 'light') {
+            theme = parsed.state.mode;
+          }
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          theme = 'dark';
+        }
+      } catch (e) {
+        console.warn('Failed to parse theme from localStorage', e);
       }
 
       const colors = { light: '#fafafa', dark: '#0d1117' };
@@ -36,7 +44,7 @@
       // Set data-theme on html only
       document.documentElement.setAttribute('data-theme', theme);
     })();
-  </script>
+    </script>
 
     <style>
       html, body {

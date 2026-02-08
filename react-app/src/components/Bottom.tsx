@@ -8,7 +8,6 @@ const Bottom: React.FC = () => {
   const currentPage = useStore((state) => state.currentPage);
   const totalPages = useStore((state) => state.totalPages);
   const aggregatedProducts = useStore((state) => state.aggregatedProducts);
-  const setCurrentPage = useStore((state) => state.setCurrentPage);
   const searchProducts = useStore((state) => state.searchProducts);
   const isLoading = useStore((state) => state.isLoading);
   const location = useLocation();
@@ -22,7 +21,6 @@ const Bottom: React.FC = () => {
     page: number,
   ) => {
     if (page !== currentPage && !isLoading) {
-      setCurrentPage(page);
       searchProducts(undefined, lang, page);
     }
   };

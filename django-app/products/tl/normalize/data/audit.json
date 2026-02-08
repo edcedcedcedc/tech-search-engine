@@ -417,6 +417,17 @@
       "examples": [
         13366
       ]
+    },
+    "smartphone": {
+      "normalized": {
+        "ro": "smartphone, telefon mobil",
+        "en": "Smartphones",
+        "ru": "\u0441\u043c\u0430\u0440\u0442\u0444\u043e\u043d\u044b"
+      },
+      "first_seen": "2026-02-06T20:24:56.252973+00:00",
+      "examples": [
+        22679
+      ]
     }
   },
   "enter": {

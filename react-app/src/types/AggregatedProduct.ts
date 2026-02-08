@@ -1,8 +1,6 @@
-export interface PriceHistoryPreview {
-  price: number;
-  in_stock: boolean;
-  recorded_at: string; // ISO date string from DRF
-}
+import type { PriceHistoryPreview, PriceTrendPreview } from "./PriceTrend";
+
+
 
 export interface Offer {
   id: string; // can be string if clustered
@@ -19,6 +17,7 @@ export interface Offer {
   in_stock: boolean;
   offer_score?: number;
   price_history?: PriceHistoryPreview[];
+  price_trend_preview: PriceTrendPreview
   embedding?: string; // write_only, optional
 }
 

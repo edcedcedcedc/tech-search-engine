@@ -231,6 +231,8 @@ Theme: "Temă",
 Dark_mode: "Mod întunecat",
 Light_mode: "Mod luminos",
 Language: "Limba",
+Disable_notifications: "Dezactivează notificările",
+
 
 No_Products_Found: "Nu s-au găsit produse",
 
@@ -239,12 +241,34 @@ No_Products_Found: "Nu s-au găsit produse",
 Search_Tooltip: "Caută",
 Menu_Tooltip: "Meniu",
 Offers_Tooltip: "Oferte",
-
+Comparation_Tooltip: "Compară tendințele prețurilor și specificațiile ofertelor",
 
 Search_For_Products_Empty: "Caută produse",
 Try_Typing_Product_Or_Brand_Empty: "Încearcă să tastezi un produs sau un brand",
 No_Products_Found_Empty: "Nu au fost găsite produse",
 No_Results_For_Empty: "Niciun rezultat pentru",
+
+
+//Trends   
+Price_Trend: "Tendința Prețului",
+In_Stock_Trend: "În stoc",
+Time_Trend: "Timp",
+Tooltip_Trend: "Preț și stoc istoric. Istoricul complet necesită abonament sau o achiziție unică",
+Tooltip_Main_Icon_Trend: "Compară tendințele de preț și specificațiile dintre oferte",
+
+
+"comparison": {
+    "title": "Compară Oferte",
+    "close": "Închide",
+    "open_tooltip": "Compară ofertele selectate",
+    "select_more_tooltip": "Selectează încă {{count}} ofertă(e) pentru a compara",
+    "offer_selected": "{{count}} ofertă selectată",
+    "offer_selected_plural": "{{count}} oferte selectate"
+  }
+
+
 };
+
+
 
 export default roMD;

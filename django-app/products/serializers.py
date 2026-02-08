@@ -8,6 +8,11 @@ class PriceHistoryPreviewSerializer(serializers.Serializer):
     recorded_at = serializers.DateTimeField()
 
 
+class PriceTrendSerializer(serializers.Serializer):
+    free_price_trend = PriceHistoryPreviewSerializer(many=True)
+    hidden_price_trend_count = serializers.IntegerField()
+
+
 class OfferSerializer(serializers.Serializer):
     id = serializers.CharField()  # ID may be string if clustered
     external_id = serializers.CharField(allow_blank=True, required=False)
@@ -25,6 +30,7 @@ class OfferSerializer(serializers.Serializer):
     price_history = PriceHistoryPreviewSerializer(
         many=True, required=False, default=list
     )
+    price_trend_preview = PriceTrendSerializer(required=False)
     embedding = serializers.CharField(allow_blank=True, required=False)
     query = serializers.CharField(allow_blank=True, required=False)
     query_embedding = serializers.CharField(allow_blank=True, required=False)

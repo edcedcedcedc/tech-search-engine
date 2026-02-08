@@ -242,6 +242,17 @@
         10759
       ]
     },
+    "telefoane mobile cu buton": {
+      "normalized": {
+        "ro": "smartphone, telefon mobil",
+        "en": "Smartphones",
+        "ru": "\u0441\u043c\u0430\u0440\u0442\u0444\u043e\u043d\u044b"
+      },
+      "first_seen": "2026-01-24T14:36:50.271734+00:00",
+      "examples": [
+        10979
+      ]
+    },
     "tablete grafice": {
       "normalized": {
         "ro": "tableta grafica",
@@ -405,6 +416,17 @@
       "first_seen": "2026-02-02T00:29:27.532902+00:00",
       "examples": [
         13366
+      ]
+    },
+    "smartphone": {
+      "normalized": {
+        "ro": "smartphone, telefon mobil",
+        "en": "Smartphones",
+        "ru": "\u0441\u043c\u0430\u0440\u0442\u0444\u043e\u043d\u044b"
+      },
+      "first_seen": "2026-02-06T20:24:56.252973+00:00",
+      "examples": [
+        22679
       ]
     }
   },

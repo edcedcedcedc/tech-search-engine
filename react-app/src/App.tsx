@@ -10,11 +10,13 @@ import { Meta } from "./components/Meta";
 import { SearchAutocomplete } from "./components/SearchAutocomplete";
 import { useTranslation } from "react-i18next";
 import Bottom from "./components/Bottom";
-
+import { useNotificationStore } from "./store/store";
+import { Notification } from "./components/Notification";
+import { TestNotification } from "./components/NotificationTest";
 function App() {
   const theme = useTheme();
   const { t } = useTranslation();
-
+  const { notifications, removeNotification } = useNotificationStore();
   return (
     <>
       <Meta />
@@ -121,6 +123,7 @@ function App() {
                   : "rgba(0,0,0,0.3) transparent",
             }}
           >
+            {/* <TestNotification /> */}
             <Container
               disableGutters
               maxWidth={false} // <-- ignore default breakpoints
@@ -135,7 +138,32 @@ function App() {
             </Container>
           </Box>
 
-          {/* FOOTER + COOKIE */}
+          {/* Notification stack */}
+          <Box
+            sx={{
+              position: "fixed",
+              bottom: 16,
+              left: 16,
+              display: "flex",
+              flexDirection: "column",
+              gap: 1.5, // ~12px gap between notifications
+              pointerEvents: "none", // container ignores clicks
+              zIndex: 1500, // visually above footer
+            }}
+          >
+            {notifications.map((n) => (
+              <Box key={n.id} sx={{ pointerEvents: "auto" }}>
+                <Notification
+                  message={n.message}
+                  type={n.type}
+                  duration={n.duration}
+                  onClose={() => removeNotification(n.id)}
+                />
+              </Box>
+            ))}
+          </Box>
+
+          {/* Footer */}
           <Box
             sx={{
               position: "fixed",

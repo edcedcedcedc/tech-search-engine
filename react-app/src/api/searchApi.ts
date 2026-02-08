@@ -5,6 +5,7 @@ import { uiLog } from "../webhook/client/sender"; // <-- import logger
 import type { AggregatedProduct } from "../types/AggregatedProduct";
 import type { SearchResponse } from "../types/SearchResponse";
 import type { AutocompleteResponse } from "../types/AutocompleteResponse";
+import { useNotificationStore } from "../store/store";
 
 // ---------------- Axios instance ----------------
 const api = axios.create({
@@ -12,8 +13,7 @@ const api = axios.create({
   timeout: 30000,
   headers: {
     Accept: "application/json",
-  },
-  withCredentials: true,
+  }
 });
 
 // ---------------- API functions ----------------
@@ -41,7 +41,7 @@ export const searchProducts = async (
   uiLog(`api | searchProducts | request | query=${query} | lang=${lang} | limit=${limit} | cursor=${params.cursor}`);
 
   try {
-    const { data } = await api.get<SearchResponse>("/search/", { params });
+    const { data } = await api.get<SearchResponse>("/search/", { params, withCredentials: true });
     uiLog(`api | searchProducts | response | query=${query} | results=${data.products.length} | total_count=${data.total_count}`);
     return data;
   } catch (err) {
@@ -66,7 +66,11 @@ export const getProductOffers = async (
   uiLog(`api | getProductOffers | request | productId=${productId} | full=${full} | limit=${limit} | cursor=${cursor}`);
 
   try {
-    const { data } = await api.get(`/product/${productId}/offers/`, { params });
+    const { data } = await api.get(`/product/${productId}/offers/`, {
+      params,
+      withCredentials: true, // <-- ensures session cookies are sent
+    });
+
     uiLog(`api | getProductOffers | response | productId=${productId} | offers=${data.offers.length} | has_more=${data.has_more}`);
     return data;
   } catch (err) {
@@ -74,6 +78,7 @@ export const getProductOffers = async (
     throw err;
   }
 };
+
 
 export default api;
 
@@ -98,3 +103,41 @@ export const autocomplete = async (
     throw err;
   }
 };
+
+
+
+// Axios response interceptor for errors
+api.interceptors.response.use(
+  (response) => response, // pass through successful responses
+  (error) => {
+    const status = error?.response?.status;
+
+    // map status to notification type and message
+    let type: "error" = "error";
+    let message = "An unexpected error occurred.";
+
+    switch (status) {
+      case 404:
+        message = "Resource not found (404).";
+        break;
+      case 403:
+        message = "You are not authorized to access this resource (403).";
+        break;
+      case 429:
+        message = "Too many requests (429). Please try again later.";
+        break;
+      case 500:
+        message = "Internal server error (500).";
+        break;
+      default:
+        if (error?.message) message = error.message;
+        break;
+    }
+
+    // Add to notification store
+    const addNotification = useNotificationStore.getState().addNotification;
+    addNotification({ message, type, duration: 3000 });
+
+    return Promise.reject(error); // keep rejecting so the original caller can handle it
+  }
+);

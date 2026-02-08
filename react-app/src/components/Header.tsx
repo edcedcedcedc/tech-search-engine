@@ -23,10 +23,14 @@ import {
   Divider,
   useMediaQuery,
   Tooltip,
+  Typography,
 } from "@mui/material";
+
+import { Switch, FormControlLabel } from "@mui/material";
+import { useNotificationStore } from "../store/store";
 import {
   ManageSearchOutlined as ManageSearchOutlinedIcon,
-  InfoOutlined as InfoOutlinedIcon,
+  HelpOutlined as HelpOutlinedIcon,
   ContactMail as ContactMailIcon,
   MenuOutlined as MenuOutlinedIcon,
   TranslateOutlined as TranslateOutlinedIcon,
@@ -37,24 +41,28 @@ import {
 import { Link as RouterLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { LANGAUGES, type LanguagesCodes } from "../i18n/languages";
-import { useStore } from "../store/store";
+import { useStore, useThemeStore } from "../store/store";
 import GrapeIcon from "../components/Icon";
 import Footer from "./Footer";
 import { NavIcon } from "./NavIcons";
+import { HeaderComparisonIcon } from "./ComparationWidget";
+import { ComparisonModal } from "../components/ComparationModal";
 
 const ICON_SIZE = 22;
 const iconSx = { fontSize: ICON_SIZE };
 
 const Header: React.FC = () => {
   const theme = useTheme();
-  const mode = useStore((s) => s.mode);
-  const toggleMode = useStore((s) => s.toggleMode);
+  const mode = useThemeStore((state) => state.mode);
+  const toggleMode = useThemeStore((s) => s.toggleMode);
   const { t, i18n } = useTranslation();
 
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [langMenuAnchor, setLangMenuAnchor] =
     React.useState<null | HTMLElement>(null);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+
+  // Add comparison modal hook
 
   const aggregatedProducts = useStore((s) => s.aggregatedProducts);
   const isProductsDisabled = aggregatedProducts.length === 0;
@@ -74,7 +82,7 @@ const Header: React.FC = () => {
       label: t("About"),
       icon: (
         <NavIcon>
-          <InfoOutlinedIcon />
+          <HelpOutlinedIcon />
         </NavIcon>
       ),
     },
@@ -108,7 +116,10 @@ const Header: React.FC = () => {
       <AppBar
         position="static"
         elevation={0}
-        sx={{ width: "100%", bgcolor: theme.palette.background.paper }}
+        sx={{
+          width: "100%",
+          bgcolor: theme.palette.background.paper,
+        }}
       >
         <Toolbar
           sx={{
@@ -120,24 +131,21 @@ const Header: React.FC = () => {
             px: { xs: 2, sm: 3, md: 4 },
           }}
         >
-          {/* Logo */}
-          <Tooltip title="Strugure" enterDelay={500} leaveDelay={0}>
-            <Box
-              component={RouterLink}
-              to="/"
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                cursor: "pointer",
-                color: "inherit",
-                textDecoration: "none",
-              }}
-            >
-              <NavIcon>
-                <GrapeIcon color="primary" variant="logo" />
-              </NavIcon>
-            </Box>
-          </Tooltip>
+          {/* Logo + Menu */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {/* Menu */}
+            <Tooltip title={t("Menu_Tooltip")} enterDelay={500} leaveDelay={0}>
+              <IconButton
+                edge="start"
+                sx={{ p: 0.5, display: "flex", alignItems: "center" }}
+                onClick={() => setDrawerOpen(true)}
+              >
+                <NavIcon>
+                  <MenuOutlinedIcon fontSize="medium" />
+                </NavIcon>
+              </IconButton>
+            </Tooltip>
+          </Box>
 
           {/* Right controls */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -169,22 +177,14 @@ const Header: React.FC = () => {
               </>
             )}
 
-            <Tooltip title={t("Menu_Tooltip")} enterDelay={500} leaveDelay={0}>
-              <IconButton
-                edge="end"
-                sx={iconButtonSx}
-                onClick={() => setDrawerOpen(true)}
-              >
-                <NavIcon>
-                  <MenuOutlinedIcon />
-                </NavIcon>
-              </IconButton>
-            </Tooltip>
+            <NavIcon>
+              <HeaderComparisonIcon />
+            </NavIcon>
           </Box>
 
           {/* Drawer */}
           <Drawer
-            anchor="right"
+            anchor="left"
             open={drawerOpen}
             onClose={() => setDrawerOpen(false)}
             PaperProps={{
@@ -205,6 +205,48 @@ const Header: React.FC = () => {
                 flexDirection: "column",
               }}
             >
+              {/* Logo on top of drawer */}
+              <Box
+                component={RouterLink}
+                to="/"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-start",
+                  px: 2,
+                  py: 2,
+                  borderBottom: 1,
+                  borderColor: "divider",
+                  gap: 1,
+                  textDecoration: "none",
+                  color: "inherit",
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    minWidth: 40,
+                    justifyContent: "center",
+                  }}
+                >
+                  <GrapeIcon color="primary" variant="logo" />
+                </Box>
+
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: "1rem",
+                    lineHeight: 1,
+                    ml: -1,
+                  }}
+                >
+                  Strugure
+                </Typography>
+              </Box>
+
+              {/* Navigation links */}
               <List disablePadding>
                 {navLinks.map((link) => {
                   const disabled =
@@ -294,6 +336,9 @@ const Header: React.FC = () => {
         </Toolbar>
       </AppBar>
 
+      {/* Comparison Modal */}
+      <ComparisonModal />
+
       {/* Settings Modal */}
       <Dialog
         open={settingsOpen}
@@ -307,6 +352,7 @@ const Header: React.FC = () => {
 
         <DialogContent>
           <List disablePadding>
+            {/* Theme toggle */}
             <ListItem sx={{ justifyContent: "space-between" }}>
               <ListItemText
                 primary={t("Theme")}
@@ -323,6 +369,7 @@ const Header: React.FC = () => {
 
             <Divider />
 
+            {/* Language selector */}
             <ListItem sx={{ justifyContent: "space-between" }}>
               <ListItemText primary={t("Language")} />
               <FormControl size="small">
@@ -339,6 +386,31 @@ const Header: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
+            </ListItem>
+
+            <Divider />
+
+            {/* Disable Notifications toggle */}
+            <ListItem
+              sx={{ justifyContent: "space-between", alignItems: "center" }}
+            >
+              <ListItemText primary={t("Disable_notifications")} />
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                {(() => {
+                  const disabled = useNotificationStore((s) => s.disabled);
+                  const setDisabled = useNotificationStore(
+                    (s) => s.setDisabled,
+                  );
+
+                  return (
+                    <Switch
+                      checked={disabled}
+                      onChange={(e) => setDisabled(e.target.checked)}
+                      color="primary"
+                    />
+                  );
+                })()}
+              </Box>
             </ListItem>
           </List>
         </DialogContent>

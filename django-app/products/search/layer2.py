@@ -69,6 +69,7 @@ class ProductOffersAPIView(SearchAPIView):
                     "in_stock": o.get("in_stock", True),
                     "offer_score": o.get("offer_score", 0.0),
                     "price_history": o.get("price_history", []),
+                    "price_trend_preview": o.get("price_trend_preview", None),
                 }
                 for o in offers_slice
             ]

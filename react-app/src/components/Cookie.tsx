@@ -1,10 +1,10 @@
 import { Box, Button, Typography, useMediaQuery } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { useStore } from "../store/store";
+import { useCookieStore } from "../store/store";
 
 export function Cookie() {
   const { t } = useTranslation();
-  const cookie = useStore((state) => state.cookie);
+  const cookie = useCookieStore((state) => state);
 
   const isVerySmall = useMediaQuery("(max-width:320px)");
   const isSmall = useMediaQuery("(min-width:321px) and (max-width:375px)");

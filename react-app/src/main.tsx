@@ -4,12 +4,12 @@ import { createRoot } from "react-dom/client";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 
 import getTheme from "./theme/theme";
-import { useStore } from "./store/store";
+import { useThemeStore } from "./store/store";
 import App from "./App";
 import "./i18n";
 
 const Root = () => {
-  const mode = useStore((state) => state.mode);
+  const mode = useThemeStore((state) => state.mode);
   const theme = useMemo(() => getTheme(mode), [mode]);
 
   return (

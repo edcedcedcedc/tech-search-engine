@@ -253,11 +253,12 @@ class DatabaseManager:
         stock_or_price_or_url = any(
             f in change_info["changed_fields"] for f in ["in_stock", "price", "url"]
         )
-        name_and_variant_and_category = any(
-            f in change_info["changed_fields"] for f in ["name", "variant", "category"]
+        name_or_variant_or_category_brand = any(
+            f in change_info["changed_fields"]
+            for f in ["name", "variant", "category", "brand"]
         )
 
-        if stock_or_price_or_url and not name_and_variant_and_category:
+        if stock_or_price_or_url and not name_or_variant_or_category_brand:
             active.save(using=UPDATE_DB)
         else:
             active.embedding = None

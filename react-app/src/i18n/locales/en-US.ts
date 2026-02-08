@@ -194,18 +194,27 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Dark_mode: "Dark mode",
   Light_mode: "Light mode",
   Language: "Language",
+  Disable_notifications: "Disable notifications",
  
 
   //Tooltip
   Search_Tooltip: "Search",
   Menu_Tooltip: "Menu",
   Offers_Tooltip: "Offers",
+  Comparation_Tooltip: "Compare price trends and offer specifications",
 
   //Empty Search State
   Search_For_Products_Empty: "Search for products",
   Try_Typing_Product_Or_Brand_Empty: "Try typing a product name or brand",
   No_Products_Found_Empty: "No products found",
   No_Results_For_Empty: "No results for",
+
+
+  //Trends
+  Price_Trend: "Price Trend",
+  In_Stock_Trend: "In Stock",
+  Time_Trend: "Time",
+  Tooltip_Trend: "Historical price and stock changes. Full history requires a subscription or one-time purchase"
 
 };
 
