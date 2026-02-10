@@ -12,24 +12,13 @@ const Contact = lazy(() => import("../views/Contact"));
 const About = lazy(() => import("../views/About"));
 const Source = lazy(() => import("../views/Source"));
 const TermsOfUse = lazy(() => import("../views/TermsOfUse"));
+const Services = lazy(() => import("../views/Services"));
 
 const AppRoutes: React.FC<any> = () => {
   const isLoading = useStore((s) => s.isLoading);
 
   return (
     <Box sx={{ position: "relative" }}>
-      <Fade in={isLoading} timeout={300} unmountOnExit={false}>
-        <LinearProgress
-          variant="query"
-          sx={{
-            position: "static", // fixed to viewport
-            top: 0,
-            left: 0,
-            width: "100%",
-            zIndex: (theme) => theme.zIndex.appBar + 1, // above AppBar but below Drawer
-          }}
-        />
-      </Fade>
       <Suspense
         fallback={
           <Box
@@ -55,6 +44,7 @@ const AppRoutes: React.FC<any> = () => {
           <Route path="/terms-of-use" element={<TermsOfUse />} />
           <Route path="/products" element={<Products />} />
           <Route path="*" element={<Navigate to="/landing" replace />} />
+          <Route path="/services" element={<Services />} />
         </Routes>
       </Suspense>
     </Box>

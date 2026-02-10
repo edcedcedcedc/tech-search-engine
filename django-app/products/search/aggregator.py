@@ -74,10 +74,10 @@ def build_aggregated_product(cluster_id, offers, query=None, query_embedding=Non
                 for ph in getattr(o, "price_history_ordered", [])
             ][:MAX_HISTORY_TREND]
 
-            free_price_trend = price_history_list[:2]  # Take first 2 items
-            # Everything after position 1 is hidden
-            hidden_price_trend_count = max(len(price_history_list) - 2, 0)
-
+            most_recent = price_history_list[:1]
+            most_oldest = price_history_list[len(price_history_list) - 1 :]
+            free_price_trend = most_recent + most_oldest
+            hidden_price_trend_count = len(price_history_list)
         except Exception:
             price_history_list = []
             free_price_trend = []

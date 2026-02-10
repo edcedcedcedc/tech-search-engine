@@ -1,4 +1,10 @@
-import { Box, Container, Typography, useTheme } from "@mui/material";
+import {
+  Box,
+  Container,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import { BrowserRouter } from "react-router-dom";
 
 import Header from "./components/Header";
@@ -12,11 +18,16 @@ import { useTranslation } from "react-i18next";
 import Bottom from "./components/Bottom";
 import { useNotificationStore } from "./store/store";
 import { Notification } from "./components/Notification";
-import { TestNotification } from "./components/NotificationTest";
+import SessionExpiredDialog from "./components/SessionExpiredDialog";
+import OfflineDialog from "./components/OfflineDialog";
+import { NetworkListener } from "./components/NetworkListener";
+import i18n from "./i18n";
 function App() {
   const theme = useTheme();
   const { t } = useTranslation();
   const { notifications, removeNotification } = useNotificationStore();
+  const isRO = i18n.language === "ro";
+  const isSmallScreen = useMediaQuery("(max-width:768px)");
   return (
     <>
       <Meta />
@@ -36,7 +47,8 @@ function App() {
             <Header />
             <Box
               sx={{
-                py: 4,
+                py: 4, // keep top padding
+                pb: isSmallScreen ? 0.5 : 4, // 0 padding bottom for xs (<768px), default 4 for sm+
                 textAlign: "center",
                 backgroundColor: theme.palette.background.default,
                 px: { xs: 2, sm: 3, md: 4 },
@@ -50,19 +62,26 @@ function App() {
                   fontWeight: 600,
                   lineHeight: 1.3,
                   textAlign: "center",
-
-                  // Proportional scaling across breakpoints
-                  fontSize: "0.9rem", // 320px
-                  [theme.breakpoints.up("sm")]: { fontSize: "1.1rem" }, // 375px
-                  [theme.breakpoints.up("md")]: { fontSize: "1.2rem" }, // 425px
-                  [theme.breakpoints.up("lg")]: { fontSize: "1.4rem" }, // 768px
-                  [theme.breakpoints.up("xl")]: { fontSize: "1.8rem" }, // 1024px
-                  [theme.breakpoints.up("xxl")]: { fontSize: "2rem" }, // 1440px
+                  fontSize: isRO ? "1.0rem" : "1.1rem", // default for smallest screen
+                  [theme.breakpoints.up("sm")]: {
+                    fontSize: isRO ? "1.1rem" : "1.3rem",
+                  },
+                  [theme.breakpoints.up("md")]: {
+                    fontSize: isRO ? "1.25rem" : "1.4rem",
+                  },
+                  [theme.breakpoints.up("lg")]: {
+                    fontSize: isRO ? "1.4rem" : "1.6rem",
+                  },
+                  [theme.breakpoints.up("xl")]: {
+                    fontSize: isRO ? "1.6rem" : "1.8rem",
+                  },
+                  [theme.breakpoints.up("xxl")]: {
+                    fontSize: isRO ? "1.8rem" : "2rem",
+                  },
                 })}
               >
                 {t("Explore_tech_in_Moldova")}
               </Typography>
-
               <Typography
                 variant="h6"
                 color="text.secondary"
@@ -138,17 +157,34 @@ function App() {
             </Container>
           </Box>
 
-          {/* Notification stack */}
           <Box
             sx={{
               position: "fixed",
               bottom: 16,
-              left: 16,
               display: "flex",
               flexDirection: "column",
-              gap: 1.5, // ~12px gap between notifications
-              pointerEvents: "none", // container ignores clicks
-              zIndex: 1500, // visually above footer
+              gap: 1.5,
+              pointerEvents: "none",
+              zIndex: 1500,
+
+              // Desktop default left-aligned
+              left: 16,
+
+              // Center notifications on screens ≤425px (xs, sm, md)
+              right: 16,
+              mx: { xs: "auto", sm: "auto", md: "auto", lg: "0" },
+              width: {
+                xs: "calc(100% - 32px)",
+                sm: "calc(100% - 32px)",
+                md: "calc(100% - 32px)",
+                lg: "auto",
+              },
+              alignItems: {
+                xs: "center",
+                sm: "center",
+                md: "center",
+                lg: "flex-start",
+              },
             }}
           >
             {notifications.map((n) => (
@@ -162,7 +198,6 @@ function App() {
               </Box>
             ))}
           </Box>
-
           {/* Footer */}
           <Box
             sx={{
@@ -173,8 +208,11 @@ function App() {
               zIndex: 1000,
             }}
           >
+            <OfflineDialog />
+            <SessionExpiredDialog />
             <Cookie />
             <Bottom />
+            <NetworkListener />
           </Box>
         </Box>
       </BrowserRouter>

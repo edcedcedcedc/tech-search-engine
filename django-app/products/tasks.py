@@ -446,7 +446,7 @@ def run_price_history_default():
     from products.analytics.price_history import PriceHistoryBuilder
 
     history = PriceHistoryBuilder(
-        db=PROD_DB, include_archived=True, include_broken=True
+        db=PROD_DB, include_archived=True, include_broken=True, force_daily=True
     )
     history.run()
     call_command("price_history_test")

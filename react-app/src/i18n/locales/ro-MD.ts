@@ -11,7 +11,7 @@ const roMD = {
   "Strugure, explorează produsele tech",
 
   Discover_the_best_offers_for_your_favorite_products:
-  "Descoperă cele mai bune oferte, într-un singur loc",
+  "Descoperă și compară ofertele, într-un singur loc",
 
   Home_subject: "Calculatoare",
   
@@ -215,15 +215,17 @@ Happy_searching:
   Offers: "Oferte",
   Shop: "Retailer",
   Price: "Preț",
-  InStock: "În stoc",
+  In: "În",
+  Stock: "stoc",
   Name: "Nume",
   Variant: "Variantă",
   Yes: "Da",
   No: "Nu",
   rows_per_view: "Rânduri per vizare",
   of: "din",
-
-
+  Actions: "Link",
+  Selection: "Comparare",
+  No_Offers_Available: "Nu s-au găsit oferte, vă rugăm să încercați din nou mai târziu",
   //Drawer+Modal
 Close: "Închide",
 Settings: "Setări",
@@ -232,6 +234,7 @@ Dark_mode: "Mod întunecat",
 Light_mode: "Mod luminos",
 Language: "Limba",
 Disable_notifications: "Dezactivează notificările",
+View_columns_tooltip: "Vizualizează coloanele",
 
 
 No_Products_Found: "Nu s-au găsit produse",
@@ -251,11 +254,17 @@ No_Results_For_Empty: "Niciun rezultat pentru",
 
 //Trends   
 Price_Trend: "Tendința Prețului",
+Price_Trend1: "Tendința",
+Price_Trend2: "Prețului",
 In_Stock_Trend: "În stoc",
-Time_Trend: "Timp",
-Tooltip_Trend: "Preț și stoc istoric. Istoricul complet necesită abonament sau o achiziție unică",
+Time_Trend: "Actualizat pe",
 Tooltip_Main_Icon_Trend: "Compară tendințele de preț și specificațiile dintre oferte",
+Price_Trend_Summary: "Rezumatul tendinței prețurilor",
 
+Tooltip_Trend: "Previzualizarea tendinței prețurilor se bazează doar pe primul și ultimul punct de preț",
+Tooltip_Trend1: "In total sunt inregistrate",
+Tooltip_Trend1_1: "puncte a istoricului pretului. ",
+Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această ofertă",
 
 "comparison": {
     "title": "Compară Oferte",
@@ -264,9 +273,42 @@ Tooltip_Main_Icon_Trend: "Compară tendințele de preț și specificațiile dint
     "select_more_tooltip": "Selectează încă {{count}} ofertă(e) pentru a compara",
     "offer_selected": "{{count}} ofertă selectată",
     "offer_selected_plural": "{{count}} oferte selectate"
-  }
+  },
+
+   Services: "Servicii",
+   Services_Title: "Servicii",
+    Services_Intro: "Oferim înțelegere profundă și date pentru decizii de cumpărare mai inteligente, livrate ca un serviciu adaptat nevoilor dumneavoastră.",
+    Services_Analytics_Title: "Analizare",
+    Services_Analytics_Intro: "Profitați de tendința de preț și istoricul de pret proprietar pentru a lua decizii mai bune de cumpărare.",
+    Services_Analytics_PriceTrend: "Analiza tendinței prețurilor, disponibil prin abonament sau plată unică",
+    Services_Analytics_Comparison: "Compararea produselor pe baza tendinței prețurilor, istoricului de preț, a și a specificațiilor, ce include tabel AI care recomandă ce să cumpărați acum, ce să evitați și ce specificații contează cel mai mult, disponibil prin abonament sau plată unică",
+
+    Services_Data_Title: "Date",
+    Services_Data_Intro: "Accesați seturile complete de date istorice proprietare despre preț și stoc pentru propria analiză.",
+    Services_Data_PriceHistory: "Seturi de date despre istoricul prețurilor, disponibil prin abonament sau plată unică",
+   
+  Services_Disclaimer: "Toate serviciile depind de abonamente active și de seturile de date disponibile. Unele funcționalități pot suferi modificări",
+
+  Error_403: "Sesiunea a expirat(403)",
+  Error_404: "Resursa nu a fost găsită (404)",
+  Error_429: "Prea multe cereri. Te rugăm să încerci mai târziu(429)",
+  Error_500: "Eroare internă a serverului (500)",
+  Error_Generic: "A apărut o eroare neașteptată",
+  Error_Network_error: "Nu există conexiune la internet. Vă rugăm să verificați rețeaua.",
 
 
+  Retry_Count: "Număr de reîncercări",
+  Retrying_in: "Reîncercare în",
+  Max_Retry_Exceeded: "Numărul maxim de reîncercări a fost depășit",
+
+  Error_403_Title: "Sesiunea a expirat",
+  Error_403_Message1: "Sesiunea ta nu mai este validă în timpul încărcării ofertelor de produse.",
+  Error_403_Message2: "Pentru a continua, trebuie să reîmprospătăm produsele și ofertele în cache.",
+  Refresh: "Reîmprospătează",
+
+  Offline_Title: "Ești offline",
+  Offline_Message1: "Se pare că conexiunea ta la internet a fost pierdută.",
+  Offline_Message2: "Apasă reîmprospătare pentru a reveni la pagina principală când conexiunea este restabilită."
 };
 
 

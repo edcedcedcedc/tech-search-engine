@@ -10,7 +10,7 @@ Explore_tech_in_Moldova:
  "Strugure, explore tech products",
 
 Discover_the_best_offers_for_your_favorite_products:
-  "Discover the best deals in one place",
+  "Discover and compare the best deals in one place",
 
 // Landing
 Welcome_to: "Welcome to Strugure",
@@ -176,15 +176,17 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Offers: "Offers",
   Shop: "Retailer",
   Price: "Price",
-  InStock: "In Stock",
+  In: "In",
+  Stock: "stock",
   Name: "Name",
   Variant: "Variant",
   Yes: "Yes",
   No: "No",
   rows_per_view: "Rows per view",
   of: "of",
-
-
+  Actions: "Link",
+  Selection: "Compare",
+  No_Offers_Available: "No offers found, please try again later",
   Manage_Products: "Manage Products",
 
   //Drawer+Modal
@@ -195,7 +197,7 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Light_mode: "Light mode",
   Language: "Language",
   Disable_notifications: "Disable notifications",
- 
+  View_columns_tooltip: "View columns",
 
   //Tooltip
   Search_Tooltip: "Search",
@@ -212,9 +214,55 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
 
   //Trends
   Price_Trend: "Price Trend",
+  Price_Trend1: "Price",
+  Price_Trend2: "Trend",
   In_Stock_Trend: "In Stock",
-  Time_Trend: "Time",
-  Tooltip_Trend: "Historical price and stock changes. Full history requires a subscription or one-time purchase"
+  Time_Trend: "Updated on",
+  Price_Trend_Summary: "Price trend summary",
+  Tooltip_Trend: "Price trend preview is based only on the first and last price points",
+  Tooltip_Trend1: "A total of",
+  Tooltip_Trend1_1: "price history points are recorded.",
+  Tooltip_Trend2: "price history points available for this offer",
+
+  //Services
+  Services: "Services",
+  Services_Title: "Our Services",
+  Services_Intro: "We provide actionable insights and data for smarter buying decisions, delivered as a service tailored to your needs.",
+  Services_Analytics_Title: "Analytics",
+  Services_Analytics_Intro: "Leverage our proprietary price history and trends to make better purchasing decisions.",
+  Services_Analytics_PriceTrend: "Price trend analysis, available via subscription or one-time payment",
+  Services_Analytics_Comparison: "Compare products based on price trends, price history, and specifications, including an AI table recommending what to buy now, what to avoid, and which specs matter most, available via subscription or one-time payment",
+  Services_Data_Title: "Data",
+  Services_Data_Intro: "Access our proprietary complete historical price and stock datasets for your own analysis.",
+  Services_Data_PriceHistory: "Price history datasets, available via subscription or one-time payment",
+
+  Services_Disclaimer: "All services depend on active subscriptions and available datasets. Some features may change",
+
+
+
+  //error handling 
+  Error_403: "Session expired(403)",
+  Error_404: "Resource not found (404).",
+  Error_429: "Too many requests. Please try again later.(429)",
+  Error_500: "Internal server error (500).",
+  Error_Generic: "An unexpected error occurred.",
+  Error_Network_error: "No internet connection. Please check your network.",
+
+
+  Retry_Count: "Retry count",
+  Retrying_in: "Retrying in",
+  Max_Retry_Exceeded: "Max retry exceeded",
+
+
+  Error_403_Title: "Session expired",
+  Error_403_Message1: "Your session is no longer valid while loading product offers.",
+  Error_403_Message2: "To continue, we need to refresh cached products and offers.",
+  Refresh: "Refresh",
+
+
+  Offline_Title: "You are offline",
+  Offline_Message1: "It looks like your internet connection is lost.",
+  Offline_Message2: "Press refresh to go back to the main page when connection is restored.",
 
 };
 

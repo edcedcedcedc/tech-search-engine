@@ -94,6 +94,7 @@ class SearchAPIView(APIView):
             try:
                 serializer = AggregatedProductSerializer(aggregated, many=True)
                 request.session["aggregated_cache"] = serializer.data
+                request.session.modified = True
             except Exception as e:
                 search_engine_log(f"Error serializing aggregated clusters: {e}")
                 request.session["aggregated_cache"] = aggregated

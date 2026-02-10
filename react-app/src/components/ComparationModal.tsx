@@ -41,7 +41,7 @@ export const ComparisonModal: React.FC<ComparisonModalProps> = ({}) => {
         }}
       >
         <Typography variant="h6" fontWeight={600}>
-          {t("comparison.title")}
+          Comparation title
         </Typography>
         <IconButton onClick={handleClose} size="small">
           <CloseIcon />
@@ -86,7 +86,7 @@ export const ComparisonModal: React.FC<ComparisonModalProps> = ({}) => {
 
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={handleClose} variant="contained">
-          {t("comparison.close")}
+          close
         </Button>
       </DialogActions>
     </Dialog>

@@ -17,7 +17,7 @@ import debounce from "lodash.debounce";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
 
 import { autocomplete } from "../api/searchApi";
-import { useStore } from "../store/store";
+import { useNotificationStore, useStore } from "../store/store";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import type { Suggestion } from "../types/Suggestion";
@@ -38,6 +38,8 @@ export const SearchAutocomplete: React.FC = () => {
   const loadingTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  const autocompleteResetToken = useStore((s) => s.autocompleteResetToken);
+  const isLoading = useStore((state) => state.isLoading);
 
   const closeSuggestions = () => {
     uiLog(`autocomplete | closeSuggestions`);
@@ -60,35 +62,50 @@ export const SearchAutocomplete: React.FC = () => {
       if (!loadingTimerRef.current) {
         loadingTimerRef.current = setTimeout(() => {
           setDelayedLoading(true);
-          uiLog(
-            `autocomplete | fetchSuggestions | delayed loading=true | query=${q}`,
-          );
+          uiLog(`autocomplete | delayed loading=true | query=${q}`);
         }, 100);
       }
 
-      try {
-        const res = await autocomplete(q, lang);
-        setSuggestions(res.suggestions);
-        uiLog(
-          `autocomplete | fetchSuggestions | success | query=${q} | results=${res.suggestions.length}`,
-        );
-      } catch (err) {
-        uiLog(
-          `autocomplete | fetchSuggestions | error | query=${q} | err=${(err as any)?.message}`,
-        );
-      } finally {
-        setLoading(false);
-        setTimeout(() => {
-          setDelayedLoading(false);
+      const attemptFetch = async (): Promise<void> => {
+        try {
+          const res = await autocomplete(q, lang);
+          setSuggestions(res.suggestions);
           uiLog(
-            `autocomplete | fetchSuggestions | delayed loading=false | query=${q}`,
+            `autocomplete | fetchSuggestions | success | query=${q} | results=${res.suggestions.length}`,
           );
-          if (loadingTimerRef.current) {
-            clearTimeout(loadingTimerRef.current);
-            loadingTimerRef.current = null;
+        } catch (err: any) {
+          const status = err?.response?.status || err?.code;
+
+          // Network offline / unreachable
+          if (
+            !navigator.onLine ||
+            status === "ERR_NETWORK" ||
+            err.message === "Network Error"
+          ) {
+            uiLog(`autocomplete | network offline detected`);
+            useStore.getState().setOffline(true); // trigger OfflineDialog
+            setSuggestions([]); // hide dropdown
+            return; // stop retries
           }
-        }, 300);
-      }
+
+          // Unknown error
+          uiLog(
+            `autocomplete | fetchSuggestions | error | query=${q} | err=${err?.message}`,
+          );
+          setSuggestions([]);
+        } finally {
+          setLoading(false);
+          setTimeout(() => {
+            setDelayedLoading(false);
+            if (loadingTimerRef.current) {
+              clearTimeout(loadingTimerRef.current);
+              loadingTimerRef.current = null;
+            }
+          }, 300);
+        }
+      };
+
+      await attemptFetch();
     }, 500),
     [lang],
   );
@@ -100,13 +117,35 @@ export const SearchAutocomplete: React.FC = () => {
     };
   }, [fetchSuggestions]);
 
+  React.useEffect(() => {
+    uiLog("autocomplete | reset via store");
+
+    setValue("");
+    setSuggestions([]);
+    setLoading(false);
+    setDelayedLoading(false);
+
+    fetchSuggestions.cancel();
+
+    if (loadingTimerRef.current) {
+      clearTimeout(loadingTimerRef.current);
+      loadingTimerRef.current = null;
+    }
+  }, [autocompleteResetToken, fetchSuggestions]);
+
   const submitSearch = (q: string) => {
+    if (!navigator.onLine) {
+      uiLog(`autocomplete | search icon clicked | offline detected`);
+      useStore.getState().setOffline(true); // trigger OfflineDialog
+      setSuggestions([]); // hide dropdown
+      return;
+    }
     uiLog(`autocomplete | submitSearch | query=${q}`);
     setQuery(q);
     searchProducts(q, lang);
-    if (q) {
+    /*   if (q) {
       navigate("/products");
-    }
+    } */
     setSuggestions([]);
     setLoading(false);
     setDelayedLoading(false);
@@ -169,6 +208,7 @@ export const SearchAutocomplete: React.FC = () => {
                 {!delayedLoading && (
                   <IconButton
                     size="medium"
+                    disabled={isLoading}
                     onClick={() => {
                       uiLog(
                         `autocomplete | search icon clicked | value=${value}`,

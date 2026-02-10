@@ -10,6 +10,7 @@ export default defineConfig({
       include: '**/*.svg',
     })],
   server: {
+    allowedHosts: undefined,
     proxy: {
       "/api": {
         target: "http://127.0.0.1:8000",

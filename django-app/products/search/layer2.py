@@ -33,73 +33,74 @@ class ProductOffersAPIView(SearchAPIView):
 
         if not aggregated:
             search_engine_log("Layer2 session cache MISS")
-            return Response({"error": "invalid session"}, status=403)
-
-        search_engine_log(f"Layer2 session cache HIT: {len(aggregated)} clusters")
-
-        product = next((p for p in aggregated if p["id"] == product_id), None)
-        if not product:
-            return Response({"offers": [], "has_more": False, "next_cursor": None})
-
-        # Score offers internally
-        score_offers_for_product(product)
-
-        # Grab offers from aggregated cluster and sort by score descending
-        offers = sorted(
-            product["offers"], key=lambda o: o.get("offer_score", 0), reverse=True
-        )
-        offers_slice = offers[offset : offset + limit]
-
-        # Prepare API response
-        if full:
-            # Return full offer objects including embeddings
-            result = [
-                {
-                    "id": o["id"],
-                    "external_id": o.get("external_id", ""),
-                    "name": o["name"],
-                    "variant": o.get("variant", ""),
-                    "t_name": o.get("t_name", {}),
-                    "t_variant": o.get("t_variant", {}),
-                    "t_category": o.get("t_category", {}),
-                    "shop": o["shop"],
-                    "price": o["price"],
-                    "url": o.get("url", ""),
-                    "brand": o.get("brand", ""),
-                    "in_stock": o.get("in_stock", True),
-                    "offer_score": o.get("offer_score", 0.0),
-                    "price_history": o.get("price_history", []),
-                    "price_trend_preview": o.get("price_trend_preview", None),
-                }
-                for o in offers_slice
-            ]
+            return Response({"error": "expired session."}, status=403)
         else:
-            # Return minimal offer object excluding embedding, query, query_embedding
-            result = [
-                {
-                    "id": o["id"],
-                    "external_id": o.get("external_id", ""),
-                    "name": o["name"],
-                    "variant": o.get("variant", ""),
-                    "t_name": o.get("t_name", {}),
-                    "t_variant": o.get("t_variant", {}),
-                    "shop": o["shop"],
-                    "price": o["price"],
-                    "offer_score": o.get("offer_score", 0.0),
-                }
-                for o in offers_slice
-            ]
-        next_cursor = str(offset + limit) if offset + limit < len(offers) else None
-        has_more = next_cursor is not None
+            search_engine_log(f"Layer2 session cache HIT: {len(aggregated)} clusters")
 
-        search_engine_log(
-            f"Product '{product_id}' offers count={len(product['offers'])}, "
-            f"limit={limit}, full={full}, cursor={cursor}"
-        )
+            product = next((p for p in aggregated if p["id"] == product_id), None)
+            if not product:
+                return Response({"error": "expired session.."}, status=403)
+                return Response({"offers": [], "has_more": False, "next_cursor": None})
 
-        return Response(
-            {"offers": result, "has_more": has_more, "next_cursor": next_cursor}
-        )
+            # Score offers internally
+            score_offers_for_product(product)
+
+            # Grab offers from aggregated cluster and sort by score descending
+            offers = sorted(
+                product["offers"], key=lambda o: o.get("offer_score", 0), reverse=True
+            )
+            offers_slice = offers[offset : offset + limit]
+
+            # Prepare API response
+            if full:
+                # Return full offer objects including embeddings
+                result = [
+                    {
+                        "id": o["id"],
+                        "external_id": o.get("external_id", ""),
+                        "name": o["name"],
+                        "variant": o.get("variant", ""),
+                        "t_name": o.get("t_name", {}),
+                        "t_variant": o.get("t_variant", {}),
+                        "t_category": o.get("t_category", {}),
+                        "shop": o["shop"],
+                        "price": o["price"],
+                        "url": o.get("url", ""),
+                        "brand": o.get("brand", ""),
+                        "in_stock": o.get("in_stock", True),
+                        "offer_score": o.get("offer_score", 0.0),
+                        "price_history": o.get("price_history", []),
+                        "price_trend_preview": o.get("price_trend_preview", None),
+                    }
+                    for o in offers_slice
+                ]
+            else:
+                # Return minimal offer object excluding embedding, query, query_embedding
+                result = [
+                    {
+                        "id": o["id"],
+                        "external_id": o.get("external_id", ""),
+                        "name": o["name"],
+                        "variant": o.get("variant", ""),
+                        "t_name": o.get("t_name", {}),
+                        "t_variant": o.get("t_variant", {}),
+                        "shop": o["shop"],
+                        "price": o["price"],
+                        "offer_score": o.get("offer_score", 0.0),
+                    }
+                    for o in offers_slice
+                ]
+            next_cursor = str(offset + limit) if offset + limit < len(offers) else None
+            has_more = next_cursor is not None
+
+            search_engine_log(
+                f"Product '{product_id}' offers count={len(product['offers'])}, "
+                f"limit={limit}, full={full}, cursor={cursor}"
+            )
+
+            return Response(
+                {"offers": result, "has_more": has_more, "next_cursor": next_cursor}
+            )
 
     def apply_cursor(self, offers, cursor):
         """Index-based cursor for universal pagination."""

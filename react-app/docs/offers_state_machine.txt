@@ -1,0 +1,6 @@
+| Condition                        | UI                         |
+| -------------------------------- | ---------------------------|
+| `isOffersLoading`                | Spinner                    |
+| `offers.length > 0`              | Table                      |
+| `offers.length === 0 && isError` | Empty + Retry and no Cache |
+| cached offers                    | Instant render             |

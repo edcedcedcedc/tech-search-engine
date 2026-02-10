@@ -1,6 +1,6 @@
 import axios from "axios";
 import { uiLog } from "../webhook/client/sender"; // <-- import logger
-
+import i18n from "../i18n";
 // ---------------- Types ----------------
 import type { AggregatedProduct } from "../types/AggregatedProduct";
 import type { SearchResponse } from "../types/SearchResponse";
@@ -42,11 +42,30 @@ export const searchProducts = async (
 
   try {
     const { data } = await api.get<SearchResponse>("/search/", { params, withCredentials: true });
+   /*  if (Math.random() < 0.9) { // 30% chance
+      const e = new Error("TOO_MANY_REQUESTS");
+      //(e as any).code = 429;
+      throw e;
+    } */
     uiLog(`api | searchProducts | response | query=${query} | results=${data.products.length} | total_count=${data.total_count}`);
     return data;
-  } catch (err) {
-    uiLog(`api | searchProducts | error | query=${query} | err=${(err as any)?.message}`);
-    throw err;
+  } catch (err: any) {
+    const status = err?.response?.status;
+    
+    if (status === 403) {
+      const e = new Error("SESSION_EXPIRED");
+      (e as any).code = 403;
+      throw e;
+    }
+
+     if (err.code === "ERR_NETWORK") {
+      const e = new Error("NETWORK_ERROR");
+      (e as any).code = "NETWORK_ERROR";
+      throw e;
+    }
+ 
+    uiLog(`api | searchProducts | error | query=${query} | err=${err?.message}`);
+    throw err; // <-- throw all other errors
   }
 };
 
@@ -55,30 +74,68 @@ export const searchProducts = async (
  */
 export const getProductOffers = async (
   productId: string,
-  full = false,
+  full = true,
   limit?: number,
-  cursor?: string
-): Promise<{ offers: AggregatedProduct["offers"]; has_more: boolean; next_cursor?: string }> => {
+  cursor?: string,
+  retry429 = 0,
+  retry500 = 0
+): Promise<{
+  offers: AggregatedProduct["offers"];
+  has_more: boolean;
+  next_cursor?: string;
+}> => {
   const params: Record<string, any> = { full };
   if (limit) params.limit = limit;
   if (cursor) params.cursor = cursor;
 
-  uiLog(`api | getProductOffers | request | productId=${productId} | full=${full} | limit=${limit} | cursor=${cursor}`);
-
   try {
-    const { data } = await api.get(`/product/${productId}/offers/`, {
+    const res = await api.get(`/product/${productId}/offers/`, {
       params,
-      withCredentials: true, // <-- ensures session cookies are sent
+      withCredentials: true,
     });
 
-    uiLog(`api | getProductOffers | response | productId=${productId} | offers=${data.offers.length} | has_more=${data.has_more}`);
-    return data;
-  } catch (err) {
-    uiLog(`api | getProductOffers | error | productId=${productId} | err=${(err as any)?.message}`);
+    const data = res?.data ?? {};
+
+    // -----------------------------
+    // FORCE 429 for first 3 retries
+    // -----------------------------
+        /* if (Math.random() < 0.9) { // 30% chance
+      const e = new Error("TOO_MANY_REQUESTS");
+      //(e as any).code = 429;
+      throw e;
+    }  */
+
+    // -----------------------------
+    // normal return
+    // -----------------------------
+    return {
+      offers: Array.isArray(data.offers) ? data.offers : [],
+      has_more: Boolean(data.has_more),
+      next_cursor: data.next_cursor,
+    };
+  } catch (err: any) {
+    const status = err?.response?.status || (err.code === 429 ? 429 : undefined);
+
+    if (status === 403) {
+      const e = new Error("SESSION_EXPIRED");
+      (e as any).code = 403;
+      throw e;
+    }
+
+    if (status === 429 && retry429 < 5) {
+      uiLog(`getProductOffers | 429 detected, retrying #${retry429 + 1} in 5s`);
+      await new Promise((r) => setTimeout(r, 5000));
+      return getProductOffers(productId, full, limit, cursor, retry429 + 1, retry500);
+    }
+
+    if (status === 500 && retry500 < 3) {
+      await new Promise((r) => setTimeout(r, 1000 * (retry500 + 1)));
+      return getProductOffers(productId, full, limit, cursor, retry429, retry500 + 1);
+    }
+
     throw err;
   }
 };
-
 
 export default api;
 
@@ -105,39 +162,3 @@ export const autocomplete = async (
 };
 
 
-
-// Axios response interceptor for errors
-api.interceptors.response.use(
-  (response) => response, // pass through successful responses
-  (error) => {
-    const status = error?.response?.status;
-
-    // map status to notification type and message
-    let type: "error" = "error";
-    let message = "An unexpected error occurred.";
-
-    switch (status) {
-      case 404:
-        message = "Resource not found (404).";
-        break;
-      case 403:
-        message = "You are not authorized to access this resource (403).";
-        break;
-      case 429:
-        message = "Too many requests (429). Please try again later.";
-        break;
-      case 500:
-        message = "Internal server error (500).";
-        break;
-      default:
-        if (error?.message) message = error.message;
-        break;
-    }
-
-    // Add to notification store
-    const addNotification = useNotificationStore.getState().addNotification;
-    addNotification({ message, type, duration: 3000 });
-
-    return Promise.reject(error); // keep rejecting so the original caller can handle it
-  }
-);

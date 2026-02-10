@@ -14,18 +14,20 @@ import {
   IconButton,
   TablePagination,
   Tooltip,
+  Menu,
+  MenuItem,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import { useNotificationStore, useStore } from "../store/store";
+import ViewColumnOutlinedIcon from "@mui/icons-material/ViewColumnOutlined";
+import { useStore } from "../store/store";
 import { useTranslation } from "react-i18next";
 import { Popover } from "@mui/material";
 import { Sparklines, SparklinesLine } from "react-sparklines";
 import { useState } from "react";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import LockIcon from "@mui/icons-material/Lock";
+import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import { uiLog } from "../webhook/client/sender";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxOutlinedIcon from "@mui/icons-material/CheckBoxOutlined";
@@ -33,11 +35,14 @@ import type { PriceTrendPreview } from "../types/PriceTrend";
 
 export default function ProductOffersTable() {
   const selectedProductId = useStore((s) => s.selectedProductId);
-  const offers = useStore((s) =>
-    selectedProductId
-      ? (s.productOffers[selectedProductId]?.offers ?? null)
-      : null,
+
+  const offersEntry = useStore((s) =>
+    selectedProductId ? s.productOffers[selectedProductId] : null,
   );
+  //offers
+  const offers = offersEntry?.offers ?? null;
+  const isError = Boolean(offersEntry?.isError);
+  const errorType = offersEntry?.errorType;
 
   const selectedOffers = useStore((s) => s.selectedOffers);
   const addSelectedOffer = useStore((s) => s.addSelectedOffer);
@@ -45,15 +50,14 @@ export default function ProductOffersTable() {
 
   const close = useStore((s) => s.closeProduct);
   const isLoading = useStore((s) => s.isOffersLoading);
-  const addNotification = useNotificationStore(
-    (state) => state.addNotification,
-  );
+
   const theme = useTheme();
   const { t, i18n } = useTranslation();
 
   const isSmallScreen = useMediaQuery("(max-width:768px)");
   const isVerySmallScreen = useMediaQuery("(max-width:425px)");
   const isTinyScreen = useMediaQuery("(max-width:320px)");
+  const isTinyScreen344 = useMediaQuery("(max-width:344px)");
   const isLargeScreen = useMediaQuery("(min-width:1024px)");
 
   const open = Boolean(selectedProductId);
@@ -62,10 +66,115 @@ export default function ProductOffersTable() {
   const [rowsPerPages, setRowsPerPages] = React.useState<
     Record<string, number>
   >({});
-  const [priceArrowUp, setPriceArrowUp] = React.useState(true);
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedPriceHistory, setSelectedPriceHistory] =
     useState<PriceTrendPreview | null>(null);
+  const [columnsAnchorEl, setColumnsAnchorEl] = useState<null | HTMLElement>(
+    null,
+  );
+
+  const openPopover = Boolean(anchorEl);
+  const [columnVisibility, setColumnVisibility] = useState({
+    selection: true,
+    shop: true,
+    price: true,
+    inStock: true,
+    priceTrend: true,
+    name: true,
+    variant: true,
+    actions: true,
+  });
+  const page = selectedProductId ? pages[selectedProductId] || 0 : 0;
+  const rowsPerPage = selectedProductId
+    ? rowsPerPages[selectedProductId] || 5
+    : 5;
+
+  //offers
+  const hasOffers = Boolean(offers && offers.length > 0);
+  const showSpinner = isLoading && !hasOffers && !isError;
+  const isEmpty =
+    !isLoading && selectedProductId && offers && offers.length === 0 && isError;
+  // Define column configurations in the correct order
+  const columnConfigs = [
+    { key: "selection" as const, label: "" },
+    { key: "shop" as const, label: t("Shop") },
+    {
+      key: "price" as const,
+      label: <span>{t("Price")}&nbsp;MDL&nbsp;</span>,
+    },
+    {
+      key: "inStock" as const,
+      label: (
+        <span>
+          {t("In")}&nbsp;{t("Stock")}&nbsp;
+        </span>
+      ),
+    },
+    {
+      key: "priceTrend" as const,
+      label: (
+        <span>
+          {t("Price_Trend1")}&nbsp;{t("Price_Trend2")}&nbsp;
+        </span>
+      ),
+    },
+    { key: "name" as const, label: t("Name") },
+    { key: "variant" as const, label: t("Variant") },
+    { key: "actions" as const, label: "" },
+  ];
+
+  React.useEffect(() => {
+    if (isTinyScreen344) {
+      // Tiny / very small screen layout
+      setColumnVisibility({
+        selection: true,
+        shop: true,
+        price: true,
+        inStock: false,
+        priceTrend: true,
+        name: true,
+        variant: false,
+        actions: false,
+      });
+    } else if (isVerySmallScreen) {
+      // Small screens (mobile tablets)
+      setColumnVisibility({
+        selection: true,
+        shop: true,
+        price: true,
+        inStock: false,
+        priceTrend: true,
+        name: true,
+        variant: true,
+        actions: false,
+      });
+    } else if (isSmallScreen) {
+      // Small screens (mobile tablets)
+      setColumnVisibility({
+        selection: true,
+        shop: true,
+        price: true,
+        inStock: true,
+        priceTrend: true,
+        name: true,
+        variant: true,
+        actions: true,
+      });
+    } else {
+      // Default (desktop)
+      setColumnVisibility({
+        selection: true,
+        shop: true,
+        price: true,
+        inStock: true,
+        priceTrend: true,
+        name: true,
+        variant: true,
+        actions: true,
+      });
+    }
+  }, [isTinyScreen, isVerySmallScreen, isSmallScreen, isTinyScreen344]);
 
   React.useEffect(() => {
     if (open && selectedProductId) {
@@ -87,8 +196,6 @@ export default function ProductOffersTable() {
     setAnchorEl(null);
     setSelectedPriceHistory(null);
   };
-
-  const openPopover = Boolean(anchorEl);
 
   const handleChangePage = (
     _event: React.MouseEvent<HTMLButtonElement> | null,
@@ -115,40 +222,40 @@ export default function ProductOffersTable() {
     }
   };
 
-  const handlePriceClick = () => {
-    uiLog("Price column clicked, toggling sort direction");
-    setPriceArrowUp((prev) => !prev);
+  const handleColumnVisibilityToggle = (
+    column: keyof typeof columnVisibility,
+  ) => {
+    setColumnVisibility((prev) => ({
+      ...prev,
+      [column]: !prev[column],
+    }));
+    uiLog(
+      `Column visibility toggled: ${column} = ${!columnVisibility[column]}`,
+    );
   };
 
-  const page = selectedProductId ? pages[selectedProductId] || 0 : 0;
-  const rowsPerPage = selectedProductId
-    ? rowsPerPages[selectedProductId] || 5
-    : 5;
-  const hasOffers = Boolean(selectedProductId && offers && offers.length > 0);
-  const showSpinner = isLoading && !hasOffers;
+  const handleColumnsMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setColumnsAnchorEl(event.currentTarget);
+    uiLog("Column visibility menu opened");
+  };
+
+  const handleColumnsMenuClose = () => {
+    setColumnsAnchorEl(null);
+    uiLog("Column visibility menu closed");
+  };
 
   const getColumns = () => {
-    const base = [
-      "",
-      t("Shop"),
-      t("Price") + " MDL",
-      t("Price_Trend"),
-      t("Name"),
-      t("Variant"),
-      "",
-    ];
-    if (isTinyScreen) return base;
-    return [
-      "",
-      t("Shop"),
-      t("Price") + " MDL",
-      t("InStock"),
-      t("Price_Trend"),
-      t("Name"),
-      t("Variant"),
-      "",
-    ];
+    const visibleColumns = columnConfigs
+      .filter((config) => {
+        // For tiny screens, always hide inStock column
+        if (config.key === "inStock" && isTinyScreen) return false;
+        return columnVisibility[config.key];
+      })
+      .map((config) => config.label);
+
+    return visibleColumns;
   };
+
   const columns = getColumns();
 
   const truncateText = (text: string, maxLength: number) => {
@@ -228,17 +335,89 @@ export default function ProductOffersTable() {
           >
             {t("Offers")}
           </Typography>
-          <IconButton
-            onClick={() => {
-              uiLog("Close icon clicked");
-              close();
-            }}
-            size="small"
-            sx={{ p: isVerySmallScreen ? 1 : 1.5 }}
-          >
-            <CloseIcon fontSize={isVerySmallScreen ? "small" : "medium"} />
-          </IconButton>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Tooltip title={t("View_columns_tooltip")}>
+              <IconButton
+                onClick={handleColumnsMenuOpen}
+                size="small"
+                sx={{ p: isVerySmallScreen ? 0.5 : 1 }}
+                disabled={isLoading || !hasOffers}
+              >
+                <ViewColumnOutlinedIcon
+                  fontSize={isVerySmallScreen ? "small" : "medium"}
+                />
+              </IconButton>
+            </Tooltip>
+            <IconButton
+              onClick={() => {
+                uiLog("Close icon clicked");
+                close();
+              }}
+              size="small"
+              sx={{ p: isVerySmallScreen ? 1 : 1.5 }}
+            >
+              <CloseOutlinedIcon
+                fontSize={isVerySmallScreen ? "small" : "medium"}
+              />
+            </IconButton>
+          </Box>
         </Box>
+
+        {/* Column Visibility Menu */}
+        <Menu
+          anchorEl={columnsAnchorEl}
+          open={Boolean(columnsAnchorEl)}
+          onClose={handleColumnsMenuClose}
+          sx={{
+            "& .MuiPaper-root": {
+              maxHeight: 400,
+              minWidth: 200,
+            },
+            "&::-webkit-scrollbar": { width: theme.spacing(1) },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: theme.palette.background.default,
+              borderRadius: theme.shape.borderRadius,
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+              backgroundColor: theme.palette.background.default,
+            },
+            "&::-webkit-scrollbar-track": { background: "transparent" },
+            scrollbarWidth: "thin", // Firefox
+            scrollbarColor:
+              theme.palette.mode === "dark"
+                ? "rgba(255,255,255,0.2) transparent"
+                : "rgba(0,0,0,0.3) transparent",
+          }}
+        >
+          {columnConfigs.map((column) => {
+            // Skip inStock column for tiny screens in the menu too
+            if (column.key === "inStock" && isTinyScreen) return null;
+
+            return (
+              <MenuItem key={column.key} dense disableGutters>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={columnVisibility[column.key]}
+                      onChange={() => handleColumnVisibilityToggle(column.key)}
+                    />
+                  }
+                  label={
+                    <Typography variant="body2">
+                      {column.key === "selection"
+                        ? t("Selection")
+                        : column.key === "actions"
+                          ? t("Actions")
+                          : column.label}
+                    </Typography>
+                  }
+                  sx={{ ml: 1, mr: 2 }}
+                />
+              </MenuItem>
+            );
+          })}
+        </Menu>
 
         {/* Loading */}
         {showSpinner && (
@@ -256,154 +435,277 @@ export default function ProductOffersTable() {
 
         {!isLoading && offers && (
           <Box sx={{ overflowX: "auto", overflowY: "auto", flexGrow: 1 }}>
-            <Table size={isVerySmallScreen ? "small" : "medium"}>
-              <TableHead>
+            <Table
+              size={isVerySmallScreen ? "small" : "medium"}
+              sx={{
+                "& .MuiTableCell-root": {
+                  px: 0.125, // left & right
+                  py: 0.5, // top & bottom
+                },
+              }}
+            >
+              <TableHead
+                sx={{
+                  "& .MuiTableCell-root": {
+                    px: 0.125, // left & right
+                    py: 0.5, // top & bottom
+                    opacity: isLoading || !hasOffers ? 0.5 : 1,
+                  },
+                }}
+              >
                 <TableRow>
-                  {columns.map((col, idx) => (
-                    <TableCell
-                      key={idx}
-                      align={
-                        col === "Price MDL" || col === "Price History"
-                          ? "center"
-                          : "left"
-                      }
-                      sx={{
-                        cursor: col === "Price MDL" ? "pointer" : "default",
-                      }}
-                      onClick={
-                        col === "Price MDL" ? handlePriceClick : undefined
-                      }
-                    >
-                      {col === "Price MDL" ? (
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: 0.3,
-                          }}
-                        >
-                          {col}
-                          {priceArrowUp ? (
-                            <ArrowDropUpIcon fontSize="small" />
-                          ) : (
-                            <ArrowDropDownIcon fontSize="small" />
-                          )}
-                        </Box>
-                      ) : (
-                        col
-                      )}
-                    </TableCell>
-                  ))}
+                  {columns.map((col, idx) => {
+                    // Get the column key for this position
+                    const visibleColumnKeys = columnConfigs
+                      .filter((config) => {
+                        if (config.key === "inStock" && isTinyScreen)
+                          return false;
+                        return columnVisibility[config.key];
+                      })
+                      .map((config) => config.key);
+
+                    const columnKey = visibleColumnKeys[idx];
+
+                    return (
+                      <TableCell
+                        key={idx}
+                        align={
+                          columnKey === "price" || columnKey === "priceTrend"
+                            ? "center"
+                            : "left"
+                        }
+                        sx={{
+                          cursor: columnKey === "price" ? "pointer" : "default",
+                        }}
+                      >
+                        {columnKey === "price" ? (
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 0.3,
+                            }}
+                          >
+                            {col}
+                          </Box>
+                        ) : (
+                          col
+                        )}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               </TableHead>
 
               <TableBody>
-                {paginatedOffers.map((offer: any) => (
-                  <TableRow key={offer.id}>
-                    <TableCell
-                      align="center"
-                      sx={{ width: 36, cursor: "pointer" }}
-                      onClick={() => {
-                        if (selectedOffers[offer.id]) {
-                          uiLog(`Offer deselected: ${offer.id}`);
-                          removeSelectedOffer(offer.id);
-                        } else {
-                          uiLog(`Offer selected: ${offer.id}`);
-                          addSelectedOffer(offer);
-                        }
-                      }}
-                    >
-                      {selectedOffers[offer.id] ? (
-                        <CheckBoxOutlinedIcon fontSize="small" />
-                      ) : (
-                        <CheckBoxOutlineBlankIcon fontSize="small" />
-                      )}
-                    </TableCell>
+                {paginatedOffers.map((offer: any) => {
+                  // Get the visible column keys in order
+                  const visibleColumnKeys = columnConfigs
+                    .filter((config) => {
+                      if (config.key === "inStock" && isTinyScreen)
+                        return false;
+                      return columnVisibility[config.key];
+                    })
+                    .map((config) => config.key);
 
-                    <TableCell>{truncateText(offer.shop, 10)}</TableCell>
-                    <TableCell align="center">
-                      {offer.price.toLocaleString()}
-                    </TableCell>
-                    {!isTinyScreen && (
-                      <TableCell>
-                        {offer.in_stock ? t("Yes") : t("No")}
-                      </TableCell>
-                    )}
+                  return (
+                    <TableRow key={offer.id}>
+                      {visibleColumnKeys.map((columnKey) => {
+                        switch (columnKey) {
+                          case "selection":
+                            return (
+                              <TableCell
+                                key={columnKey}
+                                align="center"
+                                sx={{ width: 36, cursor: "pointer" }}
+                                onClick={() => {
+                                  if (selectedOffers[offer.id]) {
+                                    uiLog(`Offer deselected: ${offer.id}`);
+                                    removeSelectedOffer(offer.id);
+                                  } else {
+                                    uiLog(`Offer selected: ${offer.id}`);
+                                    addSelectedOffer(offer);
+                                  }
+                                }}
+                              >
+                                {selectedOffers[offer.id] ? (
+                                  <CheckBoxOutlinedIcon fontSize="small" />
+                                ) : (
+                                  <CheckBoxOutlineBlankIcon fontSize="small" />
+                                )}
+                              </TableCell>
+                            );
 
-                    <TableCell sx={{ width: 120, py: 1 }}>
-                      <Box
-                        onClick={(e) =>
-                          handleSparklineClick(e, offer.price_trend_preview)
-                        }
-                        sx={{ cursor: "pointer" }}
-                      >
-                        <Sparklines
-                          data={[
-                            ...(offer.price_trend_preview?.free_price_trend
-                              .length
-                              ? offer.price_trend_preview.free_price_trend
-                              : []),
-                          ]
-                            .reverse()
-                            .map((h) => h.price)}
-                          height={40}
-                        >
-                          <SparklinesLine
-                            color={
-                              offer.price_trend_preview?.free_price_trend[0]
-                                ?.price ===
-                              offer.price_trend_preview?.free_price_trend[
-                                offer.price_trend_preview.free_price_trend
-                                  .length - 1
-                              ]?.price
-                                ? theme.palette.info.main
-                                : offer.price_trend_preview?.free_price_trend[0]
-                                      ?.price >
-                                    offer.price_trend_preview?.free_price_trend[
-                                      offer.price_trend_preview.free_price_trend
-                                        .length - 1
-                                    ]?.price
-                                  ? theme.palette.error.main
-                                  : theme.palette.success.main
-                            }
-                          />
-                        </Sparklines>
-                      </Box>
-                    </TableCell>
+                          case "shop":
+                            return (
+                              <TableCell key={columnKey}>
+                                {truncateText(offer.shop, 10)}
+                              </TableCell>
+                            );
 
-                    <TableCell>
-                      {getTranslated(offer.t_name, offer.name)}
-                    </TableCell>
-                    <TableCell>
-                      {getTranslated(offer.t_variant, offer.variant)}
-                    </TableCell>
-                    <TableCell align="center">
-                      <IconButton
-                        href={offer.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        size={isVerySmallScreen ? "small" : "medium"}
-                        onClick={() =>
-                          uiLog(`Open offer link clicked: ${offer.id}`)
+                          case "price":
+                            return (
+                              <TableCell key={columnKey} align="center">
+                                {offer.price.toLocaleString()}
+                              </TableCell>
+                            );
+
+                          case "inStock":
+                            return (
+                              <TableCell key={columnKey}>
+                                {offer.in_stock ? t("Yes") : t("No")}
+                              </TableCell>
+                            );
+
+                          case "priceTrend":
+                            return (
+                              <TableCell
+                                key={columnKey}
+                                sx={{ width: 120, py: 1 }}
+                              >
+                                <Box
+                                  onClick={(e) =>
+                                    handleSparklineClick(
+                                      e,
+                                      offer.price_trend_preview,
+                                    )
+                                  }
+                                  sx={{ cursor: "pointer" }}
+                                >
+                                  <Sparklines
+                                    data={[
+                                      ...(offer.price_trend_preview
+                                        ?.free_price_trend.length
+                                        ? offer.price_trend_preview
+                                            .free_price_trend
+                                        : []),
+                                    ]
+                                      .reverse()
+                                      .map((h) => h.price)}
+                                    height={40}
+                                  >
+                                    <SparklinesLine
+                                      color={
+                                        offer.price_trend_preview
+                                          ?.free_price_trend[0]?.price ===
+                                        offer.price_trend_preview
+                                          ?.free_price_trend[
+                                          offer.price_trend_preview
+                                            .free_price_trend.length - 1
+                                        ]?.price
+                                          ? theme.palette.info.main
+                                          : offer.price_trend_preview
+                                                ?.free_price_trend[0]?.price >
+                                              offer.price_trend_preview
+                                                ?.free_price_trend[
+                                                offer.price_trend_preview
+                                                  .free_price_trend.length - 1
+                                              ]?.price
+                                            ? theme.palette.error.main
+                                            : theme.palette.success.main
+                                      }
+                                    />
+                                  </Sparklines>
+                                </Box>
+                              </TableCell>
+                            );
+
+                          case "name":
+                            return (
+                              <TableCell key={columnKey}>
+                                {getTranslated(offer.t_name, offer.name)}
+                              </TableCell>
+                            );
+
+                          case "variant":
+                            return (
+                              <TableCell key={columnKey}>
+                                {getTranslated(offer.t_variant, offer.variant)}
+                              </TableCell>
+                            );
+
+                          case "actions":
+                            return (
+                              <TableCell key={columnKey} align="center">
+                                <IconButton
+                                  href={offer.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  size={isVerySmallScreen ? "small" : "medium"}
+                                  onClick={() =>
+                                    uiLog(
+                                      `Open offer link clicked: ${offer.id}`,
+                                    )
+                                  }
+                                >
+                                  <OpenInNewIcon fontSize="small" />
+                                </IconButton>
+                              </TableCell>
+                            );
+
+                          default:
+                            return null;
                         }
-                      >
-                        <OpenInNewIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      })}
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
 
             <TablePagination
               component="div"
               count={offers.length}
+              disabled={isLoading || !hasOffers}
               page={page}
               onPageChange={handleChangePage}
               rowsPerPage={rowsPerPage}
               onRowsPerPageChange={handleChangeRowsPerPage}
               rowsPerPageOptions={[5, 10, 25]}
+              labelRowsPerPage={t("rows_per_view")}
+              labelDisplayedRows={({ from, to, count }) =>
+                `${from}-${to} ${t("of")} ${count}`
+              }
+              sx={{
+                // 🔒 HARD STOP horizontal sliding
+                maxWidth: "100%",
+                overflowX: "hidden",
+                overflowY: "hidden",
+
+                // 👌 tiny-screen scale only
+                transform: isTinyScreen ? "scale(0.85)" : "none",
+                transformOrigin: "right top",
+
+                //  remove underline / divider forever
+                borderTop: "none",
+                borderBottom: "none",
+                "&::before, &::after": {
+                  display: "none",
+                },
+
+                // toolbar is the real slider — lock it
+                "& .MuiTablePagination-toolbar": {
+                  maxWidth: "100%",
+                  minWidth: 0,
+                  paddingLeft: 0,
+                  paddingRight: 0,
+                  justifyContent: "flex-start",
+                  overflowX: "hidden",
+                  borderTop: "none",
+                },
+
+                // prevent content from forcing width
+                "& .MuiTablePagination-actions": {
+                  marginLeft: 0,
+                  flexShrink: 0,
+                },
+
+                "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows":
+                  {
+                    whiteSpace: "nowrap",
+                  },
+              }}
             />
           </Box>
         )}
@@ -437,7 +739,13 @@ export default function ProductOffersTable() {
           <Tooltip title={t("Tooltip_Trend")} arrow placement="top">
             <InfoOutlinedIcon
               fontSize="small"
-              sx={{ position: "absolute", top: 4, right: 4, p: 0.25 }}
+              sx={{
+                position: "absolute",
+                top: 4,
+                right: 4,
+                p: 0.2,
+                mt: 0.25,
+              }}
             />
           </Tooltip>
 
@@ -467,39 +775,51 @@ export default function ProductOffersTable() {
                   </TableRow>
                 );
               })}
-              {selectedPriceHistory &&
-                Array.from(
-                  { length: selectedPriceHistory.hidden_price_trend_count },
-                  (_, idx) => (
-                    <TableRow
-                      key={`hidden-${idx}`}
-                      sx={{ opacity: 0.3, pointerEvents: "none" }}
-                    >
-                      <TableCell>
-                        <LockIcon
-                          fontSize="small"
-                          sx={{ verticalAlign: "middle" }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <LockIcon
-                          fontSize="small"
-                          sx={{ verticalAlign: "middle" }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <LockIcon
-                          fontSize="small"
-                          sx={{ verticalAlign: "middle" }}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ),
-                )}
             </TableBody>
           </Table>
+          <Typography
+            variant="body2"
+            sx={{ mt: 0.1, fontStyle: "normal", lineHeight: 1.4 }}
+            color="text.disabled"
+          >
+            {selectedPriceHistory?.hidden_price_trend_count}{" "}
+            {t("Tooltip_Trend2")}
+          </Typography>
         </Box>
       </Popover>
+      {isEmpty && (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            p: 4,
+            gap: 1,
+            flexGrow: 1,
+          }}
+        >
+          <Typography variant="body1" color="text.secondary">
+            {errorType === "429"
+              ? t("Error_429")
+              : errorType === "network"
+                ? t("Error_Network")
+                : t("No_Offers_Available")}
+          </Typography>
+
+          <Typography
+            variant="body2"
+            color="text.disabled"
+            sx={{ cursor: "pointer" }}
+            onClick={() =>
+              selectedProductId &&
+              useStore.getState().openProduct(selectedProductId)
+            }
+          >
+            {t("Retry")}
+          </Typography>
+        </Box>
+      )}
     </Drawer>
   );
 }

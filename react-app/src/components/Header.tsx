@@ -24,9 +24,11 @@ import {
   useMediaQuery,
   Tooltip,
   Typography,
+  LinearProgress,
+  Fade,
 } from "@mui/material";
 
-import { Switch, FormControlLabel } from "@mui/material";
+import { Switch } from "@mui/material";
 import { useNotificationStore } from "../store/store";
 import {
   ManageSearchOutlined as ManageSearchOutlinedIcon,
@@ -47,7 +49,7 @@ import Footer from "./Footer";
 import { NavIcon } from "./NavIcons";
 import { HeaderComparisonIcon } from "./ComparationWidget";
 import { ComparisonModal } from "../components/ComparationModal";
-
+import { BusinessCenterOutlined as ServicesOutlinedIcon } from "@mui/icons-material";
 const ICON_SIZE = 22;
 const iconSx = { fontSize: ICON_SIZE };
 
@@ -56,7 +58,8 @@ const Header: React.FC = () => {
   const mode = useThemeStore((state) => state.mode);
   const toggleMode = useThemeStore((s) => s.toggleMode);
   const { t, i18n } = useTranslation();
-
+  const isVerySmallScreen = useMediaQuery("(max-width:425px)");
+  const isTinyScreen = useMediaQuery("(max-width:320px)");
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [langMenuAnchor, setLangMenuAnchor] =
     React.useState<null | HTMLElement>(null);
@@ -95,6 +98,15 @@ const Header: React.FC = () => {
         </NavIcon>
       ),
     },
+    {
+      path: "/services", // <-- new link
+      label: t("Services"), // translation key
+      icon: (
+        <NavIcon>
+          <ServicesOutlinedIcon /> {/* outlined icon */}
+        </NavIcon>
+      ),
+    },
   ];
 
   const handleLangMenuOpen = (event: React.MouseEvent<HTMLElement>) =>
@@ -110,7 +122,7 @@ const Header: React.FC = () => {
 
   const isTiny = useMediaQuery("(max-width:320px)");
   const iconButtonSx = { color: "text.secondary" };
-
+  const isLoading = useStore((s) => s.isLoading);
   return (
     <>
       <AppBar
@@ -141,7 +153,7 @@ const Header: React.FC = () => {
                 onClick={() => setDrawerOpen(true)}
               >
                 <NavIcon>
-                  <MenuOutlinedIcon fontSize="medium" />
+                  <MenuOutlinedIcon fontSize="medium" sx={iconSx} />
                 </NavIcon>
               </IconButton>
             </Tooltip>
@@ -149,34 +161,6 @@ const Header: React.FC = () => {
 
           {/* Right controls */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {isTiny && (
-              <>
-                <IconButton onClick={toggleMode} sx={iconButtonSx}>
-                  {mode === "dark" ? (
-                    <LightModeOutlinedIcon sx={iconSx} />
-                  ) : (
-                    <DarkModeOutlinedIcon sx={iconSx} />
-                  )}
-                </IconButton>
-
-                <IconButton onClick={handleLangMenuOpen} sx={iconButtonSx}>
-                  <TranslateOutlinedIcon sx={iconSx} />
-                </IconButton>
-
-                <Menu
-                  anchorEl={langMenuAnchor}
-                  open={Boolean(langMenuAnchor)}
-                  onClose={handleLangMenuClose}
-                >
-                  {(Object.keys(LANGAUGES) as LanguagesCodes[]).map((lang) => (
-                    <MenuItem key={lang} onClick={() => handleLangChange(lang)}>
-                      {LANGAUGES[lang].label}
-                    </MenuItem>
-                  ))}
-                </Menu>
-              </>
-            )}
-
             <NavIcon>
               <HeaderComparisonIcon />
             </NavIcon>
@@ -209,6 +193,7 @@ const Header: React.FC = () => {
               <Box
                 component={RouterLink}
                 to="/"
+                onClick={() => setDrawerOpen(false)}
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -292,7 +277,7 @@ const Header: React.FC = () => {
                   );
                 })}
 
-                {!isTiny && (
+                {
                   <>
                     <Divider sx={{ my: 0.5 }} />
                     <ListItem disablePadding>
@@ -325,7 +310,7 @@ const Header: React.FC = () => {
                       </ListItemButton>
                     </ListItem>
                   </>
-                )}
+                }
               </List>
 
               <Box sx={{ mt: "auto" }}>
@@ -334,6 +319,18 @@ const Header: React.FC = () => {
             </Box>
           </Drawer>
         </Toolbar>
+        <Fade in={isLoading} timeout={300} unmountOnExit={false}>
+          <LinearProgress
+            variant="query"
+            sx={{
+              position: "static", // fixed to viewport
+              top: 0,
+              left: 0,
+              width: "100%",
+              zIndex: (theme) => theme.zIndex.appBar + 1, // above AppBar but below Drawer
+            }}
+          />
+        </Fade>
       </AppBar>
 
       {/* Comparison Modal */}
@@ -370,10 +367,17 @@ const Header: React.FC = () => {
             <Divider />
 
             {/* Language selector */}
-            <ListItem sx={{ justifyContent: "space-between" }}>
+            <ListItem sx={{ display: "flex", alignItems: "center" }}>
               <ListItemText primary={t("Language")} />
-              <FormControl size="small">
+              <FormControl size="small" sx={{ ml: "auto" }}>
                 <Select
+                  sx={{
+                    width: isTinyScreen
+                      ? "100px"
+                      : isVerySmallScreen
+                        ? "150px"
+                        : "auto",
+                  }}
                   value={i18n.language}
                   onChange={(e) =>
                     handleLangChange(e.target.value as LanguagesCodes)
