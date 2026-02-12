@@ -92,10 +92,7 @@ const VerticalHeader: React.FC = () => {
       <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
         <List disablePadding sx={{ flex: 1 }}>
           {navLinks.map((link) => {
-            const disabled =
-              link.path === "/products"
-                ? isProductsDisabled || isOffline // Products: disabled if no products OR offline
-                : isOffline;
+            const disabled = link.path === "/products" && isProductsDisabled;
 
             return (
               <React.Fragment key={link.path}>

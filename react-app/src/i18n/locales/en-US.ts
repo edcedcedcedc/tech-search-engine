@@ -265,6 +265,10 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Offline_Message1: "It looks like your internet connection is lost.",
   Offline_Message2: "Please try again when the connection is restored.",
 
+
+  Oops: "Oops! Something went wrong",
+  Go_Back_To_Home: "Go back to home"
+
 };
 
 export default enUS;

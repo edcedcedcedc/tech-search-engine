@@ -1,7 +1,8 @@
 import React from "react";
 import { Box, Typography, Button, Container } from "@mui/material";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
-
+import { useStore } from "../store/store";
+import i18n from "../i18n";
 interface ErrorBoundaryProps {
   children: any;
 }
@@ -29,8 +30,12 @@ class ErrorBoundary extends React.Component<
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null });
-    window.location.href = "/";
+    const offline = useStore.getState().isOffline;
+
+    if (!offline) {
+      this.setState({ hasError: false, error: null });
+      window.location.href = "/";
+    }
   };
 
   render() {
@@ -50,12 +55,14 @@ class ErrorBoundary extends React.Component<
           >
             <ErrorOutlineIcon sx={{ fontSize: 60, color: "error.main" }} />
             <Typography variant="h5" sx={{ fontWeight: 600 }}>
-              Oops! Something went wrong
+              {i18n.t("Oops")}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {this.state.error?.message}
             </Typography>
-            <Button variant="contained" onClick={this.handleReset}></Button>
+            <Button variant="text" onClick={this.handleReset}>
+              {i18n.t("Go_Back_To_Home")}
+            </Button>
           </Box>
         </Container>
       );

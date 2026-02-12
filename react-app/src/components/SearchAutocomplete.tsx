@@ -40,7 +40,7 @@ export const SearchAutocomplete: React.FC = () => {
   );
   const autocompleteResetToken = useStore((s) => s.autocompleteResetToken);
   const isLoading = useStore((state) => state.isLoading);
-
+  const isOffline = useStore((state) => state.isOffline);
   const closeSuggestions = () => {
     uiLog(`autocomplete | closeSuggestions`);
     setSuggestions([]);
@@ -203,18 +203,20 @@ export const SearchAutocomplete: React.FC = () => {
                   justifyContent: "center",
                 }}
               >
-                <CircularProgress
-                  size={24}
-                  style={{
-                    opacity: delayedLoading ? 1 : 0,
-                    transition: "opacity 0.5s ease",
-                    position: "absolute",
-                  }}
-                />
+                {
+                  <CircularProgress
+                    size={24}
+                    style={{
+                      opacity: delayedLoading ? 1 : 0,
+                      transition: "opacity 0.5s ease",
+                      position: "absolute",
+                    }}
+                  />
+                }
                 {!delayedLoading && (
                   <IconButton
                     size="medium"
-                    disabled={isLoading}
+                    disabled={isLoading || isOffline}
                     onClick={() => {
                       uiLog(
                         `autocomplete | search icon clicked | value=${value}`,

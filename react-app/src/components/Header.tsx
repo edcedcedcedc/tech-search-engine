@@ -68,7 +68,7 @@ const Header: React.FC = () => {
   const [langMenuAnchor, setLangMenuAnchor] =
     React.useState<null | HTMLElement>(null);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
-
+  const isOffline = useStore((state) => state.isOffline);
   // Add comparison modal hook
 
   const aggregatedProducts = useStore((s) => s.aggregatedProducts);
@@ -265,6 +265,9 @@ const Header: React.FC = () => {
                 {navLinks.map((link) => {
                   const disabled =
                     link.path === "/products" && isProductsDisabled;
+                  /*  (link.path === "/about" && isOffline) ||
+                    (link.path === "/contact" && isOffline) ||
+                    (link.path === "/" && isOffline); */
 
                   return (
                     <React.Fragment key={link.path}>

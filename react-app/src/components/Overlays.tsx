@@ -4,7 +4,6 @@ import { Box } from "@mui/material";
 import { Cookie } from "./Cookie";
 import Bottom from "./Bottom";
 import { NetworkListener } from "./NetworkListener";
-import OfflineDialog from "./OfflineDialog";
 import SessionExpiredDialog from "./SessionExpiredDialog";
 
 const AppOverlays: React.FC = () => {
@@ -18,7 +17,6 @@ const AppOverlays: React.FC = () => {
         zIndex: 1000,
       }}
     >
-      <OfflineDialog />
       <SessionExpiredDialog />
       <Cookie />
       <Bottom />

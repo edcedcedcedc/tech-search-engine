@@ -309,7 +309,10 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
 
   Offline_Title: "Ești offline",
   Offline_Message1: "Se pare că conexiunea ta la internet a fost pierdută.",
-  Offline_Message2: "Încercă din nou după ce conexiunea este restabilită."
+  Offline_Message2: "Încercă din nou după ce conexiunea este restabilită.",
+
+  Oops: "Oops! Ceva nu a mers bine",
+  Go_Back_To_Home: "Înapoi acasă"
 };
 
 

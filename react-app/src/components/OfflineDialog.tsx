@@ -19,20 +19,21 @@ export default function OfflineDialog() {
   const { t } = useTranslation();
 
   const handleConfirm = () => {
-    retriggerPulse(); // restart animation
-    setOffline(false); // close dialog
+    //retriggerPulse(); // restart animation
+    //setOffline(false); // close dialog
     // try fetching again
     if (navigator.onLine) {
     } else {
       // maybe keep dialog open or retry in few seconds
-      setTimeout(() => {
+      /* setTimeout(() => {
         if (navigator.onLine) navigate("/", { replace: true });
         else retriggerPulse();
       }, 2000);
+    } */
     }
   };
 
-  useEffect(() => {
+  /* useEffect(() => {
     let interval = setInterval(() => {
       if (navigator.onLine) {
         setOffline(false);
@@ -43,7 +44,7 @@ export default function OfflineDialog() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, []); */
 
   function retriggerPulse() {
     const icon = document.querySelector<HTMLImageElement>(
