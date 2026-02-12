@@ -30,7 +30,7 @@ const getTheme = (mode: "light" | "dark") => {
       },
       info: {
         light: "rgba(40, 123, 247, 0.8)",
-        main: "rgba(37, 116, 235, 0.83)",
+        main: "hsla(216, 83%, 53%, 0.83)",
         dark: "#1a3a8ad2",
         contrastText: "#ffffff",
       },
@@ -59,6 +59,18 @@ const getTheme = (mode: "light" | "dark") => {
 
     breakpoints: {
       values: { xs: 0, sm: 375, md: 425, lg: 768, xl: 1024, xxl: 1440 },
+    },
+
+    // ADD THIS Z-INDEX SECTION
+    zIndex: {
+      mobileStepper: 1000,
+      fab: 1050,
+      speedDial: 1050,
+      appBar: 1100,
+      drawer: 1200,
+      modal: 1300,
+      snackbar: 1400,
+      tooltip: 1500,
     },
 
     typography: {

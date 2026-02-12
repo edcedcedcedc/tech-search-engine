@@ -12,7 +12,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import { useStore } from "../store/store";
 import { useTranslation } from "react-i18next";
-import { uiLog } from "../webhook/client/sender";
+import { uiLog } from "../webhook/client/uiDebug";
 
 interface ComparisonModalProps {
   open?: boolean;

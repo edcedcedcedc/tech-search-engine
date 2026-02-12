@@ -6,7 +6,7 @@ export default function Home() {
   const { t } = useTranslation();
 
   return (
-    <Box sx={{ mt: 2, width: "100%" }}>
+    <Box sx={{ width: "100%" }}>
       <Stack spacing={2} sx={{ width: "100%" }}>
         <Typography variant="h5" fontWeight={600}>
           {t("Home_subject")}

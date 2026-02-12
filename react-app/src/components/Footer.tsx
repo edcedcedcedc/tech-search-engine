@@ -3,7 +3,11 @@ import { Box, useTheme, useMediaQuery } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-const Footer: React.FC = () => {
+interface FooterProps {
+  onItemClick?: () => void; // <-- new
+}
+
+const Footer: React.FC<FooterProps> = ({ onItemClick }) => {
   const theme = useTheme();
   const { t } = useTranslation();
 
@@ -50,6 +54,7 @@ const Footer: React.FC = () => {
             {link.path ? (
               <Box
                 component={RouterLink}
+                onClick={onItemClick}
                 to={link.path}
                 sx={{
                   textDecoration: "none",

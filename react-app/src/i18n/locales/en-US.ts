@@ -1,7 +1,7 @@
 const enUS = {
   // Nav
   Home: "Home",
-  About: "About",
+  About: "About us",
   Contact: "Contact",
   Select_Language: "Select Language",
 
@@ -187,7 +187,7 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Actions: "Link",
   Selection: "Compare",
   No_Offers_Available: "No offers found, please try again later",
-  Manage_Products: "Manage Products",
+  Manage_Products: "Manage",
 
   //Drawer+Modal
   Close: "Close",
@@ -243,11 +243,12 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   //error handling 
   Error_403: "Session expired(403)",
   Error_404: "Resource not found (404).",
-  Error_429: "Too many requests. Please try again later.(429)",
+  Error_429: "Too many requests. Close )",
   Error_500: "Internal server error (500).",
-  Error_Generic: "An unexpected error occurred.",
-  Error_Network_error: "No internet connection. Please check your network.",
-
+  Error_Generic: "An unexpected error occurred(GENERIC).",
+  Error_Network: "Network error occured(NET ERR)",
+  Error_Network_error1: "No internet connection. Please check your network.",
+  Generic_Drawer_Error_Message: "Sorry about that, close the drawer and try again.",
 
   Retry_Count: "Retry count",
   Retrying_in: "Retrying in",
@@ -262,7 +263,7 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
 
   Offline_Title: "You are offline",
   Offline_Message1: "It looks like your internet connection is lost.",
-  Offline_Message2: "Press refresh to go back to the main page when connection is restored.",
+  Offline_Message2: "Please try again when the connection is restored.",
 
 };
 

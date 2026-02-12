@@ -3,7 +3,7 @@ import { IconButton, Badge, Tooltip } from "@mui/material";
 import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import { useNotificationStore, useStore, useThemeStore } from "../store/store";
 import { t } from "i18next";
-import { uiLog } from "../webhook/client/sender";
+import { uiLog } from "../webhook/client/uiDebug";
 
 interface HeaderComparisonIconProps {
   onOpenComparison?: () => void;

@@ -1,11 +1,42 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { uiLog } from "../webhook/client/sender";
+import { uiLog } from "../webhook/client/uiDebug";
 import type { AggregatedProduct } from "../types/AggregatedProduct";
 import { getProductOffers as apiGetProductOffers } from "../api/searchApi";
 import { searchProducts as apiSearchProducts } from "../api/searchApi";
 import i18n from "../i18n";
 import { t } from "i18next";
+import { indexedDbService } from "../services/indexedDb";
+
+
+
+
+interface LastQueryState {
+  lastQuery: string | null;
+  lastQueryLang: string;
+  setLastQuery: (query: string, lang?: string) => void;
+  clearLastQuery: () => void;
+}
+
+export const useLastQueryStore = create<LastQueryState>()(
+  persist(
+    (set) => ({
+      lastQuery: null,
+      lastQueryLang: "en",
+      setLastQuery: (query, lang = "en") => 
+        set({ lastQuery: query, lastQueryLang: lang }),
+      clearLastQuery: () => set({ lastQuery: null, lastQueryLang: "en" }),
+    }),
+    {
+      name: "last-query-store",
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
+);
+
+
+
+
 
 
 export type NotificationType = "error" | "success" | "info" | "warning";
@@ -67,13 +98,6 @@ export const useNotificationStore = create<NotificationState>()(
 
 
 
-
-
-
-
-
-
-
 type ThemeMode = "light" | "dark";
 
 interface CookieState {
@@ -126,7 +150,6 @@ export const useThemeStore = create<ThemeState>()(
 
 const CACHE_MAX_AGE = 3 * 60 * 60 * 1000; // 3h
 const OFFERS_CACHE_TTL = 30 * 60 * 1000; // 30m
-const MAX_PAGES_PER_QUERY = 10;
 
 /* =========================
    TYPES
@@ -151,13 +174,35 @@ interface ProductOffersEntry {
   errorType?: "429" | "network" | "generic";
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 interface State {
   
 
+  // Add to your store (inside create)
+
+ 
+
+  /* ================= INDEXED DB SYNC ================= */
+  isSyncingFromIndexedDb: boolean;
+  lastSyncTimestamp: number;
+  setSyncingFromIndexedDb: (value: boolean) => void;
+  setLastSyncTimestamp: (timestamp: number) => void;
+
   /*fresh result*/
   hasFreshResults: boolean;
-
-
 
   /* offline */
   isOffline: boolean;
@@ -231,12 +276,21 @@ let freshResultsTimeout: ReturnType<typeof setTimeout> | null = null;
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
+      // index db
+      isSyncingFromIndexedDb: false,
+      lastSyncTimestamp: 0,
+      setSyncingFromIndexedDb: (value) => set({ isSyncingFromIndexedDb: value }),
+      setLastSyncTimestamp: (timestamp) => set({ lastSyncTimestamp: timestamp }),
+
 
       isOffline: !navigator.onLine, // initial state based on navigator
       setOffline: (value) => set({ isOffline: value }),
-      /* ================= SEARCH ================= */
 
-      query: "",
+      /* ================= SEARCH ================= */
+      query: (() => {
+        const { lastQuery } = useLastQueryStore.getState();
+        return lastQuery || "";
+      })(),
       setQuery: (q) => set({ query: q }),
 
       aggregatedProducts: [],
@@ -250,20 +304,29 @@ export const useStore = create<State>()(
 
       searchProducts: async (query, lang, page = 1) => {
 
-       if (freshResultsTimeout) {
+         // Save current query input value
+          if (query) {
+            set({ query: query,  });  // ← ONLY update query, NOT lastQuery
+          }
+
+        if (freshResultsTimeout) {
           clearTimeout(freshResultsTimeout);
           freshResultsTimeout = null;
         }
 
         const q = query ?? get().query;
+
         if (!q) return;
+
 
         const cacheKey = generateCacheKey(q, lang);
         const { multiQueryCache, itemsPerPage } = get();
         const addNotification = useNotificationStore.getState().addNotification;
 
+        // ============= STEP 1: Check Zustand memory cache =============
         const cached = multiQueryCache[cacheKey];
         if (cached && !isExpired(cached.updatedAt)) {
+          useLastQueryStore.getState().setLastQuery(q, lang || "en");
           const pageData = cached.pageCache[page];
           if (pageData) {
             set({
@@ -276,44 +339,99 @@ export const useStore = create<State>()(
           }
         }
 
+        // ============= STEP 2: Check IndexedDB =============
+        try {
+          const indexedDbCache = await indexedDbService.getProducts(cacheKey);
+          
+          if (indexedDbCache && !isExpired(indexedDbCache.updatedAt)) {
+            const pageData = indexedDbCache.pageCache[page];
+            if (pageData && pageData.length > 0) {
+                   
+                   
+                  //always decode q and lang when cached as well as in api call
+                  const [q, lang] = cacheKey.split("-")
+                  useLastQueryStore.getState().setLastQuery(q, lang || "en");
+
+              // Restore to Zustand memory cache
+              set((s) => ({
+                aggregatedProducts: pageData,
+                currentPage: page,
+                totalResults: indexedDbCache.totalResults,
+                totalPages: Math.ceil(indexedDbCache.totalResults / itemsPerPage),
+                multiQueryCache: {
+                  ...s.multiQueryCache,
+                  [cacheKey]: {
+                    pageCache: indexedDbCache.pageCache,
+                    totalResults: indexedDbCache.totalResults,
+                    updatedAt: indexedDbCache.updatedAt,
+                  },
+                },
+                queryCacheKey: cacheKey,
+                hasFreshResults: true
+              }));
+
+              freshResultsTimeout = setTimeout(() => {
+                set({ hasFreshResults: false });
+                freshResultsTimeout = null;
+              }, 1000);
+
+              return;
+            }
+          }
+        } catch (error) {
+          uiLog(`Failed to read from IndexedDB: ${error}`);
+          // Continue to API call if IndexedDB fails
+        }
+
+        // ============= STEP 3: Fetch from API =============
         set({ isLoading: true });
 
         const cursor = page > 1 ? ((page - 1) * itemsPerPage).toString() : undefined;
 
         try {
           const data = await apiSearchProducts(q, lang, itemsPerPage, cursor);
-
-          set((s) => ({
-            aggregatedProducts: data.products,
-            currentPage: page,
-            totalResults: data.total_count,
-            totalPages: Math.ceil(data.total_count / itemsPerPage),
-            multiQueryCache: {
-              ...s.multiQueryCache,
-              [cacheKey]: {
-                pageCache: {
-                  ...(cached?.pageCache ?? {}),
-                  [page]: data.products,
+          
+           //Only update lastQuery on SUCCESSFUL API response
+                           
+           useLastQueryStore.getState().setLastQuery(q, lang || "en");
+          // Update Zustand state
+          set((s) => {
+            const newState = {
+              aggregatedProducts: data.products,
+              currentPage: page,
+              totalResults: data.total_count,
+              totalPages: Math.ceil(data.total_count / itemsPerPage),
+              multiQueryCache: {
+                ...s.multiQueryCache,
+                [cacheKey]: {
+                  pageCache: {
+                    ...(cached?.pageCache ?? {}),
+                    [page]: data.products,
+                  },
+                  totalResults: data.total_count,
+                  updatedAt: Date.now(),
                 },
-                totalResults: data.total_count,
-                updatedAt: Date.now(),
               },
-            },
-            queryCacheKey: cacheKey,
-            isLoading: false,
-            hasFreshResults: true
-          }));
-        
+              queryCacheKey: cacheKey,
+              isLoading: false,
+              hasFreshResults: true
+            };
 
+            // ============= STEP 4: Save to IndexedDB in background =============
+            // Don't await - let it run in background
+            const updatedState = { ...s, ...newState };
+            syncCacheToIndexedDb(updatedState as State).catch(console.error);
+
+            return newState;
+          });
           freshResultsTimeout = setTimeout(() => {
             set({ hasFreshResults: false });
-            freshResultsTimeout = null; // clear reference
+            freshResultsTimeout = null;
           }, 1000);
 
         } catch (err: any) {
           set({ isLoading: false });
 
-  
           if (err?.code === 403 || err?.message === "SESSION_EXPIRED") {
             get().openSessionExpired();
             return;
@@ -337,18 +455,17 @@ export const useStore = create<State>()(
             return;
           }
 
-            // handle network error
+          // handle network error
           if (!err.response || err.code === "ERR_NETWORK" || err.message === "Network Error") {
             return;
           }
-
           // Other errors → notification
           addNotification({
             message: i18n.t("Error_Generic"),
             type: "error",
             duration: 5000,
           });
-          throw err; // optional: let dev tools see it
+          throw err;
         }
       },
 
@@ -356,14 +473,18 @@ export const useStore = create<State>()(
 
       multiQueryCache: {},
       queryCacheKey: "",
-      clearCache: () =>
+      clearCache: () => {
         set({
           multiQueryCache: {},
           aggregatedProducts: [],
           currentPage: 1,
           totalPages: 0,
           totalResults: 0,
-        }),
+        })
+        // Clear IndexedDB in background
+        indexedDbService.clearAll().catch(console.error);
+        uiLog("Cache cleared from both Zustand and IndexedDB");
+      },
 
       /* ================= OFFERS ================= */
 
@@ -374,7 +495,7 @@ export const useStore = create<State>()(
       openProduct: async (productId) => {
         const cached = get().productOffers[productId];
 
-        // Only trust cache if it has real offers
+        // ============= STEP 1: Check Zustand memory cache =============
         if (
           cached &&
           cached.offers.length > 0 &&
@@ -384,10 +505,39 @@ export const useStore = create<State>()(
           return;
         }
 
+        // ============= STEP 2: Check IndexedDB =============
+        try {
+          const indexedDbOffers = await indexedDbService.getOffers(productId);
+          
+          if (
+            indexedDbOffers && 
+            indexedDbOffers.offers.length > 0 && 
+            Date.now() - indexedDbOffers.fetchedAt < OFFERS_CACHE_TTL
+          ) {
+            // Restore to Zustand memory cache
+            set((s) => ({
+              productOffers: {
+                ...s.productOffers,
+                [productId]: {
+                  offers: indexedDbOffers.offers,
+                  fetchedAt: indexedDbOffers.fetchedAt,
+                  isError: false,
+                },
+              },
+              selectedProductId: productId,
+            }));
+            return;
+          }
+        } catch (error) {
+          uiLog(`Failed to read offers from IndexedDB: ${error}`);
+          // Continue to API call if IndexedDB fails
+        }
+
+        // ============= STEP 3: Fetch from API =============
         set({ isOffersLoading: true, selectedProductId: productId });
 
         try {
-          const data = await apiGetProductOffers(productId, true);
+          const data = await apiGetProductOffers(productId,true,get().query);
 
           // Defensive: server SHOULD always return offers
           if (!data.offers || data.offers.length === 0) {
@@ -407,27 +557,53 @@ export const useStore = create<State>()(
             return;
           }
 
-          //valid data → cache
-          set((s) => ({
-            productOffers: {
-              ...s.productOffers,
-              [productId]: {
-                offers: data.offers,
-                fetchedAt: Date.now(),
+          // ============= STEP 4: Update Zustand =============
+          set((s) => {
+            const newState = {
+              productOffers: {
+                ...s.productOffers,
+                [productId]: {
+                  offers: data.offers,
+                  fetchedAt: Date.now(),
+                  isError: false,
+                },
               },
-            },
-            isOffersLoading: false,
-          }));
+              isOffersLoading: false,
+            };
+
+            // ============= STEP 5: Save to IndexedDB in background =============
+            // Don't await - let it run in background
+            const updatedState = { ...s, ...newState };
+            syncCacheToIndexedDb(updatedState as State).catch(console.error);
+
+            return newState;
+          });
 
         } catch (err: any) {
           set({ isOffersLoading: false });
 
-          if (err?.message === "SESSION_EXPIRED" || err?.code === 403) {
+          if (err?.code === 403) {
             get().openSessionExpired();
+             set((s) => ({
+              productOffers: {
+                ...s.productOffers,
+                [productId]: {
+                  offers: [],
+                  fetchedAt: 0,
+                  isError: true,
+                  errorType: "generic",
+                },
+              },
+            }));
+               useNotificationStore.getState().addNotification({
+              message: i18n.t("Error_Generic"),
+              type: "error",
+              duration: 4000,
+            });
             return;
           }
 
-          if (err?.message === "TOO_MANY_REQUESTS" || err?.code === 429) {
+          if (err?.code === 429) {
             // show EMPTY UI but allow retry
             set((s) => ({
               productOffers: {
@@ -440,7 +616,6 @@ export const useStore = create<State>()(
                 },
               },
             }));
-
             useNotificationStore.getState().addNotification({
               message: i18n.t("Error_429"),
               type: "warning",
@@ -461,13 +636,15 @@ export const useStore = create<State>()(
                 },
               },
             }));
-            return;
-          }
-          useNotificationStore.getState().addNotification({
-            message: i18n.t("Error_Generic"),
-            type: "error",
+            useNotificationStore.getState().addNotification({
+            message: i18n.t("Error_Network"),
+            type: "info",
             duration: 5000,
           });
+            return;
+          }
+          
+          
         }
       },
       closeProduct: () => set({ selectedProductId: null }),
@@ -495,7 +672,7 @@ export const useStore = create<State>()(
 
       closeSessionExpired: () => set({ isSessionExpired: false }),
 
-
+        //Missleading naming 
       resetSessionData: () => {
         set({
           // search / cache
@@ -505,7 +682,7 @@ export const useStore = create<State>()(
           totalPages: 0,
           totalResults: 0,
           queryCacheKey: "",
-
+          query: "",
           // offers
           selectedProductId: null,
           productOffers: {},
@@ -515,10 +692,16 @@ export const useStore = create<State>()(
           selectedOffers: {},
         });
 
-        // 🔥 also wipe persisted sessionStorage
+        //also wipe persisted sessionStorage
         sessionStorage.removeItem("pricecomp-store");
+        //Also clear IndexedDB when session expires
+        indexedDbService.clearAll().catch(console.error);
+        uiLog("Session data cleared from Zustand, sessionStorage");
       },
+    
 
+
+      
       autocompleteResetToken: 0,
 
       triggerAutocompleteReset: () =>
@@ -539,7 +722,7 @@ export const useStore = create<State>()(
               : true,
         })),
     }),
-
+ 
     
     {
       name: "pricecomp-store",
@@ -555,3 +738,63 @@ export const useStore = create<State>()(
     }
   )
 );
+
+
+
+
+// ============= INDEXED DB SYNC HELPERS =============
+
+const syncCacheToIndexedDb = async (state: State) => {
+  try {
+    if (state.isOffline) return;
+    
+    // Sync product caches
+    const cacheEntries = Object.entries(state.multiQueryCache);
+    for (const [cacheKey, entry] of cacheEntries) {
+      if (!entry.pageCache || Object.keys(entry.pageCache).length === 0) continue;
+      
+      // Check timestamp - don't cache expired items
+      if (isExpired(entry.updatedAt)) continue;
+      
+      const validPageEntry = Object.entries(entry.pageCache).find(
+        ([_, products]) => products && products.length > 0
+      );
+      
+      if (validPageEntry) {
+        const [pageStr, products] = validPageEntry;
+        await indexedDbService.saveProducts(
+          cacheKey,
+          products,
+          parseInt(pageStr),
+          entry.totalResults,
+          entry.pageCache
+        );
+      }
+    }
+    
+    // Sync offers - STRICT filtering
+    const offerEntries = Object.entries(state.productOffers);
+    for (const [productId, offerEntry] of offerEntries) {
+      // NEVER cache if:
+      // - No offers
+      // - Empty offers array
+      // - isError = true
+      // - fetchedAt = 0 (error state)
+      // - Expired
+      if (!offerEntry.offers || 
+          offerEntry.offers.length === 0 || 
+          offerEntry.isError ||
+          offerEntry.fetchedAt === 0 ||
+          Date.now() - offerEntry.fetchedAt > OFFERS_CACHE_TTL) {
+        continue;
+      }
+      
+      await indexedDbService.saveOffers(productId, offerEntry.offers);
+    }
+    
+    state.setLastSyncTimestamp(Date.now());
+    
+  } catch (error) {
+    uiLog(`Failed to sync cache to IndexedDB: ${error}`);
+  }
+};

@@ -1,4 +1,4 @@
-const LOG_ENDPOINT = "http://localhost:5179/log";
+const LOG_ENDPOINT = "http://localhost:5179/ui-debug";
 
 /**
  * Send a log message to the Node logger.

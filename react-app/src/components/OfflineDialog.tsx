@@ -23,7 +23,6 @@ export default function OfflineDialog() {
     setOffline(false); // close dialog
     // try fetching again
     if (navigator.onLine) {
-      navigate("/", { replace: true });
     } else {
       // maybe keep dialog open or retry in few seconds
       setTimeout(() => {
@@ -38,7 +37,6 @@ export default function OfflineDialog() {
       if (navigator.onLine) {
         setOffline(false);
         clearInterval(interval);
-        navigate("/", { replace: true });
       } else {
         retriggerPulse();
       }
@@ -92,7 +90,7 @@ export default function OfflineDialog() {
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button
           onClick={handleConfirm}
-          variant="contained"
+          variant="text"
           color="primary"
           sx={{
             "&:hover": { backgroundColor: "primary.light" },

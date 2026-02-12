@@ -1,11 +1,11 @@
 import axios from "axios";
-import { uiLog } from "../webhook/client/sender"; // <-- import logger
-import i18n from "../i18n";
+import { uiLog } from "../webhook/client/uiDebug"; // <-- import logger
 // ---------------- Types ----------------
 import type { AggregatedProduct } from "../types/AggregatedProduct";
 import type { SearchResponse } from "../types/SearchResponse";
 import type { AutocompleteResponse } from "../types/AutocompleteResponse";
-import { useNotificationStore } from "../store/store";
+import i18n from "../i18n";
+
 
 // ---------------- Axios instance ----------------
 const api = axios.create({
@@ -41,7 +41,7 @@ export const searchProducts = async (
   uiLog(`api | searchProducts | request | query=${query} | lang=${lang} | limit=${limit} | cursor=${params.cursor}`);
 
   try {
-    const { data } = await api.get<SearchResponse>("/search/", { params, withCredentials: true });
+    const { data } = await api.get<SearchResponse>("/search/", { params });
    /*  if (Math.random() < 0.9) { // 30% chance
       const e = new Error("TOO_MANY_REQUESTS");
       //(e as any).code = 429;
@@ -75,10 +75,12 @@ export const searchProducts = async (
 export const getProductOffers = async (
   productId: string,
   full = true,
+  query: string,
   limit?: number,
   cursor?: string,
   retry429 = 0,
-  retry500 = 0
+  retry500 = 0,
+ 
 ): Promise<{
   offers: AggregatedProduct["offers"];
   has_more: boolean;
@@ -87,11 +89,10 @@ export const getProductOffers = async (
   const params: Record<string, any> = { full };
   if (limit) params.limit = limit;
   if (cursor) params.cursor = cursor;
-
+  if (query) params.query = query;
   try {
     const res = await api.get(`/product/${productId}/offers/`, {
-      params,
-      withCredentials: true,
+      params
     });
 
     const data = res?.data ?? {};
@@ -99,9 +100,9 @@ export const getProductOffers = async (
     // -----------------------------
     // FORCE 429 for first 3 retries
     // -----------------------------
-        /* if (Math.random() < 0.9) { // 30% chance
-      const e = new Error("TOO_MANY_REQUESTS");
-      //(e as any).code = 429;
+       /*  if (Math.random() < 0.5) { // 30% chance
+      const e = new Error("");
+      (e as any).code = 500;
       throw e;
     }  */
 
@@ -114,23 +115,39 @@ export const getProductOffers = async (
       next_cursor: data.next_cursor,
     };
   } catch (err: any) {
-    const status = err?.response?.status || (err.code === 429 ? 429 : undefined);
+
+    const status = err?.response?.status;
 
     if (status === 403) {
-      const e = new Error("SESSION_EXPIRED");
+      const e = new Error("");
       (e as any).code = 403;
       throw e;
-    }
+    } 
 
-    if (status === 429 && retry429 < 5) {
+    if (status === 429 && retry429 < 3) {
       uiLog(`getProductOffers | 429 detected, retrying #${retry429 + 1} in 5s`);
       await new Promise((r) => setTimeout(r, 5000));
-      return getProductOffers(productId, full, limit, cursor, retry429 + 1, retry500);
+      return getProductOffers(productId, full, query, limit, cursor, retry429 + 1, retry500);
+    }
+    if(retry429 >= 2)
+    {
+      retry429 = 0
+      const e = new Error("");
+      (e as any).code = 429;
+      throw e;
     }
 
     if (status === 500 && retry500 < 3) {
       await new Promise((r) => setTimeout(r, 1000 * (retry500 + 1)));
-      return getProductOffers(productId, full, limit, cursor, retry429, retry500 + 1);
+      return getProductOffers(productId, full, query, limit, cursor, retry429, retry500 + 1);
+    }
+
+     if(retry500 >= 2)
+    {
+      retry500 = 0
+      const e = new Error("");
+      (e as any).code = 500;
+      throw e;
     }
 
     throw err;

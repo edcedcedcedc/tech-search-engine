@@ -102,7 +102,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "layer1": "20/min",  # Layer1 clusters
         "layer2_preview": "20/min",  # Layer2 full=false
-        "layer2_full": "20/min",  # Layer2 full=true
+        "layer2_full": "30/min",  # Layer2 full=true
         "autocomplete": "120/min",
     },
 }
@@ -149,7 +149,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-SESSION_COOKIE_AGE = 30
+SESSION_COOKIE_AGE = 2147483647
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SECURE = False
 SESSION_COOKIE_HTTPONLY = True

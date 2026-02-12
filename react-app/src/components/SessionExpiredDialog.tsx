@@ -24,7 +24,6 @@ export default function SessionExpiredDialog() {
     resetSessionData();
     triggerAutocompleteReset();
     close();
-    navigate("/", { replace: true });
   };
 
   return (
@@ -56,7 +55,7 @@ export default function SessionExpiredDialog() {
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button
           onClick={handleConfirm}
-          variant="contained"
+          variant="text"
           color="primary"
           sx={{
             "&:hover": { backgroundColor: "primary.light" },

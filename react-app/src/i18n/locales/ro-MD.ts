@@ -1,10 +1,10 @@
 const roMD = {
   // Nav
   Home: "Acasă",
-  About: "Despre",
+  About: "Despre noi",
   Contact: "Contact",
   Select_Language: "Selectați limba",
-  Manage_Products: "Gestionează produsele",
+  Manage_Products: "Gestionează",
 
   // Hero
   Explore_tech_in_Moldova: 
@@ -289,14 +289,15 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
    
   Services_Disclaimer: "Toate serviciile depind de abonamente active și de seturile de date disponibile. Unele funcționalități pot suferi modificări",
 
-  Error_403: "Sesiunea a expirat(403)",
-  Error_404: "Resursa nu a fost găsită (404)",
-  Error_429: "Prea multe cereri. Te rugăm să încerci mai târziu(429)",
-  Error_500: "Eroare internă a serverului (500)",
-  Error_Generic: "A apărut o eroare neașteptată",
-  Error_Network_error: "Nu există conexiune la internet. Vă rugăm să verificați rețeaua.",
-
-
+  // error handling
+  Error_403: "Sesiunea a expirat (403).",
+  Error_404: "Resursa nu a fost găsită (404).",
+  Error_429: "Prea multe cereri. Vă rugăm să încercați din nou mai târziu (429).",
+  Error_500: "Eroare internă de server (500).",
+  Error_Generic: "A apărut o eroare neașteptată (GENERIC).",
+  Error_Network: "Eroare de rețea (NET ERR).",
+  Error_Network_error1: "Nu există conexiune la internet. Vă rugăm să verificați rețeaua.",
+  Generic_Drawer_Error_Message: "Îmi pare rău, închide sertarul și încearcă din nou.",
   Retry_Count: "Număr de reîncercări",
   Retrying_in: "Reîncercare în",
   Max_Retry_Exceeded: "Numărul maxim de reîncercări a fost depășit",
@@ -304,11 +305,11 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
   Error_403_Title: "Sesiunea a expirat",
   Error_403_Message1: "Sesiunea ta nu mai este validă în timpul încărcării ofertelor de produse.",
   Error_403_Message2: "Pentru a continua, trebuie să reîmprospătăm produsele și ofertele în cache.",
-  Refresh: "Reîmprospătează",
+  Refresh: "Reîncarca",
 
   Offline_Title: "Ești offline",
   Offline_Message1: "Se pare că conexiunea ta la internet a fost pierdută.",
-  Offline_Message2: "Apasă reîmprospătare pentru a reveni la pagina principală când conexiunea este restabilită."
+  Offline_Message2: "Încercă din nou după ce conexiunea este restabilită."
 };
 
 

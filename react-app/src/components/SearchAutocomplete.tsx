@@ -21,7 +21,7 @@ import { useNotificationStore, useStore } from "../store/store";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import type { Suggestion } from "../types/Suggestion";
-import { uiLog } from "../webhook/client/sender";
+import { uiLog } from "../webhook/client/uiDebug";
 
 export const SearchAutocomplete: React.FC = () => {
   const setQuery = useStore((s) => s.setQuery);
@@ -184,6 +184,12 @@ export const SearchAutocomplete: React.FC = () => {
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         placeholder={`${t("Search_product")}`}
+        inputProps={{
+          style: {
+            fontSize: "16px", // Prevents iOS zoom on focus
+            WebkitTextSizeAdjust: "100%", // Prevents text size adjustment
+          },
+        }}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">

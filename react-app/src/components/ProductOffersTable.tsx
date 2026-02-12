@@ -18,6 +18,7 @@ import {
   MenuItem,
   FormControlLabel,
   Checkbox,
+  Button,
 } from "@mui/material";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ViewColumnOutlinedIcon from "@mui/icons-material/ViewColumnOutlined";
@@ -28,7 +29,7 @@ import { Sparklines, SparklinesLine } from "react-sparklines";
 import { useState } from "react";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
-import { uiLog } from "../webhook/client/sender";
+import { uiLog } from "../webhook/client/uiDebug";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxOutlinedIcon from "@mui/icons-material/CheckBoxOutlined";
 import type { PriceTrendPreview } from "../types/PriceTrend";
@@ -391,7 +392,6 @@ export default function ProductOffersTable() {
         >
           {columnConfigs.map((column) => {
             // Skip inStock column for tiny screens in the menu too
-            if (column.key === "inStock" && isTinyScreen) return null;
 
             return (
               <MenuItem key={column.key} dense disableGutters>
@@ -434,7 +434,14 @@ export default function ProductOffersTable() {
         )}
 
         {!isLoading && offers && (
-          <Box sx={{ overflowX: "auto", overflowY: "auto", flexGrow: 1 }}>
+          <Box
+            sx={{
+              overflowX: "auto",
+              overflowY: "auto",
+              flexGrow: 1,
+              position: "relative",
+            }}
+          >
             <Table
               size={isVerySmallScreen ? "small" : "medium"}
               sx={{
@@ -562,7 +569,7 @@ export default function ProductOffersTable() {
                             return (
                               <TableCell
                                 key={columnKey}
-                                sx={{ width: 120, py: 1 }}
+                                sx={{ width: 90, py: 1 }}
                               >
                                 <Box
                                   onClick={(e) =>
@@ -668,12 +675,12 @@ export default function ProductOffersTable() {
                 `${from}-${to} ${t("of")} ${count}`
               }
               sx={{
-                // 🔒 HARD STOP horizontal sliding
+                // HARD STOP horizontal sliding
                 maxWidth: "100%",
                 overflowX: "hidden",
                 overflowY: "hidden",
 
-                // 👌 tiny-screen scale only
+                // tiny-screen scale only
                 transform: isTinyScreen ? "scale(0.85)" : "none",
                 transformOrigin: "right top",
 
@@ -709,6 +716,24 @@ export default function ProductOffersTable() {
             />
           </Box>
         )}
+        {isEmpty && (
+          <Box
+            sx={{
+              flexGrow: 1, // fill vertical space
+              display: "flex",
+              justifyContent: "center", // horizontal center
+              alignItems: "center", // vertical center
+              textAlign: "center",
+              gap: 1,
+              px: 2,
+              zIndex: 10,
+            }}
+          >
+            <Typography variant="body1" color="text.secondary">
+              {t("Generic_Drawer_Error_Message")}
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       <Popover
@@ -736,17 +761,24 @@ export default function ProductOffersTable() {
         <Box
           sx={{ p: 1, maxHeight: 250, overflowY: "auto", position: "relative" }}
         >
-          <Tooltip title={t("Tooltip_Trend")} arrow placement="top">
-            <InfoOutlinedIcon
-              fontSize="small"
+          <Tooltip
+            title={t("Tooltip_Trend")}
+            arrow
+            placement="top"
+            enterTouchDelay={0}
+            leaveTouchDelay={6000}
+          >
+            <IconButton
+              size="small"
               sx={{
                 position: "absolute",
                 top: 4,
                 right: 4,
-                p: 0.2,
-                mt: 0.25,
+                p: 0.25,
               }}
-            />
+            >
+              <InfoOutlinedIcon fontSize="small" />
+            </IconButton>
           </Tooltip>
 
           <Table size="small">
@@ -779,47 +811,19 @@ export default function ProductOffersTable() {
           </Table>
           <Typography
             variant="body2"
-            sx={{ mt: 0.1, fontStyle: "normal", lineHeight: 1.4 }}
-            color="text.disabled"
+            sx={{
+              mt: 1,
+              fontStyle: "normal",
+              lineHeight: 1.4,
+              fontWeight: 500,
+            }}
+            color="text.secondary"
           >
             {selectedPriceHistory?.hidden_price_trend_count}{" "}
             {t("Tooltip_Trend2")}
           </Typography>
         </Box>
       </Popover>
-      {isEmpty && (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            p: 4,
-            gap: 1,
-            flexGrow: 1,
-          }}
-        >
-          <Typography variant="body1" color="text.secondary">
-            {errorType === "429"
-              ? t("Error_429")
-              : errorType === "network"
-                ? t("Error_Network")
-                : t("No_Offers_Available")}
-          </Typography>
-
-          <Typography
-            variant="body2"
-            color="text.disabled"
-            sx={{ cursor: "pointer" }}
-            onClick={() =>
-              selectedProductId &&
-              useStore.getState().openProduct(selectedProductId)
-            }
-          >
-            {t("Retry")}
-          </Typography>
-        </Box>
-      )}
     </Drawer>
   );
 }
