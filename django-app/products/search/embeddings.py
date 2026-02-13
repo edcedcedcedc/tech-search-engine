@@ -9,13 +9,15 @@ import environ
 from products.utils import embeddings_cache
 from unidecode import unidecode
 import numpy as np
+from products.search.config import SEMANTIC_PRODUCT_FILTER
+
 
 env = environ.Env()
 environ.Env.read_env()
 client = OpenAI(api_key=env("OPENAI_API_KEY"))
 
 
-def semantic_filter_products(query_embedding, top_n=500):
+def semantic_filter_products(query_embedding, top_n=SEMANTIC_PRODUCT_FILTER):
     """Retrieve top products by cosine similarity using preloaded embeddings."""
 
     waited = 0

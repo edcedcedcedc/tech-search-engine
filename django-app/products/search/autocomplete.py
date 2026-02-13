@@ -2,7 +2,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from products.utils.es_index import es, INDEX_NAME
-from products.search.config import AUTOCOMPLETE_LIMIT
+from products.search.config import AUTOCOMPLETE_SUGGESTION_LIMIT
 
 
 class AutocompleteAPIView(APIView):
@@ -26,7 +26,7 @@ class AutocompleteAPIView(APIView):
         query = user_input.lower().strip()
 
         hybrid_query = {
-            "size": AUTOCOMPLETE_LIMIT,
+            "size": AUTOCOMPLETE_SUGGESTION_LIMIT,
             "query": {
                 "bool": {
                     "should": [
@@ -60,4 +60,4 @@ class AutocompleteAPIView(APIView):
         ]
 
         # Return top N
-        return results[:AUTOCOMPLETE_LIMIT]
+        return results[:AUTOCOMPLETE_SUGGESTION_LIMIT]
