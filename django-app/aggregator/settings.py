@@ -100,9 +100,9 @@ REST_FRAMEWORK = {
         "products.throttles.Layer1Throttle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "layer1": "20/min",  # Layer1 clusters
+        "layer1": "500/min",  # Layer1 clusters
         "layer2_preview": "20/min",  # Layer2 full=false
-        "layer2_full": "30/min",  # Layer2 full=true
+        "layer2_full": "1000/min",  # Layer2 full=true
         "autocomplete": "120/min",
     },
 }

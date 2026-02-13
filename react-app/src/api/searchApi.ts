@@ -26,7 +26,8 @@ export const searchProducts = async (
   lang?: string,
   limit?: number,
   cursor?: string,
-  offset?: number
+  offset?: number,
+  options?: { signal?: AbortSignal } 
 ): Promise<SearchResponse> => {
   const params: Record<string, any> = { q: query };
   if (lang) params.lang = lang;
@@ -41,7 +42,7 @@ export const searchProducts = async (
   uiLog(`api | searchProducts | request | query=${query} | lang=${lang} | limit=${limit} | cursor=${params.cursor}`);
 
   try {
-    const { data } = await api.get<SearchResponse>("/search/", { params });
+    const { data } = await api.get<SearchResponse>("/search/", { params,   signal: options?.signal });
    /*  if (Math.random() < 0.9) { // 30% chance
       const e = new Error("TOO_MANY_REQUESTS");
       //(e as any).code = 429;
@@ -80,6 +81,7 @@ export const getProductOffers = async (
   cursor?: string,
   retry429 = 0,
   retry500 = 0,
+  options?: { signal?: AbortSignal } 
  
 ): Promise<{
   offers: AggregatedProduct["offers"];
@@ -92,7 +94,8 @@ export const getProductOffers = async (
   if (query) params.query = query;
   try {
     const res = await api.get(`/product/${productId}/offers/`, {
-      params
+      params,
+      signal: options?.signal
     });
 
     const data = res?.data ?? {};
@@ -118,6 +121,14 @@ export const getProductOffers = async (
 
     const status = err?.response?.status;
 
+
+    if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') {
+      const e = new Error("REQUEST_ABORTED");
+      (e as any).code = "ABORTED";
+      throw e;
+    }
+    
+    
     if (status === 403) {
       const e = new Error("");
       (e as any).code = 403;
@@ -127,7 +138,7 @@ export const getProductOffers = async (
     if (status === 429 && retry429 < 3) {
       uiLog(`getProductOffers | 429 detected, retrying #${retry429 + 1} in 5s`);
       await new Promise((r) => setTimeout(r, 5000));
-      return getProductOffers(productId, full, query, limit, cursor, retry429 + 1, retry500);
+     return getProductOffers(productId, full, query, limit, cursor, retry429 + 1, retry500, options);
     }
     if(retry429 >= 2)
     {
@@ -139,7 +150,7 @@ export const getProductOffers = async (
 
     if (status === 500 && retry500 < 3) {
       await new Promise((r) => setTimeout(r, 1000 * (retry500 + 1)));
-      return getProductOffers(productId, full, query, limit, cursor, retry429, retry500 + 1);
+        return getProductOffers(productId, full, query, limit, cursor, retry429, retry500 + 1, options);
     }
 
      if(retry500 >= 2)

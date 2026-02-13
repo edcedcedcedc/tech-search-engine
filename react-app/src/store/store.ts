@@ -7,6 +7,7 @@ import { searchProducts as apiSearchProducts } from "../api/searchApi";
 import i18n from "../i18n";
 import { t } from "i18next";
 import { indexedDbService } from "../services/indexedDb";
+import { prefetchService } from "../services/prefetch";
 
 
 
@@ -305,7 +306,7 @@ export const useStore = create<State>()(
       searchProducts: async (query, lang, page = 1) => {
 
          // Save current query input value
-          if (query) {
+        if (query) {
             set({ query: query,  });  // ← ONLY update query, NOT lastQuery
           }
 
@@ -390,9 +391,40 @@ export const useStore = create<State>()(
 
         try {
           const data = await apiSearchProducts(q, lang, itemsPerPage, cursor);
+
           
-           //Only update lastQuery on SUCCESSFUL API response
-                           
+
+
+           //TRIGGER PREFETCH HERE - fire and forget!
+          const productIds = data.products
+            .map(p => p.id)
+            .filter(Boolean); 
+            if (productIds.length > 0 && !get().isOffline) {
+                // Don't await - background prefetch starts immediately
+                prefetchService.addToQueue(productIds,q);
+              }
+
+             // In your store's searchProducts method, after successful API response:
+            if (data.total_count > page * itemsPerPage && !get().isOffline) {
+              // Calculate how many pages actually exist
+              const totalPages = Math.ceil(data.total_count / itemsPerPage);
+              const remainingPages = totalPages - page;
+              
+              // Only prefetch up to 2 pages, but don't exceed remaining pages
+              const pagesToPrefetch = Math.min(2, remainingPages);
+              
+              if (pagesToPrefetch > 0) {
+                prefetchService.prefetchNextPages(
+                  q, 
+                  lang || 'en', 
+                  page, 
+                  itemsPerPage, 
+                  pagesToPrefetch
+                );
+              }
+            }
+
+           //Only update lastQuery on SUCCESSFUL API response                     
            useLastQueryStore.getState().setLastQuery(q, lang || "en");
           // Update Zustand state
           set((s) => {

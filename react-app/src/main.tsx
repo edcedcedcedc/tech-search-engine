@@ -8,10 +8,13 @@ import App from "./App";
 import "./i18n";
 import { indexedDbService } from "./services/indexedDb";
 import { uiLog } from "./webhook/client/uiDebug";
+import { usePrefetch } from "./hooks/usePrefetch";
 
 const Root = () => {
   const mode = useThemeStore((state) => state.mode);
   const theme = useMemo(() => getTheme(mode), [mode]);
+
+  usePrefetch();
 
   // Colors for both modes
   const colors = {
