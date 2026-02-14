@@ -159,6 +159,44 @@ class IndexedDbService {
     await this.clearOffers();
     dbDebug.clearAll(); // <-- ADD THIS
   }
+    //needed for updates
+    async getAllProductKeys(): Promise<string[]> {
+    await this.ensureDb();
+    const tx = this.db!.transaction('products', 'readonly');
+    const store = tx.objectStore('products');
+    const keys = await store.getAllKeys();
+    await tx.done;
+    return keys;
+  }
+
+  async getAllOfferKeys(): Promise<string[]> {
+    await this.ensureDb();
+    const tx = this.db!.transaction('offers', 'readonly');
+    const store = tx.objectStore('offers');
+    const keys = await store.getAllKeys();
+    await tx.done;
+    return keys;
+  }
+
+  // ============= GET COUNTS =============
+  async getProductsCount(): Promise<number> {
+    await this.ensureDb();
+    const tx = this.db!.transaction('products', 'readonly');
+    const store = tx.objectStore('products');
+    const count = await store.count();
+    await tx.done;
+    return count;
+  }
+
+  async getOffersCount(): Promise<number> {
+    await this.ensureDb();
+    const tx = this.db!.transaction('offers', 'readonly');
+    const store = tx.objectStore('offers');
+    const count = await store.count();
+    await tx.done;
+    return count;
+  }
+
 }
 
 export const indexedDbService = new IndexedDbService();

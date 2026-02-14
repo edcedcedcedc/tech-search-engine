@@ -6,6 +6,7 @@ export DJANGO_ENV=development  # Linux/Mac
 from pathlib import Path
 import environ
 import os
+from products.search.config import CACHE_TTL_LAYER1
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -18,6 +19,17 @@ environ.Env.read_env(os.path.join(BASE_DIR, env_file))
 
 DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY")
+
+
+# ------------------------
+# Session / Cookies
+# ------------------------
+SESSION_ENGINE = "django.contrib.sessions.backends.db"  # store sessions in DB
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # keep sessions after browser closes
+SESSION_COOKIE_AGE = 2147483647  # huge age (max int), basically persistent
+SESSION_COOKIE_SAMESITE = "Lax"  # prevents CSRF in cross-site requests
+SESSION_COOKIE_SECURE = False  # True if using HTTPS in production
+SESSION_COOKIE_HTTPONLY = True  # JS cannot read the cookie
 
 if not SECRET_KEY:
     raise RuntimeError(
@@ -198,4 +210,30 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
     "fanout_prefix": True,
     "fanout_patterns": True,
     "queue_order_strategy": "priority",
+}
+
+
+""" CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "django_cache_table",
+        "TIMEOUT": CACHE_TTL_LAYER1,  # Uses your 24h setting
+        "OPTIONS": {
+            "MAX_ENTRIES": 10000,  # Prevent unlimited growth
+            "CULL_FREQUENCY": 3,  # Remove 1/3 entries when max reached
+        },
+    }
+}
+
+ """
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "layer1_cache",  # just a name for isolation
+        "TIMEOUT": CACHE_TTL_LAYER1,
+        "OPTIONS": {
+            "MAX_ENTRIES": 10000,
+        },
+    }
 }

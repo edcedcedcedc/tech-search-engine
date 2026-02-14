@@ -2,6 +2,7 @@ import random
 import threading
 import time
 from celery import shared_task
+from products.search.versioning import bump_global_search_version
 
 
 @shared_task(name="reset_logs")
@@ -475,6 +476,19 @@ def run_build_autocomplete_index():
     indexer = AutocompleteIndexBuilder()
     indexer.build_index()
     autocomplete_log("[TASK] Autocomplete index rebuild finished.")
+
+
+@shared_task(name="run_bump_search_version")
+def run_bump_search_version():
+    """
+    Increment the global search version cache key.
+    Use this after a crawler / normalization / merge pipeline run.
+    """
+    from products.utils.log.versioning_log import versioning_log
+
+    new_version = bump_global_search_version()
+    versioning_log(f"[TASK] Global search version bumped to {new_version}")
+    return new_version
 
 
 @shared_task(name="debug_test_task")

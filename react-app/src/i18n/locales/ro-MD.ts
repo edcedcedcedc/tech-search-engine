@@ -294,6 +294,7 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
   Error_404: "Resursa nu a fost găsită (404).",
   Error_429: "Prea multe cereri. Vă rugăm să încercați din nou mai târziu (429).",
   Error_500: "Eroare internă de server (500).",
+  Error_0: "Anulat(0).",
   Error_Generic: "A apărut o eroare neașteptată (GENERIC).",
   Error_Network: "Eroare de rețea (NET ERR).",
   Error_Network_error1: "Nu există conexiune la internet. Vă rugăm să verificați rețeaua.",

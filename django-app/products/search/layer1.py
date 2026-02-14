@@ -15,6 +15,7 @@ from products.search.utils import apply_relevance_cutoff_sigmoid
 from products.search.identity import identity_resolution
 from products.search.config import LAYER1_LIMIT, CACHE_TTL_LAYER1
 from products.serializers import AggregatedProductSerializer
+from products.search.versioning import get_global_search_version
 
 
 def get_layer1_cache_key(query: str) -> str:
@@ -28,10 +29,14 @@ class SearchAPIView(APIView):
 
     def get(self, request):
         try:
+            current_version = get_global_search_version()
             raw_query = request.GET.get("q", "").strip()
             limit = min(int(request.GET.get("limit", LAYER1_LIMIT)), LAYER1_LIMIT)
             cursor = request.GET.get("cursor")
             offset = int(cursor) if cursor and cursor.isdigit() else 0
+
+            request.session["search_version"] = current_version
+            request.session.modified = True
 
             if not raw_query:
                 request.session["aggregated_cache"] = None

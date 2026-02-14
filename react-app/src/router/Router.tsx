@@ -1,7 +1,8 @@
 import React, { Suspense, lazy } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { Box, CircularProgress } from "@mui/material";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
+
 import LandingPage from "../views/Landing";
 import ErrorBoundary from "../components/ErrorBoundary";
 
@@ -15,23 +16,12 @@ const Source = lazy(() => import("../views/Source"));
 const TermsOfUse = lazy(() => import("../views/TermsOfUse"));
 const Services = lazy(() => import("../views/Services"));
 
-const PageWrapper = ({ children }: { children: React.ReactNode }) => (
-  <motion.div
-    initial={{ opacity: 0, x: 50 }}
-    animate={{ opacity: 1, x: 0 }}
-    exit={{ opacity: 0, x: -50 }}
-    transition={{ duration: 0.25 }}
-    style={{ width: "100%" }}
-  >
-    {" "}
-    {children}{" "}
-  </motion.div>
-);
+const AppRoutes: React.FC = () => {
+  const location = useLocation();
 
-const AppRoutes: React.FC<any> = () => {
   return (
     <ErrorBoundary>
-      <Box sx={{ position: "relative" }}>
+      <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
         <Suspense
           fallback={
             <Box
@@ -46,8 +36,8 @@ const AppRoutes: React.FC<any> = () => {
             </Box>
           }
         >
-          <AnimatePresence mode="sync">
-            <Routes>
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
               <Route path="/" element={<Home />} />
               <Route path="/landing" element={<LandingPage />} />
               <Route path="/disclaimer" element={<Disclaimer />} />
@@ -57,7 +47,6 @@ const AppRoutes: React.FC<any> = () => {
               <Route path="/source" element={<Source />} />
               <Route path="/terms-of-use" element={<TermsOfUse />} />
               <Route path="/products" element={<Products />} />
-              {/*  <Route path="*" element={<Navigate to="/landing" replace />} />*/}
               <Route path="/services" element={<Services />} />
             </Routes>
           </AnimatePresence>

@@ -8,7 +8,7 @@ class PrefetchService {
   private queue: Set<string> = new Set();
   private queryContext: Map<string, string> = new Map(); // Store query per product
   private isProcessing = false;
-  private maxConcurrent = 50;
+  private maxConcurrent = 10;
   private abortControllers: Map<string, AbortController> = new Map();
 
   // Product queue for prefetching product pages
@@ -194,10 +194,10 @@ class PrefetchService {
 
         uiLog(`[Prefetch] Cached product page: ${cacheKey} (${data.products.length} products)`);
 
-        // Prefetch offers...
-        const productIds = data.products
-          .map(p => p.id)
-          .filter(Boolean);
+  
+          //prefetch half of the view
+          const halfProducts = data.products.slice(0, Math.ceil(data.products.length / 2));
+          const productIds = halfProducts.map(p => p.id).filter(Boolean);
         
         if (productIds.length > 0) {
           this.addToQueue(productIds, params.query);

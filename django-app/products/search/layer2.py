@@ -6,6 +6,7 @@ from products.utils.log.search_engine_log import search_engine_log
 from products.search.score_offer import score_offers_for_product
 from products.search.config import LAYER2_LIMIT, LAYER3_LIMIT, CACHE_TTL_LAYER2
 from rest_framework.views import APIView
+from products.search.versioning import get_global_search_version
 
 
 def get_layer1_cache_key(query: str) -> str:
@@ -51,6 +52,16 @@ class ProductOffersAPIView(APIView):
 
             # Find product in Layer1 cache
             layer1_cache_key = get_layer1_cache_key(query)
+
+            current_version = get_global_search_version()
+            session_version = request.session.get("search_version")
+
+            if session_version != current_version:
+                return Response(
+                    {"error": "Search data outdated. Please refresh search."},
+                    status=403,
+                )
+
             aggregated = cache.get(layer1_cache_key)
 
             if not aggregated:

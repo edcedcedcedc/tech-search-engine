@@ -10,6 +10,7 @@ const BASE_DIR = process.cwd();
 const LOG_DIR = path.join(BASE_DIR, "logs");
 const LOG_FILE = path.join(LOG_DIR, "ui-search.log");
 const DB_LOG_FILE = path.join(LOG_DIR, "db-debug.log");
+const SYNC_LOG_FILE = path.join(LOG_DIR, "sync-debug.log"); // New sync log file
 
 if (!fs.existsSync(LOG_DIR)) {
   fs.mkdirSync(LOG_DIR, { recursive: true });
@@ -23,6 +24,11 @@ function writeLog(msg: string) {
 function writeDbLog(msg: string) {
   const ts = new Date().toISOString().replace("T", " ").slice(0, 23);
   fs.appendFileSync(DB_LOG_FILE, `[${ts}] ${msg}\n`, "utf-8");
+}
+
+function writeSyncLog(msg: string) {
+  const ts = new Date().toISOString().replace("T", " ").slice(0, 23);
+  fs.appendFileSync(SYNC_LOG_FILE, `[${ts}] ${msg}\n`, "utf-8");
 }
 
 const server = http.createServer((req, res) => {
@@ -58,7 +64,7 @@ const server = http.createServer((req, res) => {
       else if (req.url === "/db-debug") {
         writeDbLog(msg);
         
-        // Also pretty print to console with colors
+        // Pretty print to console with colors
         try {
           const data = JSON.parse(msg);
           
@@ -126,6 +132,144 @@ const server = http.createServer((req, res) => {
         
         res.end("ok");
       }
+      else if (req.url === "/sync-debug") {
+        writeSyncLog(msg);
+        
+        // Pretty print to console with colors for sync operations
+        try {
+          const data = JSON.parse(msg);
+          
+          // Color-code by operation type
+          let color = '\x1b[36m'; // cyan default
+          let symbol = '🔄';
+          
+          // Sync lifecycle
+          switch (data.operation) {
+            // Lifecycle
+            case 'SYNC_STARTED':
+              color = '\x1b[36m'; // cyan
+              symbol = '🚀';
+              break;
+            case 'SYNC_COMPLETED':
+              color = '\x1b[32m'; // green
+              symbol = '✅';
+              break;
+            case 'SYNC_FAILED':
+              color = '\x1b[31m'; // red
+              symbol = '❌';
+              break;
+            case 'SYNC_CANCELLED':
+              color = '\x1b[33m'; // yellow
+              symbol = '⏹️';
+              break;
+            
+            // Query level
+            case 'QUERY_STARTED':
+              color = '\x1b[36m'; // cyan
+              symbol = '🔍';
+              break;
+            case 'QUERY_COMPLETED':
+              color = '\x1b[32m'; // green
+              symbol = '📊';
+              break;
+            case 'QUERY_FAILED':
+              color = '\x1b[31m'; // red
+              symbol = '⚠️';
+              break;
+            
+            // Page level
+            case 'PAGE_FETCHED':
+              color = '\x1b[34m'; // blue
+              symbol = '📄';
+              break;
+            case 'PAGE_FAILED':
+              color = '\x1b[31m'; // red
+              symbol = '📄❌';
+              break;
+            
+            // Offer level
+            case 'OFFER_PREFETCH_STARTED':
+              color = '\x1b[35m'; // magenta
+              symbol = '💰';
+              break;
+            case 'OFFER_FETCHED':
+              color = '\x1b[32m'; // green
+              symbol = '💵';
+              break;
+            case 'OFFER_FAILED':
+              color = '\x1b[31m'; // red
+              symbol = '💵❌';
+              break;
+            
+            // IndexedDB
+            case 'DB_CLEARED':
+              color = '\x1b[33m'; // yellow
+              symbol = '🧹';
+              break;
+            case 'PRODUCTS_SAVED':
+              color = '\x1b[34m'; // blue
+              symbol = '💾';
+              break;
+            case 'OFFERS_SAVED':
+              color = '\x1b[34m'; // blue
+              symbol = '💾';
+              break;
+            
+            // Dialog
+            case 'DIALOG_OPENED':
+              color = '\x1b[36m'; // cyan
+              symbol = '🗣️';
+              break;
+            case 'DIALOG_CLOSED':
+              color = '\x1b[33m'; // yellow
+              symbol = '👋';
+              break;
+            
+            // Errors
+            case 'RATE_LIMITED':
+              color = '\x1b[33m'; // yellow
+              symbol = '⏳';
+              break;
+            case 'NETWORK_ERROR':
+              color = '\x1b[31m'; // red
+              symbol = '🌐❌';
+              break;
+          }
+          
+          const timestamp = new Date().toLocaleTimeString();
+          console.log(`${color}${symbol} [SYNC]${'\x1b[0m'} ${timestamp} - ${data.operation}`);
+          
+          // Pretty print details
+          if (data.details) {
+            Object.entries(data.details).forEach(([key, value]) => {
+              if (key === 'productIds' && Array.isArray(value)) {
+                console.log(`   ${key}: [${value.slice(0, 3).join(', ')}${value.length > 3 ? '...' : ''}] (${value.length} total)`);
+              } else if (key === 'pages' && Array.isArray(value)) {
+                console.log(`   ${key}: pages ${value.join(', ')}`);
+              } else {
+                console.log(`   ${key}: ${value}`);
+              }
+            });
+          }
+          
+          // Print error if present
+          if (data.error) {
+            console.log(`   ❌ Error: ${data.error.message || JSON.stringify(data.error)}`);
+            if (data.error.code) console.log(`   📟 Code: ${data.error.code}`);
+            if (data.error.response?.status) {
+              console.log(`   📡 HTTP: ${data.error.response.status} ${data.error.response.statusText}`);
+            }
+          }
+          
+          console.log(''); // empty line
+          
+        } catch (e) {
+          // If not JSON, just log raw
+          console.log(`[SYNC] ${msg}`);
+        }
+        
+        res.end("ok");
+      }
       else {
         res.statusCode = 404;
         res.end("not found");
@@ -141,5 +285,6 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   console.log(`\n🚀 UI Logger running on http://localhost:${PORT}`);
   console.log(`📝 UI Log: ${LOG_FILE}`);
-  console.log(`🗄️  DB Log: ${DB_LOG_FILE}\n`);
+  console.log(`🗄️  DB Log: ${DB_LOG_FILE}`);
+  console.log(`🔄 Sync Log: ${SYNC_LOG_FILE}\n`);
 });

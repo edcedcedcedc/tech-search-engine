@@ -7,6 +7,7 @@ import { Meta } from "./components/Meta";
 import { scrollableScrollbar } from "./styles/scrollbar";
 import AppOverlays from "./components/Overlays";
 import NotificationsContainer from "./components/NotificationContainer";
+import Test from "./components/test";
 
 function App() {
   const theme = useTheme();
@@ -37,7 +38,7 @@ function App() {
           >
             <Header />
           </Box>
-
+          <Test />
           {/* Main layout with vertical header + content */}
           <Box
             sx={{
@@ -62,7 +63,10 @@ function App() {
                   easing: theme.transitions.easing.sharp,
                   duration: theme.transitions.duration.standard,
                 }),
-                pb: theme.spacing(12.5),
+                pb: {
+                  xs: theme.spacing(1),
+                  xl: theme.spacing(12.5),
+                },
                 position: "relative",
                 ...scrollableScrollbar(theme),
               }}

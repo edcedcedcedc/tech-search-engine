@@ -77,6 +77,7 @@ PIPELINE_STEPS_ENABLED = {
     "price_history_prod": True,
     "load_embeddings_cache": True,
     "es_autocomplete_index": True,
+    "bump_search_version": True,
 }
 
 
@@ -106,6 +107,7 @@ def run_full_pipeline():
         run_price_history_default,
         run_load_embeddings_cache,
         run_build_autocomplete_index,
+        run_bump_search_version,
     )
 
     workflow_steps = []
@@ -142,6 +144,9 @@ def run_full_pipeline():
 
     if PIPELINE_STEPS_ENABLED.get("es_autocomplete_index"):
         workflow_steps.append(run_build_autocomplete_index.si())
+
+    if PIPELINE_STEPS_ENABLED.get("bump_search_version"):
+        workflow_steps.append(run_bump_search_version.si())
 
     if not workflow_steps:
         return "No pipeline steps enabled. Nothing queued."

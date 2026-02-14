@@ -123,8 +123,8 @@ export const getProductOffers = async (
 
 
     if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') {
-      const e = new Error("REQUEST_ABORTED");
-      (e as any).code = "ABORTED";
+      const e = new Error("");
+      (e as any).code = 0
       throw e;
     }
     
@@ -135,13 +135,20 @@ export const getProductOffers = async (
       throw e;
     } 
 
+
+     if (status === 404) {
+      const e = new Error("");
+      (e as any).code = 403;
+      throw e;
+    } 
+
     if (status === 429 && retry429 < 3) {
       uiLog(`getProductOffers | 429 detected, retrying #${retry429 + 1} in 5s`);
       await new Promise((r) => setTimeout(r, 5000));
      return getProductOffers(productId, full, query, limit, cursor, retry429 + 1, retry500, options);
     }
-    if(retry429 >= 2)
-    {
+
+    if(retry429 >= 2){
       retry429 = 0
       const e = new Error("");
       (e as any).code = 429;
@@ -153,8 +160,7 @@ export const getProductOffers = async (
         return getProductOffers(productId, full, query, limit, cursor, retry429, retry500 + 1, options);
     }
 
-     if(retry500 >= 2)
-    {
+     if(retry500 >= 2){
       retry500 = 0
       const e = new Error("");
       (e as any).code = 500;

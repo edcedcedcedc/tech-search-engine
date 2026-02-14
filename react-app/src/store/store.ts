@@ -10,12 +10,11 @@ import { indexedDbService } from "../services/indexedDb";
 import { prefetchService } from "../services/prefetch";
 
 
-
-
 interface LastQueryState {
   lastQuery: string | null;
   lastQueryLang: string;
-  setLastQuery: (query: string, lang?: string) => void;
+  lastPage: number;  
+  setLastQuery: (query: string, lang?: string, page?: number) => void;
   clearLastQuery: () => void;
 }
 
@@ -24,9 +23,10 @@ export const useLastQueryStore = create<LastQueryState>()(
     (set) => ({
       lastQuery: null,
       lastQueryLang: "en",
-      setLastQuery: (query, lang = "en") => 
-        set({ lastQuery: query, lastQueryLang: lang }),
-      clearLastQuery: () => set({ lastQuery: null, lastQueryLang: "en" }),
+      lastPage: 1,
+      setLastQuery: (query, lang = "en", page = 1) => 
+        set({ lastQuery: query, lastQueryLang: lang, lastPage: page }),
+      clearLastQuery: () => set({ lastQuery: null, lastQueryLang: "en", lastPage: 1 }),
     }),
     {
       name: "last-query-store",
@@ -34,7 +34,6 @@ export const useLastQueryStore = create<LastQueryState>()(
     }
   )
 );
-
 
 
 
@@ -191,10 +190,14 @@ interface ProductOffersEntry {
 
 interface State {
   
-
+  //
+  debugShowSessionExpired: boolean;
+  setDebugShowSessionExpired: (show: boolean) => void;
+  
   // Add to your store (inside create)
-
- 
+   globalInvalidationTimestamp: number; // When backend last resynced
+  setGlobalInvalidationTimestamp: (timestamp: number) => void;
+  
 
   /* ================= INDEXED DB SYNC ================= */
   isSyncingFromIndexedDb: boolean;
@@ -277,6 +280,16 @@ let freshResultsTimeout: ReturnType<typeof setTimeout> | null = null;
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
+
+      //
+      debugShowSessionExpired: false,
+      setDebugShowSessionExpired: (show) => set({ debugShowSessionExpired: show }),
+      
+      //global timestamp 
+      globalInvalidationTimestamp: 0,
+      setGlobalInvalidationTimestamp: (timestamp) => 
+        set({ globalInvalidationTimestamp: timestamp }),
+
       // index db
       isSyncingFromIndexedDb: false,
       lastSyncTimestamp: 0,
@@ -304,11 +317,10 @@ export const useStore = create<State>()(
       setIsLoading: (v) => set({ isLoading: v }),
 
       searchProducts: async (query, lang, page = 1) => {
-
-         // Save current query input value
         if (query) {
             set({ query: query,  });  // ← ONLY update query, NOT lastQuery
           }
+          uiLog(`Search products=${query}`);
 
         if (freshResultsTimeout) {
           clearTimeout(freshResultsTimeout);
@@ -319,7 +331,6 @@ export const useStore = create<State>()(
 
         if (!q) return;
 
-
         const cacheKey = generateCacheKey(q, lang);
         const { multiQueryCache, itemsPerPage } = get();
         const addNotification = useNotificationStore.getState().addNotification;
@@ -327,7 +338,7 @@ export const useStore = create<State>()(
         // ============= STEP 1: Check Zustand memory cache =============
         const cached = multiQueryCache[cacheKey];
         if (cached && !isExpired(cached.updatedAt)) {
-          useLastQueryStore.getState().setLastQuery(q, lang || "en");
+          useLastQueryStore.getState().setLastQuery(q, lang || "en", page);
           const pageData = cached.pageCache[page];
           if (pageData) {
             set({
@@ -347,11 +358,9 @@ export const useStore = create<State>()(
           if (indexedDbCache && !isExpired(indexedDbCache.updatedAt)) {
             const pageData = indexedDbCache.pageCache[page];
             if (pageData && pageData.length > 0) {
-                   
-                   
                   //always decode q and lang when cached as well as in api call
                   const [q, lang] = cacheKey.split("-")
-                  useLastQueryStore.getState().setLastQuery(q, lang || "en");
+                  useLastQueryStore.getState().setLastQuery(q, lang || "en", page);
 
               // Restore to Zustand memory cache
               set((s) => ({
@@ -392,9 +401,6 @@ export const useStore = create<State>()(
         try {
           const data = await apiSearchProducts(q, lang, itemsPerPage, cursor);
 
-          
-
-
            //TRIGGER PREFETCH HERE - fire and forget!
           const productIds = data.products
             .map(p => p.id)
@@ -425,7 +431,7 @@ export const useStore = create<State>()(
             }
 
            //Only update lastQuery on SUCCESSFUL API response                     
-           useLastQueryStore.getState().setLastQuery(q, lang || "en");
+           useLastQueryStore.getState().setLastQuery(q, lang || "en", page);
           // Update Zustand state
           set((s) => {
             const newState = {
@@ -462,7 +468,7 @@ export const useStore = create<State>()(
           }, 1000);
 
         } catch (err: any) {
-          set({ isLoading: false });
+         
 
           if (err?.code === 403 || err?.message === "SESSION_EXPIRED") {
             get().openSessionExpired();
@@ -498,6 +504,8 @@ export const useStore = create<State>()(
             duration: 5000,
           });
           throw err;
+        }finally{
+           set({ isLoading: false });
         }
       },
 
@@ -526,13 +534,13 @@ export const useStore = create<State>()(
 
       openProduct: async (productId) => {
         const cached = get().productOffers[productId];
+        prefetchService.removeFromQueue([productId]);
+
+        uiLog(`[openProduct] START for productId=${productId}`);
 
         // ============= STEP 1: Check Zustand memory cache =============
-        if (
-          cached &&
-          cached.offers.length > 0 &&
-          Date.now() - cached.fetchedAt < OFFERS_CACHE_TTL
-        ) {
+        if (cached && cached.offers.length > 0 && Date.now() - cached.fetchedAt < OFFERS_CACHE_TTL) {
+          uiLog(`[openProduct] Using cached offers from Zustand for ${productId}`);
           set({ selectedProductId: productId });
           return;
         }
@@ -540,13 +548,10 @@ export const useStore = create<State>()(
         // ============= STEP 2: Check IndexedDB =============
         try {
           const indexedDbOffers = await indexedDbService.getOffers(productId);
-          
-          if (
-            indexedDbOffers && 
-            indexedDbOffers.offers.length > 0 && 
-            Date.now() - indexedDbOffers.fetchedAt < OFFERS_CACHE_TTL
-          ) {
-            // Restore to Zustand memory cache
+          uiLog(`[openProduct] IndexedDB offers for ${productId}: ${JSON.stringify(indexedDbOffers)}`);
+
+          if (indexedDbOffers && indexedDbOffers.offers.length > 0 && Date.now() - indexedDbOffers.fetchedAt < OFFERS_CACHE_TTL) {
+            uiLog(`[openProduct] Restoring offers from IndexedDB for ${productId}`);
             set((s) => ({
               productOffers: {
                 ...s.productOffers,
@@ -561,35 +566,28 @@ export const useStore = create<State>()(
             return;
           }
         } catch (error) {
-          uiLog(`Failed to read offers from IndexedDB: ${error}`);
-          // Continue to API call if IndexedDB fails
+          uiLog(`[openProduct] Failed to read offers from IndexedDB: ${error}`);
         }
 
         // ============= STEP 3: Fetch from API =============
         set({ isOffersLoading: true, selectedProductId: productId });
+        uiLog(`[openProduct] Fetching offers from API for ${productId}`);
 
         try {
-          const data = await apiGetProductOffers(productId,true,get().query);
+          const data = await apiGetProductOffers(productId, true, get().query);
 
-          // Defensive: server SHOULD always return offers
+          uiLog(`[openProduct] API response for ${productId}: ${JSON.stringify(data)}`);
+
+          // Defensive check
           if (!data.offers || data.offers.length === 0) {
-            // treat as error-like state, do NOT cache
-            set((s) => ({
-              productOffers: {
-                ...s.productOffers,
-                [productId]: {
-                  offers: [],
-                  fetchedAt: 0,
-                  isError: true,
-                  errorType: "generic",
-                },
-              },
-              isOffersLoading: false,
-            }));
-            return;
+            uiLog(`[openProduct] No offers returned, throwing EMPTY_OFFERS for ${productId}`);
+            const error = new Error("EMPTY_OFFERS");
+            (error as any).code = 404;
+            throw error;
           }
 
-          // ============= STEP 4: Update Zustand =============
+          uiLog(`[openProduct] API returned ${data.offers.length} offers for ${productId}, updating state`);
+
           set((s) => {
             const newState = {
               productOffers: {
@@ -602,32 +600,66 @@ export const useStore = create<State>()(
               },
               isOffersLoading: false,
             };
-
-            // ============= STEP 5: Save to IndexedDB in background =============
-            // Don't await - let it run in background
-            const updatedState = { ...s, ...newState };
-            syncCacheToIndexedDb(updatedState as State).catch(console.error);
-
+            syncCacheToIndexedDb({ ...s, ...newState } as State).catch(console.error);
             return newState;
           });
 
         } catch (err: any) {
+          uiLog(`[openProduct] CATCH triggered for ${productId}: ${err?.message} / code=${err?.code}`);
+
           set({ isOffersLoading: false });
 
-          if (err?.code === 403) {
-            get().openSessionExpired();
-             set((s) => ({
+          if (err?.code === 0) {
+            set((s) => ({
               productOffers: {
                 ...s.productOffers,
-                [productId]: {
-                  offers: [],
-                  fetchedAt: 0,
-                  isError: true,
-                  errorType: "generic",
+                [productId]: { offers: [], fetchedAt: 0, isError: true, errorType: "generic" },
+              },
+            }));
+            useNotificationStore.getState().addNotification({
+              message: i18n.t("Error_0"),
+              type: "error",
+              duration: 4000,
+            });
+            return;
+          }
+
+          // Handle other error codes
+          if (err?.code === 404) {
+            uiLog(`[openProduct] 404 error for product ${productId}, triggering search refresh`);
+            
+            // First, set error state for this product
+            set((s) => ({
+              productOffers: {
+                ...s.productOffers,
+                [productId]: { 
+                  offers: [], 
+                  fetchedAt: 0, 
+                  isError: true, 
+                  errorType: "generic" 
                 },
               },
             }));
-               useNotificationStore.getState().addNotification({
+            
+            // Show notification
+            useNotificationStore.getState().addNotification({
+              message: i18n.t("Error_404"),
+              type: "error",
+              duration: 4000,
+            });
+            return;
+          }
+                
+          // Handle other error codes
+          if (err?.code === 403) {
+            get().openSessionExpired();
+            set((s) => ({
+              productOffers: {
+                ...s.productOffers,
+                [productId]: { offers: [], fetchedAt: 0, isError: true, errorType: "generic" },
+              },
+            }));
+            useNotificationStore.getState().addNotification({
               message: i18n.t("Error_Generic"),
               type: "error",
               duration: 4000,
@@ -636,16 +668,10 @@ export const useStore = create<State>()(
           }
 
           if (err?.code === 429) {
-            // show EMPTY UI but allow retry
             set((s) => ({
               productOffers: {
                 ...s.productOffers,
-                [productId]: {
-                  offers: [],
-                  fetchedAt: 0,
-                  isError: true,
-                  errorType: "429",
-                },
+                [productId]: { offers: [], fetchedAt: 0, isError: true, errorType: "429" },
               },
             }));
             useNotificationStore.getState().addNotification({
@@ -660,23 +686,19 @@ export const useStore = create<State>()(
             set((s) => ({
               productOffers: {
                 ...s.productOffers,
-                [productId]: {
-                  offers: [],
-                  fetchedAt: 0,
-                  isError: true,
-                  errorType: "network",
-                },
+                [productId]: { offers: [], fetchedAt: 0, isError: true, errorType: "network" },
               },
             }));
             useNotificationStore.getState().addNotification({
-            message: i18n.t("Error_Network"),
-            type: "info",
-            duration: 5000,
-          });
+              message: i18n.t("Error_Network"),
+              type: "info",
+              duration: 5000,
+            });
             return;
           }
-          
-          
+        } finally {
+          uiLog(`[openProduct] FINALLY block reached for ${productId}`);
+          set({ isOffersLoading: false });
         }
       },
       closeProduct: () => set({ selectedProductId: null }),
@@ -719,18 +741,17 @@ export const useStore = create<State>()(
           selectedProductId: null,
           productOffers: {},
           isOffersLoading: false,
-
           // selected offers
           selectedOffers: {},
         });
 
-        //also wipe persisted sessionStorage
+        // Also wipe persisted sessionStorage
         sessionStorage.removeItem("pricecomp-store");
-        //Also clear IndexedDB when session expires
-        indexedDbService.clearAll().catch(console.error);
+        
+        // DON'T clear IndexedDB here anymore - we do it in the sync service
         uiLog("Session data cleared from Zustand, sessionStorage");
       },
-    
+          
 
 
       

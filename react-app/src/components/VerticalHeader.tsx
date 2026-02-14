@@ -5,35 +5,52 @@ import {
   ListItem,
   ListItemButton,
   ListItemIcon,
-  useTheme,
-  useMediaQuery,
   Divider,
+  IconButton,
 } from "@mui/material";
 
+import NavigateNextOutlinedIcon from "@mui/icons-material/NavigateNextOutlined";
+import NavigateBeforeOutlinedIcon from "@mui/icons-material/NavigateBeforeOutlined";
 import {
   ManageSearchOutlined as ManageSearchOutlinedIcon,
-  HelpOutlined as HelpOutlinedIcon,
-  ContactMail as ContactMailIcon,
   BusinessCenterOutlined as ServicesOutlinedIcon,
-  InfoOutline,
 } from "@mui/icons-material";
 import QuestionMarkOutlinedIcon from "@mui/icons-material/QuestionMarkOutlined";
 import { Link as RouterLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-
-import { useStore, useThemeStore } from "../store/store";
-import InfoIcon from "@mui/icons-material/Info";
+import { useLocation } from "react-router-dom";
+import { useStore } from "../store/store";
 import { NavIcon } from "./NavIcons";
 
 const ICON_SIZE = 22;
 const iconSx = { fontSize: ICON_SIZE };
 
 const VerticalHeader: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+
+  const location = useLocation();
+  const isOnProductsPage = location.pathname.startsWith("/products");
 
   const aggregatedProducts = useStore((s) => s.aggregatedProducts);
+  const currentPage = useStore((s) => s.currentPage);
+  const totalPages = useStore((s) => s.totalPages);
+  const searchProducts = useStore((s) => s.searchProducts);
+  const isLoading = useStore((s) => s.isLoading);
+
+  const lang = "en"; // or get from i18n
+
   const isProductsDisabled = aggregatedProducts.length === 0;
-  const isOffline = useStore((s) => s.isOffline);
+
+  const handlePrev = () => {
+    if (currentPage > 1 && !isLoading)
+      searchProducts(undefined, lang, currentPage - 1);
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPages && !isLoading)
+      searchProducts(undefined, lang, currentPage + 1);
+  };
+
   const navLinks = [
     {
       path: "/products",
@@ -53,15 +70,6 @@ const VerticalHeader: React.FC = () => {
         </NavIcon>
       ),
     },
-    /*  {
-      path: "/contact",
-      label: t("Contact"),
-      icon: (
-        <NavIcon>
-          <ContactMailIcon sx={iconSx} />
-        </NavIcon>
-      ),
-    }, */
     {
       path: "/services",
       label: t("Services"),
@@ -89,6 +97,36 @@ const VerticalHeader: React.FC = () => {
         overflowY: "auto",
       }}
     >
+      {/* Top buttons */}
+      <Box
+        sx={{
+          display: {
+            xs: "flex",
+            xl: "none",
+          },
+          flexDirection: "column",
+          alignItems: "center",
+          py: 1,
+        }}
+      >
+        <IconButton
+          size="small"
+          onClick={handlePrev}
+          disabled={!isOnProductsPage || currentPage <= 1 || isLoading}
+        >
+          <NavigateBeforeOutlinedIcon fontSize="small" />
+        </IconButton>
+
+        <IconButton
+          size="small"
+          onClick={handleNext}
+          disabled={!isOnProductsPage || currentPage >= totalPages || isLoading}
+        >
+          <NavigateNextOutlinedIcon fontSize="small" />
+        </IconButton>
+      </Box>
+
+      {/* Nav links */}
       <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
         <List disablePadding sx={{ flex: 1 }}>
           {navLinks.map((link) => {
@@ -103,7 +141,6 @@ const VerticalHeader: React.FC = () => {
                     disabled={disabled}
                     sx={{
                       minHeight: 60,
-                      height: 60,
                       display: "flex",
                       justifyContent: "center",
                       alignItems: "center",
@@ -113,11 +150,10 @@ const VerticalHeader: React.FC = () => {
                   >
                     <ListItemIcon
                       sx={{
-                        minWidth: 40, // Match Header fixed width
+                        minWidth: 40,
                         display: "flex",
                         justifyContent: "center",
                         alignItems: "center",
-
                         color: disabled ? "text.disabled" : "text.secondary",
                       }}
                     >
@@ -126,7 +162,7 @@ const VerticalHeader: React.FC = () => {
                   </ListItemButton>
                 </ListItem>
                 {(link.path === "/products" || link.path === "/about") && (
-                  <Divider sx={{ mx: 2 }} /> // Add horizontal margin to match Header
+                  <Divider sx={{ mx: 2 }} />
                 )}
               </React.Fragment>
             );

@@ -30,10 +30,16 @@ const Bottom: React.FC = () => {
   return (
     <Box
       sx={{
-        display: "flex",
+        display: {
+          xs: "none",
+          sm: "none",
+          md: "none",
+          lg: "none",
+          xl: "flex",
+        },
         justifyContent: "center",
         alignItems: "center",
-        mt: 0, // removed top margin
+        mt: 0,
         mb: 2,
         gap: 1.5,
       }}

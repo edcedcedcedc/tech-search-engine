@@ -245,6 +245,7 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Error_404: "Resource not found (404).",
   Error_429: "Too many requests. Close )",
   Error_500: "Internal server error (500).",
+  Error_0: "Aborted(0).",
   Error_Generic: "An unexpected error occurred(GENERIC).",
   Error_Network: "Network error occured(NET ERR)",
   Error_Network_error1: "No internet connection. Please check your network.",
