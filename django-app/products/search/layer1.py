@@ -13,9 +13,9 @@ from products.search.aggregator import aggregate_products
 from products.search.embeddings import semantic_filter_products, get_query_embedding
 from products.search.utils import apply_relevance_cutoff_sigmoid
 from products.search.identity import identity_resolution
-from products.search.config import LAYER1_LIMIT, CACHE_TTL_LAYER1
+from products.search.config import LAYER1_LIMIT, CACHE_TTL_LAYER1, LAYER3_LIMIT
 from products.serializers import AggregatedProductSerializer
-from products.search.versioning import get_global_search_version
+from products.system_state.version import get_global_system_version
 
 
 def get_layer1_cache_key(query: str) -> str:
@@ -29,14 +29,14 @@ class SearchAPIView(APIView):
 
     def get(self, request):
         try:
-            current_version = get_global_search_version()
+            current_version = get_global_system_version()
+            request.session["search_version"] = current_version
+            request.session.modified = True
+
             raw_query = request.GET.get("q", "").strip()
             limit = min(int(request.GET.get("limit", LAYER1_LIMIT)), LAYER1_LIMIT)
             cursor = request.GET.get("cursor")
             offset = int(cursor) if cursor and cursor.isdigit() else 0
-
-            request.session["search_version"] = current_version
-            request.session.modified = True
 
             if not raw_query:
                 request.session["aggregated_cache"] = None
@@ -106,6 +106,7 @@ class SearchAPIView(APIView):
 
             # ================= RESPONSE =================
             aggregated_slice = aggregated[offset : offset + limit]
+
             total_count = len(aggregated)
 
             probabilistic_clusters = [
@@ -115,7 +116,8 @@ class SearchAPIView(APIView):
                     "brand": p["brand"],
                     "variant": p.get("variant"),
                     "lowest_price": p.get("lowest_price"),
-                    "offers": len(p.get("offers", [])),
+                    "offers_count": len(p.get("offers", [])[:LAYER3_LIMIT]),
+                    "offers": [],
                     "relevance": p.get("relevance"),
                     "product_score": p.get("product_score"),
                     "image": p.get("image"),

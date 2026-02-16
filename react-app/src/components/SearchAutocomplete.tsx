@@ -17,7 +17,7 @@ import debounce from "lodash.debounce";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
 
 import { autocomplete } from "../api/searchApi";
-import { useNotificationStore, useStore } from "../store/store";
+import { useStore } from "../store/store";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import type { Suggestion } from "../types/Suggestion";
@@ -133,19 +133,24 @@ export const SearchAutocomplete: React.FC = () => {
     }
   }, [autocompleteResetToken, fetchSuggestions]);
 
-  const submitSearch = (q: string) => {
+  const submitSearch = async (q: string) => {
     if (!navigator.onLine) {
       uiLog(`autocomplete | search icon clicked | offline detected`);
       useStore.getState().setOffline(true); // trigger OfflineDialog
       setSuggestions([]); // hide dropdown
       return;
     }
+
     uiLog(`autocomplete | submitSearch | query=${q}`);
     setQuery(q);
-    searchProducts(q, lang);
-    /*   if (q) {
+
+    await searchProducts(q, lang);
+
+    // Navigate only after search is complete
+    if (q) {
       navigate("/products");
-    } */
+    }
+
     setSuggestions([]);
     setLoading(false);
     setDelayedLoading(false);

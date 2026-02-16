@@ -29,6 +29,8 @@ import {
   Fade,
 } from "@mui/material";
 
+import ComputerOutlinedIcon from "@mui/icons-material/ComputerOutlined";
+
 import { Switch } from "@mui/material";
 import { useNotificationStore } from "../store/store";
 import {
@@ -40,6 +42,7 @@ import {
   DarkModeOutlined as DarkModeOutlinedIcon,
   SettingsOutlined as SettingsOutlinedIcon,
   InfoOutline,
+  BrightnessAutoOutlined as SystemThemeIcon,
 } from "@mui/icons-material";
 import { Link as RouterLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -59,8 +62,7 @@ const iconSx = { fontSize: ICON_SIZE };
 
 const Header: React.FC = () => {
   const theme = useTheme();
-  const mode = useThemeStore((state) => state.mode);
-  const toggleMode = useThemeStore((s) => s.toggleMode);
+  const { mode, effectiveMode, toggleMode } = useThemeStore();
   const { t, i18n } = useTranslation();
   const isVerySmallScreen = useMediaQuery("(max-width:425px)");
   const isTinyScreen = useMediaQuery("(max-width:320px)");
@@ -69,10 +71,37 @@ const Header: React.FC = () => {
     React.useState<null | HTMLElement>(null);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const isOffline = useStore((state) => state.isOffline);
-  // Add comparison modal hook
 
   const aggregatedProducts = useStore((s) => s.aggregatedProducts);
   const isProductsDisabled = aggregatedProducts.length === 0;
+
+  // Helper function to get theme icon
+  const getThemeIcon = () => {
+    switch (mode) {
+      case "light":
+        return <LightModeOutlinedIcon sx={iconSx} />;
+      case "dark":
+        return <DarkModeOutlinedIcon sx={iconSx} />;
+      case "system":
+        return <ComputerOutlinedIcon sx={iconSx} />;
+      default:
+        return <ComputerOutlinedIcon sx={iconSx} />;
+    }
+  };
+
+  // Helper function to get theme display text
+  const getThemeText = () => {
+    switch (mode) {
+      case "light":
+        return t("Light_mode");
+      case "dark":
+        return t("Dark_mode");
+      case "system":
+        return t("System_theme");
+      default:
+        return t("System_theme");
+    }
+  };
 
   const navLinks = [
     {
@@ -93,22 +122,12 @@ const Header: React.FC = () => {
         </NavIcon>
       ),
     },
-    /*     {
-      path: "/services",
-      label: t("Services"),
-      icon: (
-        <NavIcon>
-          <ServicesOutlinedIcon />
-        </NavIcon>
-      ),
-    }, */
     {
-      path: "/about", // <-- new link
-      label: t("About"), // translation key
+      path: "/about",
+      label: t("About"),
       icon: (
         <NavIcon>
           <InfoOutline sx={iconSx} />
-          {/* outlined icon */}
         </NavIcon>
       ),
     },
@@ -126,6 +145,7 @@ const Header: React.FC = () => {
   const handleSettingsClose = () => setSettingsOpen(false);
 
   const isLoading = useStore((s) => s.isLoading);
+
   return (
     <>
       <AppBar
@@ -133,7 +153,7 @@ const Header: React.FC = () => {
         elevation={0}
         sx={{
           width: "100%",
-          bgcolor: theme.palette.background.paper,
+          bgcolor: theme.palette.background.default,
         }}
       >
         <Fade in={isLoading} timeout={300} unmountOnExit={false}>
@@ -141,7 +161,7 @@ const Header: React.FC = () => {
             variant="query"
             sx={{
               position: "static",
-              bottom: 0, // 👈 sits ON TOP of divider
+              bottom: 0,
               left: 0,
               width: "100%",
               zIndex: (theme) => theme.zIndex.appBar + 1,
@@ -265,9 +285,6 @@ const Header: React.FC = () => {
                 {navLinks.map((link) => {
                   const disabled =
                     link.path === "/products" && isProductsDisabled;
-                  /*  (link.path === "/about" && isOffline) ||
-                    (link.path === "/contact" && isOffline) ||
-                    (link.path === "/" && isOffline); */
 
                   return (
                     <React.Fragment key={link.path}>
@@ -411,20 +428,13 @@ const Header: React.FC = () => {
 
         <DialogContent sx={{ py: { xs: 0.5, sm: 1 } }}>
           <List disablePadding>
-            {/* Theme toggle */}
+            {/* Theme toggle - Updated with system theme support */}
             <ListItem
               sx={{ justifyContent: "space-between", py: { xs: 1, sm: 1 } }}
             >
-              <ListItemText
-                primary={t("Theme")}
-                secondary={mode === "dark" ? t("Dark_mode") : t("Light_mode")}
-              />
+              <ListItemText primary={t("Theme")} secondary={getThemeText()} />
               <IconButton size="small" onClick={toggleMode}>
-                {mode === "dark" ? (
-                  <LightModeOutlinedIcon sx={iconSx} />
-                ) : (
-                  <DarkModeOutlinedIcon sx={iconSx} />
-                )}
+                {getThemeIcon()}
               </IconButton>
             </ListItem>
 

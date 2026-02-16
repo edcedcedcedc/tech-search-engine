@@ -112,33 +112,39 @@ class IndexedDbService {
     offers: AggregatedProduct["offers"]
   ): Promise<void> {
     await this.ensureDb();
+    
+  
+   
+    // Deep clone to avoid reference issues
+    const offersToSave = JSON.parse(JSON.stringify(offers));
+    
     await this.db!.put("offers", {
       productId,
-      offers,
+      offers: offersToSave,
       fetchedAt: Date.now(),
     });
     
-    // Log save operation
     dbDebug.saveOffers(productId, offers.length);
   }
 
-  async getOffers(
-    productId: string
-  ): Promise<{ offers: AggregatedProduct["offers"]; fetchedAt: number } | null> {
-    await this.ensureDb();
-    const result = await this.db!.get("offers", productId);
-    
-    // Log cache hit/miss
-    if (result) {
-      dbDebug.cacheHit('offers', productId, 'indexeddb');
-    } else {
-      dbDebug.cacheMiss('offers', productId, 'indexeddb');
+
+    // Update getOffers to verify data integrity
+    async getOffers(
+      productId: string
+    ): Promise<{ offers: AggregatedProduct["offers"]; fetchedAt: number } | null> {
+      await this.ensureDb();
+      const result = await this.db!.get("offers", productId);
+      
+      if (result) { 
+        dbDebug.cacheHit('offers', productId, 'indexeddb');
+      } else {
+        dbDebug.cacheMiss('offers', productId, 'indexeddb');
+      }
+      
+      return result
+        ? { offers: result.offers, fetchedAt: result.fetchedAt }
+        : null;
     }
-    
-    return result
-      ? { offers: result.offers, fetchedAt: result.fetchedAt }
-      : null;
-  }
 
   async clearOffers(): Promise<void> {
     await this.ensureDb();

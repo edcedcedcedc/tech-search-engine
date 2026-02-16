@@ -26,6 +26,7 @@ SECRET_KEY = env("SECRET_KEY")
 # ------------------------
 SESSION_ENGINE = "django.contrib.sessions.backends.db"  # store sessions in DB
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # keep sessions after browser closes
+
 SESSION_COOKIE_AGE = 2147483647  # huge age (max int), basically persistent
 SESSION_COOKIE_SAMESITE = "Lax"  # prevents CSRF in cross-site requests
 SESSION_COOKIE_SECURE = False  # True if using HTTPS in production
@@ -171,6 +172,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "https://strugure.app",
+    "http://192.168.1.x:5173",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -213,7 +215,7 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 }
 
 
-""" CACHES = {
+CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.db.DatabaseCache",
         "LOCATION": "django_cache_table",
@@ -221,19 +223,6 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
         "OPTIONS": {
             "MAX_ENTRIES": 10000,  # Prevent unlimited growth
             "CULL_FREQUENCY": 3,  # Remove 1/3 entries when max reached
-        },
-    }
-}
-
- """
-
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "layer1_cache",  # just a name for isolation
-        "TIMEOUT": CACHE_TTL_LAYER1,
-        "OPTIONS": {
-            "MAX_ENTRIES": 10000,
         },
     }
 }

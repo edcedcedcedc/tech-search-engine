@@ -7,7 +7,7 @@ import { Meta } from "./components/Meta";
 import { scrollableScrollbar } from "./styles/scrollbar";
 import AppOverlays from "./components/Overlays";
 import NotificationsContainer from "./components/NotificationContainer";
-import Test from "./components/test";
+import Test from "./components/Test";
 
 function App() {
   const theme = useTheme();
@@ -38,14 +38,14 @@ function App() {
           >
             <Header />
           </Box>
-          <Test />
+          {/*    <Test /> */}
           {/* Main layout with vertical header + content */}
           <Box
             sx={{
               display: "flex",
               flex: 1,
               position: "relative",
-              overflow: "hidden", // prevent double scrollbars
+              overflow: "hidden",
             }}
           >
             {/* Vertical Header */}

@@ -12,30 +12,46 @@
     <!-- CRITICAL: Add theme-color meta tag immediately -->
     <meta name="theme-color" content="#0d1117" id="theme-color-meta">
 
-    
-
-
-    <!-- Inject theme color before paint - SIMPLIFIED VERSION -->
+    <!-- Inject theme color before paint - WITH SYSTEM THEME SUPPORT -->
     <script>
     (function() {
-      let theme = 'light';
+      // Determine effective theme based on saved preference or system
+      let effectiveTheme = 'light';
+      let savedMode = 'system';
 
       try {
         const saved = localStorage.getItem('theme');
         if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed?.state?.mode === 'dark' || parsed?.state?.mode === 'light') {
-            theme = parsed.state.mode;
+          // Check if it's our new format (just a string)
+          if (saved === 'light' || saved === 'dark' || saved === 'system') {
+            savedMode = saved;
+          } else {
+            // Try to parse old format
+            try {
+              const parsed = JSON.parse(saved);
+              if (parsed?.state?.mode) {
+                savedMode = parsed.state.mode;
+              }
+            } catch {
+              // Ignore parse errors
+            }
           }
-        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          theme = 'dark';
+        }
+
+        // Calculate effective theme
+        if (savedMode === 'system') {
+          effectiveTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        } else {
+          effectiveTheme = savedMode;
         }
       } catch (e) {
         console.warn('Failed to parse theme from localStorage', e);
+        // Default to system preference on error
+        effectiveTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       }
 
       const colors = { light: '#fafafa', dark: '#0d1117' };
-      const bg = colors[theme] || '#0d1117';
+      const bg = colors[effectiveTheme] || '#0d1117';
 
       // Set theme-color meta tag immediately
       const metaThemeColor = document.getElementById('theme-color-meta');
@@ -57,8 +73,8 @@
       `;
       document.head.appendChild(style);
 
-      // Set data-theme on html
-      document.documentElement.setAttribute('data-theme', theme);
+      // Set data-theme on html (using effective theme for CSS)
+      document.documentElement.setAttribute('data-theme', effectiveTheme);
       
       // Set inline styles
       document.documentElement.style.backgroundColor = bg;
@@ -87,6 +103,7 @@
         align-items: center;
         justify-content: center;
         z-index: 9999;
+        /* Background is set by JS */
       }
 
       #preloader-icon {
@@ -101,9 +118,7 @@
         width: 100%;
         height: 100%;
         object-fit: contain;
-        /* Direct CSS color property - simpler and more accurate */
-        /* This will work if your icon is an SVG, but for PNG we need filter */
-        /* For PNG with black icon, keep the filter but make it fully opaque */
+        /* Blue color for the icon - fully opaque */
         filter: 
           brightness(0) 
           saturate(100%) 
@@ -113,8 +128,7 @@
           hue-rotate(196deg) 
           brightness(94%) 
           contrast(102%);
-        /* Remove opacity(0.83) to make it fully opaque #2574ebff */
-        animation: pulse 1s ease-in-out infinite;
+        /* animation: pulse 1s ease-in-out infinite; */
       }
 
       @keyframes pulse {
@@ -135,11 +149,73 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     
-    <!-- Optional: Add a script to verify the color -->
+    <!-- Add system theme change listener -->
     <script>
-      // Verify the filter produces #2574eb
-      console.log('Preloader icon color target: #2574ebff');
-      console.log('RGB equivalent: rgb(37, 116, 235)');
+    (function() {
+      // Listen for system theme changes
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      
+      const handleSystemThemeChange = (e) => {
+        try {
+          const saved = localStorage.getItem('theme');
+          let savedMode = 'system';
+          
+          if (saved === 'light' || saved === 'dark' || saved === 'system') {
+            savedMode = saved;
+          } else if (saved) {
+            try {
+              const parsed = JSON.parse(saved);
+              if (parsed?.state?.mode) {
+                savedMode = parsed.state.mode;
+              }
+            } catch {
+              // Ignore parse errors
+            }
+          }
+          
+          // Only update if mode is 'system'
+          if (savedMode === 'system') {
+            const effectiveTheme = e.matches ? 'dark' : 'light';
+            const colors = { light: '#fafafa', dark: '#0d1117' };
+            const bg = colors[effectiveTheme];
+            
+            // Update meta tag
+            const metaThemeColor = document.getElementById('theme-color-meta');
+            if (metaThemeColor) {
+              metaThemeColor.setAttribute('content', bg);
+            }
+            
+            // Update styles
+            const style = document.querySelector('style:first-of-type');
+            if (style) {
+              style.innerHTML = `
+                html, #preloader {
+                  background-color: ${bg} !important;
+                }
+                body {
+                  background-color: ${bg} !important;
+                  min-height: 100vh;
+                  min-height: -webkit-fill-available;
+                }
+              `;
+            }
+            
+            // Update data-theme and inline styles
+            document.documentElement.setAttribute('data-theme', effectiveTheme);
+            document.documentElement.style.backgroundColor = bg;
+            document.body.style.backgroundColor = bg;
+          }
+        } catch (e) {
+          console.warn('Failed to update theme on system change', e);
+        }
+      };
+      
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', handleSystemThemeChange);
+      } else {
+        mediaQuery.addListener(handleSystemThemeChange);
+      }
+    })();
     </script>
   </body>
 </html>

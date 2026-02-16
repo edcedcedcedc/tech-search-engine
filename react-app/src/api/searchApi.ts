@@ -4,7 +4,7 @@ import { uiLog } from "../webhook/client/uiDebug"; // <-- import logger
 import type { AggregatedProduct } from "../types/AggregatedProduct";
 import type { SearchResponse } from "../types/SearchResponse";
 import type { AutocompleteResponse } from "../types/AutocompleteResponse";
-import i18n from "../i18n";
+import type { ApiSearchResponse } from '../types/Api';
 
 
 // ---------------- Axios instance ----------------
@@ -17,7 +17,6 @@ const api = axios.create({
 });
 
 // ---------------- API functions ----------------
-
 /**
  * Layer 1: Search products
  */
@@ -28,7 +27,7 @@ export const searchProducts = async (
   cursor?: string,
   offset?: number,
   options?: { signal?: AbortSignal } 
-): Promise<SearchResponse> => {
+): Promise<ApiSearchResponse> => {
   const params: Record<string, any> = { q: query };
   if (lang) params.lang = lang;
   if (limit) params.limit = limit;
@@ -39,19 +38,25 @@ export const searchProducts = async (
     params.cursor = offset.toString();
   }
 
-  uiLog(`api | searchProducts | request | query=${query} | lang=${lang} | limit=${limit} | cursor=${params.cursor}`);
+  uiLog(`[API] searchProducts | REQUEST | query=${query} | lang=${lang} | limit=${limit} | cursor=${params.cursor}`);
 
   try {
-    const { data } = await api.get<SearchResponse>("/search/", { params,   signal: options?.signal });
-   /*  if (Math.random() < 0.9) { // 30% chance
-      const e = new Error("TOO_MANY_REQUESTS");
-      //(e as any).code = 429;
-      throw e;
-    } */
-    uiLog(`api | searchProducts | response | query=${query} | results=${data.products.length} | total_count=${data.total_count}`);
+    // Change this line from SearchResponse to ApiSearchResponse
+    const { data } = await api.get<ApiSearchResponse>("/search/", { params, signal: options?.signal });
+    
+    // Log response summary
+    uiLog(`[API] searchProducts | RESPONSE SUCCESS | query=${query} | results=${data.products.length} | total_count=${data.total_count}`);
+    
+    // Log first few product IDs for debugging
+    if (data.products.length > 0) {
+      uiLog(`[API] searchProducts | FIRST 3 PRODUCT IDs | ${data.products.slice(0, 3).map(p => p.id).join(', ')}`);
+    }
+    
     return data;
   } catch (err: any) {
     const status = err?.response?.status;
+    
+    uiLog(`[API] searchProducts | ERROR | query=${query} | status=${status} | message=${err?.message}`);
     
     if (status === 403) {
       const e = new Error("SESSION_EXPIRED");
@@ -59,14 +64,13 @@ export const searchProducts = async (
       throw e;
     }
 
-     if (err.code === "ERR_NETWORK") {
+    if (err.code === "ERR_NETWORK") {
       const e = new Error("NETWORK_ERROR");
       (e as any).code = "NETWORK_ERROR";
       throw e;
     }
  
-    uiLog(`api | searchProducts | error | query=${query} | err=${err?.message}`);
-    throw err; // <-- throw all other errors
+    throw err;
   }
 };
 
@@ -92,6 +96,9 @@ export const getProductOffers = async (
   if (limit) params.limit = limit;
   if (cursor) params.cursor = cursor;
   if (query) params.query = query;
+
+  uiLog(`[API] getProductOffers | REQUEST | productId=${productId} | full=${full} | query="${query}" | limit=${limit} | cursor=${cursor} | retry429=${retry429} | retry500=${retry500}`);
+
   try {
     const res = await api.get(`/product/${productId}/offers/`, {
       params,
@@ -99,56 +106,87 @@ export const getProductOffers = async (
     });
 
     const data = res?.data ?? {};
+    
+    // Log full response structure
+    uiLog(`[API] getProductOffers | RESPONSE RECEIVED | productId=${productId} | status=${res.status}`);
+    uiLog(`[API] getProductOffers | RESPONSE SUMMARY | productId=${productId} | offersCount=${data.offers?.length || 0} | has_more=${data.has_more} | next_cursor=${data.next_cursor}`);
 
-    // -----------------------------
-    // FORCE 429 for first 3 retries
-    // -----------------------------
-       /*  if (Math.random() < 0.5) { // 30% chance
-      const e = new Error("");
-      (e as any).code = 500;
-      throw e;
-    }  */
+    // Detailed logging for first offer to track price_history and price_trend_preview
+    if (data.offers && data.offers.length > 0) {
+      const firstOffer = data.offers[0];
+      
+      uiLog(`[API] getProductOffers | FIRST OFFER DETAIL | productId=${productId} | offerId=${firstOffer.id} | shop=${firstOffer.shop} | price=${firstOffer.price}`);
+      
+      // Log price_history details
+      if (firstOffer.price_history && firstOffer.price_history.length > 0) {
+        uiLog(`[API] getProductOffers | PRICE_HISTORY | productId=${productId} | offerId=${firstOffer.id} | length=${firstOffer.price_history.length}`);
+        uiLog(`[API] getProductOffers | PRICE_HISTORY LATEST | productId=${productId} | price=${firstOffer.price_history[0].price} | recorded_at=${firstOffer.price_history[0].recorded_at}`);
+        uiLog(`[API] getProductOffers | PRICE_HISTORY OLDEST | productId=${productId} | price=${firstOffer.price_history[firstOffer.price_history.length-1].price} | recorded_at=${firstOffer.price_history[firstOffer.price_history.length-1].recorded_at}`);
+      } else {
+        uiLog(`[API] getProductOffers | PRICE_HISTORY MISSING | productId=${productId} | offerId=${firstOffer.id}`);
+      }
+      
+      // Log price_trend_preview details
+      if (firstOffer.price_trend_preview) {
+        uiLog(`[API] getProductOffers | PRICE_TREND_PREVIEW | productId=${productId} | offerId=${firstOffer.id} | free_trend_length=${firstOffer.price_trend_preview.free_price_trend?.length || 0} | hidden_count=${firstOffer.price_trend_preview.hidden_price_trend_count}`);
+        
+        if (firstOffer.price_trend_preview.free_price_trend?.length > 0) {
+          const trend = firstOffer.price_trend_preview.free_price_trend;
+          uiLog(`[API] getProductOffers | TREND LATEST | productId=${productId} | price=${trend[0].price} | recorded_at=${trend[0].recorded_at}`);
+          uiLog(`[API] getProductOffers | TREND OLDEST | productId=${productId} | price=${trend[trend.length-1].price} | recorded_at=${trend[trend.length-1].recorded_at}`);
+        }
+      } else {
+        uiLog(`[API] getProductOffers | PRICE_TREND_PREVIEW MISSING | productId=${productId} | offerId=${firstOffer.id}`);
+      }
+      
+      // If there are multiple offers, log a sample of the second one too
+      if (data.offers.length > 1) {
+        const secondOffer = data.offers[1];
+        uiLog(`[API] getProductOffers | SECOND OFFER | productId=${productId} | offerId=${secondOffer.id} | shop=${secondOffer.shop} | price=${secondOffer.price} | price_history_length=${secondOffer.price_history?.length || 0}`);
+      }
+    } else {
+      uiLog(`[API] getProductOffers | NO OFFERS RETURNED | productId=${productId}`);
+    }
 
-    // -----------------------------
-    // normal return
-    // -----------------------------
     return {
       offers: Array.isArray(data.offers) ? data.offers : [],
       has_more: Boolean(data.has_more),
       next_cursor: data.next_cursor,
     };
   } catch (err: any) {
-
     const status = err?.response?.status;
-
+    
+    uiLog(`[API] getProductOffers | ERROR | productId=${productId} | status=${status} | message=${err?.message} | code=${err?.code}`);
 
     if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') {
+      uiLog(`[API] getProductOffers | ABORTED | productId=${productId}`);
       const e = new Error("");
       (e as any).code = 0
       throw e;
     }
     
-    
     if (status === 403) {
+      uiLog(`[API] getProductOffers | SESSION_EXPIRED | productId=${productId}`);
       const e = new Error("");
       (e as any).code = 403;
       throw e;
     } 
 
-
-     if (status === 404) {
+    if (status === 404) {
+      uiLog(`[API] getProductOffers | NOT_FOUND | productId=${productId}`);
       const e = new Error("");
       (e as any).code = 403;
       throw e;
     } 
 
     if (status === 429 && retry429 < 3) {
-      uiLog(`getProductOffers | 429 detected, retrying #${retry429 + 1} in 5s`);
+      uiLog(`[API] getProductOffers | RATE_LIMITED | productId=${productId} | retry=${retry429 + 1}/3 | waiting 5s`);
       await new Promise((r) => setTimeout(r, 5000));
-     return getProductOffers(productId, full, query, limit, cursor, retry429 + 1, retry500, options);
+      return getProductOffers(productId, full, query, limit, cursor, retry429 + 1, retry500, options);
     }
 
     if(retry429 >= 2){
+      uiLog(`[API] getProductOffers | RATE_LIMIT_EXCEEDED | productId=${productId} | max retries reached`);
       retry429 = 0
       const e = new Error("");
       (e as any).code = 429;
@@ -156,11 +194,13 @@ export const getProductOffers = async (
     }
 
     if (status === 500 && retry500 < 3) {
+      uiLog(`[API] getProductOffers | SERVER_ERROR | productId=${productId} | retry=${retry500 + 1}/3 | waiting ${1000 * (retry500 + 1)}ms`);
       await new Promise((r) => setTimeout(r, 1000 * (retry500 + 1)));
-        return getProductOffers(productId, full, query, limit, cursor, retry429, retry500 + 1, options);
+      return getProductOffers(productId, full, query, limit, cursor, retry429, retry500 + 1, options);
     }
 
-     if(retry500 >= 2){
+    if(retry500 >= 2){
+      uiLog(`[API] getProductOffers | SERVER_ERROR_EXCEEDED | productId=${productId} | max retries reached`);
       retry500 = 0
       const e = new Error("");
       (e as any).code = 500;
@@ -183,16 +223,69 @@ export const autocomplete = async (
   const params: Record<string, any> = { q: query };
   if (lang) params.lang = lang;
 
-  uiLog(`api | autocomplete | request | query=${query} | lang=${lang}`);
+  uiLog(`[API] autocomplete | REQUEST | query=${query} | lang=${lang}`);
 
   try {
     const { data } = await api.get<AutocompleteResponse>("/autocomplete/", { params });
-    uiLog(`api | autocomplete | response | query=${query} | suggestions=${data.suggestions.length}`);
+    uiLog(`[API] autocomplete | RESPONSE | query=${query} | suggestions=${data.suggestions.length}`);
+    if (data.suggestions.length > 0) {
+      uiLog(`[API] autocomplete | FIRST 3 SUGGESTIONS | ${data.suggestions.slice(0, 3).join(', ')}`);
+    }
     return data;
   } catch (err) {
-    uiLog(`api | autocomplete | error | query=${query} | err=${(err as any)?.message}`);
+    uiLog(`[API] autocomplete | ERROR | query=${query} | err=${(err as any)?.message}`);
     throw err;
   }
 };
 
 
+/**
+ * Fetch the current global system version from backend
+ */
+export const getSystemVersion = async (): Promise<{ version: number }> => {
+  uiLog(`[API] getSystemVersion | REQUEST`);
+
+  try {
+    const { data } = await api.get<{ version: number }>("/system/version/");
+    uiLog(`[API] getSystemVersion | RESPONSE | version=${data.version}`);
+    return data;
+  } catch (err: any) {
+    uiLog(`[API] getSystemVersion | ERROR | err=${err?.message}`);
+    
+    if (err.response?.status === 403) {
+      const e = new Error("SESSION_EXPIRED");
+      (e as any).code = 403;
+      throw e;
+    }
+
+    if (err.code === "ERR_NETWORK") {
+      const e = new Error("NETWORK_ERROR");
+      (e as any).code = "NETWORK_ERROR";
+      throw e;
+    }
+
+    throw err;
+  }
+};
+
+
+// Add this function to searchApi.ts
+
+/**
+ * Flush the current session on the backend
+ * This will delete the session and its associated cache
+ */
+/* export const flushSession = async (): Promise<void> => {
+  uiLog(`[API] flushSession | REQUEST`);
+
+  try {
+    const response = await api.post("/session/flush/");
+    uiLog(`[API] flushSession | RESPONSE | status=${response.status}`);
+  } catch (err: any) {
+    uiLog(`[API] flushSession | ERROR | status=${err?.response?.status} | message=${err?.message}`);
+    
+    // Don't throw - we want to continue even if flush fails
+    // The session might already be invalid
+     
+  }
+}; */

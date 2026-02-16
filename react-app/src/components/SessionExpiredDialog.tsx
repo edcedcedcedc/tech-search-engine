@@ -14,6 +14,8 @@ import { useStore } from "../store/store";
 import { useTranslation } from "react-i18next";
 import { dbSyncService, type SyncProgress } from "../services/syncDb";
 import { syncDebug } from "../webhook/client/syncDebug";
+import { indexedDbService } from "../services/indexedDb";
+import { uiLog } from "../webhook/client/uiDebug";
 
 // Small Circular Progress with Label Component
 function SmallCircularProgressWithLabel(props: { value: number }) {
@@ -64,8 +66,9 @@ export default function SessionExpiredDialog() {
   const close = useStore((s) => s.closeSessionExpired);
   const setDebugShow = useStore((s) => s.setDebugShowSessionExpired);
 
-  const [isSyncing, setIsSyncing] = React.useState(false);
-  const [isComplete, setIsComplete] = React.useState(false);
+  const [syncState, setSyncState] = React.useState<
+    "idle" | "syncing" | "completed" | "error"
+  >("idle");
   const [progress, setProgress] = React.useState<SyncProgress>({
     current: 0,
     total: 0,
@@ -77,13 +80,21 @@ export default function SessionExpiredDialog() {
   const abortControllerRef = React.useRef<AbortController | null>(null);
   const { t } = useTranslation();
 
-  // Force show in debug mode
   const isOpen = debugShow || open;
 
+  // Reset state when dialog opens
   React.useEffect(() => {
     if (isOpen) {
       syncDebug.dialogOpened();
-      setIsComplete(false);
+      setSyncState("idle");
+      setProgress({
+        current: 0,
+        total: 0,
+        currentQuery: "",
+        productsFetched: 0,
+        offersFetched: 0,
+        totalOffersEstimate: 0,
+      });
     }
   }, [isOpen]);
 
@@ -92,7 +103,6 @@ export default function SessionExpiredDialog() {
     return unsubscribe;
   }, []);
 
-  // Cleanup on unmount
   React.useEffect(() => {
     return () => {
       if (abortControllerRef.current) {
@@ -102,52 +112,60 @@ export default function SessionExpiredDialog() {
   }, []);
 
   const handleSync = async () => {
-    // Create new abort controller
     abortControllerRef.current = new AbortController();
-    setIsSyncing(true);
-    setIsComplete(false);
+    setSyncState("syncing");
 
     try {
-      await dbSyncService.syncDatabase(/* abortControllerRef.current.signal */);
+      await dbSyncService.syncDatabase();
       resetSessionData();
       triggerAutocompleteReset();
       syncDebug.dialogClosed(true, progress.total);
-      setIsComplete(true);
-      setIsSyncing(false);
+      setSyncState("completed");
     } catch (error: any) {
-      // Don't show error if it was aborted
       if (error.name === "AbortError" || error.message === "Sync cancelled") {
         console.log("Sync cancelled by user");
         syncDebug.dialogClosed(false, progress.current);
+        await indexedDbService.clearAll();
+        uiLog("[SessionExpired] IndexedDB cleared on abort");
+        // On abort, go to completed state (show Done button)
+        setSyncState("completed");
       } else {
         console.error("Sync failed:", error);
         syncDebug.dialogClosed(false, progress.current);
+        await indexedDbService.clearAll();
+        uiLog("[SessionExpired] IndexedDB cleared on error");
+        setSyncState("error");
       }
+
       resetSessionData();
       triggerAutocompleteReset();
-      if (!debugShow) close();
-      setIsSyncing(false);
-      setIsComplete(false);
     }
   };
 
-  const handleCancel = () => {
-    // Abort the sync operation if it's in progress
+  const handleCancel = async () => {
+    // If currently syncing, abort it
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
 
+    try {
+      await indexedDbService.clearAll();
+      uiLog("[SessionExpired] IndexedDB cleared on cancel");
+    } catch (error) {
+      console.error("Failed to clear IndexedDB on cancel:", error);
+    }
+
     resetSessionData();
     triggerAutocompleteReset();
-    if (!debugShow) close();
-    setIsSyncing(false);
-    setIsComplete(false);
+
+    // After cancel, go to completed state (show Done button)
+    setSyncState("completed");
   };
 
   const handleDone = () => {
     if (!debugShow) close();
-    setIsComplete(false);
+    setSyncState("idle");
   };
 
   const progressValue = Math.min(
@@ -156,6 +174,10 @@ export default function SessionExpiredDialog() {
       : 0,
     100,
   );
+
+  const isSyncing = syncState === "syncing";
+  const isCompleted = syncState === "completed";
+  const isError = syncState === "error";
 
   return (
     <Dialog open={isOpen} maxWidth="xs" fullWidth disableEscapeKeyDown>
@@ -196,72 +218,37 @@ export default function SessionExpiredDialog() {
             {t("Error_403_Message2")}
           </Typography>
 
-          {/* Dynamic product and offers display with trimmed names */}
-          {isSyncing && (
+          {isSyncing && progress.currentQuery && (
             <Box sx={{ mt: 2 }}>
-              {progress.currentQuery && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    mb: 0.5,
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    color="text.disabled"
-                    sx={{ maxWidth: "70%", textAlign: "right" }}
-                  >
-                    {progress.currentQuery}
-                  </Typography>
-                </Box>
-              )}
+              <Typography variant="caption" color="text.disabled">
+                {progress.currentQuery}
+              </Typography>
+            </Box>
+          )}
+
+          {isError && (
+            <Box sx={{ mt: 2, textAlign: "center" }}>
+              <Typography variant="body2" color="error.main">
+                Sync failed. Please try again.
+              </Typography>
             </Box>
           )}
         </Box>
       </DialogContent>
 
       <DialogActions sx={{ px: 2, pb: 2 }}>
-        {!isComplete ? (
+        {!isCompleted ? (
           <>
             <Button
               onClick={handleCancel}
               variant="text"
               color="inherit"
-              disabled={!isSyncing && !debugShow}
+              disabled={isCompleted || (!isSyncing && !debugShow)} // Enable during sync!
               sx={{
-                "&:hover": { backgroundColor: "action.hover" },
-                fontSize: {
-                  xs: "0.7rem",
-                  sm: "0.75rem",
-                  md: "0.8rem",
-                  lg: "0.85rem",
-                  xl: "0.9rem",
-                },
-                minHeight: {
-                  xs: 28,
-                  sm: 30,
-                  md: 32,
-                  lg: 36,
-                  xl: 40,
-                },
-                px: {
-                  xs: 1.5,
-                  sm: 2,
-                  md: 2.5,
-                  lg: 3,
-                  xl: 3.5,
-                },
-                ...(!isSyncing &&
-                  !debugShow && {
-                    color: "text.disabled",
-                    "&:hover": {
-                      backgroundColor: "transparent",
-                    },
-                  }),
+                opacity: isCompleted || (!isSyncing && !debugShow) ? 0.5 : 1,
               }}
             >
-              {t("Cancel", "Cancel")}
+              {t("Cancel")}
             </Button>
             <Button
               onClick={handleSync}
@@ -269,38 +256,10 @@ export default function SessionExpiredDialog() {
               color="primary"
               disabled={isSyncing}
               sx={{
-                "&:hover": { backgroundColor: "primary.light" },
-                fontSize: {
-                  xs: "0.7rem",
-                  sm: "0.75rem",
-                  md: "0.8rem",
-                  lg: "0.85rem",
-                  xl: "0.9rem",
-                },
-                minHeight: {
-                  xs: 28,
-                  sm: 30,
-                  md: 32,
-                  lg: 36,
-                  xl: 40,
-                },
-                px: {
-                  xs: 1.5,
-                  sm: 2,
-                  md: 2.5,
-                  lg: 3,
-                  xl: 3.5,
-                },
-                ...(isSyncing && {
-                  backgroundColor: "action.disabledBackground",
-                  color: "text.disabled",
-                  "&:hover": {
-                    backgroundColor: "action.disabledBackground",
-                  },
-                }),
+                opacity: isSyncing ? 0.5 : 1,
               }}
             >
-              {t("Refresh", "Refresh")}
+              {isSyncing ? t("Refreshing...") : t("Refresh")}
             </Button>
           </>
         ) : (
@@ -311,30 +270,7 @@ export default function SessionExpiredDialog() {
               onClick={handleDone}
               variant="text"
               color="primary"
-              sx={{
-                "&:hover": { backgroundColor: "primary.light" },
-                fontSize: {
-                  xs: "0.7rem",
-                  sm: "0.75rem",
-                  md: "0.8rem",
-                  lg: "0.85rem",
-                  xl: "0.9rem",
-                },
-                minHeight: {
-                  xs: 28,
-                  sm: 30,
-                  md: 32,
-                  lg: 36,
-                  xl: 40,
-                },
-                px: {
-                  xs: 1.5,
-                  sm: 2,
-                  md: 2.5,
-                  lg: 3,
-                  xl: 3.5,
-                },
-              }}
+              autoFocus
             >
               Done
             </Button>

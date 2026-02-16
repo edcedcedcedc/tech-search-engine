@@ -103,7 +103,7 @@ const ProductGrid: React.FC<Props> = () => {
             >
               <CardContent sx={{ flexGrow: 1 }}>
                 <Typography gutterBottom sx={{ color: "text.secondary" }}>
-                  {product.offers.toLocaleString()}
+                  {product.offers_count}
                 </Typography>
                 <Typography
                   variant="h5"

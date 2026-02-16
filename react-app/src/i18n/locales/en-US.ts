@@ -195,6 +195,7 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Theme: "Theme",
   Dark_mode: "Dark mode",
   Light_mode: "Light mode",
+  System_theme: "System mode",
   Language: "Language",
   Disable_notifications: "Disable notifications",
   View_columns_tooltip: "View columns",

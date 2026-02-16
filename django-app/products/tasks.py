@@ -2,7 +2,7 @@ import random
 import threading
 import time
 from celery import shared_task
-from products.search.versioning import bump_global_search_version
+from products.system_state.versioning import bump_global_system_version
 
 
 @shared_task(name="reset_logs")
@@ -486,7 +486,7 @@ def run_bump_search_version():
     """
     from products.utils.log.versioning_log import versioning_log
 
-    new_version = bump_global_search_version()
+    new_version = bump_global_system_version()
     versioning_log(f"[TASK] Global search version bumped to {new_version}")
     return new_version
 

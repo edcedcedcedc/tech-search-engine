@@ -1,5 +1,6 @@
 from products.utils.log.search_engine_log import search_engine_log
 import json
+from products.search.config import MAX_PRODUCTS_TO_AGGREGATE
 
 
 def aggregate_products(qs, query=None, query_embedding=None):
@@ -7,14 +8,20 @@ def aggregate_products(qs, query=None, query_embedding=None):
     Aggregate products into clusters, attach embeddings and query info.
     """
     product_dict = {}
-
+    product_count = 0
     for p in qs:
+        if product_count >= MAX_PRODUCTS_TO_AGGREGATE:
+            search_engine_log(
+                f"Stopping aggregation early - reached max products ({MAX_PRODUCTS_TO_AGGREGATE})"
+            )
+            break
+
         cluster_key = p.similar_id
         product_dict.setdefault(cluster_key, []).append(p)
         search_engine_log(
             f"Adding product '{p.name} / {p.variant}' to cluster {cluster_key}"
         )
-
+        product_count += 1
     return [
         build_aggregated_product(cluster_id, offers, query, query_embedding)
         for cluster_id, offers in product_dict.items()

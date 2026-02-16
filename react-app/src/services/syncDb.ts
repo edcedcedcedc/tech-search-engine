@@ -178,12 +178,7 @@ class DBSyncService {
                 // - price_trend_preview: { free_price_trend: PriceHistoryPreview[], hidden_price_trend_count: number }
                 // - price_history: PriceHistoryPreview[]
                 
-                // Log sample to verify data
-                if (offersData.offers[0]?.price_trend_preview) {
-                  console.log(`[Sync] Sample price trend for ${product.id}:`, 
-                    offersData.offers[0].price_trend_preview.free_price_trend?.length || 0, 'data points');
-                }
-                
+              
                 await indexedDbService.saveOffers(product.id, offersData.offers);
                 syncDebug.offersSaved(product.id, query, offersData.offers.length);
                 this.totalOffers += offersData.offers.length;
@@ -216,7 +211,7 @@ class DBSyncService {
 
         } catch (error) {
           syncDebug.queryFailed(query, error);
-          console.warn(`Failed to sync query "${query}":`, error);
+         
         }
 
         // Delay between queries
@@ -259,7 +254,7 @@ class DBSyncService {
           duration: 5000,
         });
       }
-      console.error('Sync failed:', error);
+
       throw error;
     } finally {
       this.abortController = null;

@@ -1,0 +1,164 @@
+## **Summary of the System**
+
+1. **Global System Version**
+
+   * Stored in `SystemState` (`GLOBAL_SEARCH_VERSION_KEY`).
+   * Incremented after pipeline tasks (crawling, normalization, merging, translation, embeddings, etc.).
+   * Acts as the “authority” for cache validity.
+
+2. **Layer1 Global Cache**
+
+   * Cached search results (`layer1:{query_hash}`) for all users.
+   * Reset whenever global system version is bumped.
+   * Shared among all users.
+
+3. **Layer2 Session Cache**
+
+   * Cached offers/results stored in the user session (`request.session["aggregated_cache"]`).
+   * Tied to **current global version**: `request.session["search_version"]`.
+   * Cleared when:
+
+     * Session is flushed manually via `/api/session/flush/`
+     * Version mismatch occurs → automatic 403 → flush.
+
+4. **Frontend (IndexedDB / Local Cache)**
+
+   * Stores per-user query and offer results for offline use.
+   * On app init:
+
+     * Checks global system version from backend.
+     * If version differs → prompts user to reset local cache → triggers backend flush if necessary.
+   * Ensures user never sees stale Layer1 or Layer2 data.
+
+5. **Error Handling / Flow**
+
+   * Layer2 requests check session version:
+
+     * If mismatch → return 403 → force session flush → regenerate session with current global version.
+   * Layer1 requests are independent but populate session cache after successful aggregation.
+
+---
+
+## **State Machine**
+
+We can model **User Session + Cache + Backend Version** as a state machine with **states** and **transitions**:
+
+### **States**
+
+| State                        | Description                                                                                 |
+| ---------------------------- | ------------------------------------------------------------------------------------------- |
+| `Idle`                       | User has no session cache yet; session exists but `aggregated_cache` empty.                 |
+| `Layer1_Cache_Valid`         | Layer1 global cache exists and is fresh.                                                    |
+| `Layer2_Cache_Valid`         | User session cache exists, matches current global version.                                  |
+| `Layer2_Cache_Expired`       | Session cache exists, but version mismatch detected (Layer2 stale).                         |
+| `Layer2_403_Triggered`       | User attempted Layer2 request with expired session cache → 403 returned.                    |
+| `Session_Flushed`            | Session cache cleared manually or automatically. New session version assigned.              |
+| `Local_Frontend_Cache_Stale` | IndexedDB/local cache version differs from backend → user prompted to reset frontend cache. |
+
+---
+
+### **Transitions**
+
+1. **Pipeline / System Update**
+
+   * **Action:** `bump_global_system_version()`
+   * **Effect:** Layer1 cache cleared, global version incremented.
+   * **From:** `Layer1_Cache_Valid`
+   * **To:** `Layer1_Cache_Valid` (but invalidated → next Layer1 request repopulates it)
+   * **Note:** Session caches not touched yet.
+
+2. **Layer1 Request (Cache Miss / Hit)**
+
+   * **Action:** User sends search query.
+   * **Effect:** Populate Layer1 global cache if missing; update session Layer2 cache.
+   * **From:** `Idle` / `Layer1_Cache_Valid`
+   * **To:** `Layer2_Cache_Valid`
+
+3. **Layer2 Request (Version Match)**
+
+   * **Action:** User requests product offers, session version matches global version.
+   * **Effect:** Return cached Layer2 offers.
+   * **From:** `Layer2_Cache_Valid`
+   * **To:** `Layer2_Cache_Valid` (unchanged)
+
+4. **Layer2 Request (Version Mismatch)**
+
+   * **Action:** User requests product offers, session version ≠ global version.
+   * **Effect:** Return 403 → flush session.
+   * **From:** `Layer2_Cache_Valid` / `Layer2_Cache_Expired`
+   * **To:** `Session_Flushed` → `Layer2_Cache_Valid` after new session generated
+
+5. **Manual Session Flush**
+
+   * **Action:** User triggers `/api/session/flush/`
+   * **Effect:** Clear Layer2 session cache, assign current global version.
+   * **From:** Any Layer2 state
+   * **To:** `Session_Flushed` → next Layer2 request → `Layer2_Cache_Valid`
+
+6. **Frontend Init Version Check**
+
+   * **Action:** FE checks `/api/system/version/` vs local IndexedDB version.
+   * **Effect:** If mismatch, prompt user → clear FE IndexedDB cache.
+   * **From:** `Local_Frontend_Cache_Stale`
+   * **To:** `Idle` or `Layer2_Cache_Valid` (after flush and reload)
+
+---
+
+### **Graphical Representation (Textual)**
+
+```
+           +----------------+
+           |     Idle       |
+           +----------------+
+                  |
+        Layer1 request (miss)
+                  v
+       +---------------------+
+       | Layer1_Cache_Valid  |
+       +---------------------+
+                  |
+       Populate session cache
+                  v
+       +---------------------+
+       | Layer2_Cache_Valid  |
+       +---------------------+
+          |             |
+   Version mismatch    Normal Layer2
+          |             |
+          v             v
++----------------+   Return data
+| Layer2_403     |    
++----------------+
+          |
+      Flush session
+          v
+ +----------------+
+ | Session_Flushed|
+ +----------------+
+          |
+   Next Layer2 request
+          v
++---------------------+
+| Layer2_Cache_Valid  |
++---------------------+
+```
+
+**Frontend Local Cache Check** happens on init:
+
+* If version mismatch → pop modal → reset IndexedDB → state `Idle` → fetch fresh data.
+
+---
+
+**Summary Takeaways**
+
+* Global cache (Layer1) is **shared, reset only on version bump**.
+* Session cache (Layer2) is **per-user, reset on flush / version mismatch**.
+* FE cache is checked proactively to avoid stale data.
+* 403 acts as **automatic session version enforcer**, preventing double usage of stale Layer2 cache.
+* Pipeline tasks trigger global version bump → invalidate Layer1 → Layer2 flushed automatically on next request.
+
+---
+
+If you want, I can also **write this as an actual `.txt` file with a visual diagram and explanation** ready to drop into your docs or repo.
+
+Do you want me to do that?

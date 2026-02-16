@@ -6,22 +6,42 @@ from products.utils.log.search_engine_log import search_engine_log
 from products.search.score_offer import score_offers_for_product
 from products.search.config import LAYER2_LIMIT, LAYER3_LIMIT, CACHE_TTL_LAYER2
 from rest_framework.views import APIView
-from products.search.versioning import get_global_search_version
+from products.system_state.version import get_global_system_version
 
 
 def get_layer1_cache_key(query: str) -> str:
-    """Same cache key as Layer1"""
     query_hash = hashlib.md5(query.encode("utf-8")).hexdigest()
     return f"layer1:{query_hash}"
 
 
-def get_offers_cache_key(product_id: str) -> str:
-    """Independent offers cache key"""
-    return f"layer2:{product_id}"
+def get_offers_cache_key(session_key: str, product_id: str) -> str:
+    return f"layer2:{session_key}:{product_id}"
 
 
 class ProductOffersAPIView(APIView):
     def get(self, request, product_id):
+
+        # ================= VALIDATE SESSION FIRST =================
+        if not request.session.session_key:
+            request.session.create()
+
+        current_version = get_global_system_version()
+        session_version = request.session.get("search_version")
+
+        if not session_version:
+            return Response({"error": "No active search session."}, status=403)
+
+        if session_version != current_version:
+            request.session.flush()
+            return Response(
+                {"error": "Search data outdated. Please refresh search."},
+                status=403,
+            )
+
+        search_engine_log(f"Layer2 session key: {request.session.session_key}")
+        search_engine_log(f"Layer2 search_version: {session_version}")
+
+        # ================= BASIC PARAMS =================
         full = request.GET.get("full", "false").lower() == "true"
         limit = int(
             request.GET.get("limit", LAYER2_LIMIT if not full else LAYER3_LIMIT)
@@ -33,64 +53,67 @@ class ProductOffersAPIView(APIView):
 
         cursor = request.GET.get("cursor")
         offset = int(cursor) if cursor and cursor.isdigit() else 0
-        query = request.GET.get("query")  # 👈 REQUIRED for first request
+        query = request.GET.get("query")
 
-        # ============= STEP 1: Try offers cache (no query needed) =============
-        offers_cache_key = get_offers_cache_key(product_id)
+        # ================= SESSION-BASED CACHE KEY =================
+        session_key = request.session.session_key
+        offers_cache_key = get_offers_cache_key(session_key, product_id)
+
         offers = cache.get(offers_cache_key)
 
+        # ================= CACHE HIT =================
         if offers:
-            search_engine_log(f"Layer2 cache HIT for product '{product_id}'")
-        else:
-            search_engine_log(f"Layer2 cache MISS for product '{product_id}'")
+            search_engine_log(
+                f"Layer2 cache HIT for product '{product_id}' (session scoped)"
+            )
 
-            # ============= STEP 2: Need query to find in Layer1 cache =============
+        # ================= CACHE MISS =================
+        else:
+            search_engine_log(
+                f"Layer2 cache MISS for product '{product_id}' (session scoped)"
+            )
+
             if not query:
                 return Response(
                     {"error": "query parameter required for first request"}, status=400
                 )
 
-            # Find product in Layer1 cache
+            # Fetch Layer1 aggregated data
             layer1_cache_key = get_layer1_cache_key(query)
-
-            current_version = get_global_search_version()
-            session_version = request.session.get("search_version")
-
-            if session_version != current_version:
-                return Response(
-                    {"error": "Search data outdated. Please refresh search."},
-                    status=403,
-                )
-
             aggregated = cache.get(layer1_cache_key)
 
             if not aggregated:
                 return Response(
-                    {"error": "Product data expired - please search again"}, status=404
+                    {"error": "Product data expired - please search again"}, status=403
                 )
 
-            # Extract the specific product
             product = next((p for p in aggregated if p["id"] == product_id), None)
+
             if not product:
                 return Response(
-                    {"error": "Product not found in search results"}, status=404
+                    {"error": "Product data expired - please search again"}, status=403
                 )
 
-            # Score and prepare offers
+            # Score offers
             score_offers_for_product(product)
+
             offers = sorted(
-                product["offers"], key=lambda o: o.get("offer_score", 0), reverse=True
+                product["offers"],
+                key=lambda o: o.get("offer_score", 0),
+                reverse=True,
             )
 
-            # ============= STEP 3: Store in offers cache (24h) =============
+            # Store per-session cache
             cache.set(offers_cache_key, offers, CACHE_TTL_LAYER2)
-            search_engine_log(f"💾 Cached offers for product '{product_id}' (24h)")
 
-        # ============= STEP 4: Pagination =============
+            search_engine_log(
+                f"Cached offers for product '{product_id}' (session scoped)"
+            )
+
+        # ================= PAGINATION =================
         total_offers = len(offers)
         offers_slice = offers[offset : offset + limit]
 
-        # Format response
         if full:
             result = [
                 {
@@ -129,13 +152,12 @@ class ProductOffersAPIView(APIView):
             ]
 
         next_cursor = str(offset + limit) if offset + limit < total_offers else None
-        has_more = next_cursor is not None
 
         return Response(
             {
                 "offers": result,
-                "has_more": has_more,
+                "has_more": next_cursor is not None,
                 "next_cursor": next_cursor,
-                "total_count": total_offers,  # 👈 Useful for UI
+                "total_count": total_offers,
             }
         )

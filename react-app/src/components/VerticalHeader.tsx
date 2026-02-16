@@ -97,34 +97,36 @@ const VerticalHeader: React.FC = () => {
         overflowY: "auto",
       }}
     >
-      {/* Top buttons */}
-      <Box
-        sx={{
-          display: {
-            xs: "flex",
-            xl: "none",
-          },
-          flexDirection: "column",
-          alignItems: "center",
-          py: 1,
-        }}
-      >
-        <IconButton
-          size="small"
-          onClick={handlePrev}
-          disabled={!isOnProductsPage || currentPage <= 1 || isLoading}
+      {/* Top buttons - Only show on products page */}
+      {isOnProductsPage && (
+        <Box
+          sx={{
+            display: {
+              xs: "flex",
+              xl: "none",
+            },
+            flexDirection: "column",
+            alignItems: "center",
+            py: 1,
+          }}
         >
-          <NavigateBeforeOutlinedIcon fontSize="small" />
-        </IconButton>
+          <IconButton
+            size="small"
+            onClick={handlePrev}
+            disabled={currentPage <= 1 || isLoading}
+          >
+            <NavigateBeforeOutlinedIcon fontSize="small" />
+          </IconButton>
 
-        <IconButton
-          size="small"
-          onClick={handleNext}
-          disabled={!isOnProductsPage || currentPage >= totalPages || isLoading}
-        >
-          <NavigateNextOutlinedIcon fontSize="small" />
-        </IconButton>
-      </Box>
+          <IconButton
+            size="small"
+            onClick={handleNext}
+            disabled={currentPage >= totalPages || isLoading}
+          >
+            <NavigateNextOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      )}
 
       {/* Nav links */}
       <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>

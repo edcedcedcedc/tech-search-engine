@@ -44,6 +44,7 @@ class AggregatedProductSerializer(serializers.Serializer):
     t_variant = serializers.JSONField(default=dict)
     brand = serializers.CharField(allow_blank=True, required=False)
     t_category = serializers.JSONField(default=dict)
+    offers_count = serializers.IntegerField()
     offers = OfferSerializer(many=True)
     lowest_price = serializers.FloatField()
     relevance = serializers.FloatField(default=0.0)

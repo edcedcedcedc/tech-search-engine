@@ -1,10 +1,11 @@
 import React, { Suspense, lazy } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
-import { Box, CircularProgress } from "@mui/material";
+import { Box } from "@mui/material";
 import { AnimatePresence } from "framer-motion";
 
-import LandingPage from "../views/Landing";
 import ErrorBoundary from "../components/ErrorBoundary";
+import { useSessionStart } from "../hooks/useSessionStart";
+import { FullScreenLoader } from "../components/FullScreenLoader";
 
 const Home = lazy(() => import("../views/Home"));
 const Products = lazy(() => import("../views/Products"));
@@ -18,28 +19,15 @@ const Services = lazy(() => import("../views/Services"));
 
 const AppRoutes: React.FC = () => {
   const location = useLocation();
+  useSessionStart();
 
   return (
     <ErrorBoundary>
       <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
-        <Suspense
-          fallback={
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                minHeight: "40vh",
-              }}
-            >
-              <CircularProgress />
-            </Box>
-          }
-        >
+        <Suspense fallback={<FullScreenLoader />}>
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={<Home />} />
-              <Route path="/landing" element={<LandingPage />} />
               <Route path="/disclaimer" element={<Disclaimer />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/contact" element={<Contact />} />
