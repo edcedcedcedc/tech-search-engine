@@ -2,9 +2,24 @@
 import { indexedDbService } from './indexedDb';
 import { searchProducts, getProductOffers } from '../api/searchApi';
 import type { AggregatedProduct } from '../types/AggregatedProduct';
-import type { PriceHistoryPreview, PriceTrendPreview } from '../types/PriceTrend';
 import { syncDebug } from '../webhook/client/syncDebug';
 import { useNotificationStore } from '../store/store';
+import { prefetchService } from './prefetch';
+
+// ============= CONFIGURATION =============
+interface DBSyncConfig {
+  syncOffers: boolean; // Whether to sync offers during database sync
+}
+
+const DEFAULT_CONFIG: DBSyncConfig = {
+  syncOffers: false // Default to true to maintain existing behavior
+};
+
+// ============= TYPES =============
+interface SyncOptions {
+  silent?: boolean; // If true, don't show notifications or progress
+  source?: 'manual' | 'background' | 'periodic';
+}
 
 export interface SyncProgress {
   current: number;
@@ -12,7 +27,7 @@ export interface SyncProgress {
   currentQuery: string;
   productsFetched: number;
   offersFetched: number;
-  totalOffersEstimate: number; // Add this field
+  totalOffersEstimate: number;
 }
 
 type ProgressCallback = (progress: SyncProgress) => void;
@@ -24,6 +39,30 @@ class DBSyncService {
   private totalProducts: number = 0;
   private totalOffers: number = 0;
   private totalOffersEstimate: number = 0;
+  private _isSyncing = false;
+  
+  // ============= CONFIGURATION =============
+  private config: DBSyncConfig;
+
+  constructor(config: Partial<DBSyncConfig> = {}) {
+    this.config = { ...DEFAULT_CONFIG, ...config };
+  }
+
+  /**
+   * Update sync configuration
+   */
+  configure(config: Partial<DBSyncConfig>) {
+    this.config = { ...this.config, ...config };
+  }
+
+  /**
+   * Get current configuration
+   */
+  getConfig(): DBSyncConfig {
+    return { ...this.config };
+  }
+
+  get isSyncing() { return this._isSyncing; }
 
   onProgress(callback: ProgressCallback) {
     this.progressCallbacks.push(callback);
@@ -36,7 +75,8 @@ class DBSyncService {
     this.progressCallbacks.forEach(cb => cb(progress));
   }
 
-  async syncDatabase() {
+  async syncDatabase(options?: { silent?: boolean }) {
+    this._isSyncing = true;
     this.abortController = new AbortController();
     this.startTime = Date.now();
     this.totalProducts = 0;
@@ -46,14 +86,26 @@ class DBSyncService {
       // Step 1: Get ALL existing query keys
       const productKeys = await indexedDbService.getAllProductKeys();
       
+      // Mutual exclusive prefetch and sync 
+      prefetchService.clearQueue();
+      
       // Step 2: Get total offers count from disk (for progress estimation)
-      this.totalOffersEstimate = await indexedDbService.getOffersCount();
+      // Only needed if we're syncing offers
+      if (this.config.syncOffers) {
+        this.totalOffersEstimate = await indexedDbService.getOffersCount();
+      }
       
       // Log sync started with estimate
-      syncDebug.syncStarted(this.totalOffersEstimate);
+      syncDebug.syncStarted(this.config.syncOffers ? this.totalOffersEstimate : 0);
       
       // Step 3: Clear everything
-      await indexedDbService.clearAll();
+      // If we're not syncing offers, only clear products
+      if (this.config.syncOffers) {
+        await indexedDbService.clearAll(); // Clear both
+      } else {
+        await indexedDbService.clearProducts();
+        await indexedDbService.clearOffers(); // Also clear offers since products are gone
+      }
       syncDebug.dbCleared();
 
       // Step 4: Process EACH query
@@ -72,8 +124,8 @@ class DBSyncService {
           total: productKeys.length,
           currentQuery: query,
           productsFetched: 0,
-          offersFetched: this.totalOffers, // Use accumulated total
-          totalOffersEstimate: this.totalOffersEstimate
+          offersFetched: this.totalOffers,
+          totalOffersEstimate: this.config.syncOffers ? this.totalOffersEstimate : 0
         });
 
         // Log query started
@@ -149,61 +201,68 @@ class DBSyncService {
 
           this.totalProducts += allProducts.length;
 
-          // ============= PREFETCH OFFERS FOR EVERY PRODUCT =============
-          if (allProducts.length > 0) {
-            syncDebug.offerPrefetchStarted(
-              query, 
-              allProducts.map(p => p.id).filter(Boolean)
-            );
-          }
-
-          for (const product of allProducts) {
-            if (!product.id) continue;
-
-            try {
-              // Fetch FULL offers with complete data including price_history and price_trend_preview
-              const offersData = await getProductOffers(
-                product.id,
-                true, // Use FULL mode to get complete data
-                query,
-                undefined, // default limit 50
-                undefined,
-                0,
-                0,
-                { signal: this.abortController.signal }
+          // ============= PREFETCH OFFERS (ONLY IF CONFIGURED) =============
+          if (this.config.syncOffers) {
+            if (allProducts.length > 0) {
+              syncDebug.offerPrefetchStarted(
+                query, 
+                allProducts.map(p => p.id).filter(Boolean)
               );
-
-              if (offersData.offers && offersData.offers.length > 0) {
-                // The API already returns the correct structure:
-                // - price_trend_preview: { free_price_trend: PriceHistoryPreview[], hidden_price_trend_count: number }
-                // - price_history: PriceHistoryPreview[]
-                
-              
-                await indexedDbService.saveOffers(product.id, offersData.offers);
-                syncDebug.offersSaved(product.id, query, offersData.offers.length);
-                this.totalOffers += offersData.offers.length;
-              }
-
-              syncDebug.offerFetched(product.id, query, offersData.offers?.length || 0);
-              
-              // Update progress with accumulated total and estimate
-              this.notifyProgress({
-                current: i,
-                total: productKeys.length,
-                currentQuery: query,
-                productsFetched: allProducts.length,
-                offersFetched: this.totalOffers, // Send accumulated total
-                totalOffersEstimate: this.totalOffersEstimate
-              });
-
-              // Small delay between offers
-              await new Promise(r => setTimeout(r, 150));
-
-            } catch (error: any) {
-              syncDebug.offerFailed(product.id, query, error);
-              if (error?.code === 429) syncDebug.rateLimited(query, 'offer');
-              if (!navigator.onLine) syncDebug.networkError(query, 'offer', error);
             }
+
+            for (const product of allProducts) {
+              if (!product.id) continue;
+
+              try {
+                // Fetch FULL offers with complete data including price_history and price_trend_preview
+                const offersData = await getProductOffers(
+                  product.id,
+                  true, // Use FULL mode to get complete data
+                  query,
+                  undefined, // default limit 50
+                  undefined,
+                  0,
+                  0,
+                  { signal: this.abortController.signal }
+                );
+
+                if (offersData.offers && offersData.offers.length > 0) {
+                  await indexedDbService.saveOffers(product.id, offersData.offers);
+                  syncDebug.offersSaved(product.id, query, offersData.offers.length);
+                  this.totalOffers += offersData.offers.length;
+                }
+
+                syncDebug.offerFetched(product.id, query, offersData.offers?.length || 0);
+                
+                // Update progress with accumulated total and estimate
+                this.notifyProgress({
+                  current: i,
+                  total: productKeys.length,
+                  currentQuery: query,
+                  productsFetched: allProducts.length,
+                  offersFetched: this.totalOffers,
+                  totalOffersEstimate: this.totalOffersEstimate
+                });
+
+                // Small delay between offers
+                await new Promise(r => setTimeout(r, 150));
+
+              } catch (error: any) {
+                syncDebug.offerFailed(product.id, query, error);
+                if (error?.code === 429) syncDebug.rateLimited(query, 'offer');
+                if (!navigator.onLine) syncDebug.networkError(query, 'offer', error);
+              }
+            }
+          } else {
+            // Even if not syncing offers, update progress for products only
+            this.notifyProgress({
+              current: i,
+              total: productKeys.length,
+              currentQuery: query,
+              productsFetched: allProducts.length,
+              offersFetched: 0,
+              totalOffersEstimate: 0
+            });
           }
 
           // Log query completed
@@ -211,7 +270,6 @@ class DBSyncService {
 
         } catch (error) {
           syncDebug.queryFailed(query, error);
-         
         }
 
         // Delay between queries
@@ -225,7 +283,7 @@ class DBSyncService {
         currentQuery: 'Complete',
         productsFetched: this.totalProducts,
         offersFetched: this.totalOffers,
-        totalOffersEstimate: this.totalOffersEstimate
+        totalOffersEstimate: this.config.syncOffers ? this.totalOffersEstimate : 0
       });
 
       // Log sync completed
@@ -235,9 +293,13 @@ class DBSyncService {
         this.totalOffers
       );
 
-      // Show success notification
+      // Show success notification (message adapts based on config)
+      const notificationMessage = this.config.syncOffers 
+        ? `Cache updated successfully! ${this.totalProducts} products, ${this.totalOffers} offers refreshed.`
+        : `Products cache updated successfully! ${this.totalProducts} products refreshed. Offers preserved.`;
+
       useNotificationStore.getState().addNotification({
-        message: `Cache updated successfully! ${this.totalProducts} products, ${this.totalOffers} offers refreshed.`,
+        message: notificationMessage,
         type: "success",
         duration: 5000,
       });
@@ -258,6 +320,7 @@ class DBSyncService {
       throw error;
     } finally {
       this.abortController = null;
+      this._isSyncing = false;
     }
   }
 
@@ -269,4 +332,15 @@ class DBSyncService {
   }
 }
 
+// Create service with default config (syncOffers = true to maintain existing behavior)
 export const dbSyncService = new DBSyncService();
+
+// Example usage for background sync without offers:
+/*
+// In your background sync initialization:
+dbSyncService.configure({ syncOffers: false });
+backgroundSyncService.initialize();
+
+// Or create a separate instance for background sync:
+export const backgroundDbSyncService = new DBSyncService({ syncOffers: false });
+*/

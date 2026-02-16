@@ -239,6 +239,25 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
 
   Services_Disclaimer: "All services depend on active subscriptions and available datasets. Some features may change",
 
+  // =======================
+  // NOTIFICATIONS & DISTRIBUTION
+  // =======================
+
+  Services_Notifications_Title: "Notifications & Distribution",
+  Services_Notifications_Intro:
+    "Stay informed in real time with intelligent alerts and targeted updates.",
+  Services_Notifications_PriceDrop:
+    "Push notifications for price drops on tracked products",
+  Services_Notifications_BackInStock:
+    "Alerts when products are back in stock",
+  Services_Notifications_Volatility:
+    "Notifications when unusual price volatility is detected",
+  Services_Notifications_MarketShift:
+    "Market movement alerts for selected categories",
+  Services_Notifications_EmailTelegramSMS:
+    "Premium email, Telegram, or SMS alerts",
+  Services_Notifications_Sponsored:
+    "Sponsored offers within newsletters and notification channels",
 
 
   //error handling 
@@ -269,7 +288,67 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
 
 
   Oops: "Oops! Something went wrong",
-  Go_Back_To_Home: "Go back to home"
+  Go_Back_To_Home: "Go back to home",
+
+
+  Cancel: "Cancel",
+
+  // =======================
+// HOW TO PAGE
+// =======================
+
+How_To: "How Strugure works?",
+How_To_Intro: "Strugure combines machine learning, large language models, structured product data, and daily market updates to help you make smarter buying decisions.",
+
+// SEARCH
+How_To_Search_Title: "How to Search Smart?",
+How_To_Search_Description_1: "You can copy the exact product name and specifications from any online store and paste them into search, or simply start typing the product name and explore.",
+How_To_Search_Description_2: "For example, typing 'iphone' will give you broader discovery results. Typing 'iphone 16' will return much more precise matches.",
+How_To_Search_Description_3: "The more specific your query, the closer you get to identical products. The more general it is, the more similar alternatives you’ll discover.",
+How_To_Search_Description_4: "Our search engine uses machine learning and semantic matching, meaning it understands product structure — not just keywords.",
+How_To_Search_Description_5: "Search results in Romanian and English are about 90% similar, depending on your system language and retailer naming differences.",
+How_To_Search_Description_6: "In short: broad search helps discovery. Specific search delivers precision.",
+
+// PRICE TREND
+Price_Trend_Title: "What Is Price Trend?",
+Price_Trend_Description_1: "Price Trend is a visual overview of how a product's price evolves over time.",
+Price_Trend_Description_2: "In the free version, you see two key points: the initial recorded price and the most recent price.",
+Price_Trend_Description_3: "This gives you a quick linear understanding of whether the price is increasing, decreasing, or stable.",
+Price_Trend_Description_4: "To access it, simply click the price trend spark icon next to any product.",
+
+// FULL PRICE HISTORY
+Full_Price_History_Title: "How to View Full Price History?",
+Full_Price_History_Description_1: "Full price history unlocks all historical price points — not just the first and last value.",
+Full_Price_History_Description_2: "You can see real price movements: drops, peaks, volatility, and stability patterns.",
+Full_Price_History_Description_3: "This feature is available via subscription or one-time payment access.",
+Full_Price_History_Description_4: "Upgrade to gain deeper market insight before making important purchase decisions.",
+
+// CUSTOMIZATION
+Customization_Title: "Customize Your Workspace",
+Customization_Description_1: "You can personalize your table view by selecting which columns are visible.",
+Customization_Description_2: "Use the settings button in the top-right corner of the product table.",
+Customization_Description_3: "Focus only on what matters to you — price, specifications, trends, or availability.",
+
+// COMPARATION
+Comparation_Title: "AI-Powered Comparation",
+Comparation_Description_1: "Comparation allows you to analyze products side-by-side using price trends, full price history, and technical specifications.",
+Comparation_Description_2: "This feature is powered by AI-based analysis that intelligently aligns specifications and highlights meaningful differences.",
+Comparation_Description_3: "It helps you understand not just which product is cheaper — but which one offers better value.",
+Comparation_Description_4: "Available with subscription access.",
+
+// DATA
+Data_Title: "How Often Is Data Updated?",
+Data_Description_1: "Strugure continuously collects and processes product data from multiple retailers.",
+Data_Description_2: "Pricing and availability information is updated daily to ensure accuracy.",
+Data_Description_3: "Machine learning models normalize product names and specifications across different stores.",
+Data_Description_4: "This means you see structured, comparable, and reliable data — not raw store listings.",
+Data_Description_5: "While prices may change during the day at individual shops, our daily updates provide a trustworthy market overview.",
+
+// SUBSCRIPTION
+Subscription_Title: "How to Get Subscription or One-Time Access?",
+Subscription_Description_1: "Subscribe to early access and provide your email address.",
+Subscription_Description_2: "After registration, you will receive activation details and payment instructions.",
+Subscription_Description_3: "You can choose between subscription access or a one-time payment for advanced features."
 
 };
 

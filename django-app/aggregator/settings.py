@@ -160,13 +160,6 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-SESSION_ENGINE = "django.contrib.sessions.backends.db"
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-SESSION_COOKIE_AGE = 2147483647
-SESSION_COOKIE_SAMESITE = "Lax"
-SESSION_COOKIE_SECURE = False
-SESSION_COOKIE_HTTPONLY = True
-
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",

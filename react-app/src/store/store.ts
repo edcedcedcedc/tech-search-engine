@@ -14,41 +14,48 @@ import { transformSearchResult, validateAndFixCachedProduct } from "../types/Tra
    SYSTEM STORE
 ========================= */
 interface SystemState {
-  systemVersion: number;  // latest backend version
+  systemVersion: number; // only one field
   setSystemVersion: (v: number) => void;
-  checkSystemVersion: (backendVersion: number) => void;
+  checkSystemVersion: (backendVersion: number) => boolean;
 }
 
 export const useSystemStore = create<SystemState>()(
   persist(
     (set, get) => ({
-      systemVersion: 0, // initial frontend version
+      systemVersion: 0, // default to 0
+
       setSystemVersion: (v: number) => {
-        uiLog(`[SYSTEM_STORE] Updating system version to ${v}`);
+        const current = get().systemVersion;
+        if (current === v) {
+          uiLog(`[SYSTEM_STORE] Version unchanged (${v})`);
+          return;
+        }
+        uiLog(`[SYSTEM_STORE] Updating system version from ${current} → ${v}`);
+        set({ systemVersion: v });
       },
 
-      checkSystemVersion: async (backendVersion: number) => {
-        const currentVersion = get().systemVersion;
-
-        if (backendVersion > currentVersion) {
-          uiLog(
-            `[SYSTEM_STORE] Outdated system detected: frontend=${currentVersion}, backend=${backendVersion}`
-          );
-
-          // Update version
+      checkSystemVersion: (backendVersion: number) => {
+        const current = get().systemVersion;
+        if (backendVersion > current) {
+          uiLog(`[SYSTEM_STORE] Backend version ${backendVersion} > frontend ${current}, updating`);
           set({ systemVersion: backendVersion });
-          uiLog(`[SYSTEM_STORE] IndexedDB caches cleared due to version bump`);
+          return true
+        }else{
+          return false 
         }
       },
     }),
     {
-      name: "system-store",                  // localStorage key
+      name: "system-store",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ systemVersion: state.systemVersion }),
+      onRehydrateStorage: () => (state, error) => {
+        if (error) uiLog(`[SYSTEM_STORE] Failed to hydrate, ${error}`);
+        else uiLog(`[SYSTEM_STORE] Hydrated systemVersion: ${state?.systemVersion}`);
+      },
     }
   )
 );
-
 
 interface LastQueryState {
   lastQuery: string | null;
@@ -133,7 +140,6 @@ export const useNotificationStore = create<NotificationState>()(
 );
 
 
-
 type ThemeMode = "light" | "dark" | "system";
 
 interface ThemeState {
@@ -145,83 +151,70 @@ interface ThemeState {
 
 export const useThemeStore = create<ThemeState>()(
   persist(
-    (set, get) => ({
-      mode: "system",
-      // Initialize with light as default, will be updated in useEffect
-      effectiveMode: "light",
-      
-      setMode: (mode) => {
-        let effectiveMode: "light" | "dark";
-        
-        if (mode === 'system') {
-          effectiveMode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        } else {
-          effectiveMode = mode;
-        }
-        
-        set({ mode, effectiveMode });
-        
-        // Apply theme to document root
-        if (effectiveMode === 'dark') {
-          document.documentElement.classList.add('dark');
-          document.documentElement.classList.remove('light');
-        } else {
-          document.documentElement.classList.add('light');
-          document.documentElement.classList.remove('dark');
-        }
-        
-        uiLog(`[THEME_STORE] Theme set to ${mode}, effective: ${effectiveMode}`);
-      },
-      
-      toggleMode: () => {
-        const modes: ThemeMode[] = ["light", "dark", "system"];
-        const currentIndex = modes.indexOf(get().mode);
-        const nextMode = modes[(currentIndex + 1) % modes.length];
-        get().setMode(nextMode);
-      },
-    }),
+    (set, get) => {
+      let mediaQuery: MediaQueryList | null = null;
+      let systemListener: ((e: MediaQueryListEvent) => void) | null = null;
+
+      const applyThemeClass = (mode: "light" | "dark") => {
+        document.documentElement.classList.remove("light", "dark");
+        document.documentElement.classList.add(mode);
+      };
+
+      const getSystemMode = (): "light" | "dark" =>
+        window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
+
+      return {
+        mode: "system",
+        effectiveMode: getSystemMode(),
+
+        setMode: (mode) => {
+          // Remove previous system listener if it exists
+          if (mediaQuery && systemListener) {
+            mediaQuery.removeEventListener("change", systemListener);
+            systemListener = null;
+          }
+
+          let effectiveMode: "light" | "dark";
+
+          if (mode === "system") {
+            mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+            effectiveMode = getSystemMode();
+
+            systemListener = (e: MediaQueryListEvent) => {
+              const newMode = e.matches ? "dark" : "light";
+              set({ effectiveMode: newMode });
+              applyThemeClass(newMode);
+            };
+
+            mediaQuery.addEventListener("change", systemListener);
+          } else {
+            effectiveMode = mode;
+          }
+
+          set({ mode, effectiveMode });
+          applyThemeClass(effectiveMode);
+        },
+
+        toggleMode: () => {
+          const modes: ThemeMode[] = ["light", "dark", "system"];
+          const currentIndex = modes.indexOf(get().mode);
+          const nextMode = modes[(currentIndex + 1) % modes.length];
+          get().setMode(nextMode);
+        },
+      };
+    },
     {
-      name: "theme", // Make sure this matches exactly what's in localStorage
+      name: "theme",
       storage: createJSONStorage(() => localStorage),
-      // Only persist the mode, not effectiveMode
       partialize: (state) => ({ mode: state.mode }),
+      onRehydrateStorage: () => (state) => {
+        if (state) state.setMode(state.mode);
+      },
     }
   )
 );
-
-// Initialize theme after store is created - FIXED VERSION
-if (typeof window !== 'undefined') {
-  const store = useThemeStore.getState();
-  const storedMode = localStorage.getItem('theme') as ThemeMode | null;
-  
-  // Only initialize if the store still has the default "system" mode
-  // This prevents overwriting a mode that was already restored from persistence
-  if (store.mode === "system") {
-    if (storedMode && ['light', 'dark', 'system'].includes(storedMode)) {
-      store.setMode(storedMode);
-    } else {
-      store.setMode('system');
-    }
-  }
-
-  // System theme change listener
-  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-  
-  const handleSystemThemeChange = (e: MediaQueryListEvent) => {
-    const store = useThemeStore.getState();
-    if (store.mode === 'system') {
-      store.setMode('system');
-      uiLog(`[THEME_STORE] System theme changed to ${e.matches ? 'dark' : 'light'}`);
-    }
-  };
-  
-  if (mediaQuery.addEventListener) {
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
-  } else {
-    mediaQuery.addListener(handleSystemThemeChange);
-  }
-}
-
 
 interface CookieState {
   consent: boolean | null;
@@ -450,6 +443,15 @@ export const useStore = create<State>()(
             if (pageData && pageData.length > 0) {
               const [q, lang] = cacheKey.split("-");
               useLastQueryStore.getState().setLastQuery(q, lang || "en", page);
+
+               // TRIGGER PREFETCH HERE! This is the missing piece
+              const productIds = pageData.map(p => p.id).filter(Boolean);
+              if (productIds.length > 0 && !get().isOffline) {
+                uiLog(`[Store] Triggering prefetch for ${productIds.length} products from IndexedDB cache`);
+                prefetchService.addToQueue(productIds, q);
+              }
+
+
 
               // Restore to Zustand memory cache with FIXED data
               set((s) => ({

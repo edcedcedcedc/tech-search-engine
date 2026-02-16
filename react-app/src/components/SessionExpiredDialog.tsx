@@ -180,7 +180,14 @@ export default function SessionExpiredDialog() {
   const isError = syncState === "error";
 
   return (
-    <Dialog open={isOpen} maxWidth="xs" fullWidth disableEscapeKeyDown>
+    <Dialog
+      open={isOpen}
+      maxWidth="xs"
+      fullWidth
+      disableEscapeKeyDown
+      disableEnforceFocus
+      disableAutoFocus
+    >
       <DialogTitle
         sx={{
           display: "flex",

@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 
@@ -13,12 +12,14 @@ import { useThemePreloadSetup } from "./hooks/useThemePreloadSetup";
 import { useHydrateLastQuery } from "./hooks/useHydrateLastQuery";
 import { useSyncDb } from "./hooks/useSyncDb";
 import React from "react";
+import { useBackgroundSyncDb } from "./hooks/useSyncDbBackground";
 
 const Root = () => {
   const effectiveMode = useThemeStore((state) => state.effectiveMode);
   const theme = React.useMemo(() => getTheme(effectiveMode), [effectiveMode]);
   usePrefetch();
-  useSyncDb();
+  /* useSyncDb(); */
+  useBackgroundSyncDb();
   useHydrateLastQuery();
   useThemePreloadSetup();
   indexedDbService.init().catch((error) => {

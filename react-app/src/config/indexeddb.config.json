@@ -1,0 +1,29 @@
+{
+  "db": {
+    "name": "pricecomp-db",
+    "version": 1,
+    "stores": ["products", "offers"]
+  },
+  "cache": {
+    "productsTtl": 86400000,
+    "offersTtl": 86400000,
+    "staleWhileRevalidate": 300000
+  },
+  "limits": {
+    "maxProductsEntries": 100,
+    "maxOffersEntries": 500,
+    "maxPageCachePerKey": 10,
+    "maxItemsPerPage": 50
+  },
+  "performance": {
+    "enableCompression": false,
+    "batchSize": 50,
+    "transactionTimeout": 5000
+  },
+  "debug": {
+    "verbose": false,
+    "logOperations": true,
+    "logCacheEvents": true,
+    "monitorStorage": false
+  }
+}

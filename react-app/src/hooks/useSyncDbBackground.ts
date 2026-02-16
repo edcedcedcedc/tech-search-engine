@@ -1,12 +1,12 @@
+// hooks/useBackgroundSyncDb.ts
 import { useEffect, useRef } from "react";
-import { useStore, useSystemStore } from "../store/store";
+import { useSystemStore } from "../store/store";
 import { getSystemVersion } from "../api/searchApi";
 import { uiLog } from "../webhook/client/uiDebug";
+import { backgroundSyncService } from "../services/syncDbBackground"
 
-export const useSyncDb = () => {
-  const openSessionExpired = useStore((s) => s.openSessionExpired);
+export const useBackgroundSyncDb = () => {
   const checkSystemVersion = useSystemStore((s) => s.checkSystemVersion);
-
   const intervalRef = useRef<any | null>(null);
   const isRunningRef = useRef(false);
 
@@ -16,14 +16,14 @@ export const useSyncDb = () => {
       isRunningRef.current = true;
 
       try {
-        
         const data = await getSystemVersion();
-        // Always check against backend version
+         uiLog(`[BackgroundSyncDb] Checking version ${data.version}`);
         if (checkSystemVersion(data.version)) {
-          openSessionExpired();
+          uiLog(`[BackgroundSyncDb] Version changed to ${data.version}, triggering background sync`);
+          await backgroundSyncService.forceBackgroundSync();
         }
       } catch (err: any) {
-        uiLog(`[SystemVersion] Check failed: ${err?.message}`);
+        uiLog(`[BackgroundSyncDb] Check failed: ${err?.message}`);
       } finally {
         isRunningRef.current = false;
       }
@@ -31,7 +31,7 @@ export const useSyncDb = () => {
 
     const init = async () => {
       await checkVersion();
-      intervalRef.current = setInterval(checkVersion, 5 * 60 * 1000); // poll every 5 min
+      intervalRef.current = setInterval(checkVersion, 5 * 60 * 1000);
     };
 
     init();
@@ -40,4 +40,4 @@ export const useSyncDb = () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
-};
+}

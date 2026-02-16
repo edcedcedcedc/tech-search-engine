@@ -277,7 +277,7 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
   },
 
    Services: "Servicii",
-   Services_Title: "Servicii",
+    Services_Title: "Servicii",
     Services_Intro: "Oferim înțelegere profundă și date pentru decizii de cumpărare mai inteligente, livrate ca un serviciu adaptat nevoilor dumneavoastră.",
     Services_Analytics_Title: "Analizare",
     Services_Analytics_Intro: "Profitați de tendința de preț și istoricul de pret proprietar pentru a lua decizii mai bune de cumpărare.",
@@ -288,6 +288,27 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
     Services_Data_Intro: "Accesați seturile complete de date istorice proprietare despre preț și stoc pentru propria analiză.",
     Services_Data_PriceHistory: "Seturi de date despre istoricul prețurilor, disponibil prin abonament sau plată unică",
    
+    // =======================
+    // NOTIFICATIONS & DISTRIBUTION
+    // =======================
+
+    Services_Notifications_Title: "Notificări & Distribuție",
+    Services_Notifications_Intro:
+      "Rămâi informat în timp real prin alerte inteligente și actualizări personalizate.",
+    Services_Notifications_PriceDrop:
+      "Notificări push pentru scăderi de preț la produsele urmărite",
+    Services_Notifications_BackInStock:
+      "Alerte când produsele revin în stoc",
+    Services_Notifications_Volatility:
+      "Notificări când este detectată volatilitate neobișnuită a prețului",
+    Services_Notifications_MarketShift:
+      "Alerte privind mișcările pieței pentru categorii selectate",
+    Services_Notifications_EmailTelegramSMS:
+      "Alerte premium prin email, Telegram sau SMS",
+    Services_Notifications_Sponsored:
+      "Oferte sponsorizate în newslettere și canale de notificare",
+
+
   Services_Disclaimer: "Toate serviciile depind de abonamente active și de seturile de date disponibile. Unele funcționalități pot suferi modificări",
 
   // error handling
@@ -314,7 +335,67 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
   Offline_Message2: "Încercă din nou după ce conexiunea este restabilită.",
 
   Oops: "Oops! Ceva nu a mers bine",
-  Go_Back_To_Home: "Înapoi acasă"
+  Go_Back_To_Home: "Înapoi acasă",
+  // =======================
+// HOW TO PAGE
+// =======================
+
+How_To: "Cum funcționează Strugure?",
+How_To_Intro: "Strugure combină învățarea automată, modelele lingvistice mari, datele structurate despre produse și actualizările zilnice ale pieței pentru a vă ajuta să luați decizii de cumpărare mai inteligente.",
+
+// SEARCH
+How_To_Search_Title: "Cum să cauți inteligent?",
+How_To_Search_Description_1: "Poți copia numele exact și specificațiile produsului din orice magazin online și să le introduci în căutare sau poți începe simplu prin a tasta numele produsului.",
+How_To_Search_Description_2: "De exemplu, tastând 'iphone' vei obține rezultate mai generale. Tastând 'iphone 16' vei primi rezultate mult mai precise.",
+How_To_Search_Description_3: "Cu cât căutarea este mai specifică, cu atât rezultatele vor fi mai apropiate de produsul identic. Cu cât este mai generală, cu atât vei descoperi alternative similare.",
+How_To_Search_Description_4: "Motorul nostru de căutare utilizează machine learning și potrivire semantică, ceea ce înseamnă că înțelege structura produselor, nu doar cuvintele cheie.",
+How_To_Search_Description_5: "Rezultatele în română și engleză sunt similare în proporție de aproximativ 90%, în funcție de limba sistemului și variațiile de denumire.",
+How_To_Search_Description_6: "Pe scurt: căutarea generală ajută la descoperire. Căutarea specifică oferă precizie.",
+
+// PRICE TREND
+Price_Trend_Title: "Ce este Price Trend?",
+Price_Trend_Description_1: "Price Trend reprezintă o vizualizare a evoluției prețului unui produs în timp.",
+Price_Trend_Description_2: "În versiunea gratuită vezi două puncte importante: primul preț înregistrat și ultimul preț.",
+Price_Trend_Description_3: "Aceasta îți oferă o perspectivă rapidă asupra direcției prețului — creștere, scădere sau stabilitate.",
+Price_Trend_Description_4: "Pentru a-l vedea, apasă pe iconița de tip spark de lângă preț.",
+
+// FULL PRICE HISTORY
+Full_Price_History_Title: "Cum vezi istoricul complet al prețului?",
+Full_Price_History_Description_1: "Istoricul complet al prețului îți oferă toate punctele istorice, nu doar primul și ultimul.",
+Full_Price_History_Description_2: "Poți observa scăderi, creșteri, volatilitate și stabilitate în timp.",
+Full_Price_History_Description_3: "Această funcționalitate este disponibilă prin abonament sau plată unică.",
+Full_Price_History_Description_4: "Activează accesul pentru a lua decizii de cumpărare mai informate.",
+
+// CUSTOMIZATION
+Customization_Title: "Personalizează interfața",
+Customization_Description_1: "Poți selecta ce coloane dorești să fie vizibile.",
+Customization_Description_2: "Folosește butonul de setări din colțul dreapta sus al tabelului.",
+Customization_Description_3: "Concentrează-te doar pe informațiile importante pentru tine — preț, specificații, trend sau disponibilitate.",
+
+// COMPARATION
+Comparation_Title: "Comparare bazată pe AI",
+Comparation_Description_1: "Funcția de comparare îți permite să analizezi produse alăturat folosind trendul de preț, istoricul complet și specificațiile tehnice.",
+Comparation_Description_2: "Această funcționalitate utilizează analiză asistată de inteligență artificială pentru a alinia specificațiile și a evidenția diferențele relevante.",
+Comparation_Description_3: "Te ajută să înțelegi nu doar care produs este mai ieftin, ci care oferă valoare mai bună.",
+Comparation_Description_4: "Disponibil prin abonament.",
+
+// DATA
+Data_Title: "Cât de des sunt actualizate datele?",
+Data_Description_1: "Strugure colectează și procesează continuu date despre produse din mai mulți retaileri.",
+Data_Description_2: "Informațiile despre preț și disponibilitate sunt actualizate zilnic pentru a asigura acuratețea.",
+Data_Description_3: "Modelele de machine learning normalizează denumirile și specificațiile produselor între diferite magazine.",
+Data_Description_4: "Astfel vezi date structurate, comparabile și de încredere — nu simple listări brute.",
+Data_Description_5: "Deși prețurile pot varia pe parcursul zilei, actualizările zilnice oferă o imagine corectă a pieței.",
+
+// SUBSCRIPTION
+Subscription_Title: "Cum obțin abonament sau acces prin plată unică?",
+Subscription_Description_1: "Înscrie-te pentru early access și introdu adresa ta de email.",
+Subscription_Description_2: "După înregistrare vei primi instrucțiuni pentru activare și plată.",
+Subscription_Description_3: "Poți alege între abonament sau plată unică pentru funcțiile avansate.",
+
+
+Cancel: "Anulează"
+
 };
 
 

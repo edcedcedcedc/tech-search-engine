@@ -16,7 +16,7 @@ export const FullScreenLoader = () => {
         justifyContent: "center",
         alignItems: "center",
         backgroundColor: "rgba(0, 0, 0, 0.1)",
-        backdropFilter: "blur(1px)",
+        backdropFilter: "blur(0.5px)",
         zIndex: theme.zIndex.modal + 1,
         opacity: 0.5,
       }}

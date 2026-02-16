@@ -51,6 +51,13 @@ export const SearchAutocomplete: React.FC = () => {
   const fetchSuggestions = React.useCallback(
     debounce(async (q: string) => {
       uiLog(`autocomplete | fetchSuggestions | start | query=${q}`);
+
+      if (isOffline) {
+        uiLog(`autocomplete | offline detected, skipping autocomplete`);
+        setSuggestions([]);
+        setLoading(false);
+        return;
+      }
       if (q.length === 0) {
         uiLog(`autocomplete | fetchSuggestions | empty query`);
         setSuggestions([]);

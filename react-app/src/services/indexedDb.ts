@@ -1,7 +1,8 @@
 import type { DBSchema, IDBPDatabase } from "idb";
 import { openDB } from 'idb';
 import type { AggregatedProduct } from "../types/AggregatedProduct";
-import { dbDebug } from "../webhook/client/dbDebug"; // <-- ADD THIS
+import { dbDebug } from "../webhook/client/dbDebug";
+import { INDEXED_DB_CONFIG, isProductCacheValid, isOfferCacheValid } from "../config/indexeddb.config";
 
 interface PriceCompDB extends DBSchema {
   // Product search results
@@ -14,6 +15,9 @@ interface PriceCompDB extends DBSchema {
       totalResults: number;
       updatedAt: number;
     };
+    indexes: {
+      'updatedAt': number;
+    };
   };
 
   // Product offers
@@ -24,32 +28,37 @@ interface PriceCompDB extends DBSchema {
       offers: AggregatedProduct["offers"];
       fetchedAt: number;
     };
+    indexes: {
+      'fetchedAt': number;
+    };
   };
 }
 
 class IndexedDbService {
   private db: IDBPDatabase<PriceCompDB> | null = null;
-  private readonly DB_NAME = "pricecomp-db";
-  private readonly DB_VERSION = 1;
+  private readonly DB_NAME = INDEXED_DB_CONFIG.db.name;
+  private readonly DB_VERSION = INDEXED_DB_CONFIG.db.version;
 
   async init(): Promise<void> {
     if (this.db) return;
 
     this.db = await openDB<PriceCompDB>(this.DB_NAME, this.DB_VERSION, {
       upgrade(db) {
-        // Create products store
-        if (!db.objectStoreNames.contains("products")) {
-          db.createObjectStore("products", { keyPath: "key" });
+        // Create products store with indexes
+        if (!db.objectStoreNames.contains(INDEXED_DB_CONFIG.db.stores.products)) {
+          const productsStore = db.createObjectStore("products", { keyPath: "key" });
+          productsStore.createIndex('updatedAt', 'updatedAt');
         }
 
-        // Create offers store
-        if (!db.objectStoreNames.contains("offers")) {
-          db.createObjectStore("offers", { keyPath: "productId" });
+        // Create offers store with indexes
+        if (!db.objectStoreNames.contains(INDEXED_DB_CONFIG.db.stores.offers)) {
+          const offersStore = db.createObjectStore("offers", { keyPath: "productId" });
+          offersStore.createIndex('fetchedAt', 'fetchedAt');
         }
       },
     });
     
-    // Log initialization
+    // Log initialization using existing debug
     dbDebug.dbInitialized();
   }
 
@@ -64,6 +73,12 @@ class IndexedDbService {
   ): Promise<void> {
     await this.ensureDb();
 
+    // Check if we've reached the storage limit
+    const currentCount = await this.getProductsCount();
+    if (currentCount >= INDEXED_DB_CONFIG.limits.maxProductsEntries) {
+      await this.removeOldestProducts();
+    }
+
     const pageCache = {
       ...(existingPageCache ?? {}),
       [page]: products,
@@ -77,7 +92,7 @@ class IndexedDbService {
       updatedAt: Date.now(),
     });
     
-    // Log save operation
+    // Log save operation using existing debug
     dbDebug.saveProducts(cacheKey, page, products.length);
   }
 
@@ -89,20 +104,32 @@ class IndexedDbService {
     await this.ensureDb();
     const result = await this.db!.get("products", cacheKey);
     
-    // Log cache hit/miss
     if (result) {
-      dbDebug.cacheHit('products', cacheKey, 'indexeddb');
-    } else {
-      dbDebug.cacheMiss('products', cacheKey, 'indexeddb');
+      // Check if cache is valid using config TTL
+      if (isProductCacheValid(result.updatedAt)) {
+        dbDebug.cacheHit('products', cacheKey, 'indexeddb');
+        return result;
+      } else if (INDEXED_DB_CONFIG.cache.staleWhileRevalidate > 0) {
+        // Return stale data but trigger revalidation
+        dbDebug.cacheHit('products', cacheKey, 'indexeddb');
+        return result;
+      } else {
+        // Cache expired, log and delete
+        const age = Date.now() - result.updatedAt;
+        dbDebug.cacheExpired('products', cacheKey, age);
+        await this.db!.delete("products", cacheKey);
+      }
     }
     
-    return result || null;
+    dbDebug.cacheMiss('products', cacheKey, 'indexeddb');
+    return null;
   }
 
   async clearProducts(): Promise<void> {
     await this.ensureDb();
     await this.db!.clear("products");
-    dbDebug.clearProducts(); // <-- ADD THIS
+    // Using existing debug
+    dbDebug.clearProducts();
   }
 
   // ============= OFFERS =============
@@ -113,8 +140,12 @@ class IndexedDbService {
   ): Promise<void> {
     await this.ensureDb();
     
-  
-   
+    // Check if we've reached the storage limit
+    const currentCount = await this.getOffersCount();
+    if (currentCount >= INDEXED_DB_CONFIG.limits.maxOffersEntries) {
+      await this.removeOldestOffers();
+    }
+    
     // Deep clone to avoid reference issues
     const offersToSave = JSON.parse(JSON.stringify(offers));
     
@@ -124,32 +155,47 @@ class IndexedDbService {
       fetchedAt: Date.now(),
     });
     
+    // Using existing debug
     dbDebug.saveOffers(productId, offers.length);
   }
 
-
-    // Update getOffers to verify data integrity
-    async getOffers(
-      productId: string
-    ): Promise<{ offers: AggregatedProduct["offers"]; fetchedAt: number } | null> {
-      await this.ensureDb();
-      const result = await this.db!.get("offers", productId);
-      
-      if (result) { 
+  async getOffers(
+    productId: string
+  ): Promise<{ offers: AggregatedProduct["offers"]; fetchedAt: number } | null> {
+    await this.ensureDb();
+    const result = await this.db!.get("offers", productId);
+    
+    if (result) {
+      if (isOfferCacheValid(result.fetchedAt)) {
         dbDebug.cacheHit('offers', productId, 'indexeddb');
       } else {
-        dbDebug.cacheMiss('offers', productId, 'indexeddb');
+        // Cache expired
+        const age = Date.now() - result.fetchedAt;
+        dbDebug.cacheExpired('offers', productId, age);
+        
+        if (!INDEXED_DB_CONFIG.cache.staleWhileRevalidate) {
+          await this.db!.delete("offers", productId);
+          dbDebug.cacheMiss('offers', productId, 'indexeddb');
+          return null;
+        }
+        
+        // Return stale but usable data
+        dbDebug.cacheHit('offers', productId, 'indexeddb');
       }
-      
-      return result
-        ? { offers: result.offers, fetchedAt: result.fetchedAt }
-        : null;
+    } else {
+      dbDebug.cacheMiss('offers', productId, 'indexeddb');
     }
+    
+    return result
+      ? { offers: result.offers, fetchedAt: result.fetchedAt }
+      : null;
+  }
 
   async clearOffers(): Promise<void> {
     await this.ensureDb();
     await this.db!.clear("offers");
-    dbDebug.clearOffers(); // <-- ADD THIS
+    // Using existing debug
+    dbDebug.clearOffers();
   }
 
   // ============= UTILITY =============
@@ -163,10 +209,11 @@ class IndexedDbService {
   async clearAll(): Promise<void> {
     await this.clearProducts();
     await this.clearOffers();
-    dbDebug.clearAll(); // <-- ADD THIS
+    // Using existing debug
+    dbDebug.clearAll();
   }
-    //needed for updates
-    async getAllProductKeys(): Promise<string[]> {
+  
+  async getAllProductKeys(): Promise<string[]> {
     await this.ensureDb();
     const tx = this.db!.transaction('products', 'readonly');
     const store = tx.objectStore('products');
@@ -203,6 +250,47 @@ class IndexedDbService {
     return count;
   }
 
+  // ============= CLEANUP METHODS =============
+  
+  private async removeOldestProducts(): Promise<void> {
+    await this.ensureDb();
+    const tx = this.db!.transaction('products', 'readwrite');
+    const store = tx.objectStore('products');
+    const index = store.index('updatedAt');
+    
+    // Get oldest entries first
+    const oldestEntries = await index.getAll(null, INDEXED_DB_CONFIG.limits.maxProductsEntries / 2);
+    
+    // Delete the oldest half
+    for (const entry of oldestEntries) {
+      await store.delete(entry.key);
+    }
+    
+    await tx.done;
+  }
+
+  private async removeOldestOffers(): Promise<void> {
+    await this.ensureDb();
+    const tx = this.db!.transaction('offers', 'readwrite');
+    const store = tx.objectStore('offers');
+    const index = store.index('fetchedAt');
+    
+    // Get oldest entries first
+    const oldestEntries = await index.getAll(null, INDEXED_DB_CONFIG.limits.maxOffersEntries / 2);
+    
+    // Delete the oldest half
+    for (const entry of oldestEntries) {
+      await store.delete(entry.productId);
+    }
+    
+    await tx.done;
+  }
+
+  // Optional: Method to manually trigger cache state logging
+  async logCacheState(): Promise<void> {
+    await this.ensureDb();
+    await dbDebug.cacheState();
+  }
 }
 
 export const indexedDbService = new IndexedDbService();

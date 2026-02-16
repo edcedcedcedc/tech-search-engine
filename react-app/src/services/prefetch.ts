@@ -1,7 +1,7 @@
 import { indexedDbService } from "./indexedDb";
 import { getProductOffers, searchProducts } from "../api/searchApi";
 import { uiLog } from "../webhook/client/uiDebug";
-import type { AggregatedProduct } from "../types/AggregatedProduct";
+import { dbSyncService } from "./syncDb";
 
 // Queue management
 class PrefetchService {
@@ -27,11 +27,17 @@ class PrefetchService {
    * Add product IDs to prefetch queue with search context
    */
   addToQueue(productIds: string[], searchQuery: string = '') {
+    if (dbSyncService.isSyncing) {
+        uiLog(`[Prefetch][addToQueue] Sync in progress, skipping prefetch for ${productIds.length} products`);
+        return;
+    }
+    
     uiLog(`[Prefetch][addToQueue] Adding ${productIds.length} product IDs, query="${searchQuery}"`);
     if (productIds.length > 0) {
       uiLog(`[Prefetch][addToQueue] First 5 IDs: ${productIds.slice(0, 5).join(', ')}${productIds.length > 5 ? `... (${productIds.length-5} more)` : ''}`);
     }
     
+  
     productIds.forEach(id => {
       if (!this.queue.has(id)) {
         this.queue.add(id);
@@ -51,7 +57,13 @@ class PrefetchService {
    * Prefetches the next page of search results
    */
  addProductPageToQueue(query: string, lang: string = 'en', page: number, itemsPerPage: number) {
+  if (dbSyncService.isSyncing) {
+    uiLog(`[Prefetch][addProductPageToQueue] Sync in progress, skipping page prefetch for "${query}" page ${page}`);
+    return;
+  }
+
   const baseCacheKey = `${query}-${lang || 'en'}`;
+  
   
   uiLog(`[Prefetch][addProductPageToQueue] Checking if page ${page} for "${baseCacheKey}" should be prefetched`);
   
@@ -84,6 +96,10 @@ class PrefetchService {
   itemsPerPage: number, 
   pagesToPrefetch: number = 2
 ) {
+  if (dbSyncService.isSyncing) {
+    uiLog(`[Prefetch][prefetchNextPages] Sync in progress, skipping next pages prefetch for "${query}"`);
+    return;
+  }
   uiLog(`[Prefetch][prefetchNextPages] Prefetching ${pagesToPrefetch} pages for query="${query}", currentPage=${currentPage}`);
   
   for (let i = 1; i <= pagesToPrefetch; i++) {
@@ -96,7 +112,7 @@ class PrefetchService {
   query: string, 
   lang: string, 
   page: number, 
-  itemsPerPage: number
+  _itemsPerPage: number
 ): Promise<boolean> {
   // Use the SAME cache key format as the store!
   const baseCacheKey = `${query}-${lang || 'en'}`;
@@ -132,6 +148,13 @@ class PrefetchService {
    * Process product queue in background with concurrency limit (NEW)
    */
   private async processProductQueue() {
+    if (dbSyncService.isSyncing) {
+      uiLog(`[Prefetch][processProductQueue] Sync started while queue was waiting, clearing product queue`);
+      this.productQueue.clear();
+      this.productAbortControllers.clear();
+      return;
+    }
+    
     if (this.isProcessingProducts) {
       uiLog(`[Prefetch][processProductQueue] Already processing, skipping`);
       return;
@@ -176,6 +199,13 @@ class PrefetchService {
     cacheKey: string,
     params: { query: string; lang: string; page: number; itemsPerPage: number }
   ) {
+    // ADD THIS CHECK AT THE START:
+    if (dbSyncService.isSyncing) {
+      uiLog(`[Prefetch][prefetchProductPage] Sync in progress, aborting product page prefetch: ${cacheKey}`);
+      this.productQueue.delete(cacheKey);
+      return;
+    }
+
     const controller = new AbortController();
     this.productAbortControllers.set(cacheKey, controller);
 
@@ -194,6 +224,14 @@ class PrefetchService {
         undefined,
         { signal: controller.signal }
       );
+
+      // ADD THIS CHECK AFTER FETCH:
+      if (dbSyncService.isSyncing) {
+        uiLog(`[Prefetch][prefetchProductPage] Sync started during fetch, discarding results for ${cacheKey}`);
+        this.productQueue.delete(cacheKey);
+        this.productAbortControllers.delete(cacheKey);
+        return;
+      }
 
       if (data.products && data.products.length > 0) {
         uiLog(`[Prefetch][prefetchProductPage] Received ${data.products.length} products for ${cacheKey}`);

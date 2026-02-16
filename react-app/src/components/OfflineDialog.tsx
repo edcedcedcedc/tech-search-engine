@@ -64,7 +64,14 @@ export default function OfflineDialog() {
   }
 
   return (
-    <Dialog open={isOffline} maxWidth="xs" fullWidth disableEscapeKeyDown>
+    <Dialog
+      open={isOffline}
+      maxWidth="xs"
+      fullWidth
+      disableEscapeKeyDown
+      disableEnforceFocus
+      disableAutoFocus
+    >
       <DialogTitle
         sx={{
           display: "flex",

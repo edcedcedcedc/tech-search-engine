@@ -1,0 +1,140 @@
+# CACHE & SYNC SYSTEM
+
+## MEMORY HIERARCHY (Fastest to Slowest)
+
+1. RAM (Main Memory) - Zustand Store
+   - Lives in JavaScript heap memory
+   - Cleared on page refresh / tab close
+   - Instant access (0ms)
+   - Holds: Current search results, open product offers
+
+2. Session Storage - Zustand Persist
+   - Lives in browser tab memory
+   - Persists through page refreshes
+   - Cleared when tab/window closes
+   - Fast access (5-10ms)
+   - Holds: Cache indexes, user preferences
+
+3. Disk (IndexedDB)
+   - Lives on hard drive/SSD
+   - Persists across browser restarts
+   - Slower access (10-50ms)
+   - 50-250MB storage limit
+   - Holds: Full product cache, all offers
+
+4. Network (Backend API)
+   - Lives on remote servers
+   - Slowest access (300-500ms+)
+   - Subject to rate limits
+   - Holds: Source of truth data
+
+
+## THE THREE SERVICES
+
+### BackgroundSync Service
+Runs automatically every 24 hours in background. Only refreshes products, never offers. Checks battery level and data saver before running. Uses localStorage to track last sync time.
+
+### SyncDb Service
+Manual or version-triggered full refresh. Has two modes:
+- syncOffers=true: Full refresh of everything (products + offers)
+- syncOffers=false: Products only (clears offers too since they're stale)
+
+### Prefetch Service
+Silently fetches offers after user searches. Queue-based with 10 concurrent limit. Checks IndexedDB first before hitting API. Clears queue when sync starts (mutually exclusive).
+
+
+## DATA FLOW SCENARIOS
+
+### First Search of the Day
+1. User types "iphone"
+2. Zustand empty → check IndexedDB
+3. IndexedDB has 24h old data → use it (fast)
+4. Silently trigger prefetch for offers
+5. Show results instantly
+6. Offers appear in background
+
+### Returning User (Same Session)
+1. User searches "iphone" again
+2. Zustand has it from memory → instant (0ms)
+3. No prefetch needed (offers already cached)
+
+### After Background Sync
+1. Sync runs at 3am, refreshes products
+2. User searches "iphone" at 9am
+3. IndexedDB has fresh products → load instantly
+4. Prefetch triggers for offers (since sync cleared them)
+5. Best of both worlds: fresh products, offers loading
+
+### System Version Change
+1. Backend deploys new version
+2. useBackgroundSyncDb detects change
+3. Triggers forceBackgroundSync()
+4. Full refresh of everything
+5. User gets fresh data next search
+
+
+## MUTUAL EXCLUSIVITY RULE
+
+Sync and prefetch NEVER run at the same time:
+
+- If sync starts: prefetch queue clears, all requests abort
+- If prefetch starts but sync begins: prefetch stops
+- After sync completes: prefetch can run normally
+
+This prevents:
+- API rate limit conflicts
+- Race conditions with IndexedDB writes
+- Wasted bandwidth
+- Corrupted cache states
+
+
+## STORAGE LAYOUT
+
+localStorage:
+- lastBackgroundSync: timestamp of last background sync
+- systemVersion: current app version
+- theme: user preference
+- cookie-consent: GDPR consent
+
+sessionStorage:
+- pricecomp-store: Zustand cache (products, offers, selected items)
+
+IndexedDB (pricecomp-db):
+- products store: { key: query-lang, pageCache, totalResults, updatedAt }
+- offers store: { productId, offers, fetchedAt }
+
+
+## WHY THIS WORKS
+
+Users get:
+- Instant results from RAM
+- Fast subsequent searches from disk
+- Fresh products daily from background sync
+- Offers loading silently after search
+- No waiting, ever
+
+The system feels fast because:
+1. RAM is fastest but volatile
+2. Disk is slower but persistent
+3. Network is slowest but source of truth
+4. Background work hides latency
+5. Mutual exclusivity prevents conflicts
+
+
+## TROUBLESHOOTING
+
+If prefetch not working:
+- Check if sync is running (dbSyncService.isSyncing)
+- Check if queue is empty (prefetchService.getQueueSize())
+- Check IndexedDB for existing offers
+
+If sync not running:
+- Check lastSync time in localStorage
+- Check battery level (skips if <15%)
+- Check data saver setting
+- Check online status
+
+If data seems stale:
+- Check system version (may need update)
+- Check if background sync ran recently
+- Manual force sync available

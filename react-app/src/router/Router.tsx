@@ -6,6 +6,7 @@ import { AnimatePresence } from "framer-motion";
 import ErrorBoundary from "../components/ErrorBoundary";
 import { useSessionStart } from "../hooks/useSessionStart";
 import { FullScreenLoader } from "../components/FullScreenLoader";
+import HowTo from "../views/HowTo";
 
 const Home = lazy(() => import("../views/Home"));
 const Products = lazy(() => import("../views/Products"));
@@ -36,6 +37,7 @@ const AppRoutes: React.FC = () => {
               <Route path="/terms-of-use" element={<TermsOfUse />} />
               <Route path="/products" element={<Products />} />
               <Route path="/services" element={<Services />} />
+              <Route path="/how-to" element={<HowTo />} />
             </Routes>
           </AnimatePresence>
         </Suspense>

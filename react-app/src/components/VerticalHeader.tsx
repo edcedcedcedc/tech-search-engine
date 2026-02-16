@@ -62,8 +62,8 @@ const VerticalHeader: React.FC = () => {
       ),
     },
     {
-      path: "/about",
-      label: t("About"),
+      path: "/how-to",
+      label: "",
       icon: (
         <NavIcon>
           <QuestionMarkOutlinedIcon sx={iconSx} />

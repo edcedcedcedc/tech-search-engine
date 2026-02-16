@@ -15,6 +15,6 @@ def price_history_log(msg: str):
     timestamp = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
     try:
         with open(AUTOCOMPLETE_LOG_FILE, "a", encoding="utf-8") as f:
-            f.write(f"[{timestamp}]{" "}{msg}\n")
+            f.write(f"[{timestamp}]{msg}\n")
     except Exception as e:
         print(f"Failed to write autocomplete log: {e}")

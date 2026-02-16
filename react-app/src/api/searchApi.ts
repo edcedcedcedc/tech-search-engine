@@ -267,25 +267,3 @@ export const getSystemVersion = async (): Promise<{ version: number }> => {
     throw err;
   }
 };
-
-
-// Add this function to searchApi.ts
-
-/**
- * Flush the current session on the backend
- * This will delete the session and its associated cache
- */
-/* export const flushSession = async (): Promise<void> => {
-  uiLog(`[API] flushSession | REQUEST`);
-
-  try {
-    const response = await api.post("/session/flush/");
-    uiLog(`[API] flushSession | RESPONSE | status=${response.status}`);
-  } catch (err: any) {
-    uiLog(`[API] flushSession | ERROR | status=${err?.response?.status} | message=${err?.message}`);
-    
-    // Don't throw - we want to continue even if flush fails
-    // The session might already be invalid
-     
-  }
-}; */

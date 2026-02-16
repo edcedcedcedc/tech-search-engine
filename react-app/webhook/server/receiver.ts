@@ -108,26 +108,26 @@ const server = http.createServer((req, res) => {
           }
           
           const timestamp = new Date().toLocaleTimeString();
-          console.log(`${color}${symbol} [DB]${'\x1b[0m'} ${timestamp} - ${data.operation}`);
+          writeDbLog(`${color}${symbol} [DB]${'\x1b[0m'} ${timestamp} - ${data.operation}`);
           
           // Pretty print details
           if (data.details) {
             if (data.operation === 'CACHE_STATE') {
-              console.log(`   📦 Products: ${data.details.products || 0} queries`);
-              console.log(`   🏷️ Offers: ${data.details.offers || 0} products`);
+              writeDbLog(`   📦 Products: ${data.details.products || 0} queries`);
+              writeDbLog(`   🏷️ Offers: ${data.details.offers || 0} products`);
               if (data.details.productsKeys?.length) {
-                console.log(`   🔑 Keys: ${data.details.productsKeys.slice(0, 3).join(', ')}${data.details.productsKeys.length > 3 ? '...' : ''}`);
+                writeDbLog(`   🔑 Keys: ${data.details.productsKeys.slice(0, 3).join(', ')}${data.details.productsKeys.length > 3 ? '...' : ''}`);
               }
             } else {
               Object.entries(data.details).forEach(([key, value]) => {
-                console.log(`   ${key}: ${value}`);
+                writeDbLog(`   ${key}: ${value}`);
               });
             }
-            console.log(''); // empty line
+            writeDbLog(''); // empty line
           }
         } catch (e) {
           // If not JSON, just log raw
-          console.log(`[DB] ${msg}`);
+          writeDbLog(`[DB] ${msg}`);
         }
         
         res.end("ok");
@@ -237,35 +237,35 @@ const server = http.createServer((req, res) => {
           }
           
           const timestamp = new Date().toLocaleTimeString();
-          console.log(`${color}${symbol} [SYNC]${'\x1b[0m'} ${timestamp} - ${data.operation}`);
+          writeSyncLog(`${color}${symbol} [SYNC]${'\x1b[0m'} ${timestamp} - ${data.operation}`);
           
           // Pretty print details
           if (data.details) {
             Object.entries(data.details).forEach(([key, value]) => {
               if (key === 'productIds' && Array.isArray(value)) {
-                console.log(`   ${key}: [${value.slice(0, 3).join(', ')}${value.length > 3 ? '...' : ''}] (${value.length} total)`);
+                writeSyncLog(`   ${key}: [${value.slice(0, 3).join(', ')}${value.length > 3 ? '...' : ''}] (${value.length} total)`);
               } else if (key === 'pages' && Array.isArray(value)) {
-                console.log(`   ${key}: pages ${value.join(', ')}`);
+                writeSyncLog(`   ${key}: pages ${value.join(', ')}`);
               } else {
-                console.log(`   ${key}: ${value}`);
+                writeSyncLog(`   ${key}: ${value}`);
               }
             });
           }
           
           // Print error if present
           if (data.error) {
-            console.log(`   ❌ Error: ${data.error.message || JSON.stringify(data.error)}`);
-            if (data.error.code) console.log(`   📟 Code: ${data.error.code}`);
+            writeSyncLog(`   ❌ Error: ${data.error.message || JSON.stringify(data.error)}`);
+            if (data.error.code) writeSyncLog(`   📟 Code: ${data.error.code}`);
             if (data.error.response?.status) {
-              console.log(`   📡 HTTP: ${data.error.response.status} ${data.error.response.statusText}`);
+              writeSyncLog(`   📡 HTTP: ${data.error.response.status} ${data.error.response.statusText}`);
             }
           }
           
-          console.log(''); // empty line
+          writeSyncLog(''); // empty line
           
         } catch (e) {
           // If not JSON, just log raw
-          console.log(`[SYNC] ${msg}`);
+          writeSyncLog(`[SYNC] ${msg}`);
         }
         
         res.end("ok");
@@ -275,7 +275,9 @@ const server = http.createServer((req, res) => {
         res.end("not found");
       }
     } catch (err) {
-      console.error('Error parsing body:', err);
+      writeSyncLog(`Error parsing body:', ${err}`);
+      writeDbLog(`Error parsing body:', ${err}`);
+      writeLog(`Error parsing body:', ${err}`);
       res.statusCode = 400;
       res.end("bad request");
     }

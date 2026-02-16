@@ -71,6 +71,64 @@ export default function Services() {
         </Box>
       </Box>
 
+      {/* Notifications & Distribution */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" fontWeight={600} gutterBottom>
+          {t("Services_Notifications_Title", "Notifications & Distribution")}
+        </Typography>
+
+        <Typography variant="body1" sx={{ mb: 1 }}>
+          {t(
+            "Services_Notifications_Intro",
+            "Stay informed in real time with intelligent alerts and targeted updates.",
+          )}
+        </Typography>
+
+        <Box component="ul" sx={{ pl: 3 }}>
+          <Typography component="li" variant="body1">
+            {t(
+              "Services_Notifications_PriceDrop",
+              "Push notifications for price drops on tracked products",
+            )}
+          </Typography>
+
+          <Typography component="li" variant="body1">
+            {t(
+              "Services_Notifications_BackInStock",
+              "Alerts when products are back in stock",
+            )}
+          </Typography>
+
+          <Typography component="li" variant="body1">
+            {t(
+              "Services_Notifications_Volatility",
+              "Notifications when unusual price volatility is detected",
+            )}
+          </Typography>
+
+          <Typography component="li" variant="body1">
+            {t(
+              "Services_Notifications_MarketShift",
+              "Market movement alerts for selected categories",
+            )}
+          </Typography>
+
+          <Typography component="li" variant="body1">
+            {t(
+              "Services_Notifications_EmailTelegramSMS",
+              "Premium email, Telegram, or SMS alerts",
+            )}
+          </Typography>
+
+          <Typography component="li" variant="body1">
+            {t(
+              "Services_Notifications_Sponsored",
+              "Sponsored offers within newsletters and notification channels",
+            )}
+          </Typography>
+        </Box>
+      </Box>
+
       <Typography variant="body2" color="text.secondary" sx={{ mt: 4 }}>
         {t(
           "Services_Disclaimer",
