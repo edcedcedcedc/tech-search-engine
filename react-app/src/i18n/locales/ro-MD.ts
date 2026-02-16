@@ -394,7 +394,18 @@ Subscription_Description_2: "După înregistrare vei primi instrucțiuni pentru 
 Subscription_Description_3: "Poți alege între abonament sau plată unică pentru funcțiile avansate.",
 
 
-Cancel: "Anulează"
+Cancel: "Anulează",
+
+//EMAIL
+
+  Email_Placeholder: "Introduceți email-ul",
+  Email_Required: "Email-ul este obligatoriu",
+  Email_Invalid: "Vă rugăm să introduceți o adresă de email validă",
+  Email_Success: "Vă mulțumim pentru abonare! Vă vom anunța când lansăm.",
+  Email_Error: "Abonarea a eșuat. Vă rugăm să încercați din nou.",
+  Subscribe: "Abonează-te",
+  Services_EarlyAccess_Title: "Obține Acces Early",
+  Services_EarlyAccess_Text: "Fiți primii care află când lansăm. Abonați-vă pentru acces early și oferte speciale.",
 
 };
 

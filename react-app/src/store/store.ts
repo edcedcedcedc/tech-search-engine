@@ -10,6 +10,48 @@ import { prefetchService } from "../services/prefetch";
 import { v4 as uuidv4 } from "uuid";
 import { transformSearchResult, validateAndFixCachedProduct } from "../types/Transformer"
 
+
+
+
+/* =========================
+   EMAIL COLLECTION STORE
+========================= */
+
+interface EmailState {
+  email: string;
+  status: 'idle' | 'loading' | 'success' | 'error';
+  message: string;
+  lastAttempt: number | null;
+  
+  setEmail: (email: string) => void;
+  setStatus: (status: EmailState['status']) => void;
+  setMessage: (message: string) => void;
+  reset: () => void;
+}
+
+export const useEmailStore = create<EmailState>()(
+  (set) => ({
+    email: '',
+    status: 'idle',
+    message: '',
+    lastAttempt: null,
+
+    setEmail: (email) => set({ email }),
+    
+    setStatus: (status) => set({ status }),
+    
+    setMessage: (message) => set({ message }),
+    
+    reset: () => set({
+      email: '',
+      status: 'idle',
+      message: '',
+      lastAttempt: null
+    })
+  })
+);
+
+
 /* =========================
    SYSTEM STORE
 ========================= */

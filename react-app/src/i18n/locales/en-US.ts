@@ -348,7 +348,20 @@ Data_Description_5: "While prices may change during the day at individual shops,
 Subscription_Title: "How to Get Subscription or One-Time Access?",
 Subscription_Description_1: "Subscribe to early access and provide your email address.",
 Subscription_Description_2: "After registration, you will receive activation details and payment instructions.",
-Subscription_Description_3: "You can choose between subscription access or a one-time payment for advanced features."
+Subscription_Description_3: "You can choose between subscription access or a one-time payment for advanced features.",
+
+
+
+//EMAIL
+
+  Email_Placeholder: "Enter your email",
+  Email_Required: "Email is required",
+  Email_Invalid: "Please enter a valid email address",
+  Email_Success: "Thanks for subscribing! We'll notify you when we launch.",
+  Email_Error: "Failed to subscribe. Please try again.",
+  Subscribe: "Subscribe",
+  Services_EarlyAccess_Title: "Get Early Access",
+  Services_EarlyAccess_Text: "Be the first to know when we launch. Subscribe for early access and special offers.",
 
 };
 

@@ -267,3 +267,34 @@ export const getSystemVersion = async (): Promise<{ version: number }> => {
     throw err;
   }
 };
+
+
+/**
+ * Collect email for newsletter/waitlist
+ */
+export const collectEmail = async (email: string): Promise<{ success: boolean; message?: string }> => {
+  uiLog(`[API] collectEmail | REQUEST | email=${email}`);
+
+  try {
+    const { data, status } = await api.post<{ success: boolean; message?: string }>("/email/", { email });
+    uiLog(`[API] collectEmail | RESPONSE | status=${status} | data= ${data}`);
+    
+    // 201 means success! Return success true
+    return { 
+      success: true, 
+      message: data.message || "Successfully subscribed!" 
+    };
+    
+  } catch (err: any) {
+    const status = err?.response?.status;
+    const message = err?.response?.data?.message || err?.message;
+    
+    uiLog(`[API] collectEmail | ERROR | email=${email} | status=${status} | message=${message}`);
+    
+    // Only return error for non-2xx responses
+    return { 
+      success: false, 
+      message: message || "Failed to subscribe. Please try again." 
+    };
+  }
+};
