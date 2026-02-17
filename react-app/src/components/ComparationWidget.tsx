@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { IconButton, Badge, Tooltip } from "@mui/material";
+import { IconButton, Badge, Tooltip, useTheme } from "@mui/material";
 import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import { useNotificationStore, useStore, useThemeStore } from "../store/store";
 import { t } from "i18next";
@@ -13,11 +13,9 @@ export const HeaderComparisonIcon: React.FC<HeaderComparisonIconProps> = ({
   onOpenComparison,
 }) => {
   const selectedOffers = useStore((s) => s.selectedOffers);
-  const mode = useThemeStore((s) => s.mode);
+  const theme = useTheme(); // Get the theme directly
 
   const selectedCount = Object.keys(selectedOffers).length;
-
-  // Show snackbar only on new selection
 
   const handleClick = () => {
     if (selectedCount < 2) {
@@ -26,45 +24,47 @@ export const HeaderComparisonIcon: React.FC<HeaderComparisonIconProps> = ({
     }
 
     uiLog(`comparison | widget_click | offers=${selectedCount}`);
+    if (onOpenComparison) {
+      onOpenComparison();
+    }
   };
 
-  // Hard-coded colors from your theme
-  const iconColor = mode === "dark" ? "#c9d1d9" : "rgba(0,0,0,0.87)";
-  const isDoubleDigit = selectedCount >= 10 ? true : false;
+  const isDoubleDigit = selectedCount >= 10;
+
   return (
-    <>
-      <Badge
-        badgeContent={selectedCount}
-        color="secondary"
-        overlap="circular"
-        invisible={selectedCount === 0}
-        sx={{
-          ...(isDoubleDigit && {
-            "& .MuiBadge-badge": {
-              width: "60%",
-              height: "60%",
-            },
-          }),
-        }}
-      >
-        <Tooltip
-          title={t("Comparation_Tooltip")}
-          enterDelay={500}
-          leaveDelay={0}
-        >
-          <span>
-            <IconButton
-              sx={{
-                color: iconColor,
-              }}
-              onClick={handleClick}
-              disabled={selectedCount < 2}
-            >
-              <CompareArrowsIcon fontSize="medium" />
-            </IconButton>
-          </span>
-        </Tooltip>
-      </Badge>
-    </>
+    <Badge
+      badgeContent={selectedCount}
+      color="secondary"
+      overlap="circular"
+      invisible={selectedCount === 0}
+      sx={{
+        ...(isDoubleDigit && {
+          "& .MuiBadge-badge": {
+            width: "60%",
+            height: "60%",
+          },
+        }),
+      }}
+    >
+      <Tooltip title={t("Comparation_Tooltip")} enterDelay={500} leaveDelay={0}>
+        <span>
+          <IconButton
+            sx={{
+              color: theme.palette.text.primary, // Use theme's text.primary
+              "&.Mui-disabled": {
+                color: theme.palette.text.disabled, // Use theme's text.disabled
+              },
+              "&:hover": {
+                color: theme.palette.text.primary, // Keep same on hover
+              },
+            }}
+            onClick={handleClick}
+            disabled={selectedCount < 2}
+          >
+            <CompareArrowsIcon fontSize="medium" />
+          </IconButton>
+        </span>
+      </Tooltip>
+    </Badge>
   );
 };

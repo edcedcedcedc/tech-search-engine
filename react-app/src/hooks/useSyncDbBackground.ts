@@ -7,17 +7,20 @@ import { backgroundSyncService } from "../services/syncDbBackground"
 
 export const useBackgroundSyncDb = () => {
   const checkSystemVersion = useSystemStore((s) => s.checkSystemVersion);
-  const intervalRef = useRef<any | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined); // Add undefined and initialize
   const isRunningRef = useRef(false);
 
   useEffect(() => {
+    let isActive = true;
+
     const checkVersion = async () => {
       if (isRunningRef.current) return;
       isRunningRef.current = true;
 
       try {
         const data = await getSystemVersion();
-         uiLog(`[BackgroundSyncDb] Checking version ${data.version}`);
+        uiLog(`[BackgroundSyncDb] Checking version ${data.version}`);
+        
         if (checkSystemVersion(data.version)) {
           uiLog(`[BackgroundSyncDb] Version changed to ${data.version}, triggering background sync`);
           await backgroundSyncService.forceBackgroundSync();
@@ -26,18 +29,26 @@ export const useBackgroundSyncDb = () => {
         uiLog(`[BackgroundSyncDb] Check failed: ${err?.message}`);
       } finally {
         isRunningRef.current = false;
+        
+        // Schedule next check only if still active
+        if (isActive) {
+          timeoutRef.current = setTimeout(checkVersion, 1 * 60 * 1000);
+        }
       }
     };
 
-    const init = async () => {
-      await checkVersion();
-      intervalRef.current = setInterval(checkVersion, 5 * 60 * 1000);
-    };
+    // Start immediately
+    checkVersion();
 
-    init();
-
+    // Cleanup function
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      uiLog(`[BackgroundSyncDb] Cleaning up`);
+      isActive = false;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
-  }, []);
-}
+  }, [checkSystemVersion]);
+
+  return null;
+};

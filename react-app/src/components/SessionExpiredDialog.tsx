@@ -16,7 +16,7 @@ import { dbSyncService, type SyncProgress } from "../services/syncDb";
 import { syncDebug } from "../webhook/client/syncDebug";
 import { indexedDbService } from "../services/indexedDb";
 import { uiLog } from "../webhook/client/uiDebug";
-
+import { useNavigate } from "react-router-dom";
 // Small Circular Progress with Label Component
 function SmallCircularProgressWithLabel(props: { value: number }) {
   return (
@@ -65,7 +65,7 @@ export default function SessionExpiredDialog() {
   const triggerAutocompleteReset = useStore((s) => s.triggerAutocompleteReset);
   const close = useStore((s) => s.closeSessionExpired);
   const setDebugShow = useStore((s) => s.setDebugShowSessionExpired);
-
+  const navigate = useNavigate();
   const [syncState, setSyncState] = React.useState<
     "idle" | "syncing" | "completed" | "error"
   >("idle");
@@ -166,14 +166,11 @@ export default function SessionExpiredDialog() {
   const handleDone = () => {
     if (!debugShow) close();
     setSyncState("idle");
+    navigate("/");
   };
 
-  const progressValue = Math.min(
-    progress.totalOffersEstimate > 0
-      ? (progress.offersFetched / (progress.totalOffersEstimate * 20)) * 100
-      : 0,
-    100,
-  );
+  const progressValue =
+    progress.total > 0 ? (progress.current / progress.total) * 100 : 0;
 
   const isSyncing = syncState === "syncing";
   const isCompleted = syncState === "completed";

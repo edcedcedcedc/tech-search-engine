@@ -3,7 +3,7 @@ import { indexedDbService } from './indexedDb';
 import { searchProducts, getProductOffers } from '../api/searchApi';
 import type { AggregatedProduct } from '../types/AggregatedProduct';
 import { syncDebug } from '../webhook/client/syncDebug';
-import { useNotificationStore } from '../store/store';
+import { useNotificationStore, useStore } from '../store/store';
 import { prefetchService } from './prefetch';
 
 // ============= CONFIGURATION =============
@@ -321,6 +321,7 @@ class DBSyncService {
     } finally {
       this.abortController = null;
       this._isSyncing = false;
+      useStore.getState().triggerSync();
     }
   }
 

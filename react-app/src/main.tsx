@@ -18,8 +18,8 @@ const Root = () => {
   const effectiveMode = useThemeStore((state) => state.effectiveMode);
   const theme = React.useMemo(() => getTheme(effectiveMode), [effectiveMode]);
   usePrefetch();
-  /* useSyncDb(); */
-  useBackgroundSyncDb();
+  useSyncDb();
+  /*  useBackgroundSyncDb(); */
   useHydrateLastQuery();
   useThemePreloadSetup();
   indexedDbService.init().catch((error) => {

@@ -5,6 +5,7 @@ import { Cookie } from "./Cookie";
 import Bottom from "./Bottom";
 import { NetworkListener } from "./NetworkListener";
 import SessionExpiredDialog from "./SessionExpiredDialog";
+import FloatingPaginator from "./FloatingPaginator";
 
 const AppOverlays: React.FC = () => {
   return (
@@ -19,6 +20,9 @@ const AppOverlays: React.FC = () => {
     >
       <SessionExpiredDialog />
       <Cookie />
+      {/* <Box sx={{ pointerEvents: "auto" }}>
+        <FloatingPaginator />
+      </Box> */}
       <Bottom />
       <NetworkListener />
     </Box>

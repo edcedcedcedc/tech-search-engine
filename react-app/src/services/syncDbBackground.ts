@@ -93,15 +93,18 @@ class BackgroundSyncService {
       }
 
       // Check if enough time has passed since last sync
-      const lastSync = await this.getLastSyncTime();
-      const timeSinceLastSync = Date.now() - lastSync;
-      
-      if (timeSinceLastSync < this.SYNC_INTERVAL) {
-        const hoursLeft = Math.round((this.SYNC_INTERVAL - timeSinceLastSync) / (60 * 60 * 1000));
-        uiLog(`[BackgroundSync] Last sync was ${hoursLeft}h ago, next sync in ${24 - hoursLeft}h`);
-        return;
-      }
-
+       if (reason !== 'manual' && reason !== 'startup') {
+          const lastSync = await this.getLastSyncTime();
+          const timeSinceLastSync = Date.now() - lastSync;
+          
+          if (timeSinceLastSync < this.SYNC_INTERVAL) {
+            const hoursLeft = Math.round((this.SYNC_INTERVAL - timeSinceLastSync) / (60 * 60 * 1000));
+            uiLog(`[BackgroundSync] Last sync was ${24 - hoursLeft}h ago, next sync in ${hoursLeft}h`);
+            return;
+          }
+        } else {
+          uiLog(`[BackgroundSync] ${reason} sync triggered - bypassing time check`);
+        }
       // Check battery level (if available)
       if ('getBattery' in navigator) {
         const battery = await (navigator as any).getBattery();

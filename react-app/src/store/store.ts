@@ -78,6 +78,7 @@ export const useSystemStore = create<SystemState>()(
 
       checkSystemVersion: (backendVersion: number) => {
         const current = get().systemVersion;
+        uiLog(`[SYSTEM_STORE] current version ${current}`)
         if (backendVersion > current) {
           uiLog(`[SYSTEM_STORE] Backend version ${backendVersion} > frontend ${current}, updating`);
           set({ systemVersion: backendVersion });
@@ -311,7 +312,10 @@ interface ProductOffersEntry {
 }
 
 interface State {
-  
+  //
+  syncTriggered: number;
+  triggerSync: () => void;
+
   //
   debugShowSessionExpired: boolean;
   setDebugShowSessionExpired: (show: boolean) => void;
@@ -403,6 +407,8 @@ export const useStore = create<State>()(
   persist(
     (set, get) => ({
 
+      syncTriggered: 0,
+      triggerSync: () => set((state) => ({ syncTriggered: state.syncTriggered + 1 })),
       //
       debugShowSessionExpired: false,
       setDebugShowSessionExpired: (show) => set({ debugShowSessionExpired: show }),
@@ -455,7 +461,14 @@ export const useStore = create<State>()(
 
         // ============= STEP 1: Check Zustand memory cache =============
         const cached = multiQueryCache[cacheKey];
-        if (cached && !isExpired(cached.updatedAt)) {
+
+        // In searchProducts, add this check at the beginning:
+        // If sync was triggered and we have cached data, reload from IndexedDB
+        if (get().syncTriggered > 0 && cached) {
+          // Force reload from IndexedDB
+          set({ syncTriggered: 0 });
+          // Continue to STEP 2 to reload from IndexedDB
+        }else if (cached && !isExpired(cached.updatedAt)) {
           useLastQueryStore.getState().setLastQuery(q, lang || "en", page);
           const pageData = cached.pageCache[page];
           if (pageData) {
