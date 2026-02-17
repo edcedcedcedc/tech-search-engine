@@ -297,7 +297,7 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
 // HOW TO PAGE
 // =======================
 
-How_To: "How Strugure works?",
+How_To: "How Strugure Works",
 How_To_Intro: "Strugure combines machine learning, large language models, structured product data, and daily market updates to help you make smarter buying decisions.",
 
 // SEARCH
@@ -362,6 +362,35 @@ Subscription_Description_3: "You can choose between subscription access or a one
   Subscribe: "Subscribe",
   Services_EarlyAccess_Title: "Get Early Access",
   Services_EarlyAccess_Text: "Be the first to know when we launch. Subscribe for early access and special offers.",
+
+
+  //COMPARE
+  Comparison_Results: "Comparison Results",
+  Compare_Offers: "Compare Offers",
+  Comparison_Error: "Comparison Failed",
+  Recommendation: "Recommendation",
+  Trend_Analysis: "Trend Analysis",
+  Spec_Comparison: "Specification Comparison",
+  Specification: "Specification",
+  Volatility: "Volatility",
+  Momentum: "Momentum",
+  Best_time: "Best time",
+  Compare_offers_request: "Compare these products for me",
+  Clear_all: "Clear all",
+  Ask_about_products: "Ask something about these products...",
+  characters: "characters",
+
+  Best_Choice: "Best Choice",
+  Analyzed: "Analyzed",
+  Cached: "Cached",
+  Expert_Consensus: "Expert Consensus",
+  Known_Issues: "Known Issues",
+  Alternatives_To_Consider: "Alternatives to Consider",
+  Expert_Reviews: "Expert Reviews",
+  Pros: "Pros",
+  Cons: "Cons",
+  reviews: "reviews",
+  Note: "Note"
 
 };
 

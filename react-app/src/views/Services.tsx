@@ -141,9 +141,9 @@ export default function Services() {
         </Box>
       </Box>
 
-      {/* Early Access Signup */}
+      {/* 
       <Box sx={{ mb: 5 }}>
-        {/* Early Access Title */}
+
         <Typography variant="h6" fontWeight={600} gutterBottom>
           {t("Services_EarlyAccess_Title")}
         </Typography>
@@ -152,7 +152,7 @@ export default function Services() {
           {t("Services_EarlyAccess_Text")}
         </Typography>
 
-        {/* Email Form */}
+
         {status === "success" ? (
           <Alert severity="success" sx={{ mt: 2 }}>
             {message}
@@ -224,7 +224,7 @@ export default function Services() {
             </Button>
           </Box>
         )}
-      </Box>
+      </Box> */}
     </Box>
   );
 }

@@ -298,3 +298,150 @@ export const collectEmail = async (email: string): Promise<{ success: boolean; m
     };
   }
 };
+
+
+
+// Add this to your searchApi.ts file
+
+/**
+ * Compare products with AI-powered trend analysis
+ */
+export interface ComparisonRequest {
+  offers: AggregatedProduct["offers"][number][]; // Array of offer objects
+  tier?: 'free' | 'premium';
+  lang?: 'en' | 'ro' | 'ru';
+  user_text?: string;
+}
+
+export interface ExpertInsights {
+  pros?: string[];
+  cons?: string[];
+  average_rating?: string;
+  review_count?: number;
+  [key: string]: any;
+}
+
+export interface ComparisonResponse {
+  success: boolean;
+  cached: boolean;
+  analysis: {
+    summary: string;
+    recommendation: string;
+    trend_analysis: Record<string, {
+      trend: string;
+      change: number;
+      change_percent: number;
+      volatility: number | string;
+      momentum: number | string;
+      best_time: string;
+      in_stock: boolean;
+      risk: string;
+      recommendation: string;
+      expert_rating?: string;
+      review_summary?: string;
+    }>;
+    spec_comparison: Array<{
+      spec: string;
+      [key: string]: any; // Dynamic product fields
+      advantage?: string;
+    }>;
+    expert_insights?: Record<string, ExpertInsights>;
+    expert_consensus?: string;
+    known_issues?: string[];
+    alternatives_suggested?: string[];
+    best_choice: string;
+    analysis_tier: 'free' | 'premium';
+    language: string;
+    user_text_used: boolean;
+    analyzed_at: string;
+  };
+}
+
+/**
+ * Compare products using AI trend analysis with extended timeout
+ * AI analysis can take 60-120 seconds for complex comparisons
+ */
+export const compareProducts = async (
+  request: ComparisonRequest
+): Promise<ComparisonResponse> => {
+  const { offers, tier = 'free', lang = 'en', user_text = '' } = request;
+
+  uiLog(`[API] compareProducts | REQUEST | offers=${offers.length} | tier=${tier} | lang=${lang} | user_text="${user_text}"`);
+
+  // Create an AbortController for timeout
+  const controller = new AbortController();
+  
+  // Set timeout between 60-120 seconds (randomized to avoid thundering herd)
+  const timeoutMs = Math.floor(Math.random() * (120000 - 60000 + 1)) + 60000; // 60-120s
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const { data } = await api.post<ComparisonResponse>(
+      "/compare/", 
+      {
+        offers,
+        tier,
+        lang,
+        user_text
+      },
+      {
+        signal: controller.signal,
+        timeout: 120000, // Also set axios timeout
+      }
+    );
+
+    // Clear timeout on success
+    clearTimeout(timeoutId);
+
+    uiLog(`[API] compareProducts | RESPONSE SUCCESS | cached=${data.cached} | best_choice=${data.analysis.best_choice} | time=${timeoutMs}ms`);
+    
+    // Log new fields if present
+    if (data.analysis.expert_consensus) {
+      uiLog(`[API] compareProducts | expert_consensus="${data.analysis.expert_consensus.substring(0, 50)}..."`);
+    }
+    if (data.analysis.known_issues?.length) {
+      uiLog(`[API] compareProducts | known_issues=${data.analysis.known_issues.length}`);
+    }
+    if (data.analysis.alternatives_suggested?.length) {
+      uiLog(`[API] compareProducts | alternatives=${data.analysis.alternatives_suggested.length}`);
+    }
+    
+    return data;
+
+  } catch (err: any) {
+    // Clear timeout on error
+    clearTimeout(timeoutId);
+
+    const status = err?.response?.status;
+    
+    // Handle abort/timeout specifically
+    if (err.code === 'ERR_CANCELED' || err.name === 'AbortError' || err.code === 'ECONNABORTED') {
+      uiLog(`[API] compareProducts | TIMEOUT | Request aborted after ${timeoutMs}ms`);
+      const e = new Error("COMPARISON_TIMEOUT");
+      (e as any).code = 408; // Request Timeout
+      throw e;
+    }
+
+    uiLog(`[API] compareProducts | ERROR | status=${status} | message=${err?.message} | time=${timeoutMs}ms`);
+
+    if (status === 400) {
+      const e = new Error("INVALID_REQUEST");
+      (e as any).code = 400;
+      throw e;
+    }
+
+    if (status === 429) {
+      const e = new Error("RATE_LIMITED");
+      (e as any).code = 429;
+      throw e;
+    }
+
+    if (err.code === "ERR_NETWORK") {
+      const e = new Error("NETWORK_ERROR");
+      (e as any).code = "NETWORK_ERROR";
+      throw e;
+    }
+
+    throw err;
+  }
+};

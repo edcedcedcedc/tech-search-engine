@@ -16,6 +16,9 @@ from products.system_state.version import (
 from products.system_state.session import (
     FlushSessionAPIView,
 )
+from products.compare.compare import (
+    ProductComparisonView,
+)
 
 from products.views import CollectEmailAPIView, RootAPIView
 
@@ -31,4 +34,5 @@ urlpatterns = [
     path("api/email/", CollectEmailAPIView.as_view(), name="collect-email"),
     path("api/system/version/", SystemVersionAPIView.as_view(), name="system-version"),
     path("api/session/flush/", FlushSessionAPIView.as_view(), name="session-flush"),
+    path("api/compare/", ProductComparisonView.as_view(), name="product-compare"),
 ]

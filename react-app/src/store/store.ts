@@ -14,6 +14,76 @@ import { transformSearchResult, validateAndFixCachedProduct } from "../types/Tra
 
 
 /* =========================
+   COMPARISON STORE
+========================= */
+
+import { compareProducts } from "../api/searchApi";
+import type { ComparisonResponse, ComparisonRequest } from "../api/searchApi";
+
+interface ComparisonState {
+  // State
+  result: ComparisonResponse | null;
+  isLoading: boolean;
+  error: string | null;
+  
+  // Actions
+  compareOffers: (request: ComparisonRequest) => Promise<void>;
+  clearComparison: () => void;
+  setResult: (result: ComparisonResponse | null) => void;
+}
+
+export const useComparisonStore = create<ComparisonState>()(
+  (set, get) => ({
+    // Initial state
+    result: null,
+    isLoading: false,
+    error: null,
+
+    // Actions
+    compareOffers: async (request: ComparisonRequest) => {
+      // Don't start another comparison if already loading
+      if (get().isLoading) return;
+
+      set({ isLoading: true, error: null });
+
+      try {
+        uiLog(`[ComparisonStore] Comparing ${request.offers.length} offers | tier=${request.tier} | lang=${request.lang}`);
+        
+        const result = await compareProducts(request);
+        
+        set({ 
+          result, 
+          isLoading: false,
+          error: null 
+        });
+
+        uiLog(`[ComparisonStore] Comparison complete | best_choice=${result.analysis.best_choice} | cached=${result.cached}`);
+        
+      } catch (err: any) {
+        uiLog(`[ComparisonStore] Comparison failed: ${err.message}`);
+        
+        set({ 
+          error: err.message || "Failed to compare products",
+          isLoading: false 
+        });
+      }
+    },
+
+    clearComparison: () => {
+      uiLog(`[ComparisonStore] Clearing comparison result`);
+      set({ 
+        result: null, 
+        error: null,
+        isLoading: false 
+      });
+    },
+
+    setResult: (result) => {
+      set({ result });
+    },
+  })
+);
+/* =========================
    EMAIL COLLECTION STORE
 ========================= */
 
@@ -429,7 +499,7 @@ export const useStore = create<State>()(
       setOffline: (value) => set({ isOffline: value }),
 
       /* ================= SEARCH ================= */
-      query:"",
+      query: useLastQueryStore.getState().lastQuery || "",
       setQuery: (q) => set({ query: q }),
 
       aggregatedProducts: [],

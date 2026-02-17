@@ -19,14 +19,17 @@ import QuestionMarkOutlinedIcon from "@mui/icons-material/QuestionMarkOutlined";
 import { Link as RouterLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
-import { useStore } from "../store/store";
+import { useStore, useLastQueryStore } from "../store/store"; // Add useLastQueryStore
 import { NavIcon } from "./NavIcons";
+import { uiLog } from "../webhook/client/uiDebug";
+import { HeaderComparisonIcon } from "./ComparisonWidget";
 
 const ICON_SIZE = 22;
 const iconSx = { fontSize: ICON_SIZE };
 
 const VerticalHeader: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation(); // Get i18n for lang
+  const lang = i18n.language.slice(0, 2); // Get proper lang from i18n
 
   const location = useLocation();
   const isOnProductsPage = location.pathname.startsWith("/products");
@@ -36,19 +39,44 @@ const VerticalHeader: React.FC = () => {
   const totalPages = useStore((s) => s.totalPages);
   const searchProducts = useStore((s) => s.searchProducts);
   const isLoading = useStore((s) => s.isLoading);
-
-  const lang = "en"; // or get from i18n
+  const storeQuery = useStore((s) => s.query); // Get current query from store
 
   const isProductsDisabled = aggregatedProducts.length === 0;
 
+  const getQueryToUse = () => {
+    // Try lastQuery first (persisted), fallback to storeQuery, then empty string
+    const lastQuery = useLastQueryStore.getState().lastQuery;
+    return lastQuery || storeQuery || "";
+  };
+
   const handlePrev = () => {
-    if (currentPage > 1 && !isLoading)
-      searchProducts(undefined, lang, currentPage - 1);
+    if (currentPage > 1 && !isLoading) {
+      const queryToUse = getQueryToUse();
+      uiLog(
+        `[VerticalHeader] Prev page - from ${currentPage} to ${currentPage - 1} with query: "${queryToUse}"`,
+      );
+
+      if (queryToUse) {
+        searchProducts(queryToUse, lang, currentPage - 1);
+      } else {
+        uiLog(`[VerticalHeader] CRITICAL: No query found for prev page`);
+      }
+    }
   };
 
   const handleNext = () => {
-    if (currentPage < totalPages && !isLoading)
-      searchProducts(undefined, lang, currentPage + 1);
+    if (currentPage < totalPages && !isLoading) {
+      const queryToUse = getQueryToUse();
+      uiLog(
+        `[VerticalHeader] Next page - from ${currentPage} to ${currentPage + 1} with query: "${queryToUse}"`,
+      );
+
+      if (queryToUse) {
+        searchProducts(queryToUse, lang, currentPage + 1);
+      } else {
+        uiLog(`[VerticalHeader] CRITICAL: No query found for next page`);
+      }
+    }
   };
 
   const navLinks = [
@@ -62,6 +90,15 @@ const VerticalHeader: React.FC = () => {
       ),
     },
     {
+      path: "/compare",
+      label: "",
+      icon: (
+        <NavIcon>
+          <HeaderComparisonIcon />
+        </NavIcon>
+      ),
+    },
+    {
       path: "/how-to",
       label: "",
       icon: (
@@ -70,6 +107,7 @@ const VerticalHeader: React.FC = () => {
         </NavIcon>
       ),
     },
+
     {
       path: "/services",
       label: t("Services"),
@@ -90,8 +128,8 @@ const VerticalHeader: React.FC = () => {
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        borderRight: 1,
-        borderColor: "divider",
+        /*        borderRight: 1,
+        borderColor: "divider", */
         bgcolor: "background.default",
         flexShrink: 0,
         overflowY: "auto",
@@ -142,12 +180,13 @@ const VerticalHeader: React.FC = () => {
                     to={!disabled ? link.path : undefined}
                     disabled={disabled}
                     sx={{
-                      minHeight: 60,
+                      minHeight: 54,
                       display: "flex",
                       justifyContent: "center",
                       alignItems: "center",
                       px: 0,
                       py: 0,
+                      ml: 1,
                     }}
                   >
                     <ListItemIcon

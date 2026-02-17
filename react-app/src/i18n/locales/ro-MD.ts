@@ -340,7 +340,7 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
 // HOW TO PAGE
 // =======================
 
-How_To: "Cum funcționează Strugure?",
+How_To: "Cum Funcționează Strugure",
 How_To_Intro: "Strugure combină învățarea automată, modelele lingvistice mari, datele structurate despre produse și actualizările zilnice ale pieței pentru a vă ajuta să luați decizii de cumpărare mai inteligente.",
 
 // SEARCH
@@ -406,6 +406,33 @@ Cancel: "Anulează",
   Subscribe: "Abonează-te",
   Services_EarlyAccess_Title: "Obține Acces Early",
   Services_EarlyAccess_Text: "Fiți primii care află când lansăm. Abonați-vă pentru acces early și oferte speciale.",
+  
+  
+  Comparison_Results: "Rezultate Comparație",
+  Compare_Offers: "Compară Ofertele",
+  Comparison_Error: "Comparație Eșuată",
+  Recommendation: "Recomandare",
+  Trend_Analysis: "Analiza Tendințelor",
+  Spec_Comparison: "Comparație Specificații",
+  Specification: "Specificație",
+  Volatility: "Volatilitate",
+  Momentum: "Momentum",
+  Best_time: "Moment optim",
+  Compare_offers_request: "Compară aceste produse pentru mine",
+  Clear_all: "Ștergeți tot",
+  Ask_about_products: "Întreabă ceva despre aceste produse...",
+  characters: "caractere",
+  Best_Choice: "Cea Mai Bună Alegere",
+  Analyzed: "Analizat",
+  Cached: "În Cache",
+  Expert_Consensus: "Consensul Experților",
+  Known_Issues: "Probleme Cunoscute",
+  Alternatives_To_Consider: "Alternative de Luat în Considerare",
+  Expert_Reviews: "Recenzii ale Experților",
+  Pros: "Avantaje",
+  Cons: "Dezavantaje",
+  reviews: "recenzii",
+  Note: "Notă"
 
 };
 

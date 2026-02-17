@@ -34,15 +34,11 @@ import ComputerOutlinedIcon from "@mui/icons-material/ComputerOutlined";
 import { Switch } from "@mui/material";
 import { useNotificationStore } from "../store/store";
 import {
-  ManageSearchOutlined as ManageSearchOutlinedIcon,
-  HelpOutlined as HelpOutlinedIcon,
   MenuOutlined as MenuOutlinedIcon,
-  TranslateOutlined as TranslateOutlinedIcon,
   LightModeOutlined as LightModeOutlinedIcon,
   DarkModeOutlined as DarkModeOutlinedIcon,
   SettingsOutlined as SettingsOutlinedIcon,
   InfoOutline,
-  BrightnessAutoOutlined as SystemThemeIcon,
 } from "@mui/icons-material";
 import { Link as RouterLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -51,9 +47,7 @@ import { useStore, useThemeStore } from "../store/store";
 import GrapeIcon from "./GrapeIcon";
 import Footer from "./Footer";
 import { NavIcon } from "./NavIcons";
-import { HeaderComparisonIcon } from "./ComparationWidget";
-import { ComparisonModal } from "../components/ComparationModal";
-import { BusinessCenterOutlined as ServicesOutlinedIcon } from "@mui/icons-material";
+
 import { SearchAutocomplete } from "./SearchAutocomplete";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 
@@ -74,6 +68,7 @@ const Header: React.FC = () => {
 
   const aggregatedProducts = useStore((s) => s.aggregatedProducts);
   const isProductsDisabled = aggregatedProducts.length === 0;
+  const [compareOpen, setCompareOpen] = React.useState(false);
 
   // Helper function to get theme icon
   const getThemeIcon = () => {
@@ -176,8 +171,8 @@ const Header: React.FC = () => {
             width: "100%",
             minHeight: 60,
             height: 60,
-            borderBottom: 1,
-            borderColor: "divider",
+            /* borderBottom: 1,
+            borderColor: "divider", */
             px: { xs: 2, sm: 2, md: 2 },
             py: 0,
           }}
@@ -204,13 +199,10 @@ const Header: React.FC = () => {
           </Tooltip>
 
           {/* Search grows here */}
-          <Box sx={{ flex: 1, ml: 0, mr: 2 }}>
+          <Box sx={{ flex: 1, ml: 0.8, mr: -1 }}>
             <SearchAutocomplete />
           </Box>
           {/* Right controls */}
-          <Box sx={{ color: "text.primary" }}>
-            <HeaderComparisonIcon />
-          </Box>
 
           {/* Drawer */}
           <Drawer
@@ -407,7 +399,6 @@ const Header: React.FC = () => {
       </AppBar>
 
       {/* Comparison Modal */}
-      <ComparisonModal />
 
       {/* Settings Modal */}
       <Dialog
@@ -421,6 +412,7 @@ const Header: React.FC = () => {
             fontWeight: 600,
             fontSize: { xs: "0.9rem", sm: "1rem", md: "1.1rem" },
             py: { xs: 1, sm: 1 },
+            mt: { xs: 1, sm: 1 },
           }}
         >
           {t("Settings")}

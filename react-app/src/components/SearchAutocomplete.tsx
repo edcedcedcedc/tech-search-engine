@@ -203,7 +203,7 @@ export const SearchAutocomplete: React.FC = () => {
           },
         }}
         InputProps={{
-          endAdornment: (
+          startAdornment: (
             <InputAdornment position="end">
               <div
                 style={{
@@ -254,7 +254,10 @@ export const SearchAutocomplete: React.FC = () => {
         }}
         sx={{
           "& .MuiOutlinedInput-root": {
-            paddingRight: "4px", // Adjust this if needed
+            paddingLeft: 0, // removes left padding of the root
+          },
+          "& .MuiOutlinedInput-input": {
+            paddingLeft: 0, // removes left padding inside the input
           },
         }}
       />
