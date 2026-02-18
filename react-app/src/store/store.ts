@@ -11,8 +11,6 @@ import { v4 as uuidv4 } from "uuid";
 import { transformSearchResult, validateAndFixCachedProduct } from "../types/Transformer"
 
 
-
-
 /* =========================
    COMPARISON STORE
 ========================= */
@@ -385,75 +383,56 @@ interface State {
   //
   syncTriggered: number;
   triggerSync: () => void;
-
   //
   debugShowSessionExpired: boolean;
   setDebugShowSessionExpired: (show: boolean) => void;
-  
   // Add to your store (inside create)
    globalInvalidationTimestamp: number; // When backend last resynced
   setGlobalInvalidationTimestamp: (timestamp: number) => void;
-  
-
   /* ================= INDEXED DB SYNC ================= */
   isSyncingFromIndexedDb: boolean;
   lastSyncTimestamp: number;
   setSyncingFromIndexedDb: (value: boolean) => void;
   setLastSyncTimestamp: (timestamp: number) => void;
-
   /*fresh result*/
   hasFreshResults: boolean;
-
   /* offline */
   isOffline: boolean;
   setOffline: (value: boolean) => void;
-
   /* autocomplete */
   autocompleteResetToken: number;
   triggerAutocompleteReset: () => void;
-
   /* Search */
   query: string;
   setQuery: (q: string) => void;
-
   aggregatedProducts: AggregatedProduct[];
   currentPage: number;
   totalPages: number;
   totalResults: number;
   itemsPerPage: number;
-
   isLoading: boolean;
   setIsLoading: (v: boolean) => void;
-
   searchProducts: (query?: string, lang?: string, page?: number, hydrating?: boolean) => Promise<void>;
-
   /* Cache */
   multiQueryCache: Record<string, MultiQueryEntry>;
   queryCacheKey: string;
   clearCache: () => void;
-
   /* Offers */
   selectedProductId: string | null;
   productOffers: Record<string, ProductOffersEntry>;
   isOffersLoading: boolean;
-
   openProduct: (productId: string) => Promise<void>;
   closeProduct: () => void;
-
   /* Selected offers */
   selectedOffers: Record<string, AggregatedProduct["offers"][number]>;
   addSelectedOffer: (offer: AggregatedProduct["offers"][number]) => void;
   removeSelectedOffer: (offerId: string) => void;
   clearSelectedOffers: () => void;
-
   /* Sorting */
   offersSortColumn: "price" | "shop" | null;
   offersSortAscending: boolean;
   setOffersSort: (column: "price" | "shop") => void;
-
-
   /* ================= SESSION ================= */
-
   isSessionExpired: boolean;
   openSessionExpired: () => void;
   closeSessionExpired: () => void;
@@ -461,18 +440,8 @@ interface State {
 }
 
 /* =========================
-   HELPERS
-========================= */
-
-const generateCacheKey = (query: string, lang?: string) =>
-  `${query}-${lang || "en"}`;
-const isExpired = (ts: number) => Date.now() - ts > CACHE_MAX_AGE;
-let freshResultsTimeout: ReturnType<typeof setTimeout> | null = null;
-
-/* =========================
    STORE
 ========================= */
-
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
@@ -482,26 +451,20 @@ export const useStore = create<State>()(
       //
       debugShowSessionExpired: false,
       setDebugShowSessionExpired: (show) => set({ debugShowSessionExpired: show }),
-      
       //global timestamp 
       globalInvalidationTimestamp: 0,
       setGlobalInvalidationTimestamp: (timestamp) => 
         set({ globalInvalidationTimestamp: timestamp }),
-
       // index db
       isSyncingFromIndexedDb: false,
       lastSyncTimestamp: 0,
       setSyncingFromIndexedDb: (value) => set({ isSyncingFromIndexedDb: value }),
       setLastSyncTimestamp: (timestamp) => set({ lastSyncTimestamp: timestamp }),
-
-
       isOffline: !navigator.onLine, // initial state based on navigator
       setOffline: (value) => set({ isOffline: value }),
-
       /* ================= SEARCH ================= */
       query: useLastQueryStore.getState().lastQuery || "",
       setQuery: (q) => set({ query: q }),
-
       aggregatedProducts: [],
       currentPage: 1,
       totalPages: 0,
@@ -510,229 +473,11 @@ export const useStore = create<State>()(
       hasFreshResults: false,
       isLoading: false,
       setIsLoading: (v) => set({ isLoading: v }),
-
       searchProducts: async (query, lang, page = 1, hydrating = false) => {
-        if (query) {
-          set({ query: query });
-        }
-        uiLog(`Search products=${query}`);
-
-        if (freshResultsTimeout) {
-          clearTimeout(freshResultsTimeout);
-          freshResultsTimeout = null;
-        }
-
-        const q = query ?? get().query;
-        if (!q) return;
-
-        const cacheKey = generateCacheKey(q, lang);
-        const { multiQueryCache, itemsPerPage } = get();
-        const addNotification = useNotificationStore.getState().addNotification;
-
-        // ============= STEP 1: Check Zustand memory cache =============
-        const cached = multiQueryCache[cacheKey];
-
-        // In searchProducts, add this check at the beginning:
-        // If sync was triggered and we have cached data, reload from IndexedDB
-        if (get().syncTriggered > 0 && cached) {
-          // Force reload from IndexedDB
-          set({ syncTriggered: 0 });
-          // Continue to STEP 2 to reload from IndexedDB
-        }else if (cached && !isExpired(cached.updatedAt)) {
-          useLastQueryStore.getState().setLastQuery(q, lang || "en", page);
-          const pageData = cached.pageCache[page];
-          if (pageData) {
-            set({
-              aggregatedProducts: pageData,
-              currentPage: page,
-              totalResults: cached.totalResults,
-              totalPages: Math.ceil(cached.totalResults / itemsPerPage),
-            });
-            return;
-          }
-        }
-
-        // ============= STEP 2: Check IndexedDB =============
-        try {
-          const indexedDbCache = await indexedDbService.getProducts(cacheKey);
-          
-          if (indexedDbCache && !isExpired(indexedDbCache.updatedAt)) {
-            // VALIDATE AND FIX: Check for corrupted data (offers as number)
-            const fixedPageCache: Record<number, AggregatedProduct[]> = {};
-            
-            Object.entries(indexedDbCache.pageCache).forEach(([pageNum, products]) => {
-              fixedPageCache[Number(pageNum)] = products.map(validateAndFixCachedProduct);
-            });
-            
-            const pageData = fixedPageCache[page];
-            if (pageData && pageData.length > 0) {
-              const [q, lang] = cacheKey.split("-");
-              useLastQueryStore.getState().setLastQuery(q, lang || "en", page);
-
-               // TRIGGER PREFETCH HERE! This is the missing piece
-              const productIds = pageData.map(p => p.id).filter(Boolean);
-              if (productIds.length > 0 && !get().isOffline) {
-                uiLog(`[Store] Triggering prefetch for ${productIds.length} products from IndexedDB cache`);
-                prefetchService.addToQueue(productIds, q);
-              }
-
-
-
-              // Restore to Zustand memory cache with FIXED data
-              set((s) => ({
-                aggregatedProducts: pageData,
-                currentPage: page,
-                totalResults: indexedDbCache.totalResults,
-                totalPages: Math.ceil(indexedDbCache.totalResults / itemsPerPage),
-                multiQueryCache: {
-                  ...s.multiQueryCache,
-                  [cacheKey]: {
-                    pageCache: fixedPageCache, // Store the fixed version
-                    totalResults: indexedDbCache.totalResults,
-                    updatedAt: indexedDbCache.updatedAt,
-                  },
-                },
-                queryCacheKey: cacheKey,
-                hasFreshResults: true
-              }));
-
-              freshResultsTimeout = setTimeout(() => {
-                set({ hasFreshResults: false });
-                freshResultsTimeout = null;
-              }, 1000);
-
-              return;
-            }
-          }
-        } catch (error) {
-          uiLog(`Failed to read from IndexedDB: ${error}`);
-        }
-
-        // ============= STEP 3: Fetch from API =============
-        if (hydrating) { 
-          set({ isLoading: false });
-        } else {
-          set({ isLoading: true });
-        }
-        
-        const cursor = page > 1 ? ((page - 1) * itemsPerPage).toString() : undefined;
-
-        try {
-          const data = await apiSearchProducts(q, lang, itemsPerPage, cursor);
-          
-          // TRANSFORM: Convert API products (with offers as number) to store products (with offers as empty array)
-          const transformedProducts = data.products.map(transformSearchResult);
-
-          // TRIGGER PREFETCH HERE - fire and forget!
-          const productIds = transformedProducts
-            .map(p => p.id)
-            .filter(Boolean); 
-          if (productIds.length > 0 && !get().isOffline) {
-            prefetchService.addToQueue(productIds, q);
-          }
-
-          // Prefetch next pages
-          if (data.total_count > page * itemsPerPage && !get().isOffline) {
-            const totalPages = Math.ceil(data.total_count / itemsPerPage);
-            const remainingPages = totalPages - page;
-            const pagesToPrefetch = Math.min(2, remainingPages);
-            
-            if (pagesToPrefetch > 0) {
-              prefetchService.prefetchNextPages(
-                q, 
-                lang || 'en', 
-                page, 
-                itemsPerPage, 
-                pagesToPrefetch
-              );
-            }
-          }
-
-          // Only update lastQuery on SUCCESSFUL API response                     
-          useLastQueryStore.getState().setLastQuery(q, lang || "en", page);
-          
-          // Update Zustand state with TRANSFORMED products
-          set((s: State) => {
-            // Create properly typed pageCache
-            const updatedPageCache: Record<number, AggregatedProduct[]> = {
-              ...(cached?.pageCache ?? {}),
-              [page]: transformedProducts,
-            };
-
-            // Create properly typed multiQueryCache entry
-            const updatedMultiQueryCache: Record<string, MultiQueryEntry> = {
-              ...s.multiQueryCache,
-              [cacheKey]: {
-                pageCache: updatedPageCache,
-                totalResults: data.total_count,
-                updatedAt: Date.now(),
-              },
-            };
-
-            const newState: Partial<State> = {
-              aggregatedProducts: transformedProducts,
-              currentPage: page,
-              totalResults: data.total_count,
-              totalPages: Math.ceil(data.total_count / itemsPerPage),
-              multiQueryCache: updatedMultiQueryCache,
-              queryCacheKey: cacheKey,
-              isLoading: false,
-              hasFreshResults: true,
-            };
-
-            // Save to IndexedDB in background
-            const updatedState = { ...s, ...newState };
-            syncCacheToIndexedDb(updatedState as State).catch(console.error);
-
-            return newState;
-          });
-
-          freshResultsTimeout = setTimeout(() => {
-            set({ hasFreshResults: false });
-            freshResultsTimeout = null;
-          }, 1000);
-
-        } catch (err: any) {
-          if (err?.code === 403 || err?.message === "SESSION_EXPIRED") {
-            get().openSessionExpired();
-            return;
-          }
-          
-          if (err?.message === "TOO_MANY_REQUESTS" || err?.response?.status === 429) {
-            addNotification({
-              message: i18n.t("Error_429"),
-              type: "warning",
-              duration: 5000,
-            });
-            return;
-          }
-          
-          if (err?.response?.status === 404) {
-            addNotification({
-              message: i18n.t("Error_404"),
-              type: "error",
-              duration: 4000,
-            });
-            return;
-          }
-
-          if (!err.response || err.code === "ERR_NETWORK" || err.message === "Network Error") {
-            return;
-          }
-          
-          addNotification({
-            message: i18n.t("Error_Generic"),
-            type: "error",
-            duration: 5000,
-          });
-          throw err;
-        } finally {
-          set({ isLoading: false });
-        }
+        const searchService = new SearchProductsService(get, set);
+        return searchService.execute(query, lang, page, hydrating);
       },
-
       /* ================= CACHE ================= */
-
       multiQueryCache: {},
       queryCacheKey: "",
       clearCache: () => {
@@ -747,354 +492,32 @@ export const useStore = create<State>()(
         indexedDbService.clearAll().catch(console.error);
         uiLog("Cache cleared from both Zustand and IndexedDB");
       },
-
       /* ================= OFFERS ================= */
-
       selectedProductId: null,
       productOffers: {},
       isOffersLoading: false,
       openProduct: async (productId) => {
-        const cached = get().productOffers[productId];
-        prefetchService.removeFromQueue([productId]);
-
-        uiLog(`[openProduct] ========== START for productId=${productId} ==========`);
-        
-        // Find the product in aggregatedProducts to get offers_count from Layer 1
-        const product = get().aggregatedProducts.find(p => p.id === productId);
-        const expectedOffersCount = product?.offers_count;
-        
-        uiLog(`[openProduct] 🔍 LAYER 1 DATA: productId=${productId}, found=${!!product}`);
-        if (product) {
-          uiLog(`[openProduct] 📊 LAYER 1: name="${product.name}", offers_count=${product.offers_count}, lowest_price=${product.lowest_price}`);
-        } else {
-          uiLog(`[openProduct] ⚠️ WARNING: Product ${productId} not found in aggregatedProducts!`);
-        }
-
-        // ============= STEP 1: Check Zustand memory cache =============
-        if (cached) {
-          uiLog(`[openProduct] 📦 STEP 1: Zustand cache check for ${productId}`);
-          uiLog(`[openProduct] 📦 Zustand cache: offers.length=${cached.offers.length}, fetchedAt=${new Date(cached.fetchedAt).toISOString()}, age=${Math.round((Date.now() - cached.fetchedAt)/1000)}s, isError=${cached.isError}`);
-          
-          if (cached.offers.length > 0 && Date.now() - cached.fetchedAt < OFFERS_CACHE_TTL) {
-            uiLog(`[openProduct] 📦 STEP 1: Using cached offers from Zustand for ${productId}`);
-            
-            // VALIDATE: Check if cached offers count matches expected from Layer 1
-            if (expectedOffersCount !== undefined) {
-              if (cached.offers.length === expectedOffersCount) {
-                uiLog(`[openProduct] ✅ VALIDATION PASSED: Zustand offers count (${cached.offers.length}) matches Layer 1 expected (${expectedOffersCount})`);
-              } else {
-                uiLog(`[openProduct] ❌ VALIDATION FAILED: Zustand offers count (${cached.offers.length}) DOES NOT MATCH Layer 1 expected (${expectedOffersCount})`);
-                uiLog(`[openProduct] ⚠️ Cache corruption detected! Invalidating and fetching fresh...`);
-                
-                // Invalidate cache and continue to fetch fresh
-                set((s) => {
-                  const newProductOffers = { ...s.productOffers };
-                  delete newProductOffers[productId];
-                  return { productOffers: newProductOffers };
-                });
-                // Continue to STEP 2/3 instead of returning
-              }
-            }
-            
-            if (!expectedOffersCount || cached.offers.length === expectedOffersCount) {
-              set({ selectedProductId: productId });
-              uiLog(`[openProduct] ✅ STEP 1: Returning with ${cached.offers.length} cached offers`);
-              return;
-            }
-          } else {
-            if (cached.offers.length === 0) {
-              uiLog(`[openProduct] 📦 STEP 1: Zustand cache has empty offers array`);
-            }
-            if (Date.now() - cached.fetchedAt >= OFFERS_CACHE_TTL) {
-              uiLog(`[openProduct] 📦 STEP 1: Zustand cache expired (age=${Math.round((Date.now() - cached.fetchedAt)/1000)}s > ${OFFERS_CACHE_TTL/1000}s)`);
-            }
-          }
-        } else {
-          uiLog(`[openProduct] 📦 STEP 1: No Zustand cache found for ${productId}`);
-        }
-
-        // ============= STEP 2: Check IndexedDB =============
-        try {
-          uiLog(`[openProduct] 💾 STEP 2: Checking IndexedDB for ${productId}`);
-          const indexedDbOffers = await indexedDbService.getOffers(productId);
-          
-          uiLog(`[openProduct] 💾 IndexedDB response: ${indexedDbOffers ? 'found' : 'not found'}`);
-          if (indexedDbOffers) {
-            uiLog(`[openProduct] 💾 IndexedDB offers: count=${indexedDbOffers.offers.length}, fetchedAt=${new Date(indexedDbOffers.fetchedAt).toISOString()}, age=${Math.round((Date.now() - indexedDbOffers.fetchedAt)/1000)}s`);
-            
-            // Log first few offer IDs if any
-            if (indexedDbOffers.offers.length > 0) {
-              uiLog(`[openProduct] 💾 IndexedDB first 3 offer IDs: ${indexedDbOffers.offers.slice(0, 3).map(o => o.id).join(', ')}`);
-            }
-          }
-
-          if (indexedDbOffers && indexedDbOffers.offers.length > 0 && Date.now() - indexedDbOffers.fetchedAt < OFFERS_CACHE_TTL) {
-            uiLog(`[openProduct] 💾 STEP 2: Restoring offers from IndexedDB for ${productId}`);
-            
-            // VALIDATE: Check if IndexedDB offers count matches expected from Layer 1
-            if (expectedOffersCount !== undefined) {
-              if (indexedDbOffers.offers.length === expectedOffersCount) {
-                uiLog(`[openProduct] ✅ VALIDATION PASSED: IndexedDB offers count (${indexedDbOffers.offers.length}) matches Layer 1 expected (${expectedOffersCount})`);
-              } else {
-                uiLog(`[openProduct] ❌ VALIDATION FAILED: IndexedDB offers count (${indexedDbOffers.offers.length}) DOES NOT MATCH Layer 1 expected (${expectedOffersCount})`);
-                uiLog(`[openProduct] ⚠️ IndexedDB corruption detected! Invalidating and fetching fresh...`);
-                
-                // Clear corrupted data and continue to fetch
-                await indexedDbService.saveOffers(productId, []); // Clear it
-                // Continue to STEP 3
-              }
-            }
-            
-            if (!expectedOffersCount || indexedDbOffers.offers.length === expectedOffersCount) {
-              set((s) => ({
-                productOffers: {
-                  ...s.productOffers,
-                  [productId]: {
-                    offers: indexedDbOffers.offers,
-                    fetchedAt: indexedDbOffers.fetchedAt,
-                    isError: false,
-                  },
-                },
-                selectedProductId: productId,
-              }));
-              uiLog(`[openProduct] ✅ STEP 2: Restored ${indexedDbOffers.offers.length} offers from IndexedDB`);
-              return;
-            }
-          } else if (indexedDbOffers && indexedDbOffers.offers.length === 0) {
-            uiLog(`[openProduct] 💾 STEP 2: IndexedDB has empty offers array`);
-          } else if (indexedDbOffers && Date.now() - indexedDbOffers.fetchedAt >= OFFERS_CACHE_TTL) {
-            uiLog(`[openProduct] 💾 STEP 2: IndexedDB cache expired (age=${Math.round((Date.now() - indexedDbOffers.fetchedAt)/1000)}s)`);
-          }
-        } catch (error) {
-          uiLog(`[openProduct] 💾 STEP 2: Failed to read offers from IndexedDB: ${error}`);
-        }
-
-        // ============= STEP 3: Fetch from API =============
-        uiLog(`[openProduct] 🌐 STEP 3: Fetching offers from API for ${productId}`);
-        set({ isOffersLoading: true, selectedProductId: productId });
-
-        try {
-          const data = await apiGetProductOffers(productId, true, get().query);
-
-          uiLog(`[openProduct] 🌐 API response received for ${productId}`);
-          uiLog(`[openProduct] 🌐 API response: offers_count=${data.offers?.length || 0}, has_more=${data.has_more}, next_cursor=${data.next_cursor}`);
-
-          // Defensive check
-          if (!data.offers) {
-            uiLog(`[openProduct] ❌ API returned no offers array for ${productId}`);
-            const error = new Error("EMPTY_OFFERS");
-            (error as any).code = 404;
-            throw error;
-          }
-
-          const actualOffersCount = data.offers.length;
-          uiLog(`[openProduct] 🌐 API returned ${actualOffersCount} offers for ${productId}`);
-          
-          // Log first few offer IDs for debugging
-          if (actualOffersCount > 0) {
-            uiLog(`[openProduct] 🌐 First 3 offer IDs: ${data.offers.slice(0, 3).map(o => o.id).join(', ')}`);
-            uiLog(`[openProduct] 🌐 First offer sample: shop=${data.offers[0].shop}, price=${data.offers[0].price}`);
-          }
-
-          // ============= CRITICAL VALIDATION: Layer 1 vs Layer 2 =============
-          if (expectedOffersCount !== undefined) {
-            if (actualOffersCount === expectedOffersCount) {
-              uiLog(`[openProduct] ✅✅✅ LAYER MATCH: Layer 1 count (${expectedOffersCount}) === Layer 2 count (${actualOffersCount})`);
-            } else {
-              uiLog(`[openProduct] ❌❌❌ LAYER MISMATCH: Layer 1 count (${expectedOffersCount}) !== Layer 2 count (${actualOffersCount})`);
-              uiLog(`[openProduct] 🔴 CRITICAL: Backend cache inconsistency detected!`);
-              uiLog(`[openProduct] 📝 Product: ${productId}, Expected: ${expectedOffersCount}, Actual: ${actualOffersCount}`);
-              
-              // Log the full product for debugging
-              if (product) {
-                uiLog(`[openProduct] 📝 Product details: name="${product.name}", lowest_price=${product.lowest_price}`);
-              }
-              
-              // If expected is 0 but we got offers, that's a big problem
-              if (expectedOffersCount === 0 && actualOffersCount > 0) {
-                uiLog(`[openProduct] 🔴 ERROR: Expected 0 offers but got ${actualOffersCount} - product should not have offers!`);
-              }
-              
-              // If expected > 0 but got 0, that's also a problem
-              if (expectedOffersCount > 0 && actualOffersCount === 0) {
-                uiLog(`[openProduct] 🔴 ERROR: Expected ${expectedOffersCount} offers but got 0 - offers missing from cache!`);
-              }
-              
-              // If we got more than expected (should never happen with backend fix)
-              if (actualOffersCount > expectedOffersCount) {
-                uiLog(`[openProduct] 🔴 ERROR: Got ${actualOffersCount} offers, expected only ${expectedOffersCount} - cache contains extra offers!`);
-              }
-              
-              // If we got less than expected (pagination might be needed)
-              if (actualOffersCount < expectedOffersCount) {
-                uiLog(`[openProduct] ⚠️ WARNING: Got ${actualOffersCount} offers, expected ${expectedOffersCount} - possible pagination?`);
-              }
-            }
-          } else {
-            uiLog(`[openProduct] ⚠️ Cannot validate Layer 1 vs Layer 2 - product not found in aggregatedProducts`);
-          }
-
-          // Check if offers count exceeds max (should never happen with backend fix)
-          if (actualOffersCount > 50) {
-            uiLog(`[openProduct] 🔴 ERROR: API returned ${actualOffersCount} offers which exceeds max 50!`);
-          }
-
-          uiLog(`[openProduct] 💾 STEP 3: Updating state with ${actualOffersCount} offers`);
-
-          set((s) => {
-            const newState = {
-              productOffers: {
-                ...s.productOffers,
-                [productId]: {
-                  offers: data.offers,
-                  fetchedAt: Date.now(),
-                  isError: false,
-                },
-              },
-              isOffersLoading: false,
-            };
-            
-            uiLog(`[openProduct] 💾 Triggering IndexedDB sync`);
-            syncCacheToIndexedDb({ ...s, ...newState } as State).catch(console.error);
-            
-            return newState;
-          });
-
-          uiLog(`[openProduct] ✅ STEP 3: Successfully fetched and stored ${actualOffersCount} offers`);
-
-        } catch (err: any) {
-          uiLog(`[openProduct] ❌ STEP 3: ERROR for ${productId}: ${err?.message} | code=${err?.code} | status=${err?.response?.status}`);
-
-          set({ isOffersLoading: false });
-
-          // Error handling with detailed logging
-          if (err?.code === 0) {
-            uiLog(`[openProduct] 🛑 Request aborted/cancelled`);
-            set((s) => ({
-              productOffers: {
-                ...s.productOffers,
-                [productId]: { offers: [], fetchedAt: 0, isError: true, errorType: "generic" },
-              },
-            }));
-            useNotificationStore.getState().addNotification({
-              message: i18n.t("Error_0"),
-              type: "error",
-              duration: 4000,
-            });
-            return;
-          }
-
-          if (err?.code === 404) {
-            uiLog(`[openProduct] 🛑 404 Not Found - product may be deleted`);
-            
-            set((s) => ({
-              productOffers: {
-                ...s.productOffers,
-                [productId]: { 
-                  offers: [], 
-                  fetchedAt: 0, 
-                  isError: true, 
-                  errorType: "generic" 
-                },
-              },
-            }));
-            
-            useNotificationStore.getState().addNotification({
-              message: i18n.t("Error_404"),
-              type: "error",
-              duration: 4000,
-            });
-            return;
-          }
-                
-          if (err?.code === 403) {
-            uiLog(`[openProduct] 🛑 403 Session Expired`);
-            get().openSessionExpired();
-            set((s) => ({
-              productOffers: {
-                ...s.productOffers,
-                [productId]: { offers: [], fetchedAt: 0, isError: true, errorType: "generic" },
-              },
-            }));
-            useNotificationStore.getState().addNotification({
-              message: i18n.t("Error_Generic"),
-              type: "error",
-              duration: 4000,
-            });
-            return;
-          }
-
-          if (err?.code === 429) {
-            uiLog(`[openProduct] 🛑 429 Rate Limited`);
-            set((s) => ({
-              productOffers: {
-                ...s.productOffers,
-                [productId]: { offers: [], fetchedAt: 0, isError: true, errorType: "429" },
-              },
-            }));
-            useNotificationStore.getState().addNotification({
-              message: i18n.t("Error_429"),
-              type: "warning",
-              duration: 4000,
-            });
-            return;
-          }
-
-          if (!err.response || err.code === "ERR_NETWORK") {
-            uiLog(`[openProduct] 🛑 Network Error - offline or connection issue`);
-            set((s) => ({
-              productOffers: {
-                ...s.productOffers,
-                [productId]: { offers: [], fetchedAt: 0, isError: true, errorType: "network" },
-              },
-            }));
-            useNotificationStore.getState().addNotification({
-              message: i18n.t("Error_Network"),
-              type: "info",
-              duration: 5000,
-            });
-            return;
-          }
-          
-          // Generic error
-          uiLog(`[openProduct] 🛑 Unhandled error: ${err}`);
-        } finally {
-          uiLog(`[openProduct] ========== END for productId=${productId} ==========`);
-          set({ isOffersLoading: false });
-        }
+        const openProductService = new OpenProductService(get, set);
+        return openProductService.execute(productId);
       },
       closeProduct: () => set({ selectedProductId: null }),
-
       /* ================= SELECTED OFFERS ================= */
       selectedOffers: {},
-
       addSelectedOffer: (offer) =>
         set((s) => ({
           selectedOffers: { ...s.selectedOffers, [offer.id]: offer },
         })),
-
       removeSelectedOffer: (id) =>
         set((s) => {
           const copy = { ...s.selectedOffers };
           delete copy[id];
           return { selectedOffers: copy };
         }),
-
       clearSelectedOffers: () => set({ selectedOffers: {} }),
-
       isSessionExpired: false,
-
       openSessionExpired: () => set({ isSessionExpired: true }),
-
       closeSessionExpired: () => set({ isSessionExpired: false }),
-
       resetSessionData: async () => {
-         /*  try {
-          await flushSession();
-            uiLog("Backend session flushed");
-          } catch (error) {
-            uiLog(`Failed to flush session: ${error}`);
-          } */
         set({
           // search / cache
           multiQueryCache: {},
@@ -1111,26 +534,18 @@ export const useStore = create<State>()(
           // selected offers
           selectedOffers: {},
         });
-
         // Also wipe persisted sessionStorage
         sessionStorage.removeItem("pricecomp-store");
-        
         // DON'T clear IndexedDB here anymore - we do it in the sync service
         uiLog("Session data cleared from Zustand, sessionStorage");
       },
-          
-
-
-      
       autocompleteResetToken: 0,
-
       triggerAutocompleteReset: () =>
         set((s) => ({
           autocompleteResetToken: s.autocompleteResetToken + 1,
         })),
 
       /* ================= SORT ================= */
-
       offersSortColumn: "price",
       offersSortAscending: true,
       setOffersSort: (column) =>
@@ -1142,8 +557,6 @@ export const useStore = create<State>()(
               : true,
         })),
     }),
- 
-    
     {
       name: "pricecomp-store",
       storage: createJSONStorage(() => sessionStorage),
@@ -1160,8 +573,17 @@ export const useStore = create<State>()(
 );
 
 
-
 // ============= INDEXED DB SYNC HELPERS =============
+
+
+/* =========================
+   HELPERS
+========================= */
+const generateCacheKey = (query: string, lang?: string) =>
+  `${query}-${lang || "en"}`;
+const isExpired = (ts: number) => Date.now() - ts > CACHE_MAX_AGE;
+let freshResultsTimeout: ReturnType<typeof setTimeout> | null = null;
+
 
 const syncCacheToIndexedDb = async (state: State) => {
   try {
@@ -1221,3 +643,769 @@ const syncCacheToIndexedDb = async (state: State) => {
     uiLog(`Failed to sync cache to IndexedDB: ${error}`);
   }
 };
+
+
+
+/* =========================
+   SEARCH PRODUCTS SERVICE
+========================= */
+
+class SearchProductsService {
+  private get: () => State;
+  private set: (partial: State | Partial<State> | ((state: State) => Partial<State>)) => void;
+
+  constructor(get: () => State, set: (partial: State | Partial<State> | ((state: State) => Partial<State>)) => void) {
+    this.get = get;
+    this.set = set;
+  }
+
+  async execute(query?: string, lang?: string, page = 1, hydrating = false): Promise<void> {
+    if (query) {
+      this.set({ query: query });
+    }
+    uiLog(`Search products=${query}`);
+
+    this.clearFreshResultsTimeout();
+
+    const q = query ?? this.get().query;
+    if (!q) return;
+
+    const cacheKey = generateCacheKey(q, lang);
+    const { itemsPerPage } = this.get();
+    const addNotification = useNotificationStore.getState().addNotification;
+
+    // STEP 1: Check Zustand memory cache
+    if (await this.tryZustandCache(q, lang, page, cacheKey)) {
+      return;
+    }
+
+    // STEP 2: Check IndexedDB
+    if (await this.tryIndexedDbCache(q, lang, page, cacheKey)) {
+      return;
+    }
+
+    // STEP 3: Fetch from API
+    await this.fetchFromApi(q, lang, page, hydrating, cacheKey, itemsPerPage, addNotification);
+  }
+
+  private clearFreshResultsTimeout(): void {
+    if (freshResultsTimeout) {
+      clearTimeout(freshResultsTimeout);
+      freshResultsTimeout = null;
+    }
+  }
+
+  private async tryZustandCache(q: string, lang: string | undefined, page: number, cacheKey: string): Promise<boolean> {
+    const { multiQueryCache, itemsPerPage, syncTriggered } = this.get();
+    const cached = multiQueryCache[cacheKey];
+
+    // If sync was triggered and we have cached data, reload from IndexedDB
+    if (syncTriggered > 0 && cached) {
+      this.set({ syncTriggered: 0 });
+      return false; // Continue to IndexedDB
+    }
+
+    if (cached && !isExpired(cached.updatedAt)) {
+      useLastQueryStore.getState().setLastQuery(q, lang || "en", page);
+      const pageData = cached.pageCache[page];
+
+      if (pageData && Array.isArray(pageData) && pageData.length > 0) {
+        this.triggerPrefetchFromPageData(pageData, q);
+        
+        this.set({
+          aggregatedProducts: pageData,
+          currentPage: page,
+          totalResults: cached.totalResults,
+          totalPages: Math.ceil(cached.totalResults / itemsPerPage),
+        });
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private triggerPrefetchFromPageData(pageData: AggregatedProduct[], query: string): void {
+    if (!this.get().isOffline) {
+      const productIds = pageData
+        .map((p: any) => p?.id)
+        .filter(Boolean);
+
+      if (productIds.length > 0) {
+        uiLog("[Store] Triggering prefetch from memory cache hydrate");
+        prefetchService.addToQueue(productIds, query);
+      }
+    }
+  }
+
+  private async tryIndexedDbCache(q: string, lang: string | undefined, page: number, cacheKey: string): Promise<boolean> {
+    try {
+      const { itemsPerPage } = this.get();
+      const indexedDbCache = await indexedDbService.getProducts(cacheKey);
+      
+      if (indexedDbCache && !isExpired(indexedDbCache.updatedAt)) {
+        // VALIDATE AND FIX: Check for corrupted data (offers as number)
+        const fixedPageCache: Record<number, AggregatedProduct[]> = {};
+        
+        Object.entries(indexedDbCache.pageCache).forEach(([pageNum, products]) => {
+          fixedPageCache[Number(pageNum)] = products.map(validateAndFixCachedProduct);
+        });
+        
+        const pageData = fixedPageCache[page];
+        if (pageData && pageData.length > 0) {
+          const [q, lang] = cacheKey.split("-");
+          useLastQueryStore.getState().setLastQuery(q, lang || "en", page);
+
+          // TRIGGER PREFETCH HERE!
+          this.triggerPrefetchFromIndexedDb(pageData, q);
+
+          // Restore to Zustand memory cache with FIXED data
+          this.restoreFromIndexedDb(pageData, page, indexedDbCache, fixedPageCache, cacheKey, itemsPerPage);
+
+          return true;
+        }
+      }
+    } catch (error) {
+      uiLog(`Failed to read from IndexedDB: ${error}`);
+    }
+
+    return false;
+  }
+
+  private triggerPrefetchFromIndexedDb(pageData: AggregatedProduct[], query: string): void {
+    const productIds = pageData.map(p => p.id).filter(Boolean);
+    if (productIds.length > 0 && !this.get().isOffline) {
+      uiLog(`[Store] Triggering prefetch for ${productIds.length} products from IndexedDB cache`);
+      prefetchService.addToQueue(productIds, query);
+    }
+  }
+
+  private restoreFromIndexedDb(
+    pageData: AggregatedProduct[],
+    page: number,
+    indexedDbCache: any,
+    fixedPageCache: Record<number, AggregatedProduct[]>,
+    cacheKey: string,
+    itemsPerPage: number
+  ): void {
+    this.set((s: State) => ({
+      aggregatedProducts: pageData,
+      currentPage: page,
+      totalResults: indexedDbCache.totalResults,
+      totalPages: Math.ceil(indexedDbCache.totalResults / itemsPerPage),
+      multiQueryCache: {
+        ...s.multiQueryCache,
+        [cacheKey]: {
+          pageCache: fixedPageCache,
+          totalResults: indexedDbCache.totalResults,
+          updatedAt: indexedDbCache.updatedAt,
+        },
+      },
+      queryCacheKey: cacheKey,
+      hasFreshResults: true
+    }));
+
+    freshResultsTimeout = setTimeout(() => {
+      this.set({ hasFreshResults: false });
+      freshResultsTimeout = null;
+    }, 1000);
+  }
+
+  private async fetchFromApi(
+    q: string,
+    lang: string | undefined,
+    page: number,
+    hydrating: boolean,
+    cacheKey: string,
+    itemsPerPage: number,
+    addNotification: any
+  ): Promise<void> {
+    if (hydrating) { 
+      this.set({ isLoading: false });
+    } else {
+      this.set({ isLoading: true });
+    }
+    
+    const cursor = page > 1 ? ((page - 1) * itemsPerPage).toString() : undefined;
+
+    try {
+      const data = await apiSearchProducts(q, lang, itemsPerPage, cursor);
+      
+      const transformedProducts = data.products.map(transformSearchResult);
+
+      this.triggerPrefetchFromApi(transformedProducts, q);
+      this.prefetchNextPages(data, q, lang, page, itemsPerPage);
+
+      // Only update lastQuery on SUCCESSFUL API response
+      useLastQueryStore.getState().setLastQuery(q, lang || "en", page);
+      
+      await this.updateStateAfterApiFetch(cacheKey, page, transformedProducts, data, itemsPerPage);
+
+    } catch (err: any) {
+      this.handleApiError(err, addNotification);
+    } finally {
+      this.set({ isLoading: false });
+    }
+  }
+
+  private triggerPrefetchFromApi(transformedProducts: AggregatedProduct[], query: string): void {
+    const productIds = transformedProducts
+      .map(p => p.id)
+      .filter(Boolean);
+    
+    if (productIds.length > 0 && !this.get().isOffline) {
+      prefetchService.addToQueue(productIds, query);
+    }
+  }
+
+  private prefetchNextPages(data: any, q: string, lang: string | undefined, page: number, itemsPerPage: number): void {
+    if (data.total_count > page * itemsPerPage && !this.get().isOffline) {
+      const totalPages = Math.ceil(data.total_count / itemsPerPage);
+      const remainingPages = totalPages - page;
+      const pagesToPrefetch = Math.min(2, remainingPages);
+      
+      if (pagesToPrefetch > 0) {
+        prefetchService.prefetchNextPages(
+          q, 
+          lang || 'en', 
+          page, 
+          itemsPerPage, 
+          pagesToPrefetch
+        );
+      }
+    }
+  }
+
+  private async updateStateAfterApiFetch(
+    cacheKey: string,
+    page: number,
+    transformedProducts: AggregatedProduct[],
+    data: any,
+    itemsPerPage: number
+  ): Promise<void> {
+    const cached = this.get().multiQueryCache[cacheKey];
+
+    this.set((s: State) => {
+      const updatedPageCache: Record<number, AggregatedProduct[]> = {
+        ...(cached?.pageCache ?? {}),
+        [page]: transformedProducts,
+      };
+
+      const updatedMultiQueryCache: Record<string, MultiQueryEntry> = {
+        ...s.multiQueryCache,
+        [cacheKey]: {
+          pageCache: updatedPageCache,
+          totalResults: data.total_count,
+          updatedAt: Date.now(),
+        },
+      };
+
+      const newState: Partial<State> = {
+        aggregatedProducts: transformedProducts,
+        currentPage: page,
+        totalResults: data.total_count,
+        totalPages: Math.ceil(data.total_count / itemsPerPage),
+        multiQueryCache: updatedMultiQueryCache,
+        queryCacheKey: cacheKey,
+        isLoading: false,
+        hasFreshResults: true,
+      };
+
+      // Save to IndexedDB in background
+      const updatedState = { ...s, ...newState };
+      syncCacheToIndexedDb(updatedState as State).catch(console.error);
+
+      return newState;
+    });
+
+    freshResultsTimeout = setTimeout(() => {
+      this.set({ hasFreshResults: false });
+      freshResultsTimeout = null;
+    }, 1000);
+  }
+
+  private handleApiError(err: any, addNotification: any): void {
+    if (err?.code === 403 || err?.message === "SESSION_EXPIRED") {
+      this.get().openSessionExpired();
+      return;
+    }
+    
+    if (err?.message === "TOO_MANY_REQUESTS" || err?.response?.status === 429) {
+      addNotification({
+        message: i18n.t("Error_429"),
+        type: "warning",
+        duration: 5000,
+      });
+      return;
+    }
+    
+    if (err?.response?.status === 404) {
+      addNotification({
+        message: i18n.t("Error_404"),
+        type: "error",
+        duration: 4000,
+      });
+      return;
+    }
+
+    if (!err.response || err.code === "ERR_NETWORK" || err.message === "Network Error") {
+      return;
+    }
+    
+    addNotification({
+      message: i18n.t("Error_Generic"),
+      type: "error",
+      duration: 5000,
+    });
+    throw err;
+  }
+}
+
+
+
+/* =========================
+   OPEN PRODUCT SERVICE
+========================= */
+
+class OpenProductService {
+  private get: () => State;
+  private set: (partial: State | Partial<State> | ((state: State) => Partial<State>)) => void;
+
+  constructor(
+    get: () => State, 
+    set: (partial: State | Partial<State> | ((state: State) => Partial<State>)) => void
+  ) {
+    this.get = get;
+    this.set = set;
+  }
+
+  async execute(productId: string): Promise<void> {
+    const cached = this.get().productOffers[productId];
+    prefetchService.removeFromQueue([productId]);
+
+    this.logStart(productId);
+    
+    // Find the product in aggregatedProducts to get offers_count from Layer 1
+    const product = this.findProductInAggregated(productId);
+    const expectedOffersCount = product?.offers_count;
+    
+    this.logLayer1Data(productId, product);
+
+    // ============= STEP 1: Check Zustand memory cache =============
+    if (await this.tryZustandCache(productId, cached, expectedOffersCount)) {
+      return;
+    }
+
+    // ============= STEP 2: Check IndexedDB =============
+    if (await this.tryIndexedDbCache(productId, expectedOffersCount)) {
+      return;
+    }
+
+    // ============= STEP 3: Fetch from API =============
+    await this.fetchFromApi(productId, expectedOffersCount, product);
+    
+    this.logEnd(productId);
+  }
+
+  private logStart(productId: string): void {
+    uiLog(`[openProduct] ========== START for productId=${productId} ==========`);
+  }
+
+  private logEnd(productId: string): void {
+    uiLog(`[openProduct] ========== END for productId=${productId} ==========`);
+  }
+
+  private findProductInAggregated(productId: string): AggregatedProduct | undefined {
+    return this.get().aggregatedProducts.find(p => p.id === productId);
+  }
+
+  private logLayer1Data(productId: string, product: AggregatedProduct | undefined): void {
+    uiLog(`[openProduct] 🔍 LAYER 1 DATA: productId=${productId}, found=${!!product}`);
+    if (product) {
+      uiLog(`[openProduct] 📊 LAYER 1: name="${product.name}", offers_count=${product.offers_count}, lowest_price=${product.lowest_price}`);
+    } else {
+      uiLog(`[openProduct] ⚠️ WARNING: Product ${productId} not found in aggregatedProducts!`);
+    }
+  }
+
+  private async tryZustandCache(
+    productId: string, 
+    cached: ProductOffersEntry | undefined, 
+    expectedOffersCount: number | undefined
+  ): Promise<boolean> {
+    if (!cached) {
+      uiLog(`[openProduct] 📦 STEP 1: No Zustand cache found for ${productId}`);
+      return false;
+    }
+
+    uiLog(`[openProduct] 📦 STEP 1: Zustand cache check for ${productId}`);
+    uiLog(`[openProduct] 📦 Zustand cache: offers.length=${cached.offers.length}, fetchedAt=${new Date(cached.fetchedAt).toISOString()}, age=${Math.round((Date.now() - cached.fetchedAt)/1000)}s, isError=${cached.isError}`);
+    
+    if (cached.offers.length > 0 && Date.now() - cached.fetchedAt < OFFERS_CACHE_TTL) {
+      uiLog(`[openProduct] 📦 STEP 1: Using cached offers from Zustand for ${productId}`);
+      
+      // VALIDATE: Check if cached offers count matches expected from Layer 1
+      if (!this.validateOffersCount(productId, cached.offers.length, expectedOffersCount, "Zustand")) {
+        // Invalidate cache and continue to fetch fresh
+        this.invalidateZustandCache(productId);
+        return false;
+      }
+      
+      if (!expectedOffersCount || cached.offers.length === expectedOffersCount) {
+        this.setSelectedProductId(productId);
+        uiLog(`[openProduct] ✅ STEP 1: Returning with ${cached.offers.length} cached offers`);
+        return true;
+      }
+    } else {
+      if (cached.offers.length === 0) {
+        uiLog(`[openProduct] 📦 STEP 1: Zustand cache has empty offers array`);
+      }
+      if (Date.now() - cached.fetchedAt >= OFFERS_CACHE_TTL) {
+        uiLog(`[openProduct] 📦 STEP 1: Zustand cache expired (age=${Math.round((Date.now() - cached.fetchedAt)/1000)}s > ${OFFERS_CACHE_TTL/1000}s)`);
+      }
+    }
+
+    return false;
+  }
+
+  private invalidateZustandCache(productId: string): void {
+    this.set((s) => {
+      const newProductOffers = { ...s.productOffers };
+      delete newProductOffers[productId];
+      return { productOffers: newProductOffers };
+    });
+  }
+
+  private async tryIndexedDbCache(productId: string, expectedOffersCount: number | undefined): Promise<boolean> {
+    try {
+      uiLog(`[openProduct] 💾 STEP 2: Checking IndexedDB for ${productId}`);
+      const indexedDbOffers = await indexedDbService.getOffers(productId);
+      
+      this.logIndexedDbResponse(productId, indexedDbOffers);
+
+      if (indexedDbOffers && indexedDbOffers.offers.length > 0 && Date.now() - indexedDbOffers.fetchedAt < OFFERS_CACHE_TTL) {
+        uiLog(`[openProduct] 💾 STEP 2: Restoring offers from IndexedDB for ${productId}`);
+        
+        // VALIDATE: Check if IndexedDB offers count matches expected from Layer 1
+        if (!this.validateOffersCount(productId, indexedDbOffers.offers.length, expectedOffersCount, "IndexedDB")) {
+          // Clear corrupted data and continue to fetch
+          await indexedDbService.saveOffers(productId, []);
+          return false;
+        }
+        
+        if (!expectedOffersCount || indexedDbOffers.offers.length === expectedOffersCount) {
+          await this.restoreFromIndexedDb(productId, indexedDbOffers);
+          return true;
+        }
+      } else if (indexedDbOffers && indexedDbOffers.offers.length === 0) {
+        uiLog(`[openProduct] 💾 STEP 2: IndexedDB has empty offers array`);
+      } else if (indexedDbOffers && Date.now() - indexedDbOffers.fetchedAt >= OFFERS_CACHE_TTL) {
+        uiLog(`[openProduct] 💾 STEP 2: IndexedDB cache expired (age=${Math.round((Date.now() - indexedDbOffers.fetchedAt)/1000)}s)`);
+      }
+    } catch (error) {
+      uiLog(`[openProduct] 💾 STEP 2: Failed to read offers from IndexedDB: ${error}`);
+    }
+
+    return false;
+  }
+
+  private logIndexedDbResponse(productId: string, indexedDbOffers: any): void {
+    uiLog(`[openProduct] 💾 IndexedDB response: ${indexedDbOffers ? 'found' : 'not found'}`);
+    if (indexedDbOffers) {
+      uiLog(`[openProduct] 💾 IndexedDB offers: count=${indexedDbOffers.offers.length}, fetchedAt=${new Date(indexedDbOffers.fetchedAt).toISOString()}, age=${Math.round((Date.now() - indexedDbOffers.fetchedAt)/1000)}s`);
+      
+      // Log first few offer IDs if any
+      if (indexedDbOffers.offers.length > 0) {
+        uiLog(`[openProduct] 💾 IndexedDB first 3 offer IDs: ${indexedDbOffers.offers.slice(0, 3).map((o: any) => o.id).join(', ')}`);
+      }
+    }
+  }
+
+  private async restoreFromIndexedDb(productId: string, indexedDbOffers: any): Promise<void> {
+    this.set((s) => ({
+      productOffers: {
+        ...s.productOffers,
+        [productId]: {
+          offers: indexedDbOffers.offers,
+          fetchedAt: indexedDbOffers.fetchedAt,
+          isError: false,
+        },
+      },
+      selectedProductId: productId,
+    }));
+    uiLog(`[openProduct] ✅ STEP 2: Restored ${indexedDbOffers.offers.length} offers from IndexedDB`);
+  }
+
+  private validateOffersCount(
+    productId: string, 
+    actualCount: number, 
+    expectedCount: number | undefined, 
+    source: string
+  ): boolean {
+    if (expectedCount === undefined) {
+      uiLog(`[openProduct] ⚠️ Cannot validate ${source} vs Layer 1 - product not found in aggregatedProducts`);
+      return true; // Can't validate, assume it's valid
+    }
+
+    if (actualCount === expectedCount) {
+      uiLog(`[openProduct] ✅ VALIDATION PASSED: ${source} offers count (${actualCount}) matches Layer 1 expected (${expectedCount})`);
+      return true;
+    } else {
+      uiLog(`[openProduct] ❌ VALIDATION FAILED: ${source} offers count (${actualCount}) DOES NOT MATCH Layer 1 expected (${expectedCount})`);
+      uiLog(`[openProduct] ⚠️ Cache corruption detected! Invalidating and fetching fresh...`);
+      return false;
+    }
+  }
+
+  private setSelectedProductId(productId: string): void {
+    this.set({ selectedProductId: productId });
+  }
+
+  private async fetchFromApi(
+    productId: string, 
+    expectedOffersCount: number | undefined,
+    product: AggregatedProduct | undefined
+  ): Promise<void> {
+    uiLog(`[openProduct] 🌐 STEP 3: Fetching offers from API for ${productId}`);
+    this.set({ isOffersLoading: true, selectedProductId: productId });
+
+    try {
+      const data = await apiGetProductOffers(productId, true, this.get().query);
+
+      this.logApiResponse(productId, data);
+
+      // Defensive check
+      if (!data.offers) {
+        this.handleEmptyOffersResponse(productId);
+        return;
+      }
+
+      const actualOffersCount = data.offers.length;
+      this.logApiOffersDetails(productId, data, actualOffersCount);
+
+      // ============= CRITICAL VALIDATION: Layer 1 vs Layer 2 =============
+      this.validateLayerConsistency(productId, expectedOffersCount, actualOffersCount, product);
+
+      // Check if offers count exceeds max (should never happen with backend fix)
+      /* if (actualOffersCount > 50) {
+        uiLog(`[openProduct] 🔴 ERROR: API returned ${actualOffersCount} offers which exceeds max 50!`);
+      } */
+
+      uiLog(`[openProduct] 💾 STEP 3: Updating state with ${actualOffersCount} offers`);
+
+      await this.updateStateWithApiResponse(productId, data);
+
+      uiLog(`[openProduct] ✅ STEP 3: Successfully fetched and stored ${actualOffersCount} offers`);
+
+    } catch (err: any) {
+      await this.handleApiError(productId, err);
+    } finally {
+      this.set({ isOffersLoading: false });
+    }
+  }
+
+  private logApiResponse(productId: string, data: any): void {
+    uiLog(`[openProduct] 🌐 API response received for ${productId}`);
+    uiLog(`[openProduct] 🌐 API response: offers_count=${data.offers?.length || 0}, has_more=${data.has_more}, next_cursor=${data.next_cursor}`);
+  }
+
+  private logApiOffersDetails(productId: string, data: any, actualOffersCount: number): void {
+    uiLog(`[openProduct] 🌐 API returned ${actualOffersCount} offers for ${productId}`);
+    
+    // Log first few offer IDs for debugging
+    if (actualOffersCount > 0) {
+      uiLog(`[openProduct] 🌐 First 3 offer IDs: ${data.offers.slice(0, 3).map((o: any) => o.id).join(', ')}`);
+      uiLog(`[openProduct] 🌐 First offer sample: shop=${data.offers[0].shop}, price=${data.offers[0].price}`);
+    }
+  }
+
+  private validateLayerConsistency(
+    productId: string, 
+    expectedCount: number | undefined, 
+    actualCount: number, 
+    product: AggregatedProduct | undefined
+  ): void {
+    if (expectedCount !== undefined) {
+      if (actualCount === expectedCount) {
+        uiLog(`[openProduct] ✅✅✅ LAYER MATCH: Layer 1 count (${expectedCount}) === Layer 2 count (${actualCount})`);
+      } else {
+        uiLog(`[openProduct] ❌❌❌ LAYER MISMATCH: Layer 1 count (${expectedCount}) !== Layer 2 count (${actualCount})`);
+        uiLog(`[openProduct] 🔴 CRITICAL: Backend cache inconsistency detected!`);
+        uiLog(`[openProduct] 📝 Product: ${productId}, Expected: ${expectedCount}, Actual: ${actualCount}`);
+        
+        // Log the full product for debugging
+        if (product) {
+          uiLog(`[openProduct] 📝 Product details: name="${product.name}", lowest_price=${product.lowest_price}`);
+        }
+        
+        // If expected is 0 but we got offers, that's a big problem
+        if (expectedCount === 0 && actualCount > 0) {
+          uiLog(`[openProduct] 🔴 ERROR: Expected 0 offers but got ${actualCount} - product should not have offers!`);
+        }
+        
+        // If expected > 0 but got 0, that's also a problem
+        if (expectedCount > 0 && actualCount === 0) {
+          uiLog(`[openProduct] 🔴 ERROR: Expected ${expectedCount} offers but got 0 - offers missing from cache!`);
+        }
+        
+        // If we got more than expected (should never happen with backend fix)
+        if (actualCount > expectedCount) {
+          uiLog(`[openProduct] 🔴 ERROR: Got ${actualCount} offers, expected only ${expectedCount} - cache contains extra offers!`);
+        }
+        
+        // If we got less than expected (pagination might be needed)
+        if (actualCount < expectedCount) {
+          uiLog(`[openProduct] ⚠️ WARNING: Got ${actualCount} offers, expected ${expectedCount} - possible pagination?`);
+        }
+      }
+    } else {
+      uiLog(`[openProduct] ⚠️ Cannot validate Layer 1 vs Layer 2 - product not found in aggregatedProducts`);
+    }
+  }
+
+  private async updateStateWithApiResponse(productId: string, data: any): Promise<void> {
+    this.set((s) => {
+      const newState = {
+        productOffers: {
+          ...s.productOffers,
+          [productId]: {
+            offers: data.offers,
+            fetchedAt: Date.now(),
+            isError: false,
+          },
+        },
+        isOffersLoading: false,
+      };
+      
+      uiLog(`[openProduct] 💾 Triggering IndexedDB sync`);
+      syncCacheToIndexedDb({ ...s, ...newState } as State).catch(console.error);
+      
+      return newState;
+    });
+  }
+
+  private handleEmptyOffersResponse(productId: string): void {
+    uiLog(`[openProduct] ❌ API returned no offers array for ${productId}`);
+    const error = new Error("EMPTY_OFFERS");
+    (error as any).code = 404;
+    throw error;
+  }
+
+  private async handleApiError(productId: string, err: any): Promise<void> {
+    uiLog(`[openProduct] ❌ STEP 3: ERROR for ${productId}: ${err?.message} | code=${err?.code} | status=${err?.response?.status}`);
+
+    this.set({ isOffersLoading: false });
+
+    // Error handling with detailed logging
+    if (err?.code === 0) {
+      this.handleRequestAborted(productId, err);
+      return;
+    }
+
+    if (err?.code === 404) {
+      await this.handleNotFoundError(productId);
+      return;
+    }
+          
+    if (err?.code === 403) {
+      await this.handleSessionExpiredError(productId);
+      return;
+    }
+
+    if (err?.code === 429) {
+      await this.handleRateLimitError(productId);
+      return;
+    }
+
+    if (!err.response || err.code === "ERR_NETWORK") {
+      await this.handleNetworkError(productId);
+      return;
+    }
+    
+    // Generic error
+    uiLog(`[openProduct] 🛑 Unhandled error: ${err}`);
+  }
+
+  private handleRequestAborted(productId: string, err: any): void {
+    uiLog(`[openProduct] 🛑 Request aborted/cancelled`);
+    this.set((s) => ({
+      productOffers: {
+        ...s.productOffers,
+        [productId]: { offers: [], fetchedAt: 0, isError: true, errorType: "generic" },
+      },
+    }));
+    useNotificationStore.getState().addNotification({
+      message: i18n.t("Error_0"),
+      type: "error",
+      duration: 4000,
+    });
+  }
+
+  private async handleNotFoundError(productId: string): Promise<void> {
+    uiLog(`[openProduct] 🛑 404 Not Found - product may be deleted`);
+    
+    this.set((s) => ({
+      productOffers: {
+        ...s.productOffers,
+        [productId]: { 
+          offers: [], 
+          fetchedAt: 0, 
+          isError: true, 
+          errorType: "generic" 
+        },
+      },
+    }));
+    
+    useNotificationStore.getState().addNotification({
+      message: i18n.t("Error_404"),
+      type: "error",
+      duration: 4000,
+    });
+  }
+
+  private async handleSessionExpiredError(productId: string): Promise<void> {
+    uiLog(`[openProduct] 🛑 403 Session Expired`);
+    this.get().openSessionExpired();
+    this.set((s) => ({
+      productOffers: {
+        ...s.productOffers,
+        [productId]: { offers: [], fetchedAt: 0, isError: true, errorType: "generic" },
+      },
+    }));
+    useNotificationStore.getState().addNotification({
+      message: i18n.t("Error_Generic"),
+      type: "error",
+      duration: 4000,
+    });
+  }
+
+  private async handleRateLimitError(productId: string): Promise<void> {
+    uiLog(`[openProduct] 🛑 429 Rate Limited`);
+    this.set((s) => ({
+      productOffers: {
+        ...s.productOffers,
+        [productId]: { offers: [], fetchedAt: 0, isError: true, errorType: "429" },
+      },
+    }));
+    useNotificationStore.getState().addNotification({
+      message: i18n.t("Error_429"),
+      type: "warning",
+      duration: 4000,
+    });
+  }
+
+  private async handleNetworkError(productId: string): Promise<void> {
+    uiLog(`[openProduct] 🛑 Network Error - offline or connection issue`);
+    this.set((s) => ({
+      productOffers: {
+        ...s.productOffers,
+        [productId]: { offers: [], fetchedAt: 0, isError: true, errorType: "network" },
+      },
+    }));
+    useNotificationStore.getState().addNotification({
+      message: i18n.t("Error_Network"),
+      type: "info",
+      duration: 5000,
+    });
+  }
+}

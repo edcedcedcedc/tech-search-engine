@@ -29,10 +29,10 @@ export const INDEXED_DB_CONFIG = {
   // Cache expiration times (in milliseconds)
   cache: {
     // Product search results expiration (24 hours)
-    productsTtl: 24 * 60 * 60 * 1000,
+    productsTtl: 12 * 60 * 60 * 1000,
     
     // Product offers expiration (1 hour)
-    offersTtl: 24 * 60 * 60 * 1000,
+    offersTtl: 12 * 60 * 60 * 1000,
     
     // Maximum age for stale-while-revalidate pattern
     staleWhileRevalidate: 5 * 60 * 1000 // 5 minutes

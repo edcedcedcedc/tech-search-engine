@@ -5,8 +5,8 @@
     "stores": ["products", "offers"]
   },
   "cache": {
-    "productsTtl": 86400000,
-    "offersTtl": 86400000,
+    "productsTtl": 43200000,
+    "offersTtl": 43200000,
     "staleWhileRevalidate": 300000
   },
   "limits": {

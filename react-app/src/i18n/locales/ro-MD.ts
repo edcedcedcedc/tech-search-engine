@@ -326,9 +326,9 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
   Max_Retry_Exceeded: "Numărul maxim de reîncercări a fost depășit",
 
   Error_403_Title: "Sesiunea a expirat",
-  Error_403_Message1: "Sesiunea ta nu mai este validă în timpul încărcării ofertelor de produse.",
-  Error_403_Message2: "Pentru a continua, trebuie să reîmprospătăm produsele și ofertele în cache.",
-  Refresh: "Reîncarca",
+  Error_403_Message1: "Sesiunea ta nu mai este validă în timpul încărcării produselor sau ofertelor.",
+  Error_403_Message2: "Pentru a continua, trebuie să actualizezi produsele și ofertele din cache. Dacă resetezi toate căutările, acestea vor fi șterse, iar următoarele încărcări vor dura mai mult timp.",
+  
 
   Offline_Title: "Ești offline",
   Offline_Message1: "Se pare că conexiunea ta la internet a fost pierdută.",
@@ -395,6 +395,9 @@ Subscription_Description_3: "Poți alege între abonament sau plată unică pent
 
 
 Cancel: "Anulează",
+Reset: "Reseteză",
+Refresh: "Actualizează",
+Refreshing: "Actualizare",
 
 //EMAIL
 

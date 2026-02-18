@@ -17,6 +17,7 @@ import { syncDebug } from "../webhook/client/syncDebug";
 import { indexedDbService } from "../services/indexedDb";
 import { uiLog } from "../webhook/client/uiDebug";
 import { useNavigate } from "react-router-dom";
+import { searchProducts } from "../api/searchApi";
 // Small Circular Progress with Label Component
 function SmallCircularProgressWithLabel(props: { value: number }) {
   return (
@@ -166,7 +167,7 @@ export default function SessionExpiredDialog() {
   const handleDone = () => {
     if (!debugShow) close();
     setSyncState("idle");
-    navigate("/");
+    window.location.reload();
   };
 
   const progressValue =
@@ -247,12 +248,9 @@ export default function SessionExpiredDialog() {
               onClick={handleCancel}
               variant="text"
               color="inherit"
-              disabled={isCompleted || (!isSyncing && !debugShow)} // Enable during sync!
-              sx={{
-                opacity: isCompleted || (!isSyncing && !debugShow) ? 0.5 : 1,
-              }}
+              disabled={isCompleted} // Enable during sync!
             >
-              {t("Cancel")}
+              {t("Reset")}
             </Button>
             <Button
               onClick={handleSync}
@@ -260,10 +258,10 @@ export default function SessionExpiredDialog() {
               color="primary"
               disabled={isSyncing}
               sx={{
-                opacity: isSyncing ? 0.5 : 1,
+                opacity: isSyncing ? 0.8 : 1,
               }}
             >
-              {isSyncing ? t("Refreshing...") : t("Refresh")}
+              {isSyncing ? t("Refreshing") : t("Refresh")}
             </Button>
           </>
         ) : (

@@ -278,8 +278,8 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
 
   Error_403_Title: "Session expired",
   Error_403_Message1: "Your session is no longer valid while loading product offers.",
-  Error_403_Message2: "To continue, we need to refresh cached products and offers.",
-  Refresh: "Refresh",
+  Error_403_Message2: "To continue, you need to refresh the products and offers in the cache. If you reset all your searches, they will be deleted, and the next loads will take longer.",
+ 
 
 
   Offline_Title: "You are offline",
@@ -292,6 +292,9 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
 
 
   Cancel: "Cancel",
+  Reset: "Reset",
+  Refresh: "Refresh",
+  Refreshing: "Refreshing",
 
   // =======================
 // HOW TO PAGE

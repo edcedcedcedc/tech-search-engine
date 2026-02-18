@@ -41,6 +41,7 @@ export const SearchAutocomplete: React.FC = () => {
   const autocompleteResetToken = useStore((s) => s.autocompleteResetToken);
   const isLoading = useStore((state) => state.isLoading);
   const isOffline = useStore((state) => state.isOffline);
+  const russianRegex = /[А-Яа-яЁё]/;
   const closeSuggestions = () => {
     uiLog(`autocomplete | closeSuggestions`);
     setSuggestions([]);
@@ -165,6 +166,12 @@ export const SearchAutocomplete: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const q = e.target.value;
+    if (russianRegex.test(q)) {
+      // Option 1: block input and show warning
+      setValue(""); // clear input
+      fetchSuggestions("");
+      return;
+    }
     uiLog(`autocomplete | handleChange | value=${q}`);
     setValue(q);
     fetchSuggestions(q);
