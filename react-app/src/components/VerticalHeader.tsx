@@ -7,6 +7,7 @@ import {
   ListItemIcon,
   Divider,
   IconButton,
+  Tooltip,
 } from "@mui/material";
 
 import NavigateNextOutlinedIcon from "@mui/icons-material/NavigateNextOutlined";
@@ -19,7 +20,7 @@ import QuestionMarkOutlinedIcon from "@mui/icons-material/QuestionMarkOutlined";
 import { Link as RouterLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
-import { useStore, useLastQueryStore } from "../store/store"; // Add useLastQueryStore
+import { useStore, useLastQueryStore } from "../store/store";
 import { NavIcon } from "./NavIcons";
 import { uiLog } from "../webhook/client/uiDebug";
 import { HeaderComparisonIcon } from "./ComparisonWidget";
@@ -28,8 +29,8 @@ const ICON_SIZE = 22;
 const iconSx = { fontSize: ICON_SIZE };
 
 const VerticalHeader: React.FC = () => {
-  const { t, i18n } = useTranslation(); // Get i18n for lang
-  const lang = i18n.language.slice(0, 2); // Get proper lang from i18n
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language.slice(0, 2);
 
   const location = useLocation();
   const isOnProductsPage = location.pathname.startsWith("/products");
@@ -39,12 +40,11 @@ const VerticalHeader: React.FC = () => {
   const totalPages = useStore((s) => s.totalPages);
   const searchProducts = useStore((s) => s.searchProducts);
   const isLoading = useStore((s) => s.isLoading);
-  const storeQuery = useStore((s) => s.query); // Get current query from store
+  const storeQuery = useStore((s) => s.query);
 
   const isProductsDisabled = aggregatedProducts.length === 0;
 
   const getQueryToUse = () => {
-    // Try lastQuery first (persisted), fallback to storeQuery, then empty string
     const lastQuery = useLastQueryStore.getState().lastQuery;
     return lastQuery || storeQuery || "";
   };
@@ -83,6 +83,7 @@ const VerticalHeader: React.FC = () => {
     {
       path: "/products",
       label: t("Manage_Products"),
+      tooltip: t("Manage_Products_Tooltip"),
       icon: (
         <NavIcon>
           <ManageSearchOutlinedIcon sx={iconSx} />
@@ -90,27 +91,19 @@ const VerticalHeader: React.FC = () => {
       ),
     },
     {
-      path: "/compare",
-      label: "",
-      icon: (
-        <NavIcon>
-          <HeaderComparisonIcon />
-        </NavIcon>
-      ),
-    },
-    {
       path: "/how-to",
       label: "",
+      tooltip: t("How_to_Tooltip"),
       icon: (
         <NavIcon>
           <QuestionMarkOutlinedIcon sx={iconSx} />
         </NavIcon>
       ),
     },
-
     {
       path: "/services",
       label: t("Services"),
+      tooltip: t("Services"),
       icon: (
         <NavIcon>
           <ServicesOutlinedIcon sx={iconSx} />
@@ -128,8 +121,6 @@ const VerticalHeader: React.FC = () => {
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        /*        borderRight: 1,
-        borderColor: "divider", */
         bgcolor: "background.default",
         flexShrink: 0,
         overflowY: "auto",
@@ -148,21 +139,41 @@ const VerticalHeader: React.FC = () => {
             py: 1,
           }}
         >
-          <IconButton
-            size="small"
-            onClick={handlePrev}
-            disabled={currentPage <= 1 || isLoading}
+          <Tooltip
+            title={t("Previous_page")}
+            placement="right"
+            enterDelay={500}
           >
-            <NavigateBeforeOutlinedIcon fontSize="small" />
-          </IconButton>
+            <span>
+              {" "}
+              {/* span needed for disabled button tooltip */}
+              <IconButton
+                size="small"
+                onClick={handlePrev}
+                disabled={currentPage <= 1 || isLoading}
+              >
+                <NavigateBeforeOutlinedIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
 
-          <IconButton
-            size="small"
-            onClick={handleNext}
-            disabled={currentPage >= totalPages || isLoading}
+          <Tooltip
+            title={t("Next_page_Tooltip")}
+            placement="right"
+            enterDelay={500}
           >
-            <NavigateNextOutlinedIcon fontSize="small" />
-          </IconButton>
+            <span>
+              {" "}
+              {/* span needed for disabled button tooltip */}
+              <IconButton
+                size="small"
+                onClick={handleNext}
+                disabled={currentPage >= totalPages || isLoading}
+              >
+                <NavigateNextOutlinedIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
         </Box>
       )}
 
@@ -175,35 +186,41 @@ const VerticalHeader: React.FC = () => {
             return (
               <React.Fragment key={link.path}>
                 <ListItem disablePadding>
-                  <ListItemButton
-                    component={!disabled ? RouterLink : "div"}
-                    to={!disabled ? link.path : undefined}
-                    disabled={disabled}
-                    sx={{
-                      minHeight: 54,
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      px: 0,
-                      py: 0,
-                      ml: 1,
-                    }}
+                  <Tooltip
+                    title={disabled ? t("No_products_available") : link.tooltip}
+                    placement="right"
+                    enterDelay={500}
                   >
-                    <ListItemIcon
+                    <ListItemButton
+                      component={!disabled ? RouterLink : "div"}
+                      to={!disabled ? link.path : undefined}
+                      disabled={disabled}
                       sx={{
-                        minWidth: 40,
+                        minHeight: 54,
                         display: "flex",
                         justifyContent: "center",
                         alignItems: "center",
-                        color: disabled ? "text.disabled" : "text.secondary",
+                        px: 0,
+                        py: 0,
+                        ml: 1,
                       }}
                     >
-                      {link.icon}
-                    </ListItemIcon>
-                  </ListItemButton>
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 40,
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          color: disabled ? "text.disabled" : "text.secondary",
+                        }}
+                      >
+                        {link.icon}
+                      </ListItemIcon>
+                    </ListItemButton>
+                  </Tooltip>
                 </ListItem>
                 {(link.path === "/products" || link.path === "/about") && (
-                  <Divider sx={{ mx: 2 }} />
+                  <Divider sx={{ mx: 2, mr: 1 }} />
                 )}
               </React.Fragment>
             );

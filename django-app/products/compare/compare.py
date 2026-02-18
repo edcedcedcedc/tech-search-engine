@@ -26,6 +26,7 @@ env = environ.Env()
 environ.Env.read_env()
 client = OpenAI(api_key=env("OPENAI_API_KEY"))
 
+
 # Language-specific system prompts with simulated web knowledge
 SYSTEM_PROMPTS = {
     "en": """You are a sophisticated shopping assistant that specializes in trend-aware product comparison.
@@ -447,8 +448,7 @@ class ProductComparisonView(View):
         try:
             # Call OpenAI API (no web search tools)
             response = client.chat.completions.create(
-                model="gpt-5-nano",
-                temperature=1,
+                model="gpt-5-nano-2025-08-07",
                 messages=[
                     {
                         "role": "system",

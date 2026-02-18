@@ -62,12 +62,29 @@ export default function Services() {
         {t("Services_Title")}
       </Typography>
 
-      {/* Intro text — match Home's body1 */}
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
         {t("Services_Intro")}
       </Typography>
 
-      {/* Analytics as a Service */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" fontWeight={600} gutterBottom>
+          {t("Services_FullPrice_Title")}
+        </Typography>
+
+        <Typography variant="body1" sx={{ mb: 1 }}>
+          {t("Services_FullPrice_Intro")}
+        </Typography>
+
+        <Box component="ul" sx={{ pl: 3 }}>
+          <Typography component="li" variant="body1">
+            {t("Services_FullPrice_Trend")}
+          </Typography>
+          <Typography component="li" variant="body1">
+            {t("Services_FullPrice_History")}
+          </Typography>
+        </Box>
+      </Box>
+
       <Box sx={{ mb: 4 }}>
         <Typography variant="h6" fontWeight={600} gutterBottom>
           {t("Services_Analytics_Title")}
@@ -81,13 +98,9 @@ export default function Services() {
           <Typography component="li" variant="body1">
             {t("Services_Analytics_PriceTrend")}
           </Typography>
-          <Typography component="li" variant="body1">
-            {t("Services_Analytics_Comparison")}
-          </Typography>
         </Box>
       </Box>
 
-      {/* Data as a Service */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h6" fontWeight={600} gutterBottom>
           {t("Services_Data_Title")}
@@ -100,43 +113,6 @@ export default function Services() {
         <Box component="ul" sx={{ pl: 3 }}>
           <Typography component="li" variant="body1">
             {t("Services_Data_PriceHistory")}
-          </Typography>
-        </Box>
-      </Box>
-
-      {/* Notifications & Distribution */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" fontWeight={600} gutterBottom>
-          {t("Services_Notifications_Title")}
-        </Typography>
-
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          {t("Services_Notifications_Intro")}
-        </Typography>
-
-        <Box component="ul" sx={{ pl: 3 }}>
-          <Typography component="li" variant="body1">
-            {t("Services_Notifications_PriceDrop")}
-          </Typography>
-
-          <Typography component="li" variant="body1">
-            {t("Services_Notifications_BackInStock")}
-          </Typography>
-
-          <Typography component="li" variant="body1">
-            {t("Services_Notifications_Volatility")}
-          </Typography>
-
-          <Typography component="li" variant="body1">
-            {t("Services_Notifications_MarketShift")}
-          </Typography>
-
-          <Typography component="li" variant="body1">
-            {t("Services_Notifications_EmailTelegramSMS")}
-          </Typography>
-
-          <Typography component="li" variant="body1">
-            {t("Services_Notifications_Sponsored")}
           </Typography>
         </Box>
       </Box>

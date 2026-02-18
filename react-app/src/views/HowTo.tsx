@@ -67,71 +67,6 @@ export default function HowTo() {
         </Box>
       </Box>
 
-      {/* FULL PRICE HISTORY */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" fontWeight={600} gutterBottom>
-          {t("Full_Price_History_Title", "Full Price History")}
-        </Typography>
-
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          {t("Full_Price_History_Description_1")}
-        </Typography>
-
-        <Box component="ul" sx={{ pl: 3 }}>
-          <Typography component="li" variant="body1">
-            {t("Full_Price_History_Description_2")}
-          </Typography>
-          <Typography component="li" variant="body1">
-            {t("Full_Price_History_Description_3")}
-          </Typography>
-          <Typography component="li" variant="body1">
-            {t("Full_Price_History_Description_4")}
-          </Typography>
-        </Box>
-      </Box>
-
-      {/* CUSTOMIZATION */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" fontWeight={600} gutterBottom>
-          {t("Customization_Title", "Customize Your Workspace")}
-        </Typography>
-
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          {t("Customization_Description_1")}
-        </Typography>
-
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          {t("Customization_Description_2")}
-        </Typography>
-
-        <Typography variant="body1">
-          {t("Customization_Description_3")}
-        </Typography>
-      </Box>
-
-      {/* AI COMPARATION */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" fontWeight={600} gutterBottom>
-          {t("Comparation_Title", "AI-Powered Comparation")}
-        </Typography>
-
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          {t("Comparation_Description_1")}
-        </Typography>
-
-        <Box component="ul" sx={{ pl: 3 }}>
-          <Typography component="li" variant="body1">
-            {t("Comparation_Description_2")}
-          </Typography>
-          <Typography component="li" variant="body1">
-            {t("Comparation_Description_3")}
-          </Typography>
-          <Typography component="li" variant="body1">
-            {t("Comparation_Description_4")}
-          </Typography>
-        </Box>
-      </Box>
-
       {/* DATA */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -157,26 +92,6 @@ export default function HowTo() {
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
           {t("Data_Description_5")}
         </Typography>
-      </Box>
-
-      {/* SUBSCRIPTION */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" fontWeight={600} gutterBottom>
-          {t("Subscription_Title", "Subscription & One-Time Access")}
-        </Typography>
-
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          {t("Subscription_Description_1")}
-        </Typography>
-
-        <Box component="ul" sx={{ pl: 3 }}>
-          <Typography component="li" variant="body1">
-            {t("Subscription_Description_2")}
-          </Typography>
-          <Typography component="li" variant="body1">
-            {t("Subscription_Description_3")}
-          </Typography>
-        </Box>
       </Box>
     </Box>
   );

@@ -412,7 +412,6 @@ const Header: React.FC = () => {
             fontWeight: 600,
             fontSize: { xs: "0.9rem", sm: "1rem", md: "1.1rem" },
             py: { xs: 1, sm: 1 },
-            mt: { xs: 1, sm: 1 },
           }}
         >
           {t("Settings")}

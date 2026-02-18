@@ -30,8 +30,8 @@ import { useState } from "react";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import { uiLog } from "../webhook/client/uiDebug";
-import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
-import CheckBoxOutlinedIcon from "@mui/icons-material/CheckBoxOutlined";
+// import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
+// import CheckBoxOutlinedIcon from "@mui/icons-material/CheckBoxOutlined";
 import type { PriceTrendPreview } from "../types/PriceTrend";
 
 export default function ProductOffersTable() {
@@ -45,9 +45,9 @@ export default function ProductOffersTable() {
   const isError = Boolean(offersEntry?.isError);
   const errorType = offersEntry?.errorType;
 
-  const selectedOffers = useStore((s) => s.selectedOffers);
-  const addSelectedOffer = useStore((s) => s.addSelectedOffer);
-  const removeSelectedOffer = useStore((s) => s.removeSelectedOffer);
+  // const selectedOffers = useStore((s) => s.selectedOffers);
+  // const addSelectedOffer = useStore((s) => s.addSelectedOffer);
+  // const removeSelectedOffer = useStore((s) => s.removeSelectedOffer);
 
   const close = useStore((s) => s.closeProduct);
   const isLoading = useStore((s) => s.isOffersLoading);
@@ -77,7 +77,7 @@ export default function ProductOffersTable() {
 
   const openPopover = Boolean(anchorEl);
   const [columnVisibility, setColumnVisibility] = useState({
-    selection: true,
+    // selection: true,
     shop: true,
     price: true,
     inStock: true,
@@ -98,7 +98,7 @@ export default function ProductOffersTable() {
     !isLoading && selectedProductId && offers && offers.length === 0 && isError;
   // Define column configurations in the correct order
   const columnConfigs = [
-    { key: "selection" as const, label: "" },
+    // { key: "selection" as const, label: "" },
     { key: "shop" as const, label: t("Shop") },
     {
       key: "price" as const,
@@ -129,7 +129,7 @@ export default function ProductOffersTable() {
     if (isTinyScreen344) {
       // Tiny / very small screen layout
       setColumnVisibility({
-        selection: true,
+        // selection: true,
         shop: true,
         price: true,
         inStock: false,
@@ -141,7 +141,7 @@ export default function ProductOffersTable() {
     } else if (isVerySmallScreen) {
       // Small screens (mobile tablets)
       setColumnVisibility({
-        selection: true,
+        // selection: true,
         shop: true,
         price: true,
         inStock: false,
@@ -153,7 +153,7 @@ export default function ProductOffersTable() {
     } else if (isSmallScreen) {
       // Small screens (mobile tablets)
       setColumnVisibility({
-        selection: true,
+        // selection: true,
         shop: true,
         price: true,
         inStock: true,
@@ -165,7 +165,7 @@ export default function ProductOffersTable() {
     } else {
       // Default (desktop)
       setColumnVisibility({
-        selection: true,
+        // selection: true,
         shop: true,
         price: true,
         inStock: true,
@@ -250,7 +250,7 @@ export default function ProductOffersTable() {
       .filter((config) => {
         // For tiny screens, always hide inStock column
         if (config.key === "inStock" && isTinyScreen) return false;
-        return columnVisibility[config.key];
+        return columnVisibility[config.key as keyof typeof columnVisibility];
       })
       .map((config) => config.label);
 
@@ -399,17 +399,21 @@ export default function ProductOffersTable() {
                   control={
                     <Checkbox
                       size="small"
-                      checked={columnVisibility[column.key]}
-                      onChange={() => handleColumnVisibilityToggle(column.key)}
+                      checked={
+                        columnVisibility[
+                          column.key as keyof typeof columnVisibility
+                        ]
+                      }
+                      onChange={() =>
+                        handleColumnVisibilityToggle(
+                          column.key as keyof typeof columnVisibility,
+                        )
+                      }
                     />
                   }
                   label={
                     <Typography variant="body2">
-                      {column.key === "selection"
-                        ? t("Selection")
-                        : column.key === "actions"
-                          ? t("Actions")
-                          : column.label}
+                      {column.key === "actions" ? t("Actions") : column.label}
                     </Typography>
                   }
                   sx={{ ml: 1, mr: 2 }}
@@ -467,7 +471,9 @@ export default function ProductOffersTable() {
                       .filter((config) => {
                         if (config.key === "inStock" && isTinyScreen)
                           return false;
-                        return columnVisibility[config.key];
+                        return columnVisibility[
+                          config.key as keyof typeof columnVisibility
+                        ];
                       })
                       .map((config) => config.key);
 
@@ -512,7 +518,9 @@ export default function ProductOffersTable() {
                     .filter((config) => {
                       if (config.key === "inStock" && isTinyScreen)
                         return false;
-                      return columnVisibility[config.key];
+                      return columnVisibility[
+                        config.key as keyof typeof columnVisibility
+                      ];
                     })
                     .map((config) => config.key);
 
@@ -520,29 +528,29 @@ export default function ProductOffersTable() {
                     <TableRow key={offer.id}>
                       {visibleColumnKeys.map((columnKey) => {
                         switch (columnKey) {
-                          case "selection":
-                            return (
-                              <TableCell
-                                key={columnKey}
-                                align="center"
-                                sx={{ width: 36, cursor: "pointer" }}
-                                onClick={() => {
-                                  if (selectedOffers[offer.id]) {
-                                    uiLog(`Offer deselected: ${offer.id}`);
-                                    removeSelectedOffer(offer.id);
-                                  } else {
-                                    uiLog(`Offer selected: ${offer.id}`);
-                                    addSelectedOffer(offer);
-                                  }
-                                }}
-                              >
-                                {selectedOffers[offer.id] ? (
-                                  <CheckBoxOutlinedIcon fontSize="small" />
-                                ) : (
-                                  <CheckBoxOutlineBlankIcon fontSize="small" />
-                                )}
-                              </TableCell>
-                            );
+                          // case "selection":
+                          //   return (
+                          //     <TableCell
+                          //       key={columnKey}
+                          //       align="center"
+                          //       sx={{ width: 36, cursor: "pointer" }}
+                          //       onClick={() => {
+                          //         if (selectedOffers[offer.id]) {
+                          //           uiLog(`Offer deselected: ${offer.id}`);
+                          //           removeSelectedOffer(offer.id);
+                          //         } else {
+                          //           uiLog(`Offer selected: ${offer.id}`);
+                          //           addSelectedOffer(offer);
+                          //         }
+                          //       }}
+                          //     >
+                          //       {selectedOffers[offer.id] ? (
+                          //         <CheckBoxOutlinedIcon fontSize="small" />
+                          //       ) : (
+                          //         <CheckBoxOutlineBlankIcon fontSize="small" />
+                          //       )}
+                          //     </TableCell>
+                          //   );
 
                           case "shop":
                             return (

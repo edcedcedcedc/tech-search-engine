@@ -10,15 +10,19 @@ import {
   Typography,
   IconButton,
   LinearProgress,
-  Chip,
   InputAdornment,
   Tooltip,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
-import FindInPageOutlinedIcon from "@mui/icons-material/FindInPageOutlined";
-import { useStore } from "../store/store";
 import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
+import { useStore } from "../store/store";
+import i18n from "../i18n";
+import type { ComparisonResponse, ComparisonRequest } from "../api/searchApi";
+import { compareProducts } from "../api/searchApi";
+import ComparisonResult from "../components/ComparisonResult";
+import { uiLog } from "../webhook/client/uiDebug";
+
 const bull = (
   <Box
     component="span"
@@ -40,9 +44,7 @@ const Item = styled(Paper)(({ theme }) => ({
   alignItems: "flex-start",
   justifyContent: "space-between",
   border: `1px solid ${theme.palette.divider}`,
-  ...theme.applyStyles?.("dark", {
-    backgroundColor: "#1A2027",
-  }),
+  ...theme.applyStyles?.("dark", { backgroundColor: "#1A2027" }),
 }));
 
 function a11yProps(index: number) {
@@ -77,62 +79,76 @@ export default function Compare() {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [estimatedTime, setEstimatedTime] = useState(60); // seconds
+  const [comparisonResult, setComparisonResult] =
+    useState<ComparisonResponse | null>(null);
   const russianRegex = /[А-Яа-яЁё]/;
   const selectedOffers = useStore((s) => s.selectedOffers);
   const removeSelectedOffer = useStore((s) => s.removeSelectedOffer);
-  const isOffline = useStore((state) => state.isOffline);
   const offerList = Object.values(selectedOffers);
 
-  const handleChange = (_: React.SyntheticEvent, newValue: number) => {
+  const handleChange = (_: React.SyntheticEvent, newValue: number) =>
     setTabValue(newValue);
-  };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     if (russianRegex.test(value)) {
-      // Option 1: block input and show warning
-      setInputValue(""); // clear input
-
+      setInputValue("");
       return;
     }
-
     setInputValue(value);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      simulateLoading();
+      submitComparison();
     }
   };
 
-  const simulateLoading = () => {
+  const submitComparison = async () => {
+    if (offerList.length < 1) return;
+
     setIsLoading(true);
     setProgress(0);
+    setComparisonResult(null);
 
-    // Simulate progress over 60 seconds
     const interval = setInterval(() => {
-      setProgress((prevProgress) => {
-        const newProgress = prevProgress + 1;
+      setProgress((prev) => Math.min(prev + 2, 98));
+    }, 600);
 
-        // Update estimated time based on progress
-        const remainingSeconds = Math.max(
-          0,
-          60 - Math.floor(newProgress / 1.67),
-        );
-        setEstimatedTime(remainingSeconds);
+    const lang = i18n.language.startsWith("ro") ? "ro" : "en";
 
-        if (newProgress >= 100) {
-          clearInterval(interval);
-          setIsLoading(false);
-          // Switch to results tab when complete
-          setTabValue(1);
-          return 100;
-        }
-        return newProgress;
-      });
-    }, 600); // Update every 600ms to complete in 60 seconds
+    try {
+      const request: ComparisonRequest = {
+        offers: offerList,
+        tier: "free",
+        lang,
+        user_text: inputValue,
+      };
+
+      // DEBUG: log request payload
+      uiLog(`[Compare] Sending request: ${JSON.stringify(request)}`);
+
+      const result = await compareProducts(request);
+
+      // DEBUG: log API response
+      uiLog(`[Compare] API response received: ${JSON.stringify(result)}`);
+
+      setComparisonResult(result);
+      setProgress(100);
+      setTabValue(1);
+    } catch (err: any) {
+      uiLog(`[Compare] API error: ${err.message || err}`);
+      console.error(err);
+      alert(
+        `${i18n.t("Error comparing products")}${
+          err.message ? `: ${err.message}` : ""
+        }`,
+      );
+    } finally {
+      clearInterval(interval);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -145,21 +161,18 @@ export default function Compare() {
           aria-label="compare top tabs"
           variant="fullWidth"
         >
-          <Tab label="Input" {...a11yProps(0)} />
-          <Tab label="Results" {...a11yProps(1)} />
+          <Tab label={i18n.t("Input")} {...a11yProps(0)} />
+          <Tab label={i18n.t("Results")} {...a11yProps(1)} />
         </Tabs>
       </Box>
 
       {/* Input Tab */}
       <TabPanel value={tabValue} index={0}>
-        {/* Loading Indicator */}
         <LinearProgress
           variant="query"
           sx={{
             backgroundColor: "action.hover",
-            "& .MuiLinearProgress-bar": {
-              borderRadius: 4,
-            },
+            "& .MuiLinearProgress-bar": { borderRadius: 4 },
             opacity: isLoading ? 1 : 0,
             mb: 2,
           }}
@@ -174,22 +187,20 @@ export default function Compare() {
             value={inputValue}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder="AI Overview"
+            placeholder={i18n.t("AI Overview")}
             disabled={isLoading}
             inputProps={{
               style: {
                 marginTop: "4.5px",
-                fontSize: "16px", // Prevents iOS zoom on focus
-                WebkitTextSizeAdjust: "100%", // Prevents text size adjustment
+                fontSize: "16px",
+                WebkitTextSizeAdjust: "100%",
               },
             }}
             InputProps={{
               startAdornment: (
                 <InputAdornment
                   position="start"
-                  sx={{
-                    alignSelf: "flex-start", // 👈 moves adornment to top
-                  }}
+                  sx={{ alignSelf: "flex-start" }}
                 >
                   <div
                     style={{
@@ -203,13 +214,25 @@ export default function Compare() {
                   >
                     <IconButton
                       size="medium"
-                      disabled={isLoading}
-                      onClick={simulateLoading}
-                      style={{
-                        position: "absolute",
+                      disabled={isLoading || offerList.length < 2}
+                      onClick={() => {
+                        if (offerList.length > 2) {
+                          alert(
+                            i18n.t(
+                              "Free version supports a maximum of 2 items. Price trend analysis is not available.",
+                            ),
+                          );
+                          return;
+                        }
+                        submitComparison();
                       }}
+                      style={{ position: "absolute" }}
                     >
-                      <Tooltip title="Search" enterDelay={500} leaveDelay={0}>
+                      <Tooltip
+                        title={i18n.t("Search")}
+                        enterDelay={500}
+                        leaveDelay={0}
+                      >
                         <AutoAwesomeOutlinedIcon fontSize="medium" />
                       </Tooltip>
                     </IconButton>
@@ -218,15 +241,12 @@ export default function Compare() {
               ),
             }}
             sx={{
-              "& .MuiOutlinedInput-root": {
-                paddingLeft: 0,
-              },
-              "& .MuiOutlinedInput-input": {
-                paddingLeft: 0,
-              },
+              "& .MuiOutlinedInput-root": { paddingLeft: 0 },
+              "& .MuiOutlinedInput-input": { paddingLeft: 0 },
             }}
           />
         </Box>
+
         {offerList.length > 0 && (
           <Stack spacing={2}>
             {offerList.map((offer: any, index: number) => {
@@ -243,25 +263,18 @@ export default function Compare() {
 
               return (
                 <Item key={offer.id || index}>
-                  {/* LEFT SIDE — matches ProductGrid typography */}
                   <Box sx={{ flex: 1, mr: 2 }}>
-                    {/* Name (h5 like grid) */}
                     <Typography
                       variant="h5"
-                      component="div"
                       sx={{ color: "text.primary", userSelect: "none" }}
                     >
                       {displayName}
                     </Typography>
-
-                    {/* Brand / Variant / Shop (secondary like grid) */}
                     <Typography
                       sx={{ color: "text.secondary", userSelect: "none" }}
                     >
-                      {offer.variant ? offer.variant : ""}
+                      {offer.variant || ""}
                     </Typography>
-
-                    {/* Price (body2 primary like grid, closer to variant) */}
                     <Typography
                       variant="body2"
                       sx={{ color: "text.primary", userSelect: "none" }}
@@ -270,15 +283,12 @@ export default function Compare() {
                         ? `${offer.price.toLocaleString()} MDL`
                         : "N/A"}
                     </Typography>
-                    {/* Brand / Variant / Shop (secondary like grid) */}
                     <Typography
                       sx={{ color: "text.primary", userSelect: "none" }}
                     >
-                      {offer.shop ? `${offer.shop}` : ""}
+                      {offer.shop || ""}
                     </Typography>
                   </Box>
-
-                  {/* Right side — delete only */}
                   <IconButton
                     size="small"
                     onClick={() => removeSelectedOffer(offer.id)}
@@ -287,9 +297,7 @@ export default function Compare() {
                       width: 32,
                       height: 32,
                       alignSelf: "flex-start",
-                      "&:hover": {
-                        backgroundColor: "action.hover",
-                      },
+                      "&:hover": { backgroundColor: "action.hover" },
                     }}
                   >
                     <DeleteOutlineOutlinedIcon fontSize="small" />
@@ -304,16 +312,17 @@ export default function Compare() {
       {/* Results Tab */}
       <TabPanel value={tabValue} index={1}>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          Comparison results will appear here.
+          {i18n.t("Comparison results will appear here.")}
         </Typography>
         {isLoading && (
           <Typography
             variant="caption"
             sx={{ display: "block", mt: 1, color: "text.secondary" }}
           >
-            Loading: {progress}% complete
+            {i18n.t("Loading")}: {progress}% {i18n.t("complete")}
           </Typography>
         )}
+        <ComparisonResult result={comparisonResult} />
       </TabPanel>
     </Box>
   );

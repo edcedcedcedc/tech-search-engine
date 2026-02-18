@@ -127,7 +127,7 @@ Happy_searching:
   // Contact Page
   Contact_Title: "Contact",
   Contact_Intro:
-    "Pentru întrebări, sugestii, feedback sau pentru informații privind posibilitatea de a plasa publicitate pe platformă, vă rugăm să ne contactați folosind datele de mai jos.",
+    "Pentru întrebări, sugestii, feedback sau pentru informații privind posibilitatea plasării de reclame pe platformă, abonament, plată unică, vă rugăm să ne contactați folosind datele de mai jos.",
   Contact_Email_Label: "Email:",
   Contact_Platform_Info: "Platforma: agregator de prețuri (informativ)",
   Contact_Disclaimer:
@@ -242,7 +242,7 @@ No_Products_Found: "Nu s-au găsit produse",
 
 //Tooltip
 
-Search_Tooltip: "Caută",
+Search_Tooltip: "Căutare",
 Menu_Tooltip: "Meniu",
 Offers_Tooltip: "Oferte",
 Comparation_Tooltip: "Compară tendințele prețurilor și specificațiile ofertelor",
@@ -278,22 +278,33 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
 
    Services: "Servicii",
     Services_Title: "Servicii",
-    Services_Intro: "Oferim înțelegere profundă și date pentru decizii de cumpărare mai inteligente, livrate ca un serviciu adaptat nevoilor dumneavoastră.",
+    Services_Intro: "Oferim înțelegere profundă și date pentru decizii de cumpărare mai inteligente.",
+
+    Services_FullPrice_Title: "Informații complete despre preț",
+    Services_FullPrice_Intro: "Previzualizarea datelor proprietare de prețuri conține doar două puncte, primul și ultimul. Tendința completă a prețurilor și istoricul complet al prețurilor este disponibil prin abonament.",
+    Services_FullPrice_Trend: "Tendință completă a prețurilor ce include: preț, în stoc, actualizat pe, cu grafice detaliate",
+    Services_FullPrice_History: "Istoric complet al prețurilor pentru toate produsele ce include: preț, în stoc, actualizat pe",
+
+
+
     Services_Analytics_Title: "Analizare",
-    Services_Analytics_Intro: "Profitați de tendința de preț și istoricul de pret proprietar pentru a lua decizii mai bune de cumpărare.",
-    Services_Analytics_PriceTrend: "Analiza tendinței prețurilor, disponibil prin abonament sau plată unică",
-    Services_Analytics_Comparison: "Compararea produselor pe baza tendinței prețurilor, istoricului de preț, a și a specificațiilor, ce include tabel AI care recomandă ce să cumpărați acum, ce să evitați și ce specificații contează cel mai mult, disponibil prin abonament sau plată unică",
+    Services_Analytics_Intro: "Profitați de tendința de preț și istoricul de pret proprietar pentru a lua decizii mai bune de cumpărare, disponibil prin abonament sau plată unică.",
+    Services_Analytics_PriceTrend: "Analiza tendinței prețurilor ce include: direcția trendului, schimbarea prețului, procentul schimbării, volatilitatea, momentum-ul, cel mai bun moment pentru achiziție, analiza disponibilității, nivelul de risc",
+
+
 
     Services_Data_Title: "Date",
-    Services_Data_Intro: "Accesați seturile complete de date istorice proprietare despre preț și stoc pentru propria analiză.",
-    Services_Data_PriceHistory: "Seturi de date despre istoricul prețurilor, disponibil prin abonament sau plată unică",
+    Services_Data_Intro: "Accesați seturile complete de date istorice proprietare despre preț și stoc pentru propria analiză, disponibil prin abonament sau plată unică.",
+    Services_Data_PriceHistory: "Seturi de date despre istoricul prețurilor in orice format",
    
+
+
     // =======================
     // NOTIFICATIONS & DISTRIBUTION
     // =======================
 
-    Services_Notifications_Title: "Notificări & Distribuție",
-    Services_Notifications_Intro:
+   /*  Services_Notifications_Title: "Notificări și distribuire (în curând)", */
+   /*  Services_Notifications_Intro:
       "Rămâi informat în timp real prin alerte inteligente și actualizări personalizate.",
     Services_Notifications_PriceDrop:
       "Notificări push pentru scăderi de preț la produsele urmărite",
@@ -306,7 +317,7 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
     Services_Notifications_EmailTelegramSMS:
       "Alerte premium prin email, Telegram sau SMS",
     Services_Notifications_Sponsored:
-      "Oferte sponsorizate în newslettere și canale de notificare",
+      "Oferte sponsorizate în newslettere și canale de notificare", */
 
 
   Services_Disclaimer: "Toate serviciile depind de abonamente active și de seturile de date disponibile. Unele funcționalități pot suferi modificări",
@@ -353,8 +364,8 @@ How_To_Search_Description_5: "Rezultatele în română și engleză sunt similar
 How_To_Search_Description_6: "Pe scurt: căutarea generală ajută la descoperire. Căutarea specifică oferă precizie.",
 
 // PRICE TREND
-Price_Trend_Title: "Ce este Price Trend?",
-Price_Trend_Description_1: "Price Trend reprezintă o vizualizare a evoluției prețului unui produs în timp.",
+Price_Trend_Title: "Ce este Tendința Prețului?",
+Price_Trend_Description_1: "Reprezintă o vizualizare a evoluției prețului unui produs în timp.",
 Price_Trend_Description_2: "În versiunea gratuită vezi două puncte importante: primul preț înregistrat și ultimul preț.",
 Price_Trend_Description_3: "Aceasta îți oferă o perspectivă rapidă asupra direcției prețului — creștere, scădere sau stabilitate.",
 Price_Trend_Description_4: "Pentru a-l vedea, apasă pe iconița de tip spark de lângă preț.",
@@ -435,7 +446,13 @@ Refreshing: "Actualizare",
   Pros: "Avantaje",
   Cons: "Dezavantaje",
   reviews: "recenzii",
-  Note: "Notă"
+  Note: "Notă",
+
+  Manage_Products_Tooltip: "Gestionează Produsele",
+  How_to_Tooltip: "Cum Funcționează",
+  Services_Tooltip: "Servicii",
+  Next_page_Tooltip: "Vizarea Următoare",
+  Previous_page_Tooltip: "Vizarea Anterioară"
 
 };
 

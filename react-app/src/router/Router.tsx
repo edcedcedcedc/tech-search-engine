@@ -17,8 +17,8 @@ const About = lazy(() => import("../views/About"));
 const Source = lazy(() => import("../views/Source"));
 const TermsOfUse = lazy(() => import("../views/TermsOfUse"));
 const Services = lazy(() => import("../views/Services"));
-const Compare = lazy(() => import("../views/Compare"));
-
+/* const Compare = lazy(() => import("../views/Compare"));
+ */
 const AppRoutes: React.FC = () => {
   const location = useLocation();
   useSessionStart();
@@ -39,7 +39,7 @@ const AppRoutes: React.FC = () => {
               <Route path="/products" element={<Products />} />
               <Route path="/services" element={<Services />} />
               <Route path="/how-to" element={<HowTo />} />
-              <Route path="/compare" element={<Compare />} />
+              {/*           <Route path="/compare" element={<Compare />} /> */}
             </Routes>
           </AnimatePresence>
         </Suspense>

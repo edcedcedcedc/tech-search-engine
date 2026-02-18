@@ -94,7 +94,7 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   // Contact page
   Contact_Title: "Contact",
   Contact_Intro:
-    "If you have questions, suggestions, feedback, or are interested in placing an advertisement on the platform, you can contact us using the information below.",
+    "For questions, suggestions, feedback or for information regarding the possibility of placing advertisements on the platform, subscription, one-time payment, please contact us using the details below.",
   Contact_Email_Label: "Email:",
   Contact_Platform_Info: "Platform: price aggregator (informational)",
   Contact_Disclaimer:
@@ -225,40 +225,22 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Tooltip_Trend1_1: "price history points are recorded.",
   Tooltip_Trend2: "price history points available for this offer",
 
-  //Services
   Services: "Services",
-  Services_Title: "Our Services",
-  Services_Intro: "We provide actionable insights and data for smarter buying decisions, delivered as a service tailored to your needs.",
+  Services_Title: "Services",
+  Services_Intro: "We offer deep insights and data to make smarter purchasing decisions.",
+
+  Services_FullPrice_Title: "Full Price Information",
+  Services_FullPrice_Intro: "Previewing proprietary price data contains only two points, the first and the last. Full price trends and complete price history are available via subscription.",
+  Services_FullPrice_Trend: "Full price trend including: price, in stock, updated on, with detailed charts",
+  Services_FullPrice_History: "Complete price history for all products including: price, in stock, updated on",
+
   Services_Analytics_Title: "Analytics",
-  Services_Analytics_Intro: "Leverage our proprietary price history and trends to make better purchasing decisions.",
-  Services_Analytics_PriceTrend: "Price trend analysis, available via subscription or one-time payment",
-  Services_Analytics_Comparison: "Compare products based on price trends, price history, and specifications, including an AI table recommending what to buy now, what to avoid, and which specs matter most, available via subscription or one-time payment",
+  Services_Analytics_Intro: "Leverage proprietary price trends and history to make better purchasing decisions, available via subscription or one-time payment.",
+  Services_Analytics_PriceTrend: "Price trend analysis including: trend direction, price change, change percentage, volatility, momentum, best time to buy, availability analysis, risk level",
+
   Services_Data_Title: "Data",
-  Services_Data_Intro: "Access our proprietary complete historical price and stock datasets for your own analysis.",
-  Services_Data_PriceHistory: "Price history datasets, available via subscription or one-time payment",
-
-  Services_Disclaimer: "All services depend on active subscriptions and available datasets. Some features may change",
-
-  // =======================
-  // NOTIFICATIONS & DISTRIBUTION
-  // =======================
-
-  Services_Notifications_Title: "Notifications & Distribution",
-  Services_Notifications_Intro:
-    "Stay informed in real time with intelligent alerts and targeted updates.",
-  Services_Notifications_PriceDrop:
-    "Push notifications for price drops on tracked products",
-  Services_Notifications_BackInStock:
-    "Alerts when products are back in stock",
-  Services_Notifications_Volatility:
-    "Notifications when unusual price volatility is detected",
-  Services_Notifications_MarketShift:
-    "Market movement alerts for selected categories",
-  Services_Notifications_EmailTelegramSMS:
-    "Premium email, Telegram, or SMS alerts",
-  Services_Notifications_Sponsored:
-    "Sponsored offers within newsletters and notification channels",
-
+  Services_Data_Intro: "Access full proprietary historical datasets on prices and stock for your own analysis, available via subscription or one-time payment.",
+  Services_Data_PriceHistory: "Datasets on price history in any format",
 
   //error handling 
   Error_403: "Session expired(403)",
@@ -393,8 +375,15 @@ Subscription_Description_3: "You can choose between subscription access or a one
   Pros: "Pros",
   Cons: "Cons",
   reviews: "reviews",
-  Note: "Note"
+  Note: "Note",
+  
 
+  //Vertical Header 
+  Manage_Products_Tooltip: "Manage Products", 
+  How_to_Tooltip: "How It Works",
+  Services_Tooltip: "Services",
+  Next_page_Tooltip: "Next View",
+  Previous_page_Tooltip: "Previous View"
 };
 
 export default enUS;
