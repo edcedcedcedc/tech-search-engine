@@ -7,7 +7,7 @@ const enUS = {
 
   // Hero
 Explore_tech_in_Moldova: 
- "Strugure, explore tech products",
+ "Strugure AI, explore tech products",
 
 Discover_the_best_offers_for_your_favorite_products:
   "Discover and compare the best deals in one place",

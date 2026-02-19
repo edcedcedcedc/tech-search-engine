@@ -381,6 +381,15 @@ interface ProductOffersEntry {
 
 interface State {
   //
+  drawerOpen: boolean;
+  settingsOpen: boolean;
+  setDrawerOpen: (open: boolean) => void;
+  setSettingsOpen: (open: boolean) => void;
+  toggleSettings: () => void;
+
+
+
+
   syncTriggered: number;
   triggerSync: () => void;
   //
@@ -445,6 +454,14 @@ interface State {
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
+
+      drawerOpen: false,
+      settingsOpen: false,
+      setDrawerOpen: (open) => set({ drawerOpen: open }),
+      setSettingsOpen: (open) => set({ settingsOpen: open }),
+      toggleSettings: () => set((state) => ({ 
+        settingsOpen: !state.settingsOpen 
+      })),
 
       syncTriggered: 0,
       triggerSync: () => set((state) => ({ syncTriggered: state.syncTriggered + 1 })),

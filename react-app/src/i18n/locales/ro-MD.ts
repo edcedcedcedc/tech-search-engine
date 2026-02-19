@@ -8,10 +8,10 @@ const roMD = {
 
   // Hero
   Explore_tech_in_Moldova: 
-  "Strugure, explorează produsele tech",
+  "Strugure AI, exploră produse tech",
 
   Discover_the_best_offers_for_your_favorite_products:
-  "Descoperă și compară ofertele, într-un singur loc",
+  "Descoperă și compară oferte, într-un singur loc",
 
   Home_subject: "Calculatoare",
   

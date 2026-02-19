@@ -5,98 +5,54 @@ import {
   Toolbar,
   Box,
   IconButton,
-  Menu,
-  MenuItem,
   Drawer,
   List,
   ListItem,
   ListItemButton,
   ListItemText,
   ListItemIcon,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  FormControl,
-  Select,
   useTheme,
   Divider,
-  useMediaQuery,
   Tooltip,
   Typography,
   LinearProgress,
   Fade,
 } from "@mui/material";
-
-import ComputerOutlinedIcon from "@mui/icons-material/ComputerOutlined";
-
-import { Switch } from "@mui/material";
-import { useNotificationStore } from "../store/store";
+import { Close as CloseIcon } from "@mui/icons-material";
 import {
   MenuOutlined as MenuOutlinedIcon,
-  LightModeOutlined as LightModeOutlinedIcon,
-  DarkModeOutlined as DarkModeOutlinedIcon,
   SettingsOutlined as SettingsOutlinedIcon,
   InfoOutline,
 } from "@mui/icons-material";
 import { Link as RouterLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { LANGAUGES, type LanguagesCodes } from "../i18n/languages";
-import { useStore, useThemeStore } from "../store/store";
+import { useStore } from "../store/store";
 import GrapeIcon from "./GrapeIcon";
 import Footer from "./Footer";
 import { NavIcon } from "./NavIcons";
-
 import { SearchAutocomplete } from "./SearchAutocomplete";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
+import SettingsView from "./SettingsView";
 
 const ICON_SIZE = 22;
 const iconSx = { fontSize: ICON_SIZE };
 
 const Header: React.FC = () => {
   const theme = useTheme();
-  const { mode, effectiveMode, toggleMode } = useThemeStore();
-  const { t, i18n } = useTranslation();
-  const isVerySmallScreen = useMediaQuery("(max-width:425px)");
-  const isTinyScreen = useMediaQuery("(max-width:320px)");
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const [langMenuAnchor, setLangMenuAnchor] =
-    React.useState<null | HTMLElement>(null);
-  const [settingsOpen, setSettingsOpen] = React.useState(false);
-  const isOffline = useStore((state) => state.isOffline);
-
+  const { t } = useTranslation();
+  const drawerOpen = useStore((s) => s.drawerOpen);
+  const setDrawerOpen = useStore((s) => s.setDrawerOpen);
+  const settingsOpen = useStore((s) => s.settingsOpen);
+  const setSettingsOpen = useStore((s) => s.setSettingsOpen);
   const aggregatedProducts = useStore((s) => s.aggregatedProducts);
   const isProductsDisabled = aggregatedProducts.length === 0;
-  const [compareOpen, setCompareOpen] = React.useState(false);
 
-  // Helper function to get theme icon
-  const getThemeIcon = () => {
-    switch (mode) {
-      case "light":
-        return <LightModeOutlinedIcon sx={iconSx} />;
-      case "dark":
-        return <DarkModeOutlinedIcon sx={iconSx} />;
-      case "system":
-        return <ComputerOutlinedIcon sx={iconSx} />;
-      default:
-        return <ComputerOutlinedIcon sx={iconSx} />;
-    }
-  };
-
-  // Helper function to get theme display text
-  const getThemeText = () => {
-    switch (mode) {
-      case "light":
-        return t("Light_mode");
-      case "dark":
-        return t("Dark_mode");
-      case "system":
-        return t("System_theme");
-      default:
-        return t("System_theme");
-    }
-  };
+  console.log(
+    "[Header] Render - drawerOpen:",
+    drawerOpen,
+    "settingsOpen:",
+    settingsOpen,
+  );
 
   const navLinks = [
     {
@@ -128,16 +84,31 @@ const Header: React.FC = () => {
     },
   ];
 
-  const handleLangMenuOpen = (event: React.MouseEvent<HTMLElement>) =>
-    setLangMenuAnchor(event.currentTarget);
-  const handleLangMenuClose = () => setLangMenuAnchor(null);
-  const handleLangChange = (lang: LanguagesCodes) => {
-    i18n.changeLanguage(lang);
-    handleLangMenuClose();
+  const handleSettingsToggle = () => {
+    console.log(
+      "[Header] Toggling settings from",
+      settingsOpen,
+      "to",
+      !settingsOpen,
+    );
+    setSettingsOpen(!settingsOpen);
   };
 
-  const handleSettingsOpen = () => setSettingsOpen(true);
-  const handleSettingsClose = () => setSettingsOpen(false);
+  const handleSettingsClose = () => {
+    console.log("[Header] Closing settings");
+    setSettingsOpen(false);
+  };
+
+  const handleDrawerClose = () => {
+    console.log("[Header] Closing drawer and settings");
+    setDrawerOpen(false);
+    setSettingsOpen(false);
+  };
+
+  const handleDrawerOpen = () => {
+    console.log("[Header] Opening drawer");
+    setDrawerOpen(true);
+  };
 
   const isLoading = useStore((s) => s.isLoading);
 
@@ -171,8 +142,6 @@ const Header: React.FC = () => {
             width: "100%",
             minHeight: 60,
             height: 60,
-            /* borderBottom: 1,
-            borderColor: "divider", */
             px: { xs: 2, sm: 2, md: 2 },
             py: 0,
           }}
@@ -190,7 +159,7 @@ const Header: React.FC = () => {
                 borderRadius: 0,
                 color: "text.primary",
               }}
-              onClick={() => setDrawerOpen(true)}
+              onClick={handleDrawerOpen}
             >
               <NavIcon>
                 <MenuOutlinedIcon sx={iconSx} />
@@ -202,154 +171,228 @@ const Header: React.FC = () => {
           <Box sx={{ flex: 1, ml: 0.8, mr: -1 }}>
             <SearchAutocomplete />
           </Box>
-          {/* Right controls */}
 
           {/* Drawer */}
           <Drawer
             anchor="left"
             open={drawerOpen}
-            onClose={() => setDrawerOpen(false)}
+            elevation={0}
+            onClose={handleDrawerClose}
             PaperProps={{
               sx: {
-                width: 260,
+                width: {
+                  xs: "100%",
+                  sm: "100%",
+                  md: 260,
+                  lg: 260,
+                  xl: 260,
+                },
                 zIndex: 1600,
                 height: "100%",
                 display: "flex",
                 flexDirection: "column",
+                bgcolor: theme.palette.background.paper,
               },
             }}
           >
             <Box
               sx={{
-                width: 260,
+                width: {
+                  xs: "100%",
+                  sm: "100%",
+                  md: 260,
+                  lg: 260,
+                  xl: 260,
+                },
                 height: "100%",
                 display: "flex",
                 flexDirection: "column",
+                position: "relative",
               }}
             >
-              {/* Logo on top of drawer */}
-              <Box
+              {/* Close button - only visible on mobile/tablet */}
+              <IconButton
+                onClick={handleDrawerClose}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "flex-start",
-                  px: { xs: 1.5, sm: 1.5, md: 2 },
-                  py: 0,
-                  height: { xs: 44, sm: 44, md: 48, lg: 48, xl: 52 },
-                  gap: 1,
-                  textDecoration: "none",
-                  color: "inherit",
+                  position: "absolute",
+                  right: 8,
+                  top: 8,
+                  zIndex: 1700,
+                  color: "text.secondary",
+                  display: {
+                    xs: "flex",
+                    sm: "flex",
+                    md: "none",
+                  },
+                  "&:hover": {
+                    bgcolor: "action.hover",
+                  },
                 }}
+                size="small"
               >
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    minWidth: { xs: 36, sm: 36, md: 40, lg: 40, xl: 44 },
-                  }}
-                >
-                  <GrapeIcon color="primary" />
-                </Box>
+                <CloseIcon fontSize="small" />
+              </IconButton>
 
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 600,
-                    fontSize: {
-                      xs: "0.9rem",
-                      sm: "0.95rem",
-                      md: "1rem",
-                      lg: "1.05rem",
-                    },
-                    lineHeight: 1,
-                    ml: -1,
-                  }}
-                >
-                  Strugure
-                </Typography>
-              </Box>
+              {/* Conditional content: either main view or settings view */}
+              {!settingsOpen ? (
+                /* Main Navigation View */
+                <>
+                  {/* Logo */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "flex-start",
+                      px: { xs: 1.5, sm: 1.5, md: 2 },
+                      py: 0,
+                      height: { xs: 44, sm: 44, md: 48, lg: 48, xl: 52 },
+                      gap: 1,
+                      textDecoration: "none",
+                      color: "inherit",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minWidth: { xs: 36, sm: 36, md: 40, lg: 40, xl: 44 },
+                      }}
+                    >
+                      <GrapeIcon color="primary" />
+                    </Box>
+                  </Box>
 
-              <Divider sx={{ mx: 2 }} />
+                  {/* Hero Text Section */}
+                  <Box
+                    sx={{
+                      px: { xs: 2, sm: 2, md: 2.5 },
+                      py: { xs: 2, sm: 2, md: 2.5 },
+                      textAlign: "center",
+                    }}
+                  >
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontWeight: 600,
+                        fontSize: {
+                          xs: "1.1rem",
+                          sm: "1.2rem",
+                          md: "1.3rem",
+                        },
+                        mb: 1,
+                        color: "text.primary",
+                      }}
+                    >
+                      {t("Explore_tech_in_Moldova")}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontSize: {
+                          xs: "0.8rem",
+                          sm: "0.85rem",
+                          md: "0.9rem",
+                        },
+                        color: "text.secondary",
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {t("Discover_the_best_offers_for_your_favorite_products")}
+                    </Typography>
+                  </Box>
 
-              {/* Navigation links */}
-              <List disablePadding>
-                {navLinks.map((link) => {
-                  const disabled =
-                    link.path === "/products" && isProductsDisabled;
+                  <Divider sx={{ mx: 2 }} />
 
-                  return (
-                    <React.Fragment key={link.path}>
-                      <ListItem disablePadding>
-                        <ListItemButton
-                          component={!disabled ? RouterLink : "div"}
-                          to={!disabled ? link.path : undefined}
-                          disabled={disabled}
-                          onClick={() => !disabled && setDrawerOpen(false)}
-                          sx={{
-                            py: 0,
-                            px: { xs: 1.5, sm: 1.5, md: 2 },
-                            display: "flex",
-                            alignItems: "center",
-                            height: { xs: 44, sm: 44, md: 48, lg: 48, xl: 52 },
-                          }}
-                        >
-                          <ListItemIcon
-                            sx={{
-                              minWidth: {
-                                xs: 36,
-                                sm: 36,
-                                md: 40,
-                                lg: 40,
-                                xl: 44,
-                              },
-                              display: "flex",
-                              justifyContent: "center",
-                              alignItems: "center",
-                              color: disabled
-                                ? "text.disabled"
-                                : "text.secondary",
-                            }}
-                          >
-                            {link.icon}
-                          </ListItemIcon>
+                  {/* Navigation links */}
+                  <List disablePadding>
+                    {navLinks.map((link) => {
+                      const disabled =
+                        link.path === "/products" && isProductsDisabled;
 
-                          <ListItemText
-                            primary={link.label}
-                            primaryTypographyProps={{
-                              fontSize: {
-                                xs: "0.85rem",
-                                sm: "0.9rem",
-                                md: "0.95rem",
-                                lg: "1rem",
-                              },
-                              fontWeight: 500,
-                            }}
-                            sx={{ m: 0, display: "flex", alignItems: "center" }}
-                          />
-                        </ListItemButton>
-                      </ListItem>
+                      return (
+                        <React.Fragment key={link.path}>
+                          <ListItem disablePadding>
+                            <ListItemButton
+                              component={!disabled ? RouterLink : "div"}
+                              to={!disabled ? link.path : undefined}
+                              disabled={disabled}
+                              onClick={() => !disabled && setDrawerOpen(false)}
+                              sx={{
+                                py: 0,
+                                px: { xs: 1.5, sm: 1.5, md: 2 },
+                                display: "flex",
+                                alignItems: "center",
+                                height: {
+                                  xs: 44,
+                                  sm: 44,
+                                  md: 48,
+                                  lg: 48,
+                                  xl: 52,
+                                },
+                              }}
+                            >
+                              <ListItemIcon
+                                sx={{
+                                  minWidth: {
+                                    xs: 36,
+                                    sm: 36,
+                                    md: 40,
+                                    lg: 40,
+                                    xl: 44,
+                                  },
+                                  display: "flex",
+                                  justifyContent: "center",
+                                  alignItems: "center",
+                                  color: disabled
+                                    ? "text.disabled"
+                                    : "text.secondary",
+                                }}
+                              >
+                                {link.icon}
+                              </ListItemIcon>
 
-                      {link.path === "/products" && <Divider sx={{ mx: 2 }} />}
-                    </React.Fragment>
-                  );
-                })}
+                              <ListItemText
+                                primary={link.label}
+                                primaryTypographyProps={{
+                                  fontSize: {
+                                    xs: "0.85rem",
+                                    sm: "0.9rem",
+                                    md: "0.95rem",
+                                    lg: "1rem",
+                                  },
+                                  fontWeight: 500,
+                                }}
+                                sx={{
+                                  m: 0,
+                                  display: "flex",
+                                  alignItems: "center",
+                                }}
+                              />
+                            </ListItemButton>
+                          </ListItem>
 
-                {
-                  <>
-                    <Divider sx={{ mx: 2 }} />
+                          {link.path === "/products" && (
+                            <Divider sx={{ mx: 2 }} />
+                          )}
+                          {link.path === "/about" && <Divider sx={{ mx: 2 }} />}
+                        </React.Fragment>
+                      );
+                    })}
+
+                    {/* Settings button */}
                     <ListItem disablePadding>
                       <ListItemButton
-                        onClick={() => {
-                          setDrawerOpen(false);
-                          handleSettingsOpen();
-                        }}
+                        onClick={handleSettingsToggle}
                         sx={{
                           py: 0,
                           px: { xs: 1.5, sm: 1.5, md: 2 },
                           display: "flex",
                           alignItems: "center",
                           height: { xs: 44, sm: 44, md: 48, lg: 48, xl: 52 },
+                          bgcolor: settingsOpen
+                            ? "action.selected"
+                            : "transparent",
                         }}
                       >
                         <ListItemIcon
@@ -386,115 +429,21 @@ const Header: React.FC = () => {
                         />
                       </ListItemButton>
                     </ListItem>
-                  </>
-                }
-              </List>
+                  </List>
 
-              <Box sx={{ mt: "auto" }}>
-                <Footer onItemClick={() => setDrawerOpen(false)} />
-              </Box>
+                  {/* Footer */}
+                  <Box sx={{ mt: "auto" }}>
+                    <Footer onItemClick={() => setDrawerOpen(false)} />
+                  </Box>
+                </>
+              ) : (
+                /* Settings View - takes full height */
+                <SettingsView onClose={handleSettingsClose} />
+              )}
             </Box>
           </Drawer>
         </Toolbar>
       </AppBar>
-
-      {/* Comparison Modal */}
-
-      {/* Settings Modal */}
-      <Dialog
-        open={settingsOpen}
-        onClose={handleSettingsClose}
-        fullWidth
-        maxWidth="xs"
-      >
-        <DialogTitle
-          sx={{
-            fontWeight: 600,
-            fontSize: { xs: "0.9rem", sm: "1rem", md: "1.1rem" },
-            py: { xs: 1, sm: 1 },
-          }}
-        >
-          {t("Settings")}
-        </DialogTitle>
-
-        <DialogContent sx={{ py: { xs: 0.5, sm: 1 } }}>
-          <List disablePadding>
-            {/* Theme toggle - Updated with system theme support */}
-            <ListItem
-              sx={{ justifyContent: "space-between", py: { xs: 1, sm: 1 } }}
-            >
-              <ListItemText primary={t("Theme")} secondary={getThemeText()} />
-              <IconButton size="small" onClick={toggleMode}>
-                {getThemeIcon()}
-              </IconButton>
-            </ListItem>
-
-            <Divider sx={{ mx: 2 }} />
-
-            {/* Language selector */}
-            <ListItem
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                py: { xs: 0.5, sm: 1 },
-                gap: 1,
-              }}
-            >
-              <ListItemText primary={t("Language")} sx={{ flex: 0 }} />
-              <FormControl size="small" sx={{ ml: "auto", flexShrink: 0 }}>
-                <Select
-                  sx={{
-                    width: { xs: "85px", sm: "110px", md: "140px" },
-                  }}
-                  value={i18n.language}
-                  onChange={(e) =>
-                    handleLangChange(e.target.value as LanguagesCodes)
-                  }
-                >
-                  {(Object.keys(LANGAUGES) as LanguagesCodes[]).map((lang) => (
-                    <MenuItem key={lang} value={lang}>
-                      {LANGAUGES[lang].label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </ListItem>
-
-            <Divider sx={{ mx: 2 }} />
-
-            {/* Disable Notifications toggle */}
-            <ListItem
-              sx={{
-                justifyContent: "space-between",
-                alignItems: "center",
-                py: { xs: 0.5, sm: 1 },
-              }}
-            >
-              <ListItemText primary={t("Disable_notifications")} />
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                {(() => {
-                  const disabled = useNotificationStore((s) => s.disabled);
-                  const setDisabled = useNotificationStore(
-                    (s) => s.setDisabled,
-                  );
-
-                  return (
-                    <Switch
-                      checked={disabled}
-                      onChange={(e) => setDisabled(e.target.checked)}
-                      color="primary"
-                    />
-                  );
-                })()}
-              </Box>
-            </ListItem>
-          </List>
-        </DialogContent>
-
-        <DialogActions sx={{ py: { xs: 0.5, sm: 1 } }}>
-          <Button onClick={handleSettingsClose}>{t("Close")}</Button>
-        </DialogActions>
-      </Dialog>
     </>
   );
 };
