@@ -28,6 +28,7 @@ import {
 } from "@mui/icons-material";
 /* import { Link as RouterLink } from "react-router-dom"; */
 import { useTranslation } from "react-i18next";
+import RefreshOutlinedIcon from "@mui/icons-material/RefreshOutlined";
 import { useStore } from "../store/store";
 import GrapeIcon from "./GrapeIcon";
 import Footer from "./Footer";
@@ -73,6 +74,14 @@ const Header: React.FC = () => {
     termsOpen,
     "disclaimerOpen:",
     disclaimerOpen,
+  );
+
+  // Add PWA detection
+  const isPWA = React.useMemo(
+    () =>
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true,
+    [],
   );
 
   const handleSettingsToggle = () => {
@@ -263,6 +272,29 @@ const Header: React.FC = () => {
               </NavIcon>
             </IconButton>
           </Tooltip>
+
+          {/* Refresh icon - only in PWA mode - matching menu icon exactly */}
+          {isPWA && (
+            <Tooltip title={t("Refresh")} enterDelay={500}>
+              <IconButton
+                sx={{
+                  height: 60,
+                  width: 60,
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  borderRadius: 0,
+                  color: "text.primary", // Same color as menu icon
+                  ml: "auto", // Push to the right
+                }}
+                onClick={() => window.location.reload()}
+              >
+                <NavIcon>
+                  <RefreshOutlinedIcon sx={iconSx} />
+                </NavIcon>
+              </IconButton>
+            </Tooltip>
+          )}
 
           {/* Drawer */}
           <Drawer
