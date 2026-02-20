@@ -1,16 +1,19 @@
-import { Box, Container, useTheme } from "@mui/material";
+// App.tsx
+import { Box, Container, useTheme, useMediaQuery } from "@mui/material";
 import { BrowserRouter } from "react-router-dom";
 import Header from "./components/Header";
-import VerticalHeader from "./components/VerticalHeader"; // our new vertical header
+import VerticalHeader from "./components/VerticalHeader";
 import AppRoutes from "./router/Router";
 import { Meta } from "./components/Meta";
 import { scrollableScrollbar } from "./styles/scrollbar";
 import AppOverlays from "./components/Overlays";
 import NotificationsContainer from "./components/NotificationContainer";
-import Test from "./components/Test";
 
 function App() {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+
+  console.log("📱 isMobile:", isMobile);
 
   return (
     <>
@@ -26,7 +29,7 @@ function App() {
             bgcolor: "background.default",
           }}
         >
-          {/* HEADER + HERO - fixed at top */}
+          {/* HEADER - always present */}
           <Box
             id="app-header"
             sx={{
@@ -38,8 +41,8 @@ function App() {
           >
             <Header />
           </Box>
-          {/*    <Test /> */}
-          {/* Main layout with vertical header + content */}
+
+          {/* Main layout */}
           <Box
             sx={{
               display: "flex",
@@ -48,9 +51,8 @@ function App() {
               overflow: "hidden",
             }}
           >
-            {/* Vertical Header */}
-
-            <VerticalHeader />
+            {/* Vertical Header - ONLY on desktop */}
+            {!isMobile && <VerticalHeader />}
 
             {/* MAIN CONTENT */}
             <Box
@@ -58,29 +60,34 @@ function App() {
               sx={{
                 flex: 1,
                 overflowY: "auto",
-                // leave space for vertical header
-                transition: theme.transitions.create("margin-left", {
-                  easing: theme.transitions.easing.sharp,
-                  duration: theme.transitions.duration.standard,
-                }),
-                pb: {
-                  xs: theme.spacing(1),
-                  xl: theme.spacing(12.5),
-                },
+                // Different padding/margin for mobile vs desktop
+                ...(isMobile
+                  ? {
+                      pb: 7, // Space for bottom nav on mobile
+                    }
+                  : {
+                      transition: theme.transitions.create("margin-left", {
+                        easing: theme.transitions.easing.sharp,
+                        duration: theme.transitions.duration.standard,
+                      }),
+                      pb: {
+                        xs: theme.spacing(1),
+                        xl: theme.spacing(1),
+                      },
+                    }),
                 position: "relative",
                 ...scrollableScrollbar(theme),
               }}
             >
-              {/* <Test /> */}
               <Container
                 disableGutters
                 maxWidth={false}
                 sx={{
-                  maxWidth: 800,
+                  maxWidth: isMobile ? "100%" : 800,
                   width: "100%",
                   mx: "auto",
                   pt: 1,
-                  px: 1,
+                  px: isMobile ? 0 : 1,
                 }}
               >
                 <AppRoutes />

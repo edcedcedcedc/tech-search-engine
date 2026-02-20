@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Paper, Typography, IconButton, useTheme } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+/* import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
-
+ */
 type NotificationType = "error" | "success" | "info" | "warning";
 
 interface NotificationProps {
@@ -16,7 +16,7 @@ interface NotificationProps {
 }
 
 // Icon map as a function to dynamically set the color
-const iconMap: Record<NotificationType, (color: string) => React.ReactNode> = {
+/* const iconMap: Record<NotificationType, (color: string) => React.ReactNode> = {
   error: (color) => <ErrorOutlineIcon fontSize="small" sx={{ color }} />,
   success: (color) => (
     <CheckCircleOutlineIcon fontSize="small" sx={{ color }} />
@@ -25,9 +25,7 @@ const iconMap: Record<NotificationType, (color: string) => React.ReactNode> = {
   warning: (color) => (
     <WarningAmberOutlinedIcon fontSize="small" sx={{ color }} />
   ),
-};
-
-export const Notification: React.FC<NotificationProps> = ({
+} */ export const Notification: React.FC<NotificationProps> = ({
   message,
   type = "info",
   duration = 5000,
@@ -54,7 +52,7 @@ export const Notification: React.FC<NotificationProps> = ({
   let bgColor = theme.palette.background.paper;
   let textColor =
     theme.palette.mode === "dark" ? "#c9d1d9" : "rgba(0,0,0,0.87)";
-  let borderColor = theme.palette.divider;
+  /*  let borderColor = theme.palette.divider; */
 
   // Override based on type
   switch (type) {
@@ -62,44 +60,44 @@ export const Notification: React.FC<NotificationProps> = ({
       bgColor =
         theme.palette.mode === "dark"
           ? theme.palette.error.dark
-          : theme.palette.error.main;
+          : /*       : theme.palette.error.main;
       borderColor =
         theme.palette.mode === "dark"
           ? theme.palette.error.dark
-          : theme.palette.error.main;
-      textColor = theme.palette.error.contrastText;
+          : theme.palette.error.main; */
+            (textColor = theme.palette.error.contrastText);
       break;
     case "success":
       bgColor =
         theme.palette.mode === "dark"
           ? theme.palette.success.dark
           : theme.palette.success.main;
-      borderColor =
+      /*    borderColor =
         theme.palette.mode === "dark"
           ? theme.palette.success.dark
-          : theme.palette.success.main;
+          : theme.palette.success.main; */
       textColor = theme.palette.success.contrastText;
       break;
     case "info":
       bgColor =
         theme.palette.mode === "dark"
           ? theme.palette.primary.dark
-          : theme.palette.primary.main;
+          : /*         : theme.palette.primary.main;
       borderColor =
         theme.palette.mode === "dark"
           ? theme.palette.info.dark
-          : theme.palette.info.main;
-      textColor = theme.palette.info.contrastText;
+          : theme.palette.info.main; */
+            (textColor = theme.palette.info.contrastText);
       break;
     case "warning":
       bgColor =
         theme.palette.mode === "dark"
           ? theme.palette.warning.dark
           : theme.palette.warning.main;
-      borderColor =
+      /*      borderColor =
         theme.palette.mode === "dark"
           ? theme.palette.warning.dark
-          : theme.palette.warning.main;
+          : theme.palette.warning.main; */
       // Hardcode readable text depending on theme
       textColor = theme.palette.info.contrastText;
       break;

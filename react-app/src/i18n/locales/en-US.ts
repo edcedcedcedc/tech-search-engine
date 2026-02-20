@@ -282,7 +282,7 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
 // HOW TO PAGE
 // =======================
 
-How_To: "How Strugure Works",
+How_To: "Questions",
 How_To_Intro: "Strugure combines machine learning, large language models, structured product data, and daily market updates to help you make smarter buying decisions.",
 
 // SEARCH
@@ -383,7 +383,27 @@ Subscription_Description_3: "You can choose between subscription access or a one
   How_to_Tooltip: "How It Works",
   Services_Tooltip: "Services",
   Next_page_Tooltip: "Next View",
-  Previous_page_Tooltip: "Previous View"
+  Previous_page_Tooltip: "Previous View",
+
+  //Random
+  More_Tooltip: "More",
+  Search_tips: "Search Tips",
+  Popular_Categories: "Popular categories",
+  Updated_Today: "Updated at",
+  Products: "Products",
+  Phones: "Phones",
+  Tablets: "Tablets",
+  Laptops: "Laptops",
+  Gadgets: "Gadgeturi",
+ 
+  Copy_and_past_from_your_shops: "Copy names from any store, darwin, enter or xstore",
+  Compare: "Compare offers with the same name and variant from different stores",
+  Diversity: "Enter some words for a more diverse search",
+  Visibility_off: "Even if no suggestion was found, search anyway",
+
+  Clickable_Sparkline: "Click on any sparkline to see price history, stock status, and last update time",
+  In_Stock: "In stock",
+  Updated: "Updated",
 };
 
 export default enUS;

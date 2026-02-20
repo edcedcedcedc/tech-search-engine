@@ -12,7 +12,6 @@ import { useThemePreloadSetup } from "./hooks/useThemePreloadSetup";
 import { useHydrateLastQuery } from "./hooks/useHydrateLastQuery";
 import { useSyncDb } from "./hooks/useSyncDb";
 import React from "react";
-import { useBackgroundSyncDb } from "./hooks/useSyncDbBackground";
 
 const Root = () => {
   const effectiveMode = useThemeStore((state) => state.effectiveMode);

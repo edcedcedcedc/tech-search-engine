@@ -1,12 +1,14 @@
 import React, { Suspense, lazy } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
-import { Box } from "@mui/material";
+import { Box, useMediaQuery, useTheme } from "@mui/material";
 import { AnimatePresence } from "framer-motion";
 
 import ErrorBoundary from "../components/ErrorBoundary";
 import { useSessionStart } from "../hooks/useSessionStart";
 import { FullScreenLoader } from "../components/FullScreenLoader";
-import HowTo from "../views/HowTo";
+/* import HowTo from "../views/Qna";
+
+import SourceMobile from "../views/mobile/Sources";
 
 const Home = lazy(() => import("../views/Home"));
 const Products = lazy(() => import("../views/Products"));
@@ -17,32 +19,48 @@ const About = lazy(() => import("../views/About"));
 const Source = lazy(() => import("../views/Source"));
 const TermsOfUse = lazy(() => import("../views/TermsOfUse"));
 const Services = lazy(() => import("../views/Services"));
-/* const Compare = lazy(() => import("../views/Compare"));
+const Offers = lazy(() => import("../components/ProductOffersTable"));
  */
+// Mobile views
+const HomeMobile = lazy(() => import("../views/mobile/Home"));
+const ProductsMobile = lazy(() => import("../views/mobile/Products"));
+import BottomNav from "../views/mobile/BottomNav";
+import ServicesMobile from "../views/mobile/Services";
+import QnaMobile from "../views/mobile/Qna";
+/* import MagnifyOnScroll from "../views/mobile/Magnify"; */
+
 const AppRoutes: React.FC = () => {
   const location = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
   useSessionStart();
-
+  console.log("📱 AppRoutes - isMobile:", isMobile);
+  console.log("📱 AppRoutes - screen width:", window.innerWidth);
+  console.log("📱 AppRoutes - lg breakpoint:", theme.breakpoints.values.lg);
   return (
     <ErrorBoundary>
       <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
         <Suspense fallback={<FullScreenLoader />}>
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
-              <Route path="/" element={<Home />} />
-              <Route path="/disclaimer" element={<Disclaimer />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/source" element={<Source />} />
-              <Route path="/terms-of-use" element={<TermsOfUse />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/how-to" element={<HowTo />} />
-              {/*           <Route path="/compare" element={<Compare />} /> */}
+              {/* Mobile routes */}
+
+              <Route path="/" element={<HomeMobile />} />
+              <Route path="/products" element={<ProductsMobile />} />
+              <Route path="/services" element={<ServicesMobile />} />
+              <Route path="/faq" element={<QnaMobile />} />
+
+              {/*    <Route path="/privacy" element={<PrivacyPolicyMobile />} />
+              <Route path="/terms" element={<TermsOfUseMobile />} />
+              <Route path="/disclaimer" element={<DisclaimerMobile />} /> */}
+              {/* <Route path="/source" element={<SourceMobile />} /> */}
+              {/* Desktop routes (keep existing) */}
+              {/*  <Route path="/desktop" element={<Home />} /> */}
+              {/* ... other desktop routes */}
             </Routes>
           </AnimatePresence>
         </Suspense>
+        {isMobile && <BottomNav />}
       </Box>
     </ErrorBoundary>
   );

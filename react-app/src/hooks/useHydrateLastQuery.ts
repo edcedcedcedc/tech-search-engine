@@ -10,7 +10,7 @@ export const useHydrateLastQuery = () => {
   useEffect(() => {
     const hydrateLastQuery = async () => {
       const { searchProducts } = useStore.getState();
-      const { lastQuery, lastQueryLang, lastPage } = useLastQueryStore.getState();
+      const { lastQuery, lastQueryLang } = useLastQueryStore.getState();
 
       if (lastQuery) {
         uiLog(`[useHydrateLastQuery] Hydrating last query from LastQueryStore:", ${lastQuery}`);

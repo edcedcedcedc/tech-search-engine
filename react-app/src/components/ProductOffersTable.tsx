@@ -18,7 +18,7 @@ import {
   MenuItem,
   FormControlLabel,
   Checkbox,
-  Button,
+  /*  Button, */
 } from "@mui/material";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ViewColumnOutlinedIcon from "@mui/icons-material/ViewColumnOutlined";
@@ -43,8 +43,9 @@ export default function ProductOffersTable() {
   //offers
   const offers = offersEntry?.offers ?? null;
   const isError = Boolean(offersEntry?.isError);
-  const errorType = offersEntry?.errorType;
+  /*   const errorType = offersEntry?.errorType; */
 
+  const setRightDrawerOpen = useStore((s) => s.setRightDrawerOpen);
   // const selectedOffers = useStore((s) => s.selectedOffers);
   // const addSelectedOffer = useStore((s) => s.addSelectedOffer);
   // const removeSelectedOffer = useStore((s) => s.removeSelectedOffer);
@@ -178,6 +179,19 @@ export default function ProductOffersTable() {
   }, [isTinyScreen, isVerySmallScreen, isSmallScreen, isTinyScreen344]);
 
   React.useEffect(() => {
+    console.log("[ProductOffersTable] Right drawer state changing to:", open);
+    setRightDrawerOpen(open);
+
+    // Cleanup when component unmounts
+    return () => {
+      if (open) {
+        console.log("[ProductOffersTable] Cleaning up, closing right drawer");
+        setRightDrawerOpen(false);
+      }
+    };
+  }, [open, setRightDrawerOpen]);
+
+  React.useEffect(() => {
     if (open && selectedProductId) {
       uiLog(`Drawer opened for productId=${selectedProductId}`);
     }
@@ -283,9 +297,19 @@ export default function ProductOffersTable() {
     <Drawer
       anchor="right"
       open={open}
+      elevation={0}
       onClose={() => {
         uiLog("Drawer closed");
         close();
+      }}
+      PaperProps={{
+        sx: {
+          zIndex: 1600,
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          bgcolor: theme.palette.background.paper,
+        },
       }}
       sx={{
         // Scrollbar styles
@@ -330,7 +354,13 @@ export default function ProductOffersTable() {
           <Typography
             variant="h6"
             sx={{
-              fontSize: isVerySmallScreen ? "0.9rem" : "1rem",
+              fontSize: {
+                xs: "0.85rem", // < 375px
+                sm: "0.9rem", // 375px - 424px
+                md: "0.95rem", // 425px - 767px
+                lg: "1rem", // 768px - 1023px
+                xl: "1.1rem", // 1024px+
+              },
               fontWeight: 600,
             }}
           >
@@ -369,6 +399,7 @@ export default function ProductOffersTable() {
           anchorEl={columnsAnchorEl}
           open={Boolean(columnsAnchorEl)}
           onClose={handleColumnsMenuClose}
+          /* elevation={1} */
           sx={{
             "& .MuiPaper-root": {
               maxHeight: 400,
@@ -747,6 +778,7 @@ export default function ProductOffersTable() {
       <Popover
         open={openPopover}
         anchorEl={anchorEl}
+        elevation={1}
         onClose={handleClosePopover}
         sx={{
           // Scrollbar styles

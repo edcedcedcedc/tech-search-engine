@@ -11,8 +11,9 @@ const colors: Record<"light" | "dark", string> = {
 export const useThemePreloadSetup = () => {
   const theme = useTheme();
   const { mode, effectiveMode } = useThemeStore();
-  const drawerOpen = useStore((s) => s.drawerOpen);
-
+  const test1 = useStore((s) => s.drawerOpen);
+  const test2 = useStore((s) => s.rightDrawerOpen);
+  const drawerOpen = test1 || test2
   console.log("🔵 [ThemePreloadSetup] ========== HOOK INITIALIZED ==========");
   console.log("🔵 [ThemePreloadSetup] Initial state:", {
     mode,

@@ -16,8 +16,8 @@ import { dbSyncService, type SyncProgress } from "../services/syncDb";
 import { syncDebug } from "../webhook/client/syncDebug";
 import { indexedDbService } from "../services/indexedDb";
 import { uiLog } from "../webhook/client/uiDebug";
-import { useNavigate } from "react-router-dom";
-import { searchProducts } from "../api/searchApi";
+/* import { useNavigate } from "react-router-dom";
+import { searchProducts } from "../api/searchApi"; */
 // Small Circular Progress with Label Component
 function SmallCircularProgressWithLabel(props: { value: number }) {
   return (
@@ -53,20 +53,20 @@ function SmallCircularProgressWithLabel(props: { value: number }) {
 }
 
 // Helper function to trim strings
-const trimString = (str: string, maxLength: number = 15): string => {
+/* const trimString = (str: string, maxLength: number = 15): string => {
   if (!str) return "";
   if (str.length <= maxLength) return str;
   return str.substring(0, maxLength - 3) + "...";
 };
-
+ */
 export default function SessionExpiredDialog() {
   const open = useStore((s) => s.isSessionExpired);
   const debugShow = useStore((s) => s.debugShowSessionExpired);
   const resetSessionData = useStore((s) => s.resetSessionData);
   const triggerAutocompleteReset = useStore((s) => s.triggerAutocompleteReset);
   const close = useStore((s) => s.closeSessionExpired);
-  const setDebugShow = useStore((s) => s.setDebugShowSessionExpired);
-  const navigate = useNavigate();
+  /*   const setDebugShow = useStore((s) => s.setDebugShowSessionExpired);
+  const navigate = useNavigate(); */
   const [syncState, setSyncState] = React.useState<
     "idle" | "syncing" | "completed" | "error"
   >("idle");

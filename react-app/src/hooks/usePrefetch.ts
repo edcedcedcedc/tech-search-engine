@@ -6,7 +6,7 @@ import { useStore } from "../store/store"
 import { uiLog } from '../webhook/client/uiDebug';
 
 export function usePrefetch() {
-  const { lastQuery, lastQueryLang } = useLastQueryStore();
+  const {lastQueryLang } = useLastQueryStore();
   const { query: currentQuery, currentPage } = useStore();
   const previousPageRef = useRef(currentPage);
   const previousQueryRef = useRef(currentQuery);

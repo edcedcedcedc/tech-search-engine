@@ -2,10 +2,11 @@ import React from "react";
 import { Box } from "@mui/material";
 
 import { Cookie } from "./Cookie";
-import Bottom from "./Bottom";
+
 import { NetworkListener } from "./NetworkListener";
 import SessionExpiredDialog from "./SessionExpiredDialog";
-import FloatingPaginator from "./FloatingPaginator";
+
+import ProductOffersTable from "../components/ProductOffersTable";
 
 const AppOverlays: React.FC = () => {
   return (
@@ -23,8 +24,9 @@ const AppOverlays: React.FC = () => {
       {/* <Box sx={{ pointerEvents: "auto" }}>
         <FloatingPaginator />
       </Box> */}
-      <Bottom />
+      {/*  <Bottom /> */}
       <NetworkListener />
+      <ProductOffersTable />
     </Box>
   );
 };

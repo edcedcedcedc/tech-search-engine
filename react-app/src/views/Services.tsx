@@ -1,33 +1,26 @@
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Alert,
-  CircularProgress,
-} from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { useEmailStore } from "../store/store";
-import { collectEmail } from "../api/searchApi";
-import { useState, useEffect } from "react";
-import validator from "validator";
+/* import { useEmailStore } from "../store/store";
+import { collectEmail } from "../api/searchApi"; */
+
+/* import validator from "validator"; */
 
 export default function Services() {
   const { t } = useTranslation();
-  const { email, status, message, setEmail, setStatus, setMessage, reset } =
-    useEmailStore();
-  const [emailError, setEmailError] = useState("");
+  /*   const { email, status, setStatus, setMessage, reset } =
+    useEmailStore(); */
+  /*  const [_emailError, setEmailError] = useState(""); */
 
   // Auto-reset after success or error
-  useEffect(() => {
+  /*   useEffect(() => {
     if (status === "success" || status === "error") {
       const timer = setTimeout(() => {
         reset();
       }, 3000); // Reset after 3 seconds
       return () => clearTimeout(timer);
     }
-  }, [status, reset]);
-
+  }, [status, reset]); */
+  /* 
   const handleSubmit = async () => {
     // Clear previous errors
     setEmailError("");
@@ -53,7 +46,7 @@ export default function Services() {
       setStatus("error");
       setMessage(t("Email_Error"));
     }
-  };
+  }; */
 
   return (
     <Box>

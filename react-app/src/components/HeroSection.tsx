@@ -2,7 +2,7 @@
 import React from "react";
 import { Box, Typography, useTheme, useMediaQuery } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { SearchAutocomplete } from "./SearchAutocomplete";
+/* import { SearchAutocomplete } from "./SearchAutocomplete"; */
 
 interface HeroSectionProps {
   isRO?: boolean;

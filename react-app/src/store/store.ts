@@ -388,6 +388,10 @@ interface State {
   toggleSettings: () => void;
 
 
+  rightDrawerOpen: boolean;
+  setRightDrawerOpen: (open: boolean) => void;
+
+
 
 
   syncTriggered: number;
@@ -454,6 +458,9 @@ interface State {
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
+
+      rightDrawerOpen: false,
+      setRightDrawerOpen: (open) => set({ rightDrawerOpen: open }),
 
       drawerOpen: false,
       settingsOpen: false,
@@ -755,7 +762,7 @@ class SearchProductsService {
     }
   }
 
-  private async tryIndexedDbCache(q: string, lang: string | undefined, page: number, cacheKey: string): Promise<boolean> {
+  private async tryIndexedDbCache(_q: string, _lang: string | undefined, page: number, cacheKey: string): Promise<boolean> {
     try {
       const { itemsPerPage } = this.get();
       const indexedDbCache = await indexedDbService.getProducts(cacheKey);
@@ -1126,7 +1133,7 @@ class OpenProductService {
     return false;
   }
 
-  private logIndexedDbResponse(productId: string, indexedDbOffers: any): void {
+  private logIndexedDbResponse(_productId: string, indexedDbOffers: any): void {
     uiLog(`[openProduct] 💾 IndexedDB response: ${indexedDbOffers ? 'found' : 'not found'}`);
     if (indexedDbOffers) {
       uiLog(`[openProduct] 💾 IndexedDB offers: count=${indexedDbOffers.offers.length}, fetchedAt=${new Date(indexedDbOffers.fetchedAt).toISOString()}, age=${Math.round((Date.now() - indexedDbOffers.fetchedAt)/1000)}s`);
@@ -1154,7 +1161,7 @@ class OpenProductService {
   }
 
   private validateOffersCount(
-    productId: string, 
+    _productId: string, 
     actualCount: number, 
     expectedCount: number | undefined, 
     source: string
@@ -1343,7 +1350,7 @@ class OpenProductService {
     uiLog(`[openProduct] 🛑 Unhandled error: ${err}`);
   }
 
-  private handleRequestAborted(productId: string, err: any): void {
+  private handleRequestAborted(productId: string, _err: any): void {
     uiLog(`[openProduct] 🛑 Request aborted/cancelled`);
     this.set((s) => ({
       productOffers: {

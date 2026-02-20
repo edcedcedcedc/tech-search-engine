@@ -12,6 +12,7 @@
     <!-- CRITICAL: Add theme-color meta tag immediately -->
     <meta name="theme-color" content="#0d1117" id="theme-color-meta">
     
+
     <!-- Inject theme color before paint - WITH SYSTEM THEME SUPPORT -->
     <script>
     (function() {
@@ -75,10 +76,6 @@
 
       // Set data-theme on html (using effective theme for CSS)
       document.documentElement.setAttribute('data-theme', effectiveTheme);
-      
-      // Set inline styles
-      /* document.documentElement.style.backgroundColor = bg;
-      document.body.style.backgroundColor = bg; */
     })();
     </script>
 
@@ -103,7 +100,6 @@
         align-items: center;
         justify-content: center;
         z-index: 9999;
-        /* Background is set by JS */
       }
 
       #preloader-icon {
@@ -128,7 +124,6 @@
           hue-rotate(196deg) 
           brightness(94%) 
           contrast(102%);
-        /* animation: pulse 1s ease-in-out infinite; */
       }
 
       @keyframes pulse {
@@ -140,6 +135,8 @@
   </head>
 
   <body>
+    <!-- SVG filter MUST be in body, right at the top -->
+   
     <div id="preloader">
       <div id="preloader-icon">
         <img src="src/assets/icon.png" alt="Strugure Icon" />
@@ -147,6 +144,7 @@
     </div>
 
     <div id="root"></div>
+    
     <script type="module" src="/src/main.tsx"></script>
     
     <!-- Add system theme change listener -->
@@ -215,6 +213,12 @@
       } else {
         mediaQuery.addListener(handleSystemThemeChange);
       }
+
+      // Verify filter is loaded
+      setTimeout(() => {
+        const filter = document.getElementById('glass-distortion');
+        console.log('SVG Filter loaded:', !!filter);
+      }, 100);
     })();
     </script>
   </body>

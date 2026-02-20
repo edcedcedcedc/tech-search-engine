@@ -7,15 +7,15 @@ import {
   Typography,
   Box,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+/* import { useNavigate } from "react-router-dom"; */
 import { useTranslation } from "react-i18next";
 import { useStore } from "../store/store";
-import { useEffect } from "react";
+/* import { useEffect } from "react"; */
 
 export default function OfflineDialog() {
   const isOffline = useStore((s) => s.isOffline);
-  const setOffline = useStore((s) => s.setOffline);
-  const navigate = useNavigate();
+  /*   const setOffline = useStore((s) => s.setOffline);
+  const navigate = useNavigate(); */
   const { t } = useTranslation();
 
   const handleConfirm = () => {
@@ -46,7 +46,7 @@ export default function OfflineDialog() {
     return () => clearInterval(interval);
   }, []); */
 
-  function retriggerPulse() {
+  /*   function retriggerPulse() {
     const icon = document.querySelector<HTMLImageElement>(
       "#preloader-icon img",
     );
@@ -61,7 +61,7 @@ export default function OfflineDialog() {
 
     // Re-add animation
     icon.style.animation = "pulse 1s ease-in-out infinite";
-  }
+  } */
 
   return (
     <Dialog

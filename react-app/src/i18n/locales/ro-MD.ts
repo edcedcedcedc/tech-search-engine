@@ -351,7 +351,7 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
 // HOW TO PAGE
 // =======================
 
-How_To: "Cum Funcționează Strugure",
+How_To: "Întrebări",
 How_To_Intro: "Strugure combină învățarea automată, modelele lingvistice mari, datele structurate despre produse și actualizările zilnice ale pieței pentru a vă ajuta să luați decizii de cumpărare mai inteligente.",
 
 // SEARCH
@@ -448,12 +448,30 @@ Refreshing: "Actualizare",
   reviews: "recenzii",
   Note: "Notă",
 
-  Manage_Products_Tooltip: "Gestionează Produsele",
+  Manage_Products_Tooltip: "Gestionare Produse",
   How_to_Tooltip: "Cum Funcționează",
   Services_Tooltip: "Servicii",
   Next_page_Tooltip: "Vizarea Următoare",
-  Previous_page_Tooltip: "Vizarea Anterioară"
+  Previous_page_Tooltip: "Vizarea Anterioară",
 
+  //Random
+  More_Tooltip: "Mai multe",
+  Search_tips: "Trucuri pentru căutare",
+  Popular_Categories: "Categorii populare",
+  Updated_Today: "Actualizat pe",
+  Products: "Produse",
+  Phones: "Celulare",
+  Tablets: "Tablete",
+  Laptops: "Laptopuri",
+  Gadgets: "Gadgeturi",
+  Copy_and_past_from_your_shops: "Copiați nume din orice magazin, darwin, enter sau xstore",
+  Diversity: "Introduceți câteva cuvinte pentru o căutare mai diversă",
+  Compare: "Comparați oferte cu același nume si variantă din magazine diferite",
+  Visibility_off: "Chiar dacă nu a fost găsită nicio sugestie, oricum căutați",
+
+  Clickable_Sparkline: "Apasă pe orice grafic pentru a vedea istoricul prețului, disponibilitatea și ultima actualizare",
+  In_Stock: "În stoc",
+  Updated: "Actualizat"
 };
 
 

@@ -1,11 +1,11 @@
-import React, { useLayoutEffect, useState } from "react";
+import React, { useLayoutEffect /* useState */ } from "react";
 import {
   Box,
   Card,
   CardContent,
   CardActions,
   Typography,
-  useMediaQuery,
+  /*   useMediaQuery, */
   CardActionArea,
 } from "@mui/material";
 
@@ -31,15 +31,15 @@ const bull = (
 
 const ProductGrid: React.FC<Props> = () => {
   const { i18n } = useTranslation();
-  const isSmallScreen = useMediaQuery("(max-width:768px)");
+  /*   const isSmallScreen = useMediaQuery("(max-width:768px)");
   const isVerySmallScreen = useMediaQuery("(max-width:425px)");
-  const isTinyScreen = useMediaQuery("(max-width:320px)");
+  const isTinyScreen = useMediaQuery("(max-width:320px)"); */
   const aggregated_products = useStore((state) => state.aggregatedProducts);
   const currentPage = useStore((state) => state.currentPage);
   const isLoading = useStore((state) => state.isLoading);
   const onOpenProduct = useStore((state) => state.openProduct);
-
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  /* 
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null); */
 
   useLayoutEffect(() => {
     const main = document.querySelector("main");
@@ -82,6 +82,7 @@ const ProductGrid: React.FC<Props> = () => {
         return (
           <Card
             key={product.id}
+            elevation={1}
             sx={{
               display: "flex",
               flexDirection: "column",

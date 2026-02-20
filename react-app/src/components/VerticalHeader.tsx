@@ -6,49 +6,50 @@ import {
   ListItemButton,
   ListItemIcon,
   Divider,
-  IconButton,
+  /*   IconButton, */
   Tooltip,
 } from "@mui/material";
 
-import NavigateNextOutlinedIcon from "@mui/icons-material/NavigateNextOutlined";
-import NavigateBeforeOutlinedIcon from "@mui/icons-material/NavigateBeforeOutlined";
+/* import NavigateNextOutlinedIcon from "@mui/icons-material/NavigateNextOutlined";
+import NavigateBeforeOutlinedIcon from "@mui/icons-material/NavigateBeforeOutlined"; */
 import {
   ManageSearchOutlined as ManageSearchOutlinedIcon,
+  SearchOutlined,
   BusinessCenterOutlined as ServicesOutlinedIcon,
 } from "@mui/icons-material";
 import QuestionMarkOutlinedIcon from "@mui/icons-material/QuestionMarkOutlined";
 import { Link as RouterLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useLocation } from "react-router-dom";
-import { useStore, useLastQueryStore } from "../store/store";
+/* import { useLocation } from "react-router-dom"; */
+import { useStore /* useLastQueryStore */ } from "../store/store";
 import { NavIcon } from "./NavIcons";
-import { uiLog } from "../webhook/client/uiDebug";
-import { HeaderComparisonIcon } from "./ComparisonWidget";
+/* import { uiLog } from "../webhook/client/uiDebug"; */
+/* import { HeaderComparisonIcon } from "./ComparisonWidget"; */
 
 const ICON_SIZE = 22;
 const iconSx = { fontSize: ICON_SIZE };
 
 const VerticalHeader: React.FC = () => {
-  const { t, i18n } = useTranslation();
-  const lang = i18n.language.slice(0, 2);
+  const { t /* i18n  */ } = useTranslation();
+  /*   const lang = i18n.language.slice(0, 2);
 
-  const location = useLocation();
-  const isOnProductsPage = location.pathname.startsWith("/products");
+  const location = useLocation(); */
+  /*   const isOnProductsPage = location.pathname.startsWith("/products"); */
 
   const aggregatedProducts = useStore((s) => s.aggregatedProducts);
-  const currentPage = useStore((s) => s.currentPage);
-  const totalPages = useStore((s) => s.totalPages);
-  const searchProducts = useStore((s) => s.searchProducts);
-  const isLoading = useStore((s) => s.isLoading);
-  const storeQuery = useStore((s) => s.query);
+  /*   const currentPage = useStore((s) => s.currentPage);
+  const totalPages = useStore((s) => s.totalPages); */
+  /*   const searchProducts = useStore((s) => s.searchProducts);
+  const isLoading = useStore((s) => s.isLoading); */
+  /*   const storeQuery = useStore((s) => s.query); */
 
   const isProductsDisabled = aggregatedProducts.length === 0;
 
-  const getQueryToUse = () => {
+  /*   const getQueryToUse = () => {
     const lastQuery = useLastQueryStore.getState().lastQuery;
     return lastQuery || storeQuery || "";
-  };
-
+  }; */
+  /* 
   const handlePrev = () => {
     if (currentPage > 1 && !isLoading) {
       const queryToUse = getQueryToUse();
@@ -62,9 +63,9 @@ const VerticalHeader: React.FC = () => {
         uiLog(`[VerticalHeader] CRITICAL: No query found for prev page`);
       }
     }
-  };
+  }; */
 
-  const handleNext = () => {
+  /*   const handleNext = () => {
     if (currentPage < totalPages && !isLoading) {
       const queryToUse = getQueryToUse();
       uiLog(
@@ -77,9 +78,19 @@ const VerticalHeader: React.FC = () => {
         uiLog(`[VerticalHeader] CRITICAL: No query found for next page`);
       }
     }
-  };
+  }; */
 
   const navLinks = [
+    {
+      path: "/",
+      label: "",
+      tooltip: t("Search_Tooltip"),
+      icon: (
+        <NavIcon>
+          <SearchOutlined sx={iconSx} />
+        </NavIcon>
+      ),
+    },
     {
       path: "/products",
       label: t("Manage_Products"),
@@ -90,6 +101,7 @@ const VerticalHeader: React.FC = () => {
         </NavIcon>
       ),
     },
+
     {
       path: "/how-to",
       label: "",
@@ -127,55 +139,6 @@ const VerticalHeader: React.FC = () => {
       }}
     >
       {/* Top buttons - Only show on products page */}
-      {isOnProductsPage && (
-        <Box
-          sx={{
-            display: {
-              xs: "flex",
-              xl: "none",
-            },
-            flexDirection: "column",
-            alignItems: "center",
-            py: 1,
-          }}
-        >
-          <Tooltip
-            title={t("Previous_page")}
-            placement="right"
-            enterDelay={500}
-          >
-            <span>
-              {" "}
-              {/* span needed for disabled button tooltip */}
-              <IconButton
-                size="small"
-                onClick={handlePrev}
-                disabled={currentPage <= 1 || isLoading}
-              >
-                <NavigateBeforeOutlinedIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-
-          <Tooltip
-            title={t("Next_page_Tooltip")}
-            placement="right"
-            enterDelay={500}
-          >
-            <span>
-              {" "}
-              {/* span needed for disabled button tooltip */}
-              <IconButton
-                size="small"
-                onClick={handleNext}
-                disabled={currentPage >= totalPages || isLoading}
-              >
-                <NavigateNextOutlinedIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </Box>
-      )}
 
       {/* Nav links */}
       <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>

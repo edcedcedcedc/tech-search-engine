@@ -1,12 +1,12 @@
 // src/components/ComparisonResult.tsx
-import React from "react";
+/* import React from "react"; */
 import {
-  Box,
+  /*  Box, */
   Typography,
   Paper,
   Stack,
   Tooltip,
-  Divider,
+  /*   Divider, */
   List,
   ListItem,
   ListItemIcon,
@@ -16,12 +16,14 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+/* import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined"; */
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import type { ComparisonResponse, ExpertInsights } from "../api/searchApi";
+/* import OpenInNewIcon from "@mui/icons-material/OpenInNew"; */
+import type {
+  ComparisonResponse /* , ExpertInsights */,
+} from "../api/searchApi";
 
 interface Props {
   result: ComparisonResponse | null;

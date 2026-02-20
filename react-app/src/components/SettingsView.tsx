@@ -190,7 +190,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             <FormControl size="small" sx={{ ml: "auto", flexShrink: 0 }}>
               <Select
                 sx={{
-                  width: "110px",
+                  width: "160px",
                   fontSize: "0.9rem",
                 }}
                 value={i18n.language}

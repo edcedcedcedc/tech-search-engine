@@ -193,6 +193,16 @@ export const SearchAutocomplete: React.FC = () => {
     setSuggestions([]); // close dropdown
   };
 
+  const handleFocus = () => {
+    // Small delay to allow keyboard to open first
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }, 300);
+  };
+
   return (
     <Box ref={containerRef} sx={{ width: "100%", position: "relative" }}>
       <TextField
@@ -200,6 +210,7 @@ export const SearchAutocomplete: React.FC = () => {
         variant="outlined"
         inputRef={anchorRef}
         value={value}
+        onFocus={handleFocus}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         placeholder={`${t("Search_product")}`}
@@ -220,6 +231,7 @@ export const SearchAutocomplete: React.FC = () => {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  minHeight: 48,
                 }}
               >
                 {
@@ -279,15 +291,8 @@ export const SearchAutocomplete: React.FC = () => {
             ? `${containerRef.current.offsetWidth}px`
             : "auto",
           maxWidth: "100%",
+          maxHeight: 20,
         }}
-        modifiers={[
-          {
-            name: "offset",
-            options: {
-              offset: [0, 8], // 8px gap between input and dropdown
-            },
-          },
-        ]}
       >
         <ClickAwayListener onClickAway={closeSuggestions}>
           <Paper

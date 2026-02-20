@@ -2,7 +2,7 @@ import axios from "axios";
 import { uiLog } from "../webhook/client/uiDebug"; // <-- import logger
 // ---------------- Types ----------------
 import type { AggregatedProduct } from "../types/AggregatedProduct";
-import type { SearchResponse } from "../types/SearchResponse";
+/* import type { SearchResponse } from "../types/SearchResponse"; */
 import type { AutocompleteResponse } from "../types/AutocompleteResponse";
 import type { ApiSearchResponse } from '../types/Api';
 

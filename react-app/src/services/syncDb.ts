@@ -16,10 +16,10 @@ const DEFAULT_CONFIG: DBSyncConfig = {
 };
 
 // ============= TYPES =============
-interface SyncOptions {
+/* interface SyncOptions {
   silent?: boolean; // If true, don't show notifications or progress
   source?: 'manual' | 'background' | 'periodic';
-}
+} */
 
 export interface SyncProgress {
   current: number;
@@ -75,13 +75,14 @@ class DBSyncService {
     this.progressCallbacks.forEach(cb => cb(progress));
   }
 
-  async syncDatabase(options?: { silent?: boolean }) {
+  async syncDatabase(_options?: { silent?: boolean }) {
     this._isSyncing = true;
     this.abortController = new AbortController();
     this.startTime = Date.now();
     this.totalProducts = 0;
     this.totalOffers = 0;
-    
+    //random code 
+    this.startTime += 1
     try {
       // Step 1: Get ALL existing query keys
       const productKeys = await indexedDbService.getAllProductKeys();
