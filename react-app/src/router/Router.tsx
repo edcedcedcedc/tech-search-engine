@@ -21,18 +21,19 @@ const TermsOfUse = lazy(() => import("../views/TermsOfUse"));
 const Services = lazy(() => import("../views/Services"));
 const Offers = lazy(() => import("../components/ProductOffersTable"));
  */
+
 // Mobile views
-const HomeMobile = lazy(() => import("../views/mobile/Home"));
-const ProductsMobile = lazy(() => import("../views/mobile/Products"));
+import HomeMobile from "../views/mobile/Home";
 import BottomNav from "../views/mobile/BottomNav";
 import ServicesMobile from "../views/mobile/Services";
 import QnaMobile from "../views/mobile/Qna";
-/* import MagnifyOnScroll from "../views/mobile/Magnify"; */
+import ProductsMobile from "../views/mobile/Products";
 
 const AppRoutes: React.FC = () => {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+
   useSessionStart();
   console.log("📱 AppRoutes - isMobile:", isMobile);
   console.log("📱 AppRoutes - screen width:", window.innerWidth);

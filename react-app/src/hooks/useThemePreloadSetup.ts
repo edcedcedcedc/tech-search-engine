@@ -183,7 +183,7 @@ export const useThemePreloadSetup = () => {
         console.log("🔴 [ThemePreloadSetup] ⏰ Retry timeout fired, checking drawer color again");
         console.log("🔴 [ThemePreloadSetup] Current drawerOpen state:", drawerOpen);
         updateMetaTag(true);
-      }, 50);
+      }, 10);
       
       return () => {
         console.log("🔴 [ThemePreloadSetup] Cleaning up retry timeout");
