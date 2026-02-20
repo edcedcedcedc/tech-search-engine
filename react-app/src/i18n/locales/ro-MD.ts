@@ -347,6 +347,14 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
 
   Oops: "Oops! Ceva nu a mers bine",
   Go_Back_To_Home: "Înapoi acasă",
+
+//Session expired
+Cancel: "Anulează",
+Reset: "Reseteză",
+Refresh: "Actualizează",
+Refreshing: "Actualizare",
+Done: "Finalizat",
+
   // =======================
 // HOW TO PAGE
 // =======================
@@ -405,10 +413,7 @@ Subscription_Description_2: "După înregistrare vei primi instrucțiuni pentru 
 Subscription_Description_3: "Poți alege între abonament sau plată unică pentru funcțiile avansate.",
 
 
-Cancel: "Anulează",
-Reset: "Reseteză",
-Refresh: "Actualizează",
-Refreshing: "Actualizare",
+
 
 //EMAIL
 

@@ -9,15 +9,27 @@ import {
   Typography,
   Box,
   CircularProgress,
+  useMediaQuery,
+  useTheme,
+  Slide,
+  Paper,
 } from "@mui/material";
-import { useStore } from "../store/store";
+import type { TransitionProps } from "@mui/material/transitions";
+import { useLastQueryStore, useStore } from "../store/store";
 import { useTranslation } from "react-i18next";
 import { dbSyncService, type SyncProgress } from "../services/syncDb";
 import { syncDebug } from "../webhook/client/syncDebug";
 import { indexedDbService } from "../services/indexedDb";
 import { uiLog } from "../webhook/client/uiDebug";
-/* import { useNavigate } from "react-router-dom";
-import { searchProducts } from "../api/searchApi"; */
+
+// Slide transition for mobile
+const Transition = React.forwardRef(function Transition(
+  props: TransitionProps & { children: React.ReactElement },
+  ref: React.Ref<unknown>,
+) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
+
 // Small Circular Progress with Label Component
 function SmallCircularProgressWithLabel(props: { value: number }) {
   return (
@@ -52,21 +64,16 @@ function SmallCircularProgressWithLabel(props: { value: number }) {
   );
 }
 
-// Helper function to trim strings
-/* const trimString = (str: string, maxLength: number = 15): string => {
-  if (!str) return "";
-  if (str.length <= maxLength) return str;
-  return str.substring(0, maxLength - 3) + "...";
-};
- */
 export default function SessionExpiredDialog() {
   const open = useStore((s) => s.isSessionExpired);
+  const theme = useTheme();
   const debugShow = useStore((s) => s.debugShowSessionExpired);
   const resetSessionData = useStore((s) => s.resetSessionData);
+  const clearLastQuery = useLastQueryStore((s) => s.clearLastQuery);
   const triggerAutocompleteReset = useStore((s) => s.triggerAutocompleteReset);
   const close = useStore((s) => s.closeSessionExpired);
-  /*   const setDebugShow = useStore((s) => s.setDebugShowSessionExpired);
-  const navigate = useNavigate(); */
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+
   const [syncState, setSyncState] = React.useState<
     "idle" | "syncing" | "completed" | "error"
   >("idle");
@@ -113,6 +120,16 @@ export default function SessionExpiredDialog() {
   }, []);
 
   const handleSync = async () => {
+    const lastQuery = useLastQueryStore.getState().lastQuery;
+    const hasProducts = useStore.getState().aggregatedProducts?.length > 0;
+
+    if (!lastQuery && !hasProducts) {
+      resetSessionData();
+      triggerAutocompleteReset();
+      setSyncState("completed");
+      return;
+    }
+
     abortControllerRef.current = new AbortController();
     setSyncState("syncing");
 
@@ -127,24 +144,24 @@ export default function SessionExpiredDialog() {
         console.log("Sync cancelled by user");
         syncDebug.dialogClosed(false, progress.current);
         await indexedDbService.clearAll();
+        clearLastQuery();
         uiLog("[SessionExpired] IndexedDB cleared on abort");
-        // On abort, go to completed state (show Done button)
         setSyncState("completed");
       } else {
         console.error("Sync failed:", error);
         syncDebug.dialogClosed(false, progress.current);
         await indexedDbService.clearAll();
+        clearLastQuery();
         uiLog("[SessionExpired] IndexedDB cleared on error");
         setSyncState("error");
       }
 
-      resetSessionData();
-      triggerAutocompleteReset();
+      /*    resetSessionData();
+      triggerAutocompleteReset(); */
     }
   };
 
   const handleCancel = async () => {
-    // If currently syncing, abort it
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
@@ -158,16 +175,15 @@ export default function SessionExpiredDialog() {
     }
 
     resetSessionData();
+    clearLastQuery();
     triggerAutocompleteReset();
-
-    // After cancel, go to completed state (show Done button)
     setSyncState("completed");
   };
 
   const handleDone = () => {
     if (!debugShow) close();
-    setSyncState("idle");
-    window.location.reload();
+    setSyncState("completed");
+    window.location.replace("/");
   };
 
   const progressValue =
@@ -177,6 +193,240 @@ export default function SessionExpiredDialog() {
   const isCompleted = syncState === "completed";
   const isError = syncState === "error";
 
+  // Mobile full-screen dialog
+  if (isMobile) {
+    return (
+      <Dialog
+        open={isOpen}
+        fullScreen
+        TransitionComponent={Transition}
+        disableEscapeKeyDown
+        disableEnforceFocus
+        disableAutoFocus
+        PaperProps={{
+          sx: {
+            backgroundColor: theme.palette.background.default,
+            backgroundImage: "none",
+          },
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            backgroundColor: theme.palette.background.default,
+          }}
+        >
+          {/* Header */}
+          <Box
+            sx={{
+              px: 3,
+              py: 2,
+              borderBottom: 1,
+              borderColor: "divider",
+              backgroundColor: theme.palette.background.default,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 600,
+                color: "text.primary",
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                fontSize: {
+                  xs: "1.125rem", // 18px - mobile (0-374px)
+                  sm: "1.25rem", // 20px - small mobile (375-424px)
+                  md: "1.375rem", // 22px - medium (425-767px)
+                  lg: "1.5rem", // 24px - tablet (768-1023px)
+                  xl: "1.625rem", // 26px - desktop (1024-1439px)
+                  xxl: "1.75rem", // 28px - large desktop (1440px+)
+                },
+                lineHeight: 1.2,
+              }}
+            >
+              {t("Error_403_Title")}
+              {isSyncing && (
+                <SmallCircularProgressWithLabel value={progressValue} />
+              )}
+            </Typography>
+
+            {debugShow && (
+              <Typography
+                variant="caption"
+                sx={{
+                  bgcolor: "warning.main",
+                  color: "warning.contrastText",
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 1,
+                  fontWeight: 500,
+                }}
+              >
+                DEBUG
+              </Typography>
+            )}
+          </Box>
+
+          {/* Content */}
+          <Box
+            sx={{
+              flex: 1,
+              overflowY: "auto",
+              px: 3,
+              py: 4,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Box sx={{ maxWidth: 400, mx: "auto", width: "100%" }}>
+              <Typography
+                variant="body1"
+                sx={{
+                  mb: 3,
+                  color: "text.primary",
+                  fontSize: "1.1rem",
+                  lineHeight: 1.5,
+                }}
+              >
+                {t("Error_403_Message1")}
+              </Typography>
+
+              <Typography
+                variant="body2"
+                sx={{
+                  mb: 4,
+                  color: "text.secondary",
+                  fontSize: "1rem",
+                }}
+              >
+                {t("Error_403_Message2")}
+              </Typography>
+
+              {isSyncing && progress.currentQuery && (
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    mt: 2,
+                    backgroundColor: theme.palette.action.hover,
+                    borderRadius: 2,
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                      fontFamily: "monospace",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {progress.currentQuery}
+                  </Typography>
+                </Paper>
+              )}
+
+              {isError && (
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    mt: 2,
+                    backgroundColor: theme.palette.error.light + "20",
+                    borderColor: theme.palette.error.main,
+                    borderRadius: 2,
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "error.main",
+                      textAlign: "center",
+                      fontWeight: 500,
+                    }}
+                  >
+                    Sync failed. Please try again.
+                  </Typography>
+                </Paper>
+              )}
+            </Box>
+          </Box>
+
+          {/* Footer with actions */}
+          {/* Footer with actions - MATCH DESKTOP STYLE */}
+          <Box
+            sx={{
+              p: 2,
+              borderTop: 1,
+              borderColor: "divider",
+              backgroundColor: theme.palette.background.paper,
+              display: "flex",
+              justifyContent: "flex-end", // Align to the right like desktop
+              gap: 1,
+            }}
+          >
+            {!isCompleted ? (
+              <>
+                <Button
+                  onClick={handleCancel}
+                  variant="text"
+                  color="inherit"
+                  disabled={isCompleted}
+                  sx={{
+                    minWidth: "auto",
+                    px: 2,
+                    py: 1,
+                    fontSize: "0.875rem",
+                    fontWeight: 500,
+                  }}
+                >
+                  {t("Reset")}
+                </Button>
+                <Button
+                  onClick={handleSync}
+                  variant="text"
+                  color="primary"
+                  disabled={isSyncing}
+                  sx={{
+                    minWidth: "auto",
+                    px: 2,
+                    py: 1,
+                    fontSize: "0.875rem",
+                    fontWeight: 500,
+                    opacity: isSyncing ? 0.8 : 1,
+                  }}
+                >
+                  {isSyncing ? t("Refreshing") : t("Refresh")}
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={handleDone}
+                variant="text"
+                color="primary"
+                sx={{
+                  minWidth: "auto",
+                  px: 2,
+                  py: 1,
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                }}
+              >
+                {t("Done")}
+              </Button>
+            )}
+          </Box>
+        </Box>
+      </Dialog>
+    );
+  }
+
+  // Desktop version (unchanged)
   return (
     <Dialog
       open={isOpen}
@@ -248,7 +498,7 @@ export default function SessionExpiredDialog() {
               onClick={handleCancel}
               variant="text"
               color="inherit"
-              disabled={isCompleted} // Enable during sync!
+              disabled={isCompleted}
             >
               {t("Reset")}
             </Button>

@@ -28,6 +28,7 @@ import BottomNav from "../views/mobile/BottomNav";
 import ServicesMobile from "../views/mobile/Services";
 import QnaMobile from "../views/mobile/Qna";
 import ProductsMobile from "../views/mobile/Products";
+import { ScrollContainer } from "../components/ScrollContainer";
 
 const AppRoutes: React.FC = () => {
   const location = useLocation();
@@ -44,20 +45,38 @@ const AppRoutes: React.FC = () => {
         <Suspense fallback={<FullScreenLoader />}>
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
-              {/* Mobile routes */}
-
-              <Route path="/" element={<HomeMobile />} />
-              <Route path="/products" element={<ProductsMobile />} />
-              <Route path="/services" element={<ServicesMobile />} />
-              <Route path="/faq" element={<QnaMobile />} />
-
-              {/*    <Route path="/privacy" element={<PrivacyPolicyMobile />} />
-              <Route path="/terms" element={<TermsOfUseMobile />} />
-              <Route path="/disclaimer" element={<DisclaimerMobile />} /> */}
-              {/* <Route path="/source" element={<SourceMobile />} /> */}
-              {/* Desktop routes (keep existing) */}
-              {/*  <Route path="/desktop" element={<Home />} /> */}
-              {/* ... other desktop routes */}
+              <Route
+                path="/"
+                element={
+                  <ScrollContainer route="/">
+                    <HomeMobile />
+                  </ScrollContainer>
+                }
+              />
+              <Route
+                path="/products"
+                element={
+                  <ScrollContainer route="/products">
+                    <ProductsMobile />
+                  </ScrollContainer>
+                }
+              />
+              <Route
+                path="/services"
+                element={
+                  <ScrollContainer route="/services">
+                    <ServicesMobile />
+                  </ScrollContainer>
+                }
+              />
+              <Route
+                path="/faq"
+                element={
+                  <ScrollContainer route="/faq">
+                    <QnaMobile />
+                  </ScrollContainer>
+                }
+              />
             </Routes>
           </AnimatePresence>
         </Suspense>

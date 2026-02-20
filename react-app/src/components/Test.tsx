@@ -8,7 +8,7 @@ export default function DebugControls() {
   const debugShow = useStore((s) => s.debugShowSessionExpired);
 
   return (
-    <Box sx={{ position: "fixed", bottom: 16, right: 16, zIndex: 9999 }}>
+    <Box sx={{ position: "fixed", bottom: 16, left: 16, zIndex: 9999 }}>
       <Button
         variant="contained"
         color={debugShow ? "warning" : "primary"}

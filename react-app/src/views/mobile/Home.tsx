@@ -7,10 +7,6 @@ import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import PhoneIphoneIcon from "@mui/icons-material/PhoneIphone";
-import LaptopIcon from "@mui/icons-material/Laptop";
-import TabletIcon from "@mui/icons-material/Tablet";
-import WatchIcon from "@mui/icons-material/Watch";
 import { t } from "i18next";
 import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
@@ -70,43 +66,6 @@ const HomeMobile: React.FC = () => {
           </Typography>
         </Box>
       </Box>
-
-      {/* Quick Categories */}
-      <Box sx={{ mb: 4 }}>
-        {/*    <Typography variant="subtitle2" sx={{ mb: 2 }}>
-          {t("Popular_Categories")}
-        </Typography> */}
-        {/*   <Stack
-          direction="row"
-          spacing={2}
-          sx={{ overflowX: "auto", pb: 1, justifyContent: "center" }}
-        >
-          {[
-            { icon: <PhoneIphoneIcon />, label: t("Phones") },
-            { icon: <LaptopIcon />, label: t("Laptops") },
-            { icon: <TabletIcon />, label: t("Tablets") },
-            { icon: <WatchIcon />, label: t("Gadgets") },
-          ].map((cat) => (
-            <Box
-              key={cat.label}
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 1,
-                minWidth: 60,
-                cursor: "pointer",
-              }}
-            >
-              <IconButton sx={{ bgcolor: "action.hover", p: 1.5 }}>
-                {cat.icon}
-              </IconButton>
-              <Typography variant="caption">{cat.label}</Typography>
-            </Box>
-          ))}
-        </Stack> */}
-      </Box>
-
       <Divider sx={{ my: 3 }} />
 
       {/* Expandable Tips */}

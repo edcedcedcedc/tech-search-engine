@@ -8,6 +8,7 @@ import { Meta } from "./components/Meta";
 import { scrollableScrollbar } from "./styles/scrollbar";
 import AppOverlays from "./components/Overlays";
 import NotificationsContainer from "./components/NotificationContainer";
+import Test from "./components/Test";
 
 function App() {
   const theme = useTheme();
@@ -59,7 +60,7 @@ function App() {
               component="main"
               sx={{
                 flex: 1,
-                overflowY: "auto",
+                //overflowY: "auto",
                 // Different padding/margin for mobile vs desktop
                 ...(isMobile
                   ? {
@@ -88,13 +89,14 @@ function App() {
                   mx: "auto",
                   pt: 1,
                   px: isMobile ? 0 : 1,
+                  height: "100%",
                 }}
               >
                 <AppRoutes />
               </Container>
             </Box>
           </Box>
-
+          <Test />
           <NotificationsContainer />
           <AppOverlays />
         </Box>

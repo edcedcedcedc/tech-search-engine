@@ -380,7 +380,13 @@ interface ProductOffersEntry {
 }
 
 interface State {
-  //
+  
+  hasSearched: boolean;
+  setHasSearched: (value: boolean) => void;
+  searchError: string | null;
+  setSearchError: (error: string | null) => void;
+
+
   drawerOpen: boolean;
   settingsOpen: boolean;
   setDrawerOpen: (open: boolean) => void;
@@ -458,6 +464,11 @@ interface State {
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
+
+      hasSearched: false,
+      setHasSearched: (value) => set({ hasSearched: value }),
+      searchError: null,
+      setSearchError: (error) => set({ searchError: error }),
 
       rightDrawerOpen: false,
       setRightDrawerOpen: (open) => set({ rightDrawerOpen: open }),
