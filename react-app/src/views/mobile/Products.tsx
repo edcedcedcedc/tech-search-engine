@@ -156,13 +156,7 @@ const ProductsMobile: React.FC = () => {
       </Box>
 
       {/* Content */}
-      {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-          <Typography variant="body2" color="text.secondary">
-            Loading...
-          </Typography>
-        </Box>
-      ) : showEmptyState ? (
+      {!isLoading && showEmptyState ? (
         <EmptyState
           type={emptyStateType}
           hasSearched={hasSearched}

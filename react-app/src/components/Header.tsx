@@ -113,6 +113,10 @@ const Header: React.FC = () => {
       "to",
       !sourcesExpanded,
     );
+    // Close other expanded menus first
+    setAboutExpanded(false);
+    setContactExpanded(false);
+    // Then toggle sources
     setSourcesExpanded(!sourcesExpanded);
     // Close settings and other views
     setSettingsOpen(false);
@@ -128,6 +132,10 @@ const Header: React.FC = () => {
       "to",
       !aboutExpanded,
     );
+    // Close other expanded menus first
+    setSourcesExpanded(false);
+    setContactExpanded(false);
+    // Then toggle about
     setAboutExpanded(!aboutExpanded);
     // Close settings and other views
     setSettingsOpen(false);
@@ -143,6 +151,10 @@ const Header: React.FC = () => {
       "to",
       !contactExpanded,
     );
+    // Close other expanded menus first
+    setSourcesExpanded(false);
+    setAboutExpanded(false);
+    // Then toggle contact
     setContactExpanded(!contactExpanded);
     // Close settings and other views
     setSettingsOpen(false);
@@ -243,7 +255,7 @@ const Header: React.FC = () => {
         <Toolbar
           sx={{
             display: "flex",
-            justifyContent: "space-between",
+            justifyContent: "flex-start",
             alignItems: "center",
             width: "100%",
             minHeight: 60,
@@ -252,7 +264,7 @@ const Header: React.FC = () => {
             py: 0,
           }}
         >
-          {/* Menu - fixed 60x60 to always align with vertical icons */}
+          {/* Menu button */}
           <Tooltip title={t("Menu_Tooltip")} enterDelay={500}>
             <IconButton
               edge="start"
@@ -273,7 +285,7 @@ const Header: React.FC = () => {
             </IconButton>
           </Tooltip>
 
-          {/* Refresh icon - only in PWA mode - matching menu icon exactly */}
+          {/* Refresh icon - only in PWA mode */}
           {isPWA && (
             <Tooltip title={t("Refresh")} enterDelay={500}>
               <IconButton
@@ -284,8 +296,8 @@ const Header: React.FC = () => {
                   justifyContent: "center",
                   alignItems: "center",
                   borderRadius: 0,
-                  color: "text.primary", // Same color as menu icon
-                  ml: "auto", // Push to the right
+                  ml: -2,
+                  color: "text.primary",
                 }}
                 onClick={() => window.location.reload()}
               >
@@ -308,8 +320,8 @@ const Header: React.FC = () => {
                   xs: "100%",
                   sm: "100%",
                   md: "100%",
-                  lg: 260,
-                  xl: 260,
+                  lg: 360,
+                  xl: 360,
                 },
                 zIndex: 1600,
                 height: "100%",
@@ -325,8 +337,8 @@ const Header: React.FC = () => {
                   xs: "100%",
                   sm: "100%",
                   md: "100%", // Changed from 260 to 100% for md and below
-                  lg: 260,
-                  xl: 260,
+                  lg: 360,
+                  xl: 360,
                 },
                 height: "100%",
                 display: "flex",

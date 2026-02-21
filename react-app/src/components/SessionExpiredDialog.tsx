@@ -250,7 +250,7 @@ export default function SessionExpiredDialog() {
                 lineHeight: 1.2,
               }}
             >
-              {t("Error_403_Title")}
+              {isCompleted ? t("Error_403_Title2") : t("Error_403_Title")}
               {isSyncing && (
                 <SmallCircularProgressWithLabel value={progressValue} />
               )}
@@ -445,7 +445,7 @@ export default function SessionExpiredDialog() {
           color: "text.primary",
         }}
       >
-        {t("Error_403_Title")}
+        {isCompleted ? t("Error_403_Title2") : t("Error_403_Title")}
         {isSyncing && <SmallCircularProgressWithLabel value={progressValue} />}
         {debugShow && (
           <Typography
@@ -524,7 +524,7 @@ export default function SessionExpiredDialog() {
               color="primary"
               autoFocus
             >
-              Done
+              {t("Done")}
             </Button>
           </Box>
         )}

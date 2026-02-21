@@ -16,7 +16,7 @@ const NotificationsContainer: React.FC = () => {
         flexDirection: "column",
         gap: 1.5,
         pointerEvents: "none",
-        zIndex: 1500,
+        zIndex: 998,
 
         // Desktop default left-aligned
         left: 16,

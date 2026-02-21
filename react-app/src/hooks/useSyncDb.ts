@@ -1,29 +1,62 @@
 import { useEffect, useRef } from "react";
-import { useStore, useSystemStore } from "../store/store";
-import { getSystemVersion } from "../api/searchApi";
+import { useStore } from "../store/store";
 import { uiLog } from "../webhook/client/uiDebug";
 import { indexedDbService } from "../services/indexedDb";
 import { INDEXED_DB_CONFIG } from "../config/indexeddb.config";
 
 export const useSyncDb = () => {
   const openSessionExpired = useStore((s) => s.openSessionExpired);
-  const checkSystemVersion = useSystemStore((s) => s.checkSystemVersion);
 
   const intervalRef = useRef<any | null>(null);
   const isRunningRef = useRef(false);
   const timeoutRef = useRef<any | null>(null);
 
-  // Function to get random interval between 5-10 minutes (in milliseconds)
-  const getRandomInterval = (): number => {
-    const min = 5 * 60 * 1000; // 5 minutes
-    const max = 10 * 60 * 1000; // 10 minutes
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+  // Check if user has any active data (queries, cache, etc.)
+  const hasUserData = async (): Promise<boolean> => {
+    try {
+      // Check IndexedDB for any cached products
+      const productKeys = await indexedDbService.getAllProductKeys();
+      if (productKeys.length > 0) {
+        uiLog(`[SyncDb] Found ${productKeys.length} product caches in IndexedDB`);
+        return true;
+      }
+
+      // Check IndexedDB for any cached offers
+      const offerKeys = await indexedDbService.getAllOfferKeys();
+      if (offerKeys.length > 0) {
+        uiLog(`[SyncDb] Found ${offerKeys.length} offer caches in IndexedDB`);
+        return true;
+      }
+
+      // Check Zustand cache in sessionStorage
+      const zustandCache = sessionStorage.getItem("pricecomp-store");
+      if (zustandCache) {
+        const parsed = JSON.parse(zustandCache);
+        if (parsed.state?.multiQueryCache && 
+            Object.keys(parsed.state.multiQueryCache).length > 0) {
+          uiLog(`[SyncDb] Found cached queries in sessionStorage`);
+          return true;
+        }
+      }
+
+      uiLog(`[SyncDb] No user data found - user is new or has cleared data`);
+      return false;
+    } catch (err: any) {
+      uiLog(`[SyncDb] Error checking user data: ${err?.message}`);
+      return false; // Assume no data on error to be safe
+    }
   };
 
-  // Schedule next run with random interval
+  // Function to get 24 hour interval
+  const get24HourInterval = (): number => {
+    return 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+  };
+
+  // Schedule next run in 24 hours
   const scheduleNextRun = (callback: () => Promise<void>) => {
-    const nextInterval = getRandomInterval();
-    uiLog(`[SyncDb] Next check scheduled in ${Math.round(nextInterval / 1000 / 60)} minutes`);
+    const nextInterval = get24HourInterval();
+    const nextRunTime = new Date(Date.now() + nextInterval);
+    uiLog(`[SyncDb] Next check scheduled in 24 hours at ${nextRunTime.toLocaleString()}`);
     
     timeoutRef.current = setTimeout(async () => {
       await callback();
@@ -31,10 +64,17 @@ export const useSyncDb = () => {
     }, nextInterval);
   };
 
-  // Check if any cache entry has expired
+  // Check if any cache entry has expired based on timestamp
   const checkCacheExpiration = async (): Promise<boolean> => {
     try {
-      uiLog(`[SyncDb] Checking cache expiration...`);
+      uiLog(`[SyncDb] Checking cache expiration based on timestamps...`);
+      
+      // First check if user has any data at all
+      const hasData = await hasUserData();
+      if (!hasData) {
+        uiLog(`[SyncDb] No user data found, skipping cache expiration check`);
+        return false;
+      }
       
       // Check products - sample a few to avoid performance issues
       const productKeys = await indexedDbService.getAllProductKeys();
@@ -51,7 +91,7 @@ export const useSyncDb = () => {
             
             if (isExpired) {
               expiredCount++;
-              uiLog(`[SyncDb] Found expired product: ${productKeys[i]}, age: ${Math.round(age / 1000 / 60)} min`);
+              uiLog(`[SyncDb] Found expired product: ${productKeys[i]}, age: ${Math.round(age / 1000 / 60 / 60)} hours`);
             }
           }
         }
@@ -76,7 +116,7 @@ export const useSyncDb = () => {
             
             if (isExpired) {
               expiredCount++;
-              uiLog(`[SyncDb] Found expired offer for product: ${offerKeys[i]}, age: ${Math.round(age / 1000 / 60)} min`);
+              uiLog(`[SyncDb] Found expired offer for product: ${offerKeys[i]}, age: ${Math.round(age / 1000 / 60 / 60)} hours`);
             }
           }
         }
@@ -87,7 +127,7 @@ export const useSyncDb = () => {
         }
       }
 
-      uiLog(`[SyncDb] No expired cache found`);
+      uiLog(`[SyncDb] No expired cache found - all cached data is fresh`);
       return false;
     } catch (err: any) {
       uiLog(`[SyncDb] Cache check failed: ${err?.message}`);
@@ -107,29 +147,26 @@ export const useSyncDb = () => {
     const startTime = Date.now();
 
     try {
-      uiLog(`[SyncDb] Starting background check...`);
+      uiLog(`[SyncDb] Starting 24-hour background check...`);
       
-      // First check system version (fast)
-      const data = await getSystemVersion();
-      const versionChanged = checkSystemVersion(data.version);
-      
-      if (versionChanged) {
-        uiLog(`[SyncDb] System version changed, triggering session expiration`);
-        openSessionExpired();
+      // Check if user has any data at all
+      const hasData = await hasUserData();
+      if (!hasData) {
+        uiLog(`[SyncDb] No user data found, skipping cache check`);
         return;
       }
-
-      // Then check cache expiration (slower but sampled)
+      
+      // Check cache expiration based on timestamps
       const cacheExpired = await checkCacheExpiration();
       
       if (cacheExpired) {
-        uiLog(`[SyncDb] Expired cache detected, triggering session expiration`);
+        uiLog(`[SyncDb] Expired cache detected based on timestamp comparison, triggering session expiration`);
         openSessionExpired();
         return;
       }
 
       const duration = Date.now() - startTime;
-      uiLog(`[SyncDb] Background check completed in ${duration}ms`);
+      uiLog(`[SyncDb] 24-hour background check completed in ${duration}ms - all caches are fresh`);
 
     } catch (err: any) {
       uiLog(`[SyncDb] Background check failed: ${err?.message}`);
@@ -139,13 +176,22 @@ export const useSyncDb = () => {
   };
 
   useEffect(() => {
-    uiLog(`[SyncDb] Initializing background sync hook`);
+    uiLog(`[SyncDb] Initializing 24-hour background sync hook`);
     
-    // Run immediately on mount
-    performBackgroundCheck();
-
-    // Schedule subsequent runs with random intervals
-    scheduleNextRun(performBackgroundCheck);
+    // Check if user has data before starting periodic checks
+    hasUserData().then(hasData => {
+      if (hasData) {
+        uiLog(`[SyncDb] User has data, starting 24-hour periodic checks`);
+        // Run immediately on mount
+        performBackgroundCheck();
+        // Schedule subsequent runs every 24 hours
+        scheduleNextRun(performBackgroundCheck);
+      } else {
+        uiLog(`[SyncDb] No user data found, sync hook idle - will check once`);
+        // Run once to be safe (maybe user just cleared data)
+        performBackgroundCheck();
+      }
+    });
 
     // Cleanup on unmount
     return () => {

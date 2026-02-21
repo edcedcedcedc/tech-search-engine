@@ -25,7 +25,7 @@ const MobileBottomNav: React.FC = () => {
     [],
   );
 
-  const [isSafari, setIsSafari] = React.useState(false);
+  const [_isSafari, setIsSafari] = React.useState(false);
 
   React.useEffect(() => {
     const ua = navigator.userAgent.toLowerCase();
@@ -129,7 +129,7 @@ const MobileBottomNav: React.FC = () => {
         left: 0,
         right: 0,
         bottom: 0,
-        zIndex: 1100,
+        zIndex: 999,
         pb: isPWA ? "env(safe-area-inset-bottom)" : 0,
         fontWeight: 600,
         overflow: "hidden",

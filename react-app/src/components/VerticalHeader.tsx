@@ -13,6 +13,7 @@ import {
 /* import NavigateNextOutlinedIcon from "@mui/icons-material/NavigateNextOutlined";
 import NavigateBeforeOutlinedIcon from "@mui/icons-material/NavigateBeforeOutlined"; */
 import {
+  CategoryOutlined,
   ManageSearchOutlined as ManageSearchOutlinedIcon,
   SearchOutlined,
   BusinessCenterOutlined as ServicesOutlinedIcon,
@@ -97,7 +98,7 @@ const VerticalHeader: React.FC = () => {
       tooltip: t("Manage_Products_Tooltip"),
       icon: (
         <NavIcon>
-          <ManageSearchOutlinedIcon sx={iconSx} />
+          <CategoryOutlined sx={iconSx} />
         </NavIcon>
       ),
     },

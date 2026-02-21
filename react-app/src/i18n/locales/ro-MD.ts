@@ -336,9 +336,7 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
   Retrying_in: "Reîncercare în",
   Max_Retry_Exceeded: "Numărul maxim de reîncercări a fost depășit",
 
-  Error_403_Title: "Sesiunea a expirat",
-  Error_403_Message1: "Sesiunea ta nu mai este validă în timpul încărcării produselor sau ofertelor.",
-  Error_403_Message2: "Pentru a continua, trebuie să actualizezi produsele și ofertele din cache. Dacă resetezi toate căutările, acestea vor fi șterse, iar următoarele încărcări vor dura mai mult timp.",
+
   
 
   Offline_Title: "Ești offline",
@@ -354,6 +352,10 @@ Reset: "Reseteză",
 Refresh: "Actualizează",
 Refreshing: "Actualizare",
 Done: "Finalizat",
+Error_403_Title: "Sesiunea a expirat",
+Error_403_Title2: "Sesiunea a fost reînnoită",
+Error_403_Message1: "Sesiunea ta nu mai este validă în timpul încărcării produselor sau ofertelor.",
+Error_403_Message2: "Pentru a continua, trebuie să actualizezi produsele și ofertele. Dacă resetezi toate căutările, acestea vor fi șterse, iar următoarele încărcări vor dura mai mult timp.",
 
   // =======================
 // HOW TO PAGE
@@ -461,7 +463,7 @@ Subscription_Description_3: "Poți alege între abonament sau plată unică pent
 
   //Random
   More_Tooltip: "Mai multe",
-  Search_tips: "Trucuri pentru căutare",
+  Search_tips: "Sugestii pentru căutare",
   Popular_Categories: "Categorii populare",
   Updated_Today: "Actualizat pe",
   Products: "Produse",

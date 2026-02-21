@@ -21,10 +21,6 @@ const AppOverlays: React.FC = () => {
     >
       <SessionExpiredDialog />
       <Cookie />
-      {/* <Box sx={{ pointerEvents: "auto" }}>
-        <FloatingPaginator />
-      </Box> */}
-      {/*  <Bottom /> */}
       <NetworkListener />
       <ProductOffersTable />
     </Box>
