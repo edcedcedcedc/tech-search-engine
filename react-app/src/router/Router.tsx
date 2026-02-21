@@ -29,16 +29,15 @@ import ServicesMobile from "../views/mobile/Services";
 import QnaMobile from "../views/mobile/Qna";
 import ProductsMobile from "../views/mobile/Products";
 import { ScrollContainer } from "../components/ScrollContainer";
+import { useTranslation } from "react-i18next";
 
 const AppRoutes: React.FC = () => {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
-
+  const { i18n } = useTranslation();
   useSessionStart();
-  console.log("📱 AppRoutes - isMobile:", isMobile);
-  console.log("📱 AppRoutes - screen width:", window.innerWidth);
-  console.log("📱 AppRoutes - lg breakpoint:", theme.breakpoints.values.lg);
+
   return (
     <ErrorBoundary>
       <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
@@ -49,7 +48,7 @@ const AppRoutes: React.FC = () => {
                 path="/"
                 element={
                   <ScrollContainer route="/">
-                    <HomeMobile />
+                    <HomeMobile key={i18n.language} />
                   </ScrollContainer>
                 }
               />
@@ -57,7 +56,7 @@ const AppRoutes: React.FC = () => {
                 path="/products"
                 element={
                   <ScrollContainer route="/products">
-                    <ProductsMobile />
+                    <ProductsMobile key={i18n.language} />
                   </ScrollContainer>
                 }
               />
@@ -65,7 +64,7 @@ const AppRoutes: React.FC = () => {
                 path="/services"
                 element={
                   <ScrollContainer route="/services">
-                    <ServicesMobile />
+                    <ServicesMobile key={i18n.language} />
                   </ScrollContainer>
                 }
               />
@@ -73,7 +72,7 @@ const AppRoutes: React.FC = () => {
                 path="/faq"
                 element={
                   <ScrollContainer route="/faq">
-                    <QnaMobile />
+                    <QnaMobile key={i18n.language} />
                   </ScrollContainer>
                 }
               />

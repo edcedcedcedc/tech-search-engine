@@ -62,6 +62,17 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     }
   };
 
+  const translate = (param: string): string => {
+    if (i18n.language !== "ro") return param;
+
+    const translations: Record<string, string> = {
+      dark: "întunecat",
+      light: "luminos",
+    };
+
+    return translations[param] || param;
+  };
+
   const getThemeText = () => {
     switch (mode) {
       case "light":
@@ -69,7 +80,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       case "dark":
         return t("Dark_mode");
       case "system":
-        return t("System_theme") + (effectiveMode ? ` (${effectiveMode})` : "");
+        return t("System_theme") + "(" + translate(effectiveMode) + ")";
       default:
         return t("System_theme");
     }
@@ -134,14 +145,21 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           component="h1"
           sx={{
             fontWeight: 600,
-            fontSize: "1rem",
+            fontSize: {
+              xs: "0.75rem", // mobile - smaller
+              sm: "0.85rem", // 375px
+              md: "0.9rem", // 425px
+              lg: "0.95rem", // 768px
+              xl: "1rem", // 1024px
+              xxl: "1.05rem", // 1440px
+            },
             color: "text.primary",
+            lineHeight: 1.2,
           }}
         >
-          {t("Settings")}
+          {/*  {t("Settings")} */}
         </Typography>
       </Box>
-
       {/* Settings content */}
       <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
         <List disablePadding>
