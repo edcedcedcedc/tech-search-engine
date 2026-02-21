@@ -1,20 +1,36 @@
 // App.tsx
 import { Box, Container, useTheme, useMediaQuery } from "@mui/material";
 import { BrowserRouter } from "react-router-dom";
+import { useEffect } from "react";
 import Header from "./components/Header";
 import VerticalHeader from "./components/VerticalHeader";
 import AppRoutes from "./router/Router";
 import { Meta } from "./components/Meta";
-import { scrollableScrollbar } from "./styles/scrollbar";
 import AppOverlays from "./components/Overlays";
 import NotificationsContainer from "./components/NotificationContainer";
-import Test from "./components/Test";
+import { useHideOnScroll } from "./hooks/useHideOnScroll";
+import { useScrollContainer } from "./hooks/useScrollContainer";
+import { uiLog } from "./webhook/client/uiDebug";
 
 function App() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
 
+  // Get the active ScrollContainer
+  const scrollElement = useScrollContainer();
+
+  uiLog(
+    `[App] Rendering with isMobile: ${isMobile}, hasScrollElement: ${!!scrollElement}`,
+  );
+
+  // Use the hook with the ScrollContainer
+  const isHeaderVisible = useHideOnScroll({
+    scrollElement,
+    threshold: 10,
+  });
+
   console.log("📱 isMobile:", isMobile);
+  console.log("👆 Header visible:", isHeaderVisible);
 
   return (
     <>
@@ -30,7 +46,7 @@ function App() {
             bgcolor: "background.default",
           }}
         >
-          {/* HEADER - always present */}
+          {/* HEADER */}
           <Box
             id="app-header"
             sx={{
@@ -38,6 +54,15 @@ function App() {
               position: "sticky",
               top: 0,
               zIndex: theme.zIndex.appBar,
+              display: isMobile && !isHeaderVisible ? "none" : "block",
+              transform: isMobile && isHeaderVisible ? "translateY(0)" : "none",
+              transition:
+                isMobile && isHeaderVisible
+                  ? theme.transitions.create("transform", {
+                      duration: theme.transitions.duration.standard,
+                      easing: theme.transitions.easing.easeInOut,
+                    })
+                  : "none",
             }}
           >
             <Header />
@@ -50,21 +75,24 @@ function App() {
               flex: 1,
               position: "relative",
               overflow: "hidden",
+              minHeight: 0,
             }}
           >
             {/* Vertical Header - ONLY on desktop */}
             {!isMobile && <VerticalHeader />}
 
-            {/* MAIN CONTENT */}
+            {/* MAIN CONTENT - This just provides the container for ScrollContainer */}
             <Box
               component="main"
               sx={{
                 flex: 1,
-                //overflowY: "auto",
-                // Different padding/margin for mobile vs desktop
+                display: "flex",
+                flexDirection: "column",
+                minHeight: 0,
+                height: "100%",
                 ...(isMobile
                   ? {
-                      pb: 7, // Space for bottom nav on mobile
+                      pb: 7, // Space for bottom nav
                     }
                   : {
                       transition: theme.transitions.create("margin-left", {
@@ -77,7 +105,6 @@ function App() {
                       },
                     }),
                 position: "relative",
-                ...scrollableScrollbar(theme),
               }}
             >
               <Container
@@ -87,16 +114,18 @@ function App() {
                   maxWidth: isMobile ? "100%" : 800,
                   width: "100%",
                   mx: "auto",
-                  pt: 1,
+                  pt: isMobile && !isHeaderVisible ? 0 : 1,
                   px: isMobile ? 0 : 1,
                   height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
                 }}
               >
+                {/* AppRoutes renders ScrollContainer which handles actual scrolling */}
                 <AppRoutes />
               </Container>
             </Box>
           </Box>
-          {/*  <Test /> */}
           <NotificationsContainer />
           <AppOverlays />
         </Box>
