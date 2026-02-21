@@ -1,5 +1,5 @@
 // components/ScrollContainer.tsx
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useRef } from "react";
 import { Box, useTheme } from "@mui/material";
 import { scrollableScrollbar } from "../styles/scrollbar";
 
@@ -28,7 +28,7 @@ export const ScrollContainer: React.FC<ScrollContainerProps> = ({
   }, [route]);
 
   // Save scroll position on scroll
-  useEffect(() => {
+  useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
@@ -53,7 +53,7 @@ export const ScrollContainer: React.FC<ScrollContainerProps> = ({
         overflowX: "hidden",
         ...scrollableScrollbar(theme),
         // Smooth scrolling
-        scrollBehavior: "smooth",
+        scrollBehavior: "auto",
       }}
     >
       {children}
