@@ -12,6 +12,7 @@ import { useThemePreloadSetup } from "./hooks/useThemePreloadSetup";
 import { useHydrateLastQuery } from "./hooks/useHydrateLastQuery";
 import { useSyncDb } from "./hooks/useSyncDb";
 import React from "react";
+import { BrowserRouter } from "react-router-dom";
 
 const Root = () => {
   const effectiveMode = useThemeStore((state) => state.effectiveMode);
@@ -28,7 +29,9 @@ const Root = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <App />
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
     </ThemeProvider>
   );
 };

@@ -1,79 +1,100 @@
-// hooks/useHideOnScroll.ts
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { uiLog } from '../webhook/client/uiDebug';
+import { useScrollStore } from '../store/store';
 
 interface UseHideOnScrollOptions {
   threshold?: number;
   hideOnMount?: boolean;
-  scrollElement?: HTMLElement | null;
+ 
 }
 
 export const useHideOnScroll = (options: UseHideOnScrollOptions = {}) => {
-  const { threshold = 10, hideOnMount = false, scrollElement = null } = options;
-  
+  const { threshold = 10, hideOnMount = false } = options;
+  const location = useLocation();
+
   const [isVisible, setIsVisible] = useState(!hideOnMount);
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
+  const visibleRef = useRef(isVisible);
+  const scrollElement = useScrollStore((s) => s.currentScrollElement);
+   const elementRef = useRef<HTMLElement | null>(scrollElement);      
+  // Track visibility changes
+  useEffect(() => {
+    visibleRef.current = isVisible;
+    uiLog(`[useHideOnScroll] Visibility updated: ${isVisible}`);
+  }, [isVisible]);
 
-  uiLog(`[useHideOnScroll] Hook initialized with threshold: ${threshold}, hideOnMount: ${hideOnMount}, hasScrollElement: ${!!scrollElement}`);
+  // Reset on route change
+  useLayoutEffect(() => {
+  if (!scrollElement) {
+    uiLog(`[useHideOnScroll] Route change to ${location.pathname}, but no scroll element`);
+    return;
+  }
+
+  lastScrollY.current = scrollElement.scrollTop;
+  setIsVisible(true);
+  visibleRef.current = true;
+  uiLog(`[useHideOnScroll] Route change to ${location.pathname}, reset visibility and lastScrollY=${lastScrollY.current}`);
+}, [location.pathname, scrollElement]); 
 
   useEffect(() => {
-    if (!scrollElement) {
-      uiLog(`[useHideOnScroll] No scroll element yet, waiting...`);
+    const el = scrollElement;
+
+    if (!el) {
+      uiLog(`[useHideOnScroll] No scrollElement provided`);
       return;
     }
+    elementRef.current = el;
+    lastScrollY.current = el.scrollTop;
+    setIsVisible(true);
+    visibleRef.current = true;
 
-    const element = scrollElement;
-    
-    uiLog(`[useHideOnScroll] Setting up scroll listener on element: ${element.tagName} ${element.id ? '#'+element.id : ''}`);
 
-    // Log initial scroll position
-    uiLog(`[useHideOnScroll] Initial scrollTop: ${element.scrollTop}, scrollHeight: ${element.scrollHeight}, clientHeight: ${element.clientHeight}`);
 
-    const update = () => {
-      const currentScrollY = element.scrollTop;
-      const scrollDiff = currentScrollY - lastScrollY.current;
-      
-      uiLog(`[useHideOnScroll] 📊 Scroll update - current: ${currentScrollY}, last: ${lastScrollY.current}, diff: ${scrollDiff}`);
-      
-      if (currentScrollY > lastScrollY.current + threshold) {
-        uiLog(`[useHideOnScroll] 🔽 Scrolling down - hiding header`);
-        setIsVisible(false);
-      } else if (currentScrollY < lastScrollY.current - threshold) {
-        uiLog(`[useHideOnScroll] 🔼 Scrolling up - showing header`);
-        setIsVisible(true);
-      }
-      
-      if (currentScrollY < 10) {
-        if (!isVisible) {
-          uiLog(`[useHideOnScroll] ⬆️ At top - forcing header visible`);
+    const handleScroll = () => {
+      if (ticking.current) return;
+
+      ticking.current = true;
+
+      requestAnimationFrame(() => {
+        const currentY = el.scrollTop;
+        const diff = currentY - lastScrollY.current;
+
+        uiLog(`[useHideOnScroll] Scroll detected, currentY=${currentY}, diff=${diff}, lastScrollY=${lastScrollY.current}`);
+
+        if (diff > threshold && visibleRef.current) {
+          setIsVisible(false);
+          visibleRef.current = false;
+          uiLog(`[useHideOnScroll] Hiding header (scrolled down ${diff}px)`);
+        } else if (diff < -threshold && !visibleRef.current) {
+          setIsVisible(true);
+          visibleRef.current = true;
+          uiLog(`[useHideOnScroll] Showing header (scrolled up ${-diff}px)`);
         }
-        setIsVisible(true);
-      }
-      
-      lastScrollY.current = currentScrollY;
-      ticking.current = false;
+
+        if (currentY < 10 && !visibleRef.current) {
+          setIsVisible(true);
+          visibleRef.current = true;
+          uiLog(`[useHideOnScroll] Showing header because near top (currentY < 10)`);
+        }
+
+        lastScrollY.current = currentY;
+        ticking.current = false;
+      });
     };
 
-    const onScroll = (e: Event) => {
-      uiLog(`[useHideOnScroll] 🔄 SCROLL EVENT! target: ${(e.target as HTMLElement).id || 'unknown'}, scrollTop: ${element.scrollTop}`);
-      
-      if (!ticking.current) {
-        requestAnimationFrame(update);
-        ticking.current = true;
-      }
-    };
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    uiLog(`[useHideOnScroll] Scroll listener attached`);
 
-    element.addEventListener('scroll', onScroll, { passive: true });
-    
-    uiLog(`[useHideOnScroll] Scroll listener attached - waiting for scroll events...`);
+    // Initial check
+    handleScroll();
 
     return () => {
-      uiLog(`[useHideOnScroll] Cleaning up scroll listener`);
-      element.removeEventListener('scroll', onScroll);
+      el.removeEventListener('scroll', handleScroll);
+      uiLog(`[useHideOnScroll] Scroll listener removed`);
     };
-  }, [threshold, scrollElement]);
+  }, [scrollElement, threshold, location.pathname]);
 
-  uiLog(`[useHideOnScroll] Returning isVisible: ${isVisible}`);
   return isVisible;
 };

@@ -205,11 +205,11 @@ Happy_searching:
   Cookie_Reject_Button: "Respinge",
 
   //Meta 
-  Meta_Title: "Compară prețurile tech în Moldova",
+  Meta_Title: "Descoperire de produse tech prin inteligență artificială",
 
   Meta_Description: "Găsește cele mai bune oferte din magazinele din Moldova și compară prețurile rapid.",
 
-  Meta_Keywords: "electronice, compara preturi, Moldova, laptop, telefon",
+  Meta_Keywords: "electronice, compara preturi, Moldova, laptop, calculator, telefon",
 
   //Offers 
   Offers: "Oferte",

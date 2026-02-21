@@ -11,6 +11,19 @@ import { v4 as uuidv4 } from "uuid";
 import { transformSearchResult, validateAndFixCachedProduct } from "../types/Transformer"
 
 
+
+
+interface ScrollState {
+  currentScrollElement: HTMLElement | null;
+  setCurrentScrollElement: (el: HTMLElement | null) => void;
+}
+
+export const useScrollStore = create<ScrollState>()((set) => ({
+  currentScrollElement: null,
+  setCurrentScrollElement: (el) => set({ currentScrollElement: el }),
+}));
+
+
 /* =========================
    COMPARISON STORE
 ========================= */

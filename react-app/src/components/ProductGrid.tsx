@@ -1,4 +1,4 @@
-import React, { useLayoutEffect /* useState */ } from "react";
+import React, { useLayoutEffect } from "react";
 import {
   Box,
   Card,

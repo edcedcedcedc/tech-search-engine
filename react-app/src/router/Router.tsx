@@ -1,4 +1,5 @@
-import React, { Suspense, lazy } from "react";
+// router/Router.tsx
+import React, { Suspense, useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { Box, useMediaQuery, useTheme } from "@mui/material";
 import { AnimatePresence } from "framer-motion";
@@ -6,21 +7,6 @@ import { AnimatePresence } from "framer-motion";
 import ErrorBoundary from "../components/ErrorBoundary";
 import { useSessionStart } from "../hooks/useSessionStart";
 import { FullScreenLoader } from "../components/FullScreenLoader";
-/* import HowTo from "../views/Qna";
-
-import SourceMobile from "../views/mobile/Sources";
-
-const Home = lazy(() => import("../views/Home"));
-const Products = lazy(() => import("../views/Products"));
-const Disclaimer = lazy(() => import("../views/Disclaimer"));
-const PrivacyPolicy = lazy(() => import("../views/PrivacyPolicy"));
-const Contact = lazy(() => import("../views/Contact"));
-const About = lazy(() => import("../views/About"));
-const Source = lazy(() => import("../views/Source"));
-const TermsOfUse = lazy(() => import("../views/TermsOfUse"));
-const Services = lazy(() => import("../views/Services"));
-const Offers = lazy(() => import("../components/ProductOffersTable"));
- */
 
 // Mobile views
 import HomeMobile from "../views/mobile/Home";
@@ -30,13 +16,31 @@ import QnaMobile from "../views/mobile/Qna";
 import ProductsMobile from "../views/mobile/Products";
 import { ScrollContainer } from "../components/ScrollContainer";
 import { useTranslation } from "react-i18next";
+import { uiLog } from "../webhook/client/uiDebug"; // assuming you have this
 
-const AppRoutes: React.FC = () => {
+interface AppRoutesProps {
+  scrollRefs: Record<string, React.RefObject<HTMLDivElement | null>>;
+}
+
+const AppRoutes: React.FC<AppRoutesProps> = ({ scrollRefs }) => {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
   const { i18n } = useTranslation();
+
   useSessionStart();
+
+  // Debug log route and language changes
+  useEffect(() => {
+    uiLog(
+      `[AppRoutes] Mounted or route changed: ${location.pathname}, language=${i18n.language}`,
+    );
+    uiLog(
+      `[AppRoutes] Scroll refs: ${Object.keys(scrollRefs)
+        .map((k) => `${k}: ${!!scrollRefs[k].current}`)
+        .join(", ")}`,
+    );
+  }, [location.pathname, i18n.language, scrollRefs]);
 
   return (
     <ErrorBoundary>
@@ -47,7 +51,7 @@ const AppRoutes: React.FC = () => {
               <Route
                 path="/"
                 element={
-                  <ScrollContainer route="/">
+                  <ScrollContainer route="/" ref={scrollRefs["/"]}>
                     <HomeMobile key={i18n.language} />
                   </ScrollContainer>
                 }
@@ -55,7 +59,10 @@ const AppRoutes: React.FC = () => {
               <Route
                 path="/products"
                 element={
-                  <ScrollContainer route="/products">
+                  <ScrollContainer
+                    route="/products"
+                    ref={scrollRefs["/products"]}
+                  >
                     <ProductsMobile key={i18n.language} />
                   </ScrollContainer>
                 }
@@ -63,7 +70,10 @@ const AppRoutes: React.FC = () => {
               <Route
                 path="/services"
                 element={
-                  <ScrollContainer route="/services">
+                  <ScrollContainer
+                    route="/services"
+                    ref={scrollRefs["/services"]}
+                  >
                     <ServicesMobile key={i18n.language} />
                   </ScrollContainer>
                 }
@@ -71,7 +81,7 @@ const AppRoutes: React.FC = () => {
               <Route
                 path="/faq"
                 element={
-                  <ScrollContainer route="/faq">
+                  <ScrollContainer route="/faq" ref={scrollRefs["/faq"]}>
                     <QnaMobile key={i18n.language} />
                   </ScrollContainer>
                 }
@@ -79,7 +89,13 @@ const AppRoutes: React.FC = () => {
             </Routes>
           </AnimatePresence>
         </Suspense>
-        {isMobile && <BottomNav />}
+
+        {/* Bottom nav debug */}
+        {isMobile &&
+          (() => {
+            uiLog(`[AppRoutes] Rendering BottomNav for mobile`);
+            return <BottomNav />;
+          })()}
       </Box>
     </ErrorBoundary>
   );

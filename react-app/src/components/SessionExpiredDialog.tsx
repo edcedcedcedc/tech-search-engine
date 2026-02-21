@@ -364,7 +364,7 @@ export default function SessionExpiredDialog() {
               p: 2,
               borderTop: 1,
               borderColor: "divider",
-              backgroundColor: theme.palette.background.paper,
+              backgroundColor: theme.palette.background.default,
               display: "flex",
               justifyContent: "flex-end", // Align to the right like desktop
               gap: 1,

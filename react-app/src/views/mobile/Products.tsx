@@ -1,6 +1,14 @@
 // views/mobile/ProductsMobile.tsx
-import React from "react";
-import { Box, Typography, IconButton, Tooltip, alpha } from "@mui/material";
+import React, { useRef } from "react";
+import {
+  Box,
+  Typography,
+  IconButton,
+  Tooltip,
+  Fade,
+  useTheme,
+  useMediaQuery,
+} from "@mui/material";
 import NavigateNextOutlinedIcon from "@mui/icons-material/NavigateNextOutlined";
 import NavigateBeforeOutlinedIcon from "@mui/icons-material/NavigateBeforeOutlined";
 import ProductGrid from "../../components/ProductGrid";
@@ -9,6 +17,7 @@ import { useStore, useLastQueryStore } from "../../store/store";
 import { useTranslation } from "react-i18next";
 import { uiLog } from "../../webhook/client/uiDebug";
 import { useNavigate } from "react-router-dom";
+import { useHideOnScroll } from "../../hooks/useHideOnScroll";
 
 const ProductsMobile: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -22,6 +31,15 @@ const ProductsMobile: React.FC = () => {
   const products = useStore((s) => s.aggregatedProducts);
   const hasSearched = useStore((s) => s.hasSearched);
   const searchError = useStore((s) => s.searchError);
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+  // Use the hook to control visibility of the product header
+
+  const isHeaderVisible = useHideOnScroll({
+    threshold: 10,
+    hideOnMount: false,
+  });
 
   const getQueryToUse = () => {
     const lastQuery = useLastQueryStore.getState().lastQuery;
@@ -85,75 +103,90 @@ const ProductsMobile: React.FC = () => {
     emptyStateType = "noResults";
 
   return (
-    <Box sx={{ p: 2, pb: 8 }}>
+    <Box
+      sx={{
+        p: !isMobile ? 2 : isHeaderVisible ? 2 : 1.9,
+        pb: 8,
+        // Use theme transitions for consistency with your app
+        transition: theme.transitions.create(["padding"], {
+          duration: theme.transitions.duration.standard, // 300ms
+          easing: theme.transitions.easing.easeInOut,
+        }),
+        // Add will-change hint for better performance
+        willChange: "padding",
+      }}
+    >
       {/* Fixed header section */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: showEmptyState ? 0 : 4,
-          position: "sticky",
-          top: 0,
-          bgcolor: "background.default",
-          zIndex: 10,
-          mt: -1,
-        }}
-      >
-        <Typography
-          variant="h5"
+      <Fade in={isHeaderVisible} timeout={300}>
+        <Box
+          ref={headerRef}
           sx={{
-            fontWeight: 600,
-            fontSize: "1.5rem",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: showEmptyState ? 0 : 4,
+            position: "sticky",
+            top: 0,
+            bgcolor: "background.default",
+            zIndex: 10,
+            mt: -1,
+            transition: "opacity 0.2s ease-in-out",
           }}
         >
-          {t("Products")}
-        </Typography>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 600,
+            }}
+          >
+            {t("Products")}
+          </Typography>
 
-        {showPagination && (
-          <Box sx={{ display: "flex", gap: 0.5 }}>
-            <Tooltip title={t("Previous_page_Tooltip")} enterDelay={500}>
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={handlePrev}
-                  disabled={currentPage <= 1 || isLoading}
-                  sx={{
-                    bgcolor: "background.paper",
-                    boxShadow: 1,
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                    },
-                    opacity: currentPage <= 1 || isLoading ? 0.5 : 1,
-                  }}
-                >
-                  <NavigateBeforeOutlinedIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
+          {showPagination && (
+            <Box sx={{ display: "flex", gap: 0.5 }}>
+              <Tooltip title={t("Previous_page_Tooltip")} enterDelay={500}>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={handlePrev}
+                    disabled={currentPage <= 1 || isLoading}
+                    sx={{
+                      bgcolor: "background.paper",
+                      boxShadow: 1,
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                      },
+                      opacity: currentPage <= 1 || isLoading ? 0.5 : 1,
+                    }}
+                  >
+                    <NavigateBeforeOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
 
-            <Tooltip title={t("Next_page_Tooltip")} enterDelay={500}>
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={handleNext}
-                  disabled={currentPage >= totalPages || isLoading}
-                  sx={{
-                    bgcolor: "background.paper",
-                    boxShadow: 1,
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                    },
-                    opacity: currentPage >= totalPages || isLoading ? 0.5 : 1,
-                  }}
-                >
-                  <NavigateNextOutlinedIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-          </Box>
-        )}
-      </Box>
+              <Tooltip title={t("Next_page_Tooltip")} enterDelay={500}>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={handleNext}
+                    disabled={currentPage >= totalPages || isLoading}
+                    sx={{
+                      bgcolor: "background.paper",
+                      boxShadow: 1,
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                      },
+                      opacity: currentPage >= totalPages || isLoading ? 0.5 : 1,
+                    }}
+                  >
+                    <NavigateNextOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </Box>
+          )}
+        </Box>
+      </Fade>
 
       {/* Content */}
       {!isLoading && showEmptyState ? (

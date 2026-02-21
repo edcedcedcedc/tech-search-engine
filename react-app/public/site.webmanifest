@@ -1,7 +1,7 @@
 {
-  "name": "Descoperire de produse prin inteligență artificială",
+  "name": "Descoperire de produse tech prin inteligență artificială",
   "short_name":"Strugure",
-  "description": "Găsiți rapid produse din mai multe magazine online",
+  "description": "Găsește cele mai bune oferte din magazinele din Moldova și compară prețurile rapid.",
   "start_url": "/index.html",
   "scope": "/",
   "display": "standalone",
