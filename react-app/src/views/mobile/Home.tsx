@@ -1,31 +1,54 @@
-// views/mobile/HomeMobile.tsx
 import React from "react";
-import { Box, Typography, IconButton, Stack, Divider } from "@mui/material";
+import {
+  Box,
+  Typography,
+  IconButton,
+  Stack,
+  Divider,
+  CircularProgress,
+  Chip,
+} from "@mui/material";
 import { SearchAutocomplete } from "../../components/SearchAutocomplete";
 import SearchIcon from "@mui/icons-material/Search";
 import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import { t } from "i18next";
 import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
+
+import { useSystemStatusStore } from "../../store/store";
+import i18n from "../../i18n";
+import { t } from "i18next";
+
 const HomeMobile: React.FC = () => {
   const [showTips, setShowTips] = React.useState(false);
+  const { refreshInfo, isLoading } = useSystemStatusStore();
+
+  // Format time depending on language
+  const formatTime = (isoString?: string) => {
+    if (!isoString) return "";
+    const lang = i18n.language;
+    return new Date(isoString).toLocaleTimeString(
+      lang === "en" ? "en-US" : "ro-MD",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: lang === "en",
+      },
+    );
+  };
 
   return (
     <Box sx={{ p: 2, pb: 8 }}>
-      {/* Centered Header Text */}
+      {/* Header */}
       <Box sx={{ textAlign: "center", mb: 4 }}>
         <Typography
           variant="h5"
           sx={{
             fontWeight: 600,
-            fontSize: {
-              xs: "1.1rem",
-              sm: "1.2rem",
-              md: "1.3rem",
-            },
+            fontSize: { xs: "1.1rem", sm: "1.2rem", md: "1.3rem" },
             mb: 1,
             color: "text.primary",
           }}
@@ -35,11 +58,7 @@ const HomeMobile: React.FC = () => {
         <Typography
           variant="body2"
           sx={{
-            fontSize: {
-              xs: "0.8rem",
-              sm: "0.85rem",
-              md: "0.9rem",
-            },
+            fontSize: { xs: "0.8rem", sm: "0.85rem", md: "0.9rem" },
             color: "text.secondary",
             lineHeight: 1.4,
           }}
@@ -48,27 +67,36 @@ const HomeMobile: React.FC = () => {
         </Typography>
       </Box>
 
-      {/* Search Section */}
+      {/* Search */}
       <Box sx={{ mb: 4 }}>
         <SearchAutocomplete />
-
-        <Box
-          sx={{
-            display: "flex",
-
-            gap: 2,
-            mt: 2,
-          }}
-        >
-          <AccessTimeIcon sx={{ fontSize: 18, color: "text.secondary" }} />
-          <Typography variant="body2" color="text.secondary">
-            {t("Updated_Today")} • 234 {t("Products")}
-          </Typography>
+        <Box sx={{ display: "flex", gap: 2, mt: 2, alignItems: "center" }}>
+          {isLoading ? (
+            <CircularProgress size={16} />
+          ) : refreshInfo?.finished_at ? (
+            <>
+              <AccessTimeIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+              <Typography variant="body2" color="text.secondary">
+                {`${t("Updated_at")} ${formatTime(refreshInfo.finished_at)} • ${
+                  refreshInfo.updated ?? 0
+                } ${t("Refreshed_total")} • ${refreshInfo.total ?? 0} ${t("total")}`}
+              </Typography>
+            </>
+          ) : (
+            <Chip
+              icon={<HourglassEmptyIcon />}
+              label={t("Preparing_data")}
+              size="small"
+              variant="outlined"
+              sx={{ opacity: 0.7 }}
+            />
+          )}
         </Box>
       </Box>
+
       <Divider sx={{ my: 3 }} />
 
-      {/* Expandable Tips */}
+      {/* Tips */}
       <Box>
         <Box
           onClick={() => setShowTips(!showTips)}

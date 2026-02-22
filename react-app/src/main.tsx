@@ -13,12 +13,14 @@ import { useHydrateLastQuery } from "./hooks/useHydrateLastQuery";
 import { useSyncDb } from "./hooks/useSyncDb";
 import React from "react";
 import { BrowserRouter } from "react-router-dom";
+import { useCrawlerStatusPoll } from "./hooks/useCrawlerStatusPoll";
 
 const Root = () => {
   const effectiveMode = useThemeStore((state) => state.effectiveMode);
   const theme = React.useMemo(() => getTheme(effectiveMode), [effectiveMode]);
   usePrefetch();
   useSyncDb();
+  useCrawlerStatusPoll();
   /*  useBackgroundSyncDb(); */
   useHydrateLastQuery();
   useThemePreloadSetup();

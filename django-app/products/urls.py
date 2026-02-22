@@ -9,17 +9,15 @@ from products.search.layer1 import (
 from products.search.autocomplete import (
     AutocompleteAPIView,
 )
-
 from products.system_state.version import (
     SystemVersionAPIView,
 )
 from products.system_state.session import (
     FlushSessionAPIView,
 )
-from products.compare.compare import (
-    ProductComparisonView,
+from products.system_state.crawler_status import (
+    CrawlerStatusAPIView,
 )
-
 from products.views import CollectEmailAPIView, RootAPIView
 
 urlpatterns = [
@@ -34,5 +32,9 @@ urlpatterns = [
     path("api/email/", CollectEmailAPIView.as_view(), name="collect-email"),
     path("api/system/version/", SystemVersionAPIView.as_view(), name="system-version"),
     path("api/session/flush/", FlushSessionAPIView.as_view(), name="session-flush"),
-    path("api/compare/", ProductComparisonView.as_view(), name="product-compare"),
+    path(
+        "api/system/crawler-status/",
+        CrawlerStatusAPIView.as_view(),
+        name="crawler-status",
+    ),
 ]

@@ -129,8 +129,8 @@ class ProductOffersAPIView(APIView):
                     "url": o.get("url", ""),
                     "brand": o.get("brand", ""),
                     "in_stock": o.get("in_stock", True),
-                    "offer_score": o.get("offer_score", 0.0),
-                    "price_history": o.get("price_history", []),
+                    # "offer_score": o.get("offer_score", 0.0),
+                    # "price_history": o.get("price_history", []),
                     "price_trend_preview": o.get("price_trend_preview", None),
                 }
                 for o in offers_slice
@@ -146,7 +146,7 @@ class ProductOffersAPIView(APIView):
                     "t_variant": o.get("t_variant", {}),
                     "shop": o["shop"],
                     "price": o["price"],
-                    "offer_score": o.get("offer_score", 0.0),
+                    # "offer_score": o.get("offer_score", 0.0),
                 }
                 for o in offers_slice
             ]

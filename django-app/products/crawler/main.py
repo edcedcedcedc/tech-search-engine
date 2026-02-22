@@ -1,10 +1,11 @@
+import json
 import time
 import random
 import traceback
 from threading import Thread
 from queue import Queue, Empty
 from django.utils import timezone
-from products.models import Product
+from products.models import Product, SystemState
 from products.crawler.manager import DatabaseManager
 from products.crawler.settings import FetchSettings
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
@@ -129,6 +130,8 @@ class ShopCrawlerEngine:
             if "xstore" in crawl_shops and not filter_category and max_pages == 999:
                 self.handle_xstore_missing_products()
 
+            self.finalize_crawl()
+
             shop_crawler_log(
                 "Saved all created/updated records for downstream processing"
             )
@@ -251,3 +254,17 @@ class ShopCrawlerEngine:
             product.save(using=UPDATE_DB)
 
         shop_crawler_log("XSTORE missing detection finished")
+
+    def finalize_crawl(self):
+        payload = {
+            "created": self.total_created,
+            "updated": self.total_updated,
+            "total": self.total_created + self.total_updated,
+            "finished_at": timezone.now().isoformat(),
+        }
+
+        SystemState.objects.update_or_create(
+            key="crawler_last_run", defaults={"value": json.dumps(payload)}
+        )
+
+        shop_crawler_log(f"CRAWLER FINALIZED: {payload}")

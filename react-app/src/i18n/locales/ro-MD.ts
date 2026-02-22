@@ -465,7 +465,9 @@ Subscription_Description_3: "Poți alege între abonament sau plată unică pent
   More_Tooltip: "Mai multe",
   Search_tips: "Sugestii pentru căutare",
   Popular_Categories: "Categorii populare",
-  Updated_Today: "Actualizat pe",
+  Updated_at: "Actualizat la",
+  Refreshed_total: "actualizate",
+  Total: "total",
   Products: "Produse",
   Phones: "Celulare",
   Tablets: "Tablete",
@@ -475,6 +477,7 @@ Subscription_Description_3: "Poți alege între abonament sau plată unică pent
   Diversity: "Introduceți câteva cuvinte pentru o căutare mai diversă",
   Compare: "Comparați oferte cu același nume si variantă din magazine diferite",
   Visibility_off: "Chiar dacă nu a fost găsită nicio sugestie, oricum căutați",
+  Preparing_data: "Pregătirea datelor",
 
   Clickable_Sparkline: "Apasă pe orice grafic pentru a vedea istoricul prețului, disponibilitatea și ultima actualizare",
   In_Stock: "În stoc",

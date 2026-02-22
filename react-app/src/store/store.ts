@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { uiLog } from "../webhook/client/uiDebug";
 import type { AggregatedProduct } from "../types/AggregatedProduct";
-import { getProductOffers as apiGetProductOffers } from "../api/searchApi";
+import { getProductOffers as apiGetProductOffers, getCrawlerStatus } from "../api/searchApi";
 import { searchProducts as apiSearchProducts } from "../api/searchApi";
 import i18n from "../i18n";
 import { indexedDbService } from "../services/indexedDb";
@@ -11,7 +11,79 @@ import { v4 as uuidv4 } from "uuid";
 import { transformSearchResult, validateAndFixCachedProduct } from "../types/Transformer"
 
 
+type RefreshInfo = 
+{
+  status: string,
+  finished_at?: string;
+  updated?: number;
+  total?: number;
+  system_version?: number
+}
 
+
+interface SystemStatusState {
+  refreshInfo: RefreshInfo | null;
+  isLoading: boolean;
+  lastFetchedAt: string | null;
+
+  fetchStatus: (showSpinner?: boolean) => Promise<void>; // allow optional spinner
+}
+
+export const useSystemStatusStore = create<SystemStatusState>()(
+  persist(
+    (set, get) => ({
+      refreshInfo: null,
+      isLoading: false,
+      lastFetchedAt: null,
+
+      fetchStatus: async (showSpinner = true) => {
+        if (showSpinner) set({ isLoading: true });
+
+        try {
+          const data = await getCrawlerStatus();
+
+          const newData =
+            data.status === "completed"
+              ? {
+                  status: data.status,
+                  finished_at: data.finished_at,
+                  updated: data.updated,
+                  total: data.total,
+                }
+              : get().refreshInfo;
+                
+          set({
+            refreshInfo: newData,
+            isLoading: false,
+            lastFetchedAt: new Date().toISOString(),
+          });
+        } catch (err) {
+          uiLog(`[SystemStatusStore] Failed to fetch status`);
+          const fallback =
+            get().refreshInfo ?? {
+              status: "pending",
+              finished_at: new Date().toISOString(),
+              updated: 120,
+              total: 5000,
+            };
+          set({
+            refreshInfo: fallback,
+            isLoading: false,
+            lastFetchedAt: get().lastFetchedAt ?? new Date().toISOString(),
+          });
+        }
+      },
+    }),
+    {
+      name: "crawler-status-store",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        refreshInfo: state.refreshInfo,
+        lastFetchedAt: state.lastFetchedAt,
+      }),
+    }
+  )
+);
 
 interface ScrollState {
   currentScrollElement: HTMLElement | null;

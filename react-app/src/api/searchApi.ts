@@ -445,3 +445,29 @@ export const compareProducts = async (
     throw err;
   }
 };
+
+
+/**
+ * Get crawler status
+ */
+export const getCrawlerStatus = async (): Promise<{
+  status: string;
+  created?: number;
+  updated?: number;
+  total?: number;
+  finished_at?: string;
+  system_version?: number;
+}> => {
+  uiLog(`[API] getCrawlerStatus | REQUEST`);
+
+  try {
+    const { data } = await api.get("/system/crawler-status/");
+    uiLog(
+      `[API] getCrawlerStatus | RESPONSE | status=${data.status} | version=${data.system_version}`
+    );
+    return data;
+  } catch (err: any) {
+    uiLog(`[API] getCrawlerStatus | ERROR | ${err?.message}`);
+    throw err;
+  }
+};
