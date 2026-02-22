@@ -297,7 +297,7 @@ export default function ProductOffersTable() {
     <Drawer
       anchor="right"
       open={open}
-      elevation={0}
+      elevation={3}
       onClose={() => {
         uiLog("Drawer closed");
         close();
@@ -778,7 +778,6 @@ export default function ProductOffersTable() {
       <Popover
         open={openPopover}
         anchorEl={anchorEl}
-        elevation={1}
         onClose={handleClosePopover}
         sx={{
           // Scrollbar styles

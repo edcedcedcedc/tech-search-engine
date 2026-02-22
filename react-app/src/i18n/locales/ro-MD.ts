@@ -478,8 +478,14 @@ Subscription_Description_3: "Poți alege între abonament sau plată unică pent
 
   Clickable_Sparkline: "Apasă pe orice grafic pentru a vedea istoricul prețului, disponibilitatea și ultima actualizare",
   In_Stock: "În stoc",
-  Updated: "Actualizat"
-};
+  Updated: "Actualizat",
+
+  //search 
+  Search: "Căutare",
+  No_results_for_this_search: "Niciun rezultat pentru această căutare",
+  Your_products_will_appear_here: "Produsele dvs. vor apărea aici",
+  No_products: "Niciun produs"
+  };
 
 
 

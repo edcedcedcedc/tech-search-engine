@@ -153,6 +153,13 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Privacy_Contact_Body:
     "For privacy-related questions, you can contact us via the contact page.",
 
+    //Meta
+    Meta_Title: "Discovering tech products through artificial intelligence",
+
+    Meta_Description: "Find the best deals in Moldovan stores and compare prices quickly.",
+
+    Meta_Keywords: "electronics, compare prices, Moldova, laptop, computer, phone",
+
   // Product
   See_product: "See product",
 
@@ -407,6 +414,14 @@ Subscription_Description_3: "You can choose between subscription access or a one
   Clickable_Sparkline: "Click on any sparkline to see price history, stock status, and last update time",
   In_Stock: "In stock",
   Updated: "Updated",
+
+  //Empty state 
+  Search: "Search",
+  No_results_for_this_search: "No results for this search",
+  Your_products_will_appear_here: "Your products will appear here",
+  No_products: "No products"
+
+
 };
 
 export default enUS;

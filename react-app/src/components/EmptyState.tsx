@@ -54,10 +54,10 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       default:
         return {
           icon: <InventoryIcon />,
-          title: t("No products"),
+          title: t("No_products"),
           description: hasSearched
-            ? t("No results for this search")
-            : t("Your products will appear here"),
+            ? t("No_results_for_this_search")
+            : t("Your_products_will_appear_here"),
           actionLabel: actionLabel || (!hasSearched ? t("Search") : undefined),
         };
     }

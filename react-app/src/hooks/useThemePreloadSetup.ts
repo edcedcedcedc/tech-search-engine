@@ -3,21 +3,43 @@ import { useTheme } from "@mui/material";
 import { useThemeStore } from "../store/store";
 import { useStore } from "../store/store";
 
-const colors: Record<"light" | "dark", string> = {
-  light: "#fafafa",
-  dark: "#0d1117",
+// Hardcoded color dictionary based on your logs
+const drawerColors = {
+  dark: {
+    left: {
+      open: "#161b22",
+      close: "#0d1117"
+    },
+    right: {
+      open: "#292e34",
+      close: "#0d1117"
+    }
+  },
+  light: {
+    left: {
+      open: "#ffffff",
+      close: "#fafafa"
+    },
+    right: {
+      open: "#ffffff",
+      close: "#fafafa"
+    }
+  }
 };
 
 export const useThemePreloadSetup = () => {
   const theme = useTheme();
   const { mode, effectiveMode } = useThemeStore();
-  const test1 = useStore((s) => s.drawerOpen);
-  const test2 = useStore((s) => s.rightDrawerOpen);
-  const drawerOpen = test1 || test2
+  const leftDrawerOpen = useStore((s) => s.drawerOpen);
+  const rightDrawerOpen = useStore((s) => s.rightDrawerOpen);
+  const drawerOpen = leftDrawerOpen || rightDrawerOpen;
+  
   console.log("🔵 [ThemePreloadSetup] ========== HOOK INITIALIZED ==========");
   console.log("🔵 [ThemePreloadSetup] Initial state:", {
     mode,
     effectiveMode,
+    leftDrawerOpen,
+    rightDrawerOpen,
     drawerOpen,
     timestamp: new Date().toISOString()
   });
@@ -31,233 +53,89 @@ export const useThemePreloadSetup = () => {
     img.onerror = (err) => console.error("🖼️ [ThemePreloadSetup] Icon failed to load", err);
   }, []);
 
-  // Function to get drawer color with enhanced logging
-  const getDrawerColor = (): string => {
-    console.log("🎨 [ThemePreloadSetup] getDrawerColor() called");
-    console.log("🎨 [ThemePreloadSetup] Current effectiveMode:", effectiveMode);
-    
-    // Try multiple selectors for better compatibility
-    const selectors = [
-      '.MuiDrawer-paper',
-      '[class*="MuiDrawer-paper"]',
-      '.MuiPaper-root'
-    ];
-    
-    for (const selector of selectors) {
-      console.log(`🎨 [ThemePreloadSetup] Trying selector: "${selector}"`);
-      const drawerElement = document.querySelector(selector);
-      
-      if (drawerElement) {
-        console.log(`🎨 [ThemePreloadSetup] ✅ Found element with selector: "${selector}"`);
-        console.log(`🎨 [ThemePreloadSetup] Element classes:`, drawerElement.className);
-        
-        const computedStyle = window.getComputedStyle(drawerElement);
-        let color = computedStyle.backgroundColor;
-        
-        console.log(`🎨 [ThemePreloadSetup] Raw computed backgroundColor:`, color);
-        console.log(`🎨 [ThemePreloadSetup] Also checking other color properties:`);
-        console.log(`   - background:`, computedStyle.background);
-        console.log(`   - backgroundImage:`, computedStyle.backgroundImage);
-        
-        // Convert rgb/rgba to hex if needed
-        if (color.startsWith('rgb')) {
-          console.log(`🎨 [ThemePreloadSetup] Converting RGB to hex`);
-          const rgb = color.match(/\d+/g);
-          if (rgb && rgb.length >= 3) {
-            const hex = '#' + rgb.slice(0, 3).map(x => {
-              const hexVal = parseInt(x).toString(16);
-              return hexVal.length === 1 ? '0' + hexVal : hexVal;
-            }).join('');
-            console.log(`🎨 [ThemePreloadSetup] Converted: ${color} → ${hex}`);
-            console.log(`🎨 [ThemePreloadSetup] ✅ FINAL DRAWER COLOR: ${hex}`);
-            return hex;
-          }
-        } else {
-          console.log(`🎨 [ThemePreloadSetup] ✅ FINAL DRAWER COLOR (already hex): ${color}`);
-        }
-        return color;
-      } else {
-        console.log(`🎨 [ThemePreloadSetup] ❌ No element found with selector: "${selector}"`);
-      }
-    }
-    
-    console.log("🎨 [ThemePreloadSetup] ⚠️ No drawer element found with any selector, using fallback");
-    const fallbackColor = theme.palette.background.paper;
-    console.log("🎨 [ThemePreloadSetup] Fallback color from theme:", fallbackColor);
-    console.log("🎨 [ThemePreloadSetup] Theme palette details:", {
-      paper: theme.palette.background.paper,
-      default: theme.palette.background.default,
-      mode: theme.palette.mode
-    });
-    
-    return fallbackColor;
-  };
-
-  // Apply theme and remove preloader
+  // Handle meta theme color based on drawer state - NO DOM SCANNING
   useEffect(() => {
-    console.log("\n🔴 [ThemePreloadSetup] ========== EFFECT RUNNING ==========");
-    console.log("🔴 [ThemePreloadSetup] Effect triggered with dependencies:", {
-      mode,
-      effectiveMode,
-      drawerOpen,
-      theme: theme.palette.mode,
-      timestamp: new Date().toISOString()
-    });
-
-    // Log all possible colors we might use
-    console.log("🔴 [ThemePreloadSetup] Available colors:", {
-      fromColorsObject: {
-        light: colors.light,
-        dark: colors.dark,
-        current: colors[effectiveMode]
-      },
-      fromTheme: {
-        paper: theme.palette.background.paper,
-        default: theme.palette.background.default
-      }
-    });
+    console.log("\n🔴 [ThemePreloadSetup] ========== META COLOR UPDATE ==========");
     
-    const bgColor = colors[effectiveMode];
-    console.log("🔴 [ThemePreloadSetup] Selected bgColor:", bgColor);
+    // Determine which drawer is open (prioritize right drawer if both are open)
+    const activeDrawerType = rightDrawerOpen ? 'right' : (leftDrawerOpen ? 'left' : null);
     
-    // Function to update meta tag with current drawer state
-    const updateMetaTag = (isRetry: boolean = false) => {
-      console.log(`\n🟡 [ThemePreloadSetup] ${isRetry ? 'RETRY' : 'INITIAL'} updateMetaTag()`);
-      console.log(`🟡 [ThemePreloadSetup] drawerOpen:`, drawerOpen);
-      
-      let metaColor;
-      let colorSource = '';
-      
-      if (drawerOpen) {
-        console.log("🟡 [ThemePreloadSetup] Drawer is OPEN, getting drawer color...");
-        const drawerColor = getDrawerColor();
-        metaColor = drawerColor;
-        colorSource = 'drawer (computed)';
-        console.log("🟡 [ThemePreloadSetup] Drawer color result:", drawerColor);
-      } else {
-        console.log("🟡 [ThemePreloadSetup] Drawer is CLOSED, using bgColor");
-        metaColor = bgColor;
-        colorSource = 'bgColor (hardcoded)';
-        console.log("🟡 [ThemePreloadSetup] Background color:", bgColor);
-      }
-
-      console.log("🟡 [ThemePreloadSetup] Meta color decision:", {
-        drawerOpen,
-        colorSource,
-        chosen: metaColor,
-        drawerColor: drawerOpen ? metaColor : 'N/A',
-        defaultBg: bgColor,
-        mode,
-        effectiveMode
-      });
-
-      const metaThemeColor = document.querySelector("meta[name=theme-color]");
-      if (metaThemeColor) {
-        const oldColor = metaThemeColor.getAttribute("content");
-        console.log("🟡 [ThemePreloadSetup] Found meta tag, current color:", oldColor);
-        console.log("🟡 [ThemePreloadSetup] Setting meta tag to:", metaColor);
-        metaThemeColor.setAttribute("content", metaColor);
-        
-        // Verify it was set
-        const newColor = metaThemeColor.getAttribute("content");
-        console.log("🟡 [ThemePreloadSetup] Meta tag now:", newColor);
-        
-        if (oldColor !== newColor) {
-          console.log("🟡 [ThemePreloadSetup] ✅ Meta tag updated successfully");
-        } else {
-          console.log("🟡 [ThemePreloadSetup] ⚠️ Meta tag did not change");
-        }
-      } else {
-        console.warn("🟡 [ThemePreloadSetup] ❌ Meta theme-color tag not found!");
-      }
-    };
-
-    // Update immediately
-    console.log("🔴 [ThemePreloadSetup] Running immediate update...");
-    updateMetaTag(false);
-
-    // If drawer just opened, retry after a short delay to ensure DOM is ready
-    if (drawerOpen) {
-      console.log("🔴 [ThemePreloadSetup] ⏰ Drawer opened, scheduling retry in 50ms...");
-      const timeoutId = setTimeout(() => {
-        console.log("🔴 [ThemePreloadSetup] ⏰ Retry timeout fired, checking drawer color again");
-        console.log("🔴 [ThemePreloadSetup] Current drawerOpen state:", drawerOpen);
-        updateMetaTag(true);
-      }, 10);
-      
-      return () => {
-        console.log("🔴 [ThemePreloadSetup] Cleaning up retry timeout");
-        clearTimeout(timeoutId);
-      };
+    let metaColor;
+    
+    if (activeDrawerType && effectiveMode) {
+      // Use hardcoded colors based on effectiveMode and drawer type
+      metaColor = drawerColors[effectiveMode][activeDrawerType].open;
+      console.log(`🔴 [ThemePreloadSetup] ${activeDrawerType} drawer OPEN - using color:`, metaColor);
+    } else {
+      // No drawer open - use background color
+      metaColor = effectiveMode === 'dark' ? '#0d1117' : '#fafafa';
+      console.log("🔴 [ThemePreloadSetup] No drawer open - using background color:", metaColor);
     }
-
-    // Continue with rest of theme setup
-    console.log("🔴 [ThemePreloadSetup] Setting document background to:", bgColor);
-    document.documentElement.style.backgroundColor = bgColor;
-    document.body.style.backgroundColor = bgColor;
     
-    console.log("🔴 [ThemePreloadSetup] Setting data-theme to:", mode);
-    document.documentElement.setAttribute("data-theme", mode);
-    console.log("🔴 [ThemePreloadSetup] Setting color-scheme to:", effectiveMode);
-    document.documentElement.style.colorScheme = effectiveMode;
-
-    // Overscroll style
-    console.log("🔴 [ThemePreloadSetup] Creating/updating overscroll style");
-    const styleEl = document.createElement("style");
-    styleEl.id = "theme-overscroll-style";
-    styleEl.innerHTML = `
-      html {
-        background-color: ${bgColor} !important;
-        color-scheme: ${effectiveMode};
-      }
-      body {
-        background-color: ${bgColor} !important;
-      }
-      @media (hover: none) and (pointer: coarse) {
-        body {
-          background-attachment: fixed;
-          background-image: linear-gradient(${bgColor}, ${bgColor});
-        }
-      }
-    `;
-
-    const existingStyle = document.getElementById("theme-overscroll-style");
-    if (existingStyle) {
-      console.log("🔴 [ThemePreloadSetup] Removing existing overscroll style");
-      existingStyle.remove();
+    // Update meta tag
+    const metaThemeColor = document.querySelector("meta[name=theme-color]");
+    if (metaThemeColor) {
+      const oldColor = metaThemeColor.getAttribute("content");
+      console.log("🔴 [ThemePreloadSetup] Meta tag changing:", oldColor, "→", metaColor);
+      metaThemeColor.setAttribute("content", metaColor);
+    } else {
+      console.warn("🔴 [ThemePreloadSetup] Meta theme-color tag not found!");
     }
-    document.head.appendChild(styleEl);
-    console.log("🔴 [ThemePreloadSetup] Added new overscroll style");
+    
+    console.log("🔴 [ThemePreloadSetup] ========== META UPDATE FINISHED ==========\n");
+    
+  }, [effectiveMode, leftDrawerOpen, rightDrawerOpen]); // Use effectiveMode
 
-    // Preloader
-    console.log("🔴 [ThemePreloadSetup] Checking for preloader");
+  // Preloader fadeout only
+  useEffect(() => {
+    console.log("\n🔴 [ThemePreloadSetup] ========== PRELOADER FADEOUT ==========");
+    
     const preloader = document.getElementById("preloader");
     if (preloader) {
-      console.log("🔴 [ThemePreloadSetup] Found preloader, fading out");
-      console.log("🔴 [ThemePreloadSetup] Preloader current opacity:", preloader.style.opacity);
       preloader.style.transition = "opacity 0.3s ease";
       preloader.style.opacity = "0";
-      console.log("🔴 [ThemePreloadSetup] Preloader new opacity:", preloader.style.opacity);
-      
       setTimeout(() => {
         if (preloader && preloader.parentNode) {
-          console.log("🔴 [ThemePreloadSetup] Removing preloader from DOM");
           preloader.style.display = "none";
         }
       }, 300);
-    } else {
-      console.log("🔴 [ThemePreloadSetup] No preloader found");
     }
+    
+    console.log("🔴 [ThemePreloadSetup] ========== PRELOADER FINISHED ==========\n");
+  }, []); // Run once on mount
 
-    console.log("🔴 [ThemePreloadSetup] ========== EFFECT FINISHED ==========\n");
-
-    return () => {
-      console.log("🔴 [ThemePreloadSetup] Cleanup running");
-      const style = document.getElementById("theme-overscroll-style");
-      if (style?.parentNode) {
-        console.log("🔴 [ThemePreloadSetup] Removing overscroll style");
-        style.parentNode.removeChild(style);
-      }
-    };
-  }, [mode, effectiveMode, drawerOpen, theme]);
+  const detectTrueRightDrawerColor = () => {
+  if (!rightDrawerOpen) return;
+  
+  console.log("🎯 [DETECT] ========== DETECTING TRUE RIGHT DRAWER COLOR ==========");
+  
+  const rightDrawer = document.querySelector('.MuiDrawer-paperAnchorRight');
+  
+  if (rightDrawer) {
+    const styles = window.getComputedStyle(rightDrawer);
+    const bgColor = styles.backgroundColor; // rgb(22, 27, 34)
+    const bgImage = styles.backgroundImage; // linear-gradient(rgba(255, 255, 255, 0.082), rgba(255, 255, 255, 0.082))
+    
+    console.log("🎯 Base color:", bgColor);
+    console.log("🎯 Overlay:", bgImage);
+    
+    // Create a canvas to sample the actual rendered color
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      // Draw the element to canvas to get the actual pixel color
+      const rect = rightDrawer.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      
+      // This is a simplified approach - in reality you'd need to 
+      // draw the element with all its styles
+      console.log("🎯 To get true color, inspect in DevTools:");
+      console.log("🎯 1. Right-click the drawer → Inspect");
+      console.log("🎯 2. In Styles tab, look for background color with overlay");
+      console.log("🎯 3. The computed color will show the final value");
+    }
+  }
+};
+detectTrueRightDrawerColor()
 };
