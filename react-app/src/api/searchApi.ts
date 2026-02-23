@@ -226,7 +226,7 @@ export const autocomplete = async (
   uiLog(`[API] autocomplete | REQUEST | query=${query} | lang=${lang}`);
 
   try {
-    const { data } = await api.get<AutocompleteResponse>("/autocomplete/", { params });
+    const { data } = await api.get<AutocompleteResponse>("/autocomplete/", { params, timeout: 5000 });
     uiLog(`[API] autocomplete | RESPONSE | query=${query} | suggestions=${data.suggestions.length}`);
     if (data.suggestions.length > 0) {
       uiLog(`[API] autocomplete | FIRST 3 SUGGESTIONS | ${data.suggestions.slice(0, 3).join(', ')}`);
