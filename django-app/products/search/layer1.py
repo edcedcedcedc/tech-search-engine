@@ -116,10 +116,14 @@ class SearchAPIView(APIView):
                     "brand": p["brand"],
                     "variant": p.get("variant"),
                     "lowest_price": p.get("lowest_price"),
-                    "offers_count": len(p.get("offers", [])),
+                    "offers_count": (
+                        50
+                        if len(p.get("offers", [])) > 50
+                        else len(p.get("offers", []))
+                    ),
                     "offers": [],
-                    "relevance": p.get("relevance"),
-                    "product_score": p.get("product_score"),
+                    # "relevance": p.get("relevance"),
+                    # "product_score": p.get("product_score"),
                     "image": p.get("image"),
                     "t_name": p.get("t_name", {}),
                     "t_variant": p.get("t_variant", {}),
