@@ -31,6 +31,8 @@ export interface AggregatedProduct {
   offers: Offer[];  // Will be populated when product is opened
   offers_count: number;  // ← KEEP THIS! The count from search results
   lowest_price: number;
+  highest_price: number;
+  average_price: number;
   relevance?: number;
   product_score: number;
   image?: string;

@@ -1,6 +1,7 @@
 from products.utils.log.search_engine_log import search_engine_log
 import json
 from products.search.config import MAX_PRODUCTS_TO_AGGREGATE
+from products.search.config import LAYER1_LIMIT, CACHE_TTL_LAYER1, LAYER2_LIMIT
 
 
 def aggregate_products(qs, query=None, query_embedding=None):
@@ -124,7 +125,11 @@ def build_aggregated_product(cluster_id, offers, query=None, query_embedding=Non
         "name": rep.name,
         "variant": rep.variant or "",
         "brand": rep.brand or "",
-        "lowest_price": float(min(o.price for o in offers)),
+        "lowest_price": int(min(o.price for o in offers[:LAYER2_LIMIT])),
+        "highest_price": int(max(o.price for o in offers[:LAYER2_LIMIT])),
+        "average_price": int(
+            sum(o.price for o in offers[:LAYER2_LIMIT]) / len(offers[:LAYER2_LIMIT])
+        ),
         "t_name": rep.t_name or {},
         "t_variant": rep.t_variant or {},
         "t_category": rep.t_category or {},

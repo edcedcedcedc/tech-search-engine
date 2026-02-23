@@ -13,7 +13,7 @@ from products.search.aggregator import aggregate_products
 from products.search.embeddings import semantic_filter_products, get_query_embedding
 from products.search.utils import apply_relevance_cutoff_sigmoid
 from products.search.identity import identity_resolution
-from products.search.config import LAYER1_LIMIT, CACHE_TTL_LAYER1, LAYER3_LIMIT
+from products.search.config import LAYER1_LIMIT, CACHE_TTL_LAYER1, LAYER2_LIMIT
 from products.serializers import AggregatedProductSerializer
 from products.system_state.version import get_global_system_version
 
@@ -116,11 +116,9 @@ class SearchAPIView(APIView):
                     "brand": p["brand"],
                     "variant": p.get("variant"),
                     "lowest_price": p.get("lowest_price"),
-                    "offers_count": (
-                        50
-                        if len(p.get("offers", [])) > 50
-                        else len(p.get("offers", []))
-                    ),
+                    "highest_price": p.get("highest_price"),
+                    "average_price": p.get("average_price"),
+                    "offers_count": len(p.get("offers")[:LAYER2_LIMIT]),
                     "offers": [],
                     # "relevance": p.get("relevance"),
                     # "product_score": p.get("product_score"),

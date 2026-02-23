@@ -47,6 +47,8 @@ class AggregatedProductSerializer(serializers.Serializer):
     offers_count = serializers.IntegerField()
     offers = OfferSerializer(many=True)
     lowest_price = serializers.FloatField()
+    highest_price = serializers.FloatField()
+    average_price = serializers.FloatField()
     relevance = serializers.FloatField(default=0.0)
     product_score = serializers.FloatField(default=0.0)
     image = serializers.URLField(allow_blank=True, required=False)

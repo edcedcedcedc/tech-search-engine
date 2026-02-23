@@ -14,6 +14,8 @@ export function transformSearchResult(apiProduct: ApiSearchProduct): AggregatedP
     offers: [], // Empty array - will be populated later
     offers_count: apiProduct.offers_count, // ← PRESERVE THE COUNT!
     lowest_price: apiProduct.lowest_price,
+    highest_price: apiProduct.highest_price,
+    average_price: apiProduct.average_price,
     relevance: apiProduct.relevance,
     product_score: apiProduct.product_score,
     image: apiProduct.image,
@@ -39,6 +41,8 @@ export function validateAndFixCachedProduct(product: any): AggregatedProduct {
       ? product.offers_count 
       : (Array.isArray(product.offers) ? product.offers.length : 0),
     lowest_price: product.lowest_price,
+    highest_price: product.highest_price,
+    average_price: product.average_price,
     relevance: product.relevance,
     product_score: product.product_score,
     image: product.image,

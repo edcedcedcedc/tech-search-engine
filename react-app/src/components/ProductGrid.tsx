@@ -121,9 +121,13 @@ const ProductGrid: React.FC<Props> = () => {
                 <Typography sx={{ color: "text.secondary" }}>
                   {product.brand} {displayVariant ? `— ${displayVariant}` : ""}
                 </Typography>
+
                 <Typography variant="body2" sx={{ color: "text.primary" }}>
-                  {product.lowest_price.toLocaleString()} MDL
+                  {product.lowest_price.toLocaleString()}{" "}
+                  {product.offers_count > 1 ? bull : ""}{" "}
+                  {product.offers_count > 1 ? product.highest_price : ""} MDL
                 </Typography>
+
                 <Typography variant="body2" sx={{ color: "text.primary" }}>
                   {product.shops.map((s) => ` ${s}`)}
                 </Typography>
