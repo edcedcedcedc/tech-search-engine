@@ -247,7 +247,7 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
 
   Services_Data_Title: "Data",
   Services_Data_Intro: "Access full proprietary historical datasets on prices and stock for your own analysis, available via subscription or one-time payment.",
-  Services_Data_PriceHistory: "Datasets on price history in any format",
+  Services_Data_PriceHistory: "Datasets on price history in any format for any offers or bundle of offers of your choice",
 
   //error handling 
   Error_403: "Session expired(403)",

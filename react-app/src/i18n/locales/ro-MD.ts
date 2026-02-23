@@ -295,7 +295,7 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
 
     Services_Data_Title: "Date",
     Services_Data_Intro: "Accesați seturile complete de date istorice proprietare despre preț și stoc pentru propria analiză, disponibil prin abonament sau plată unică.",
-    Services_Data_PriceHistory: "Seturi de date despre istoricul prețurilor in orice format",
+    Services_Data_PriceHistory: "Seturi de date privind istoricul prețurilor în orice format pentru orice ofertă sau pachet de oferte la alegere",
    
 
 
