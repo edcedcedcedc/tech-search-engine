@@ -32,7 +32,8 @@ export const useThemePreloadSetup = () => {
   const { mode, effectiveMode } = useThemeStore();
   const leftDrawerOpen = useStore((s) => s.drawerOpen);
   const rightDrawerOpen = useStore((s) => s.rightDrawerOpen);
-  const drawerOpen = leftDrawerOpen || rightDrawerOpen;
+  const sessionExpiredBottomDrawer = useStore((s) => s.isSessionExpired);
+  const drawerOpen = leftDrawerOpen || rightDrawerOpen || sessionExpiredBottomDrawer;
   
   console.log("🔵 [ThemePreloadSetup] ========== HOOK INITIALIZED ==========");
   console.log("🔵 [ThemePreloadSetup] Initial state:", {

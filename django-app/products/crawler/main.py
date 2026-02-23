@@ -42,6 +42,8 @@ class ShopCrawlerEngine:
         track_fields: list[str] | None = None,
     ):
         self.crawled_ids = defaultdict(set)
+        self.total_created = 0
+        self.total_updated = 0
 
         try:
             crawl_shops = [shop] if shop else SHOPS_TO_CRAWL
@@ -169,6 +171,8 @@ class ShopCrawlerEngine:
                     saved_count += 1
                 elif change_info.get("has_changes"):
                     updated_count += 1
+            self.total_created += saved_count
+            self.total_updated += updated_count
 
         shop_crawler_log(
             f"BATCH {batch_number} RESULT | "
@@ -257,10 +261,11 @@ class ShopCrawlerEngine:
 
     def finalize_crawl(self):
         payload = {
+            "status": "pending",
             "created": self.total_created,
             "updated": self.total_updated,
             "total": self.total_created + self.total_updated,
-            "finished_at": timezone.now().isoformat(),
+            "finished_at": "",
         }
 
         SystemState.objects.update_or_create(

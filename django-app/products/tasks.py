@@ -484,10 +484,31 @@ def run_bump_search_version():
     Increment the global search version cache key.
     Use this after a crawler / normalization / merge pipeline run.
     """
+    from django.utils import timezone
+    import json
+    from products.models import SystemState
     from products.utils.log.versioning_log import versioning_log
+    from products.system_state.versioning import bump_global_system_version
 
+    # 1️⃣ Bump version
     new_version = bump_global_system_version()
+
+    # 2️⃣ Update crawler_last_run
+    try:
+        state = SystemState.objects.get(key="crawler_last_run")
+        payload = json.loads(state.value)
+
+        payload["status"] = "completed"
+        payload["finished_at"] = timezone.now().isoformat()
+
+        state.value = json.dumps(payload)
+        state.save(update_fields=["value", "updated_at"])
+        versioning_log(f"[TASK] state object {state}")
+    except SystemState.DoesNotExist:
+        versioning_log("[TASK] crawler_last_run not found in SystemState")
+
     versioning_log(f"[TASK] Global search version bumped to {new_version}")
+
     return new_version
 
 

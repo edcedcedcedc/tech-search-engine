@@ -16,20 +16,13 @@ class CrawlerStatusAPIView(APIView):
 
     def get(self, request):
         try:
-            # Fetch the last crawler run from the DB
             system_state = SystemState.objects.get(key="crawler_last_run")
-            data = system_state.value  # already a JSON object
+            data = json.loads(system_state.value)  # <-- parse string
 
-            # Optionally, add a "status" key
-            response = {
-                "status": "completed",
-                **data,
-                "system_version": 1,  # optional versioning
-            }
+            response = {**data}
             return Response(response, status=status.HTTP_200_OK)
 
         except SystemState.DoesNotExist:
-            # No crawl has been run yet
             fallback = {
                 "status": "pending",
                 "created": 0,
@@ -41,6 +34,8 @@ class CrawlerStatusAPIView(APIView):
             return Response(fallback, status=status.HTTP_200_OK)
 
         except Exception as e:
+            import traceback
+
             trace = traceback.format_exc()
             search_engine_log(f"Error in CrawlerStatusAPIView: {e}\n{trace}")
             return Response(
