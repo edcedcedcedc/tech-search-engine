@@ -59,27 +59,37 @@ export const useHideOnScroll = (options: UseHideOnScrollOptions = {}) => {
 
       requestAnimationFrame(() => {
         const currentY = el.scrollTop;
-        const diff = currentY - lastScrollY.current;
+        const maxScroll = el.scrollHeight - el.clientHeight;
+        
+        // ADD THIS: Protect against boundary extremes
+        const clampedY = Math.max(0, Math.min(currentY, maxScroll));
+        const clampedLastY = Math.max(0, Math.min(lastScrollY.current, maxScroll));
+        
+        const diff = clampedY - clampedLastY;
+        
+        uiLog(`[useHideOnScroll] Scroll detected, currentY=${currentY}, clampedY=${clampedY}, diff=${diff}, maxScroll=${maxScroll}`);
 
-        uiLog(`[useHideOnScroll] Scroll detected, currentY=${currentY}, diff=${diff}, lastScrollY=${lastScrollY.current}`);
-
-        if (diff > threshold && visibleRef.current) {
-          setIsVisible(false);
-          visibleRef.current = false;
-          uiLog(`[useHideOnScroll] Hiding header (scrolled down ${diff}px)`);
-        } else if (diff < -threshold && !visibleRef.current) {
-          setIsVisible(true);
-          visibleRef.current = true;
-          uiLog(`[useHideOnScroll] Showing header (scrolled up ${-diff}px)`);
+        // Only process if we have valid diff (not at boundaries)
+        if (Math.abs(diff) > threshold) {
+          if (diff > threshold && visibleRef.current) {
+            setIsVisible(false);
+            visibleRef.current = false;
+            uiLog(`[useHideOnScroll] Hiding header (scrolled down ${diff}px)`);
+          } else if (diff < -threshold && !visibleRef.current) {
+            setIsVisible(true);
+            visibleRef.current = true;
+            uiLog(`[useHideOnScroll] Showing header (scrolled up ${-diff}px)`);
+          }
         }
 
+        // Keep near top check
         if (currentY < 10 && !visibleRef.current) {
           setIsVisible(true);
           visibleRef.current = true;
           uiLog(`[useHideOnScroll] Showing header because near top (currentY < 10)`);
         }
 
-        lastScrollY.current = currentY;
+        lastScrollY.current = clampedY; // Store clamped value
         ticking.current = false;
       });
     };

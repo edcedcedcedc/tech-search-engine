@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { uiLog } from "../webhook/client/uiDebug";
 import type { AggregatedProduct } from "../types/AggregatedProduct";
-import { getProductOffers as apiGetProductOffers, getCrawlerStatus } from "../api/searchApi";
+import { getProductOffers as apiGetProductOffers, getPipelineStatus } from "../api/searchApi";
 import { searchProducts as apiSearchProducts } from "../api/searchApi";
 import i18n from "../i18n";
 import { indexedDbService } from "../services/indexedDb";
@@ -10,29 +10,22 @@ import { prefetchService } from "../services/prefetch";
 import { v4 as uuidv4 } from "uuid";
 import { transformSearchResult, validateAndFixCachedProduct } from "../types/Transformer"
 
-
-type RefreshInfo = 
-{
-  status: string,
-  finished_at?: string;
-  updated?: number;
-  total?: number;
-  system_version?: number
+interface RefreshInfo {
+  finished_at: string;
 }
 
-
 interface SystemStatusState {
-  refreshInfo: RefreshInfo | null;
+  refreshInfo: RefreshInfo;
   isLoading: boolean;
   lastFetchedAt: string | null;
 
-  fetchStatus: (showSpinner?: boolean) => Promise<void>; // allow optional spinner
+  fetchStatus: (showSpinner?: boolean) => Promise<void>;
 }
 
 export const useSystemStatusStore = create<SystemStatusState>()(
   persist(
     (set, get) => ({
-      refreshInfo: null,
+      refreshInfo: { finished_at: new Date().toISOString() },
       isLoading: false,
       lastFetchedAt: null,
 
@@ -40,32 +33,18 @@ export const useSystemStatusStore = create<SystemStatusState>()(
         if (showSpinner) set({ isLoading: true });
 
         try {
-          const data = await getCrawlerStatus();
+          const data = await getPipelineStatus();
 
-          const newData =
-            data.status === "completed"
-              ? {
-                  status: data.status,
-                  finished_at: data.finished_at,
-                  updated: data.updated,
-                  total: data.total,
-                }
-              : get().refreshInfo;
-                
           set({
-            refreshInfo: newData,
+            refreshInfo: { finished_at: data.finished_at! }, // single field
             isLoading: false,
             lastFetchedAt: new Date().toISOString(),
           });
         } catch (err) {
-          uiLog(`[SystemStatusStore] Failed to fetch status`);
-          const fallback =
-            get().refreshInfo ?? {
-              status: "pending",
-              finished_at: new Date().toISOString(),
-              updated: 120,
-              total: 5000,
-            };
+          uiLog("[SystemStatusStore] Failed to fetch status");
+
+          // fallback to previous or today
+          const fallback = get().refreshInfo ?? { finished_at: new Date().toISOString() };
           set({
             refreshInfo: fallback,
             isLoading: false,
@@ -75,7 +54,7 @@ export const useSystemStatusStore = create<SystemStatusState>()(
       },
     }),
     {
-      name: "crawler-status-store",
+      name: "pipeline-status-store",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         refreshInfo: state.refreshInfo,

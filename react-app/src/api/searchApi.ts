@@ -447,27 +447,19 @@ export const compareProducts = async (
 };
 
 
-/**
- * Get crawler status
- */
-export const getCrawlerStatus = async (): Promise<{
-  status: string;
-  created?: number;
-  updated?: number;
-  total?: number;
-  finished_at?: string;
-  system_version?: number;
-}> => {
-  uiLog(`[API] getCrawlerStatus | REQUEST`);
 
+export const getPipelineStatus = async (): Promise<{
+  finished_at?: string;
+}> => {
+  uiLog(`[API] getPipelineStatus | REQUEST`);
   try {
-    const { data } = await api.get("/system/crawler-status/");
+    const { data } = await api.get("/system/pipeline-status/");
     uiLog(
-      `[API] getCrawlerStatus | RESPONSE | status=${data.status} | version=${data.system_version}`
+      `[API] getPipelineStatus | RESPONSE | status=${data.status} | version=${data.system_version}`
     );
     return data;
   } catch (err: any) {
-    uiLog(`[API] getCrawlerStatus | ERROR | ${err?.message}`);
+    uiLog(`[API] getPipelineStatus | ERROR | ${err?.message}`);
     throw err;
   }
 };

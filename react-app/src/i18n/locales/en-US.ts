@@ -399,7 +399,7 @@ Subscription_Description_3: "You can choose between subscription access or a one
   More_Tooltip: "More",
   Search_tips: "Search Tips",
   Popular_Categories: "Popular categories",
-  Updated_at: "Updated at",
+  Updated_at: "Last updated at",
   Refreshed_total: "refreshed",
   Total: "total",
   Products: "Products",

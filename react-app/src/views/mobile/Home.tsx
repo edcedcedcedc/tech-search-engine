@@ -27,17 +27,20 @@ const HomeMobile: React.FC = () => {
   const { refreshInfo, isLoading } = useSystemStatusStore();
 
   // Format time depending on language
-  const formatTime = (isoString?: string) => {
+  const formatDateTime = (isoString?: string) => {
     if (!isoString) return "";
+
     const lang = i18n.language;
-    return new Date(isoString).toLocaleTimeString(
-      lang === "en" ? "en-US" : "ro-MD",
-      {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: lang === "en",
-      },
-    );
+    const locale = lang === "en" ? "en-US" : "ro-MD";
+
+    const date = new Date(isoString); // Automatically converts from UTC → local time
+
+    return date.toLocaleString(locale, {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour12: lang === "en",
+    });
   };
 
   return (
@@ -77,9 +80,7 @@ const HomeMobile: React.FC = () => {
             <>
               <AccessTimeIcon sx={{ fontSize: 18, color: "text.secondary" }} />
               <Typography variant="body2" color="text.secondary">
-                {`${t("Updated_at")} ${formatTime(refreshInfo.finished_at)} • ${
-                  refreshInfo.updated ?? 0
-                } ${t("Refreshed_total")} • ${refreshInfo.total ?? 0} ${t("total")}`}
+                {`${t("Updated_at")} ${formatDateTime(refreshInfo.finished_at)}`}
               </Typography>
             </>
           ) : (

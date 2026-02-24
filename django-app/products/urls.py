@@ -15,8 +15,8 @@ from products.system_state.version import (
 from products.system_state.session import (
     FlushSessionAPIView,
 )
-from products.system_state.crawler_status import (
-    CrawlerStatusAPIView,
+from products.system_state.pipeline_status import (
+    PipelineStatusAPIView,
 )
 from products.views import CollectEmailAPIView, RootAPIView
 
@@ -33,8 +33,8 @@ urlpatterns = [
     path("api/system/version/", SystemVersionAPIView.as_view(), name="system-version"),
     path("api/session/flush/", FlushSessionAPIView.as_view(), name="session-flush"),
     path(
-        "api/system/crawler-status/",
-        CrawlerStatusAPIView.as_view(),
-        name="crawler-status",
+        "api/system/pipeline-status/",
+        PipelineStatusAPIView.as_view(),
+        name="pipeline-status",
     ),
 ]
