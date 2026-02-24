@@ -1,12 +1,11 @@
-// hooks/useCrawlerStatusPoll.ts
 import { useEffect } from "react";
 import { useSystemStatusStore } from "../store/store";
 
 /**
- * Poll the crawler status every hour, but only update UI once per 24 hours.
+ * Poll pipelinie status every hour, but only update UI once per 24 hours.
  * Shows spinner if an update is actually performed.
  */
-export const useCrawlerStatusPoll = () => {
+export const usePipelineStatusPoll = () => {
   const fetchStatus = useSystemStatusStore((s) => s.fetchStatus);
 
   useEffect(() => {
