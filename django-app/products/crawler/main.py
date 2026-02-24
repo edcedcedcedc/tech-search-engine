@@ -171,8 +171,8 @@ class ShopCrawlerEngine:
                     saved_count += 1
                 elif change_info.get("has_changes"):
                     updated_count += 1
-            self.total_created += saved_count
-            self.total_updated += updated_count
+        self.total_created += saved_count
+        self.total_updated += updated_count
 
         shop_crawler_log(
             f"BATCH {batch_number} RESULT | "
