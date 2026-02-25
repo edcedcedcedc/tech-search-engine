@@ -1,10 +1,5 @@
 // App.tsx
-import {
-  Box,
-  Container,
-  useTheme,
-  useMediaQuery /* Slide */,
-} from "@mui/material";
+import { Box, Container, useTheme, useMediaQuery } from "@mui/material";
 import Header from "./components/Header";
 import VerticalHeader from "./components/VerticalHeader";
 import AppRoutes from "./router/Router";
@@ -12,21 +7,21 @@ import { Meta } from "./components/Meta";
 import AppOverlays from "./components/Overlays";
 import NotificationsContainer from "./components/NotificationContainer";
 import { useHideOnScroll } from "./hooks/useHideOnScroll";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState, useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { uiLog } from "./webhook/client/uiDebug";
 import { useScrollStore } from "./store/store";
-/* import Test from "./components/Test"; */
+import { InstallBlocker } from "./components/InstallBlocker";
 
 function App() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+  // Use your custom breakpoint: xl = 1440px
+  const isBelow1440 = useMediaQuery(theme.breakpoints.down("xxl"));
   const location = useLocation();
   const currentScrollElement = useScrollStore((s) => s.currentScrollElement);
+  const [blocker, setBlocker] = useState(false);
 
-  // ----------------------
   // Per-route scroll refs
-  // ----------------------
   const scrollRefs: Record<string, React.RefObject<HTMLDivElement | null>> = {
     "/": useRef<HTMLDivElement | null>(null),
     "/products": useRef<HTMLDivElement | null>(null),
@@ -34,9 +29,40 @@ function App() {
     "/faq": useRef<HTMLDivElement | null>(null),
   };
 
-  // ----------------------
-  // Debug scrollRefs assignment
-  // ----------------------
+  // Blocking logic
+  useLayoutEffect(() => {
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+
+    // Always allow installed PWA
+    if (isStandalone) {
+      setBlocker(false);
+      uiLog("[App] PWA mode - showing app");
+      return;
+    }
+
+    // Rule 1: Block all browsers on screens <1440px (mobile, tablets, small laptops)
+    if (isBelow1440) {
+      setBlocker(true);
+      uiLog("[App] Screen <1440px - showing install blocker");
+      return;
+    }
+
+    // Rule 2: Block Safari on any screen (including desktop)
+    if (isSafari) {
+      setBlocker(true);
+      uiLog("[App] Safari detected (desktop) - showing install blocker");
+      return;
+    }
+
+    // Otherwise allow (non-Safari desktop browsers on screens ≥1440px)
+    setBlocker(false);
+    uiLog("[App] Desktop browser (non-Safari) ≥1440px - showing web version");
+  }, [isBelow1440]);
+
+  // Debug logs (unchanged)
   useEffect(() => {
     uiLog(
       `[App] ScrollRefs initialized: ${Object.keys(scrollRefs)
@@ -45,53 +71,20 @@ function App() {
     );
   }, []);
 
-  useEffect(() => {
-    // Only for iOS Safari (not PWA)
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as any).standalone;
-
-    if (isIOS && !isStandalone) {
-      const handleScroll = () => {
-        // When scrolled down, make height full to hide toolbar
-        if (window.scrollY > 50) {
-          document.documentElement.style.height = "100%";
-          document.body.style.height = "100%";
-        } else {
-          // When at top, restore to trigger toolbar show
-          document.documentElement.style.height = "";
-          document.body.style.height = "";
-        }
-      };
-
-      // Initial force
-      window.scrollTo(0, 1);
-
-      window.addEventListener("scroll", handleScroll);
-      return () => window.removeEventListener("scroll", handleScroll);
-    }
-  }, []);
-
-  // ----------------------
-  // Get current route scroll element
-  // ----------------------
-  //const scrollElement = scrollRefs[location.pathname]?.current || null;
-
   uiLog(
-    `[App] Render cycle: route=${location.pathname}, isMobile=${isMobile}, hasScrollElement=${!!currentScrollElement}`,
+    `[App] Render cycle: route=${location.pathname}, isBelow1440=${isBelow1440}, hasScrollElement=${!!currentScrollElement}`,
   );
 
-  // ----------------------
-  // Header visibility debug
-  // ----------------------
-  const isHeaderVisible = useHideOnScroll({
-    threshold: 10,
-  });
+  const isHeaderVisible = useHideOnScroll({ threshold: 10 });
 
   useEffect(() => {
     uiLog(`[App] Header visibility updated: ${isHeaderVisible}`);
   }, [isHeaderVisible]);
+
+  // Show blocker if conditions met
+  if (blocker) {
+    return <InstallBlocker />;
+  }
 
   return (
     <>
@@ -107,7 +100,6 @@ function App() {
         }}
       >
         {/* HEADER */}
-        {/*   <Slide direction="down" in={isHeaderVisible} mountOnEnter unmountOnExit> */}
         <Box
           id="app-header"
           sx={{
@@ -116,24 +108,24 @@ function App() {
             zIndex: theme.zIndex.appBar,
             flexShrink: 0,
             overflow: "hidden",
-            height: isMobile ? (isHeaderVisible ? "auto" : 0) : "auto",
-            transform: isMobile
+            height: isBelow1440 ? (isHeaderVisible ? "auto" : 0) : "auto",
+            transform: isBelow1440
               ? isHeaderVisible
                 ? "translateY(0)"
                 : "translateY(-100%)"
               : "none",
-            transition: isMobile
+            transition: isBelow1440
               ? theme.transitions.create(["transform", "height"], {
                   duration: 300,
                   easing: theme.transitions.easing.easeInOut,
                 })
               : "none",
-            willChange: isMobile ? "transform, height" : "auto",
+            willChange: isBelow1440 ? "transform, height" : "auto",
           }}
         >
           <Header />
         </Box>
-        {/*      </Slide> */}
+
         {/* Main layout */}
         <Box
           sx={{
@@ -144,39 +136,30 @@ function App() {
             minHeight: 0,
           }}
         >
-          {!isMobile && <VerticalHeader />}
+          {!isBelow1440 && <VerticalHeader />}
 
-          <Box
-            component="main"
+          <Container
+            disableGutters
+            maxWidth={false}
             sx={{
-              flex: 1,
+              maxWidth: isBelow1440 ? "100%" : 800,
+              width: "100%",
+              mx: "auto",
+              pt: isBelow1440 && !isHeaderVisible ? 0 : 1,
+              px: isBelow1440 ? 0 : 1,
+              height: "100%",
               display: "flex",
               flexDirection: "column",
-              minHeight: 0,
-              height: "100%",
-              pb: isMobile ? 7 : 0,
-              position: "relative",
+              "& > *": {
+                flex: 1,
+                minHeight: 0,
+              },
             }}
           >
-            <Container
-              disableGutters
-              maxWidth={false}
-              sx={{
-                maxWidth: isMobile ? "100%" : 800,
-                width: "100%",
-                mx: "auto",
-                pt: isMobile && !isHeaderVisible ? 0 : 1,
-                px: isMobile ? 0 : 1,
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <AppRoutes scrollRefs={scrollRefs} />
-            </Container>
-          </Box>
+            <AppRoutes scrollRefs={scrollRefs} />
+          </Container>
         </Box>
-        {/* <Test /> */}
+
         <NotificationsContainer />
         <AppOverlays />
       </Box>

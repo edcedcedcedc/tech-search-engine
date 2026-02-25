@@ -6,7 +6,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
-import ManageSearchOutlined from "@mui/icons-material/ManageSearchOutlined";
+/* import ManageSearchOutlined from "@mui/icons-material/ManageSearchOutlined"; */
 import { CategoryOutlined, SearchOutlined } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { BusinessCenterOutlined as ServicesOutlinedIcon } from "@mui/icons-material";

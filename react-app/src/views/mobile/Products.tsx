@@ -5,7 +5,6 @@ import {
   Typography,
   IconButton,
   Tooltip,
-  Fade,
   useTheme,
   useMediaQuery,
 } from "@mui/material";
@@ -105,88 +104,82 @@ const ProductsMobile: React.FC = () => {
   return (
     <Box
       sx={{
-        p: !isMobile ? 2 : isHeaderVisible ? 2 : 1.9,
+        p: !isMobile ? 0 : 2,
         pb: 8,
-        // Use theme transitions for consistency with your app
         transition: theme.transitions.create(["padding"], {
           duration: theme.transitions.duration.standard, // 300ms
           easing: theme.transitions.easing.easeInOut,
         }),
-        // Add will-change hint for better performance
         willChange: "padding",
       }}
     >
       {/* Fixed header section */}
-      <Fade in={isHeaderVisible} timeout={300}>
-        <Box
-          ref={headerRef}
+
+      <Box
+        ref={headerRef}
+        sx={{
+          transform: isHeaderVisible ? "translateY(0)" : "translateY(-100%)",
+          transition: theme.transitions.create("transform"),
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: showEmptyState ? 0 : 4,
+          position: "sticky",
+          top: 0,
+          bgcolor: "background.default",
+          zIndex: 10,
+          mt: -1,
+        }}
+      >
+        <Typography
+          variant="h5"
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: showEmptyState ? 0 : 4,
-            position: "sticky",
-            top: 0,
-            bgcolor: "background.default",
-            zIndex: 10,
-            mt: -1,
-            transition: "opacity 0.2s ease-in-out",
+            fontWeight: 600,
           }}
         >
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 600,
-            }}
-          >
-            {t("Products")}
-          </Typography>
+          {t("Products")}
+        </Typography>
 
-          {showPagination && (
-            <Box sx={{ display: "flex", gap: 0.5 }}>
-              <Tooltip title={t("Previous_page_Tooltip")} enterDelay={500}>
-                <span>
-                  <IconButton
-                    size="small"
-                    onClick={handlePrev}
-                    disabled={currentPage <= 1 || isLoading}
-                    sx={{
-                      bgcolor: "background.paper",
-                      boxShadow: 1,
-                      "&:hover": {
-                        bgcolor: "action.hover",
-                      },
-                      opacity: currentPage <= 1 || isLoading ? 0.5 : 1,
-                    }}
-                  >
-                    <NavigateBeforeOutlinedIcon fontSize="small" />
-                  </IconButton>
-                </span>
-              </Tooltip>
+        {showPagination && (
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <Tooltip title={t("Previous_page_Tooltip")} enterDelay={500}>
+              <IconButton
+                size="small"
+                onClick={handlePrev}
+                disabled={currentPage <= 1 || isLoading}
+                sx={{
+                  bgcolor: "background.paper",
+                  boxShadow: 1,
+                  "&:hover": {
+                    bgcolor: "action.hover",
+                  },
+                  /*   opacity: currentPage <= 1 || isLoading ? 0.5 : 1, */
+                }}
+              >
+                <NavigateBeforeOutlinedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
 
-              <Tooltip title={t("Next_page_Tooltip")} enterDelay={500}>
-                <span>
-                  <IconButton
-                    size="small"
-                    onClick={handleNext}
-                    disabled={currentPage >= totalPages || isLoading}
-                    sx={{
-                      bgcolor: "background.paper",
-                      boxShadow: 1,
-                      "&:hover": {
-                        bgcolor: "action.hover",
-                      },
-                      opacity: currentPage >= totalPages || isLoading ? 0.5 : 1,
-                    }}
-                  >
-                    <NavigateNextOutlinedIcon fontSize="small" />
-                  </IconButton>
-                </span>
-              </Tooltip>
-            </Box>
-          )}
-        </Box>
-      </Fade>
+            <Tooltip title={t("Next_page_Tooltip")} enterDelay={500}>
+              <IconButton
+                size="small"
+                onClick={handleNext}
+                disabled={currentPage >= totalPages || isLoading}
+                sx={{
+                  bgcolor: "background.paper",
+                  boxShadow: 1,
+                  "&:hover": {
+                    bgcolor: "action.hover",
+                  },
+                  /*   opacity: currentPage >= totalPages || isLoading ? 0.5 : 1, */
+                }}
+              >
+                <NavigateNextOutlinedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        )}
+      </Box>
 
       {/* Content */}
       {!isLoading && showEmptyState ? (

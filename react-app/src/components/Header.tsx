@@ -53,7 +53,7 @@ const Header: React.FC = () => {
   const [privacyOpen, setPrivacyOpen] = React.useState(false);
   const [termsOpen, setTermsOpen] = React.useState(false);
   const [disclaimerOpen, setDisclaimerOpen] = React.useState(false);
-  const { t, i18n } = useTranslation(); // Make sure to get i18n
+  const { t /* i18n */ } = useTranslation(); // Make sure to get i18n
   /*   const aggregatedProducts = useStore((s) => s.aggregatedProducts); */
   /*   const isProductsDisabled = aggregatedProducts.length === 0; */
 
@@ -258,8 +258,8 @@ const Header: React.FC = () => {
             justifyContent: "flex-start",
             alignItems: "center",
             width: "100%",
-            minHeight: 60,
-            height: 60,
+            height: `calc(60px + env(safe-area-inset-top))`, // header height + safe area
+            minHeight: `calc(60px + env(safe-area-inset-top))`,
             px: { xs: 2, sm: 2, md: 2 },
             py: 0,
           }}

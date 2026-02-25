@@ -130,11 +130,40 @@
         100% { transform: scale(1); }
       }
     </style>
+
+    <div id="safari-tint"></div>
+    <div id="safari-tint-bottom" class="browser-only"></div>
+    <style>
+      #safari-tint {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: max(env(safe-area-inset-top), 11px); /* >= 3px required */
+        z-index: 2147483647; /* VERY HIGH */
+        pointer-events: none;
+      }
+      #safari-tint-bottom {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: max(env(safe-area-inset-bottom), 11px);
+        z-index: 2147483647;
+        pointer-events: none;
+        background-color: transparent;
+      }
+      @media all and (display-mode: standalone) {
+      #safari-tint-bottom {
+        display: none;
+      }
+    }
+    </style>
   </head>
 
   <body>
     <!-- SVG filter MUST be in body, right at the top -->
-   
+
     <div id="preloader">
       <div id="preloader-icon">
         <img src="src/assets/icon.png" alt="Strugure Icon" />
@@ -220,4 +249,5 @@
     })();
     </script>
   </body>
+
 </html>

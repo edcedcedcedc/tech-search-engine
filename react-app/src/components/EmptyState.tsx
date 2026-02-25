@@ -9,7 +9,7 @@ import {
   Fade,
   Paper,
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
+/* import SearchIcon from "@mui/icons-material/Search"; */
 import InventoryIcon from "@mui/icons-material/Inventory";
 import SentimentDissatisfiedIcon from "@mui/icons-material/SentimentDissatisfied";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";

@@ -14,7 +14,7 @@ import {
 import NavigateBeforeOutlinedIcon from "@mui/icons-material/NavigateBeforeOutlined"; */
 import {
   CategoryOutlined,
-  ManageSearchOutlined as ManageSearchOutlinedIcon,
+  /*   ManageSearchOutlined as ManageSearchOutlinedIcon, */
   SearchOutlined,
   BusinessCenterOutlined as ServicesOutlinedIcon,
 } from "@mui/icons-material";

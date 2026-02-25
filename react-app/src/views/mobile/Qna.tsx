@@ -1,9 +1,9 @@
 // views/mobile/HowTo.tsx
-import { Box, Typography, Paper } from "@mui/material";
+import { Box, Typography /* , Paper  */ } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { Sparklines, SparklinesLine } from "react-sparklines";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-
+/* import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+ */
 export default function QnaMobile() {
   const { t } = useTranslation();
 

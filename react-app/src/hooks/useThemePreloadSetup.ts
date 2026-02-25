@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useTheme } from "@mui/material";
+/* import { useTheme } from "@mui/material"; */
 import { useThemeStore } from "../store/store";
 import { useStore } from "../store/store";
 
@@ -28,13 +28,15 @@ const drawerColors = {
 };
 
 export const useThemePreloadSetup = () => {
-  const theme = useTheme();
+/*   const theme = useTheme(); */
   const { mode, effectiveMode } = useThemeStore();
   const leftDrawerOpen = useStore((s) => s.drawerOpen);
   const rightDrawerOpen = useStore((s) => s.rightDrawerOpen);
   const sessionExpiredBottomDrawer = useStore((s) => s.isSessionExpired);
   const drawerOpen = leftDrawerOpen || rightDrawerOpen || sessionExpiredBottomDrawer;
-  
+  const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
   console.log("🔵 [ThemePreloadSetup] ========== HOOK INITIALIZED ==========");
   console.log("🔵 [ThemePreloadSetup] Initial state:", {
     mode,
@@ -57,35 +59,87 @@ export const useThemePreloadSetup = () => {
   // Handle meta theme color based on drawer state - NO DOM SCANNING
   useEffect(() => {
     console.log("\n🔴 [ThemePreloadSetup] ========== META COLOR UPDATE ==========");
-    
-    // Determine which drawer is open (prioritize right drawer if both are open)
-    const activeDrawerType = rightDrawerOpen ? 'right' : (leftDrawerOpen ? 'left' : null);
-    
-    let metaColor;
-    
+
+    const activeDrawerType = rightDrawerOpen
+      ? "right"
+      : leftDrawerOpen
+      ? "left"
+      : null;
+
+    let metaColor: string;
+
     if (activeDrawerType && effectiveMode) {
-      // Use hardcoded colors based on effectiveMode and drawer type
-      metaColor = drawerColors[effectiveMode][activeDrawerType].open;
-      console.log(`🔴 [ThemePreloadSetup] ${activeDrawerType} drawer OPEN - using color:`, metaColor);
+      metaColor =
+        drawerColors[effectiveMode][activeDrawerType].open;
+      console.log(
+        `🔴 Drawer ${activeDrawerType} OPEN →`,
+        metaColor
+      );
     } else {
-      // No drawer open - use background color
-      metaColor = effectiveMode === 'dark' ? '#0d1117' : '#fafafa';
-      console.log("🔴 [ThemePreloadSetup] No drawer open - using background color:", metaColor);
+      metaColor =
+        effectiveMode === "dark" ? "#0d1117" : "#fafafa";
+      console.log("🔴 No drawer →", metaColor);
     }
-    
-    // Update meta tag
-    const metaThemeColor = document.querySelector("meta[name=theme-color]");
-    if (metaThemeColor) {
-      const oldColor = metaThemeColor.getAttribute("content");
-      console.log("🔴 [ThemePreloadSetup] Meta tag changing:", oldColor, "→", metaColor);
-      metaThemeColor.setAttribute("content", metaColor);
+
+    const existing = document.querySelector(
+      'meta[name="theme-color"]'
+    );
+
+    if (existing) {
+      existing.remove();
+    }
+
+    const meta = document.createElement("meta");
+    meta.name = "theme-color";
+    meta.content = metaColor;
+
+    document.head.appendChild(meta);
+
+    console.log("🔴 Meta recreated with:", metaColor);
+    console.log("🔴 ========== META UPDATE FINISHED ==========\n");
+  }, [effectiveMode, leftDrawerOpen, rightDrawerOpen]);
+
+  // Handle Safari tint instead of meta tag
+  useEffect(() => {
+    console.log("\n🟢 [ThemePreloadSetup] ========== SAFARI TINT UPDATE ==========");
+
+    const activeDrawerType = rightDrawerOpen
+      ? "right"
+      : leftDrawerOpen
+      ? "left"
+      : null;
+
+    let tintColor: string;
+
+    if (activeDrawerType && effectiveMode) {
+      tintColor =
+        drawerColors[effectiveMode][activeDrawerType].open;
+      console.log(`🟢 Drawer ${activeDrawerType} OPEN →`, tintColor);
     } else {
-      console.warn("🔴 [ThemePreloadSetup] Meta theme-color tag not found!");
+      tintColor =
+        effectiveMode === "dark" ? "#0d1117" : "#fafafa";
+      console.log("🟢 No drawer →", tintColor);
     }
-    
-    console.log("🔴 [ThemePreloadSetup] ========== META UPDATE FINISHED ==========\n");
-    
-  }, [effectiveMode, leftDrawerOpen, rightDrawerOpen]); // Use effectiveMode
+
+    const tintEl = document.getElementById("safari-tint");
+
+    if (tintEl) {
+      tintEl.style.backgroundColor = tintColor;
+    }
+      // Update bottom tint (only visible in browser mode)
+  const bottomTint = document.getElementById("safari-tint-bottom");
+  if (bottomTint && !isStandalone) {
+    bottomTint.style.backgroundColor = tintColor;
+  }
+
+    console.log("🟢 Safari tint updated:", tintColor);
+    console.log("🟢 ========== TINT UPDATE FINISHED ==========\n");
+
+
+    console.log("Tint element exists:", !!tintEl);
+    console.log("Current tint height:", tintEl?.offsetHeight);
+
+  }, [effectiveMode, leftDrawerOpen, rightDrawerOpen]);
 
   // Preloader fadeout only
   useEffect(() => {
