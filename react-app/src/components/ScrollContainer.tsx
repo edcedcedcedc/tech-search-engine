@@ -1,8 +1,8 @@
 import React, { useEffect, useLayoutEffect, useRef, forwardRef } from "react";
 import { Box, useTheme } from "@mui/material";
 import { scrollableScrollbar } from "../styles/scrollbar";
-import { uiLog } from "../webhook/client/uiDebug"; // assuming you use this for logs
-import { useScrollStore } from "../store/store"; // adjust path
+import { uiLog } from "../webhook/client/uiDebug";
+import { useScrollStore } from "../store/store";
 
 interface ScrollContainerProps {
   children: React.ReactNode;
@@ -29,56 +29,43 @@ export const ScrollContainer = forwardRef<
       setCurrentScrollElement(el);
     }
     return () => {
-      // Only clear if it's the current element (avoid race conditions)
       if (currentScrollElement === el) {
         setCurrentScrollElement(null);
       }
     };
   }, [setCurrentScrollElement]);
 
-  // --- Notify parent when mounted / ref changes ---
   useEffect(() => {
     if (containerRef.current) {
-      uiLog(`[ScrollContainer][${route}] Mounted, containerRef.current set`);
+      uiLog(`[ScrollContainer][${route}] Mounted`);
     }
 
     if (ref && typeof ref === "object") {
       (ref as React.MutableRefObject<HTMLDivElement | null>).current =
         containerRef.current;
-      uiLog(`[ScrollContainer][${route}] Forwarded ref updated`);
     }
   }, [ref, route]);
 
-  // --- Restore scroll position when mounting ---
   useEffect(() => {
     const container = containerRef.current;
     if (container) {
       const savedPosition = scrollPositions.get(route) || 0;
       container.scrollTop = savedPosition;
-      uiLog(`[ScrollContainer][${route}] Restored scrollTop=${savedPosition}`);
-    } else {
-      uiLog(`[ScrollContainer][${route}] No container to restore scrollTop`);
     }
   }, [route]);
 
-  // --- Save scroll position on scroll ---
   useLayoutEffect(() => {
     const container = containerRef.current;
-    if (!container) {
-      uiLog(`[ScrollContainer][${route}] No container for scroll listener`);
-      return;
-    }
+    if (!container) return;
 
     const handleScroll = () => {
       scrollPositions.set(route, container.scrollTop);
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
-    uiLog(`[ScrollContainer][${route}] Scroll listener attached`);
 
     return () => {
       container.removeEventListener("scroll", handleScroll);
-      uiLog(`[ScrollContainer][${route}] Scroll listener removed`);
     };
   }, [route]);
 
@@ -92,9 +79,19 @@ export const ScrollContainer = forwardRef<
         overflowX: "hidden",
         ...scrollableScrollbar(theme),
         scrollBehavior: "auto",
+        // Add a pseudo-element to ensure minimum scroll height
+        "&::after": {
+          content: '""',
+          display: "block",
+          height: "100px",
+          opacity: 0,
+          pointerEvents: "none",
+        },
       }}
     >
       {children}
+      {/* Add invisible spacer div to ensure minimum scroll height */}
+      <Box sx={{ height: "1px", opacity: 0 }} />
     </Box>
   );
 });
