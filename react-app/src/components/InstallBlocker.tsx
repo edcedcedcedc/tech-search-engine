@@ -32,11 +32,12 @@ type Platform = "ios" | "android" | "windows" | "macos" | "linux" | "other";
 
 export const InstallBlocker = () => {
   const theme = useTheme();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [platform, setPlatform] = useState<Platform>("ios");
   const [showLangSelector, setShowLangSelector] = useState(false);
   const [key, setKey] = useState(0); // Add key for remounti
   const { mode } = useThemeStore(); // Get theme mode
+
   useEffect(() => {
     setKey((prev) => prev + 1);
   }, [mode]);
@@ -57,34 +58,17 @@ export const InstallBlocker = () => {
   const getDeviceName = () => {
     switch (platform) {
       case "ios":
-        return "iPhone/iPad";
+        return t("Device_iphone_ipad");
       case "android":
-        return "Android";
+        return t("Device_android");
       case "windows":
-        return "Windows PC";
+        return t("Device_windows");
       case "macos":
-        return "Mac";
+        return t("Device_mac");
       case "linux":
-        return "Linux";
+        return t("Device_linux");
       default:
-        return "your device";
-    }
-  };
-
-  const getBrowserName = () => {
-    switch (platform) {
-      case "ios":
-        return "Safari";
-      case "android":
-        return "Chrome";
-      case "windows":
-        return "Edge/Chrome/Firefox";
-      case "macos":
-        return "Safari/Chrome/Firefox";
-      case "linux":
-        return "Firefox/Chrome";
-      default:
-        return "your browser";
+        return t("Device_your_device");
     }
   };
 
@@ -110,7 +94,9 @@ export const InstallBlocker = () => {
         );
       case "macos":
         return (
-          <Apple sx={{ fontSize: theme.typography.body1.fontSize, ml: 0.5 }} />
+          <IosShare // Share button in Safari
+            sx={{ fontSize: theme.typography.body1.fontSize, ml: 0.5 }}
+          />
         );
       default:
         return (
@@ -124,45 +110,46 @@ export const InstallBlocker = () => {
   const getStep1Text = () => {
     switch (platform) {
       case "ios":
-        return "Tap the Share button";
+        return t("Step_1_tap_share");
       case "android":
-        return "Tap the menu button (⋮)";
+        return t("Step_1_tap_menu");
       case "windows":
-        return "Click the browser menu (⋮ or ☰)";
+        return t("Step_1_click_browser_menu");
       case "macos":
-        return "Click the Share button in Safari or browser menu";
+        return t("Step_1_click_share");
       default:
-        return "Open the browser menu";
+        return t("Step_1_open_menu");
     }
   };
 
   const getStep2Text = () => {
     switch (platform) {
       case "ios":
-        return 'Scroll down and select "Add to Home Screen"';
+        return t("Step_2_ios");
       case "android":
-        return 'Select "Install app" or "Add to Home screen"';
+        return t("Step_2_android");
+      case "macos": // Add specific case for macOS
+        return t("Select_Add_to_Dock_from_the_menu");
       case "windows":
-      case "macos":
       case "linux":
-        return 'Select "Install" or "Add to Home screen" from the menu';
+        return t("Step_2_desktop");
       default:
-        return "Look for the install option in the menu";
+        return t("Step_2_default");
     }
   };
 
   const getStep3Text = () => {
     switch (platform) {
       case "ios":
-        return 'Tap "Add" in the top right corner';
+        return t("Step_3_ios");
       case "android":
-        return 'Tap "Install" in the popup';
+        return t("Step_3_android");
       case "windows":
       case "macos":
       case "linux":
-        return 'Click "Install" in the dialog';
+        return t("Step_3_desktop");
       default:
-        return "Confirm the installation";
+        return t("Step_3_default");
     }
   };
 
@@ -172,90 +159,20 @@ export const InstallBlocker = () => {
     ) : null;
   };
 
-  const getPreviewIcon1 = () => {
-    switch (platform) {
-      case "ios":
-        return <IosShare sx={{ fontSize: theme.typography.h4.fontSize }} />;
-      case "android":
-        return <MoreVert sx={{ fontSize: theme.typography.h4.fontSize }} />;
-      case "windows":
-        return (
-          <DesktopWindows sx={{ fontSize: theme.typography.h4.fontSize }} />
-        );
-      case "macos":
-        return <Apple sx={{ fontSize: theme.typography.h4.fontSize }} />;
-      default:
-        return (
-          <InstallMobile sx={{ fontSize: theme.typography.h4.fontSize }} />
-        );
-    }
-  };
-
-  const getPreviewText1 = () => {
-    switch (platform) {
-      case "ios":
-        return "Share";
-      case "android":
-        return "Menu";
-      case "windows":
-        return "Menu";
-      case "macos":
-        return "Share";
-      default:
-        return "Menu";
-    }
-  };
-
-  const getPreviewIcon2 = () => {
-    switch (platform) {
-      case "ios":
-        return <Add sx={{ fontSize: theme.typography.h4.fontSize }} />;
-      case "android":
-        return (
-          <InstallMobile sx={{ fontSize: theme.typography.h4.fontSize }} />
-        );
-      case "windows":
-        return (
-          <InstallMobile sx={{ fontSize: theme.typography.h4.fontSize }} />
-        );
-      case "macos":
-        return (
-          <InstallMobile sx={{ fontSize: theme.typography.h4.fontSize }} />
-        );
-      default:
-        return <Add sx={{ fontSize: theme.typography.h4.fontSize }} />;
-    }
-  };
-
-  const getPreviewText2 = () => {
-    switch (platform) {
-      case "ios":
-        return "Add to Home";
-      case "android":
-        return "Install";
-      case "windows":
-        return "Install";
-      case "macos":
-        return "Install";
-      default:
-        return "Install";
-    }
-  };
-
   const getUnsupportedMessage = () => {
     switch (platform) {
       case "ios":
-        return "Safari on iOS is not supported. Please install the app from the home screen.";
+        return t("Unsupported_ios");
       case "android":
-        return "Mobile browsers on Android are not supported. Please install the app from your home screen.";
+        return t("Unsupported_android");
       case "windows":
-        return "Browsers on Windows below 1440px are not supported. Please install the desktop app.";
+        return t("Unsupported_windows");
       case "macos":
-        return "Safari on macOS is not supported. Please install the desktop app or use Chrome/Firefox.";
+        return t("Unsupported_macos");
       case "linux":
-        return "Linux browsers are not fully supported. Please install the app if available.";
+        return t("Unsupported_linux");
       default:
-        return "This browser is not supported. Please use the installed app.";
+        return t("Unsupported_default");
     }
   };
 
@@ -346,11 +263,11 @@ export const InstallBlocker = () => {
         />
 
         <Typography variant="h5" gutterBottom fontWeight="bold">
-          Install Our App
+          {t("Install_our_app")}
         </Typography>
 
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          Select your device to see installation instructions:
+          {t("Select_your_device")}
         </Typography>
 
         {/* Platform Selector */}
@@ -390,12 +307,12 @@ export const InstallBlocker = () => {
             />{" "}
             macOS
           </ToggleButton>
-          <ToggleButton value="linux" aria-label="Linux" size="small">
+          {/*     <ToggleButton value="linux" aria-label="Linux" size="small">
             <InstallMobile
               sx={{ mr: 0.5, fontSize: theme.typography.body1.fontSize }}
             />{" "}
             Linux
-          </ToggleButton>
+          </ToggleButton> */}
           <ToggleButton value="other" aria-label="Other" size="small">
             <MenuIcon
               sx={{ mr: 0.5, fontSize: theme.typography.body1.fontSize }}
@@ -405,7 +322,7 @@ export const InstallBlocker = () => {
         </ToggleButtonGroup>
 
         <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-          For the best experience, please install our app on {getDeviceName()}.
+          {t("For_best_experience", { device: getDeviceName() })}
         </Typography>
 
         {/* Installation Steps */}
@@ -492,8 +409,7 @@ export const InstallBlocker = () => {
         </Box>
 
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Once installed, open from your home screen / desktop for the best
-          experience.
+          {t("Once_installed")}
         </Typography>
 
         <Typography

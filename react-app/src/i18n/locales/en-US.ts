@@ -422,8 +422,51 @@ Subscription_Description_3: "You can choose between subscription access or a one
   Search: "Search",
   No_results_for_this_search: "No results for this search",
   Your_products_will_appear_here: "Your products will appear here",
-  No_products: "No products"
+  No_products: "No products",
 
+
+
+  // Install Blocker
+  Install_our_app: "Install App",
+  Select_your_device: "Select your device to see installation instructions:",
+  For_best_experience: "For the best experience, please install our app on {{device}}.",
+  Step_1_tap_share: "Tap the Share button",
+  Step_1_tap_menu: "Tap the menu button (⋮)",
+  Step_1_click_browser_menu: "Click the browser menu (⋮ or ☰)",
+  Step_1_click_share: "Click the Share button in Safari",
+  Step_1_open_menu: "Open the browser menu",
+  Step_2_ios: "Scroll down and select \"Add to Home Screen\"",
+  Step_2_android: "Select \"Install app\" or \"Add to Home screen\"",
+  Step_2_desktop: "Select \"Install\" or \"Add to Home screen\" from the menu",
+  Step_2_default: "Look for the install option in the menu",
+  Step_3_ios: "Tap \"Add\" in the top right corner",
+  Step_3_android: "Tap \"Install\" in the popup",
+  Step_3_desktop: "Click \"Install\" in the dialog",
+  Step_3_default: "Confirm the installation",
+  Once_installed: "Once installed, open from your home screen / desktop for the best experience.",
+  Unsupported_ios: "Safari on iOS is not supported. Please install the app from the home screen.",
+  Unsupported_android: "Mobile browsers on Android are not supported. Please install the app from your home screen.",
+  Unsupported_windows: "Browsers on Windows below 1440px are not supported. Please install the desktop app.",
+  Unsupported_macos: "Safari on macOS is not supported. Please install the desktop app or use Chrome/Firefox.",
+  Unsupported_linux: "Linux browsers are not fully supported. Please install the app if available.",
+  Unsupported_default: "This browser is not supported. Please use the installed app.",
+  Device_iphone_ipad: "iPhone/iPad",
+  Device_android: "Android",
+  Device_windows: "Windows PC",
+  Device_mac: "Mac",
+  Device_linux: "Linux",
+  Device_your_device: "your device",
+  Browser_safari: "Safari",
+  Browser_chrome: "Chrome",
+  Browser_edge_chrome_firefox: "Edge/Chrome/Firefox",
+  Browser_safari_chrome_firefox: "Safari/Chrome/Firefox",
+  Browser_firefox_chrome: "Firefox/Chrome",
+  Browser_your_browser: "your browser",
+  Preview_share: "Share",
+  Preview_menu: "Menu",
+  Preview_add_to_home: "Add to Home",
+  Preview_install: "Install",
+  Select_Add_to_Dock_from_the_menu: 'Select "Add to Dock" from the menu'
 
 };
 

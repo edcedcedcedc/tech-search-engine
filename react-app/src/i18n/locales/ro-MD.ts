@@ -487,8 +487,51 @@ Subscription_Description_3: "Poți alege între abonament sau plată unică pent
   Search: "Căutare",
   No_results_for_this_search: "Niciun rezultat pentru această căutare",
   Your_products_will_appear_here: "Produsele dvs. vor apărea aici",
-  No_products: "Niciun produs"
-  };
+  No_products: "Niciun produs",
+  
+  
+  // Install Blocker
+  Install_our_app: "Instalează Aplicația",
+  Select_your_device: "Selectează dispozitivul tău pentru a vedea instrucțiunile de instalare:",
+  For_best_experience: "Pentru cea mai bună experiență, te rugăm să instalezi aplicația pe {{device}}.",
+  Step_1_tap_share: "Atinge butonul Distribuie",
+  Step_1_tap_menu: "Atinge butonul de meniu (⋮)",
+  Step_1_click_browser_menu: "Dă click pe meniul browserului (⋮ sau ☰)",
+  Step_1_click_share: "Dă click pe butonul Distribuie în Safari",
+  Step_1_open_menu: "Deschide meniul browserului",
+  Step_2_ios: "Derulează în jos și selectează \"Adaugă la Ecranul de start\"",
+  Step_2_android: "Selectează \"Instalează aplicația\" sau \"Adaugă la Ecranul de start\"",
+  Step_2_desktop: "Selectează \"Instalează\" sau \"Adaugă la Ecranul de start\" din meniu",
+  Step_2_default: "Caută opțiunea de instalare în meniu",
+  Step_3_ios: "Atinge \"Adaugă\" în colțul din dreapta sus",
+  Step_3_android: "Atinge \"Instalează\" în fereastra popup",
+  Step_3_desktop: "Dă click pe \"Instalează\" în dialog",
+  Step_3_default: "Confirmă instalarea",
+  Once_installed: "Odată instalată, deschide aplicația de pe ecranul de start / desktop pentru cea mai bună experiență.",
+  Unsupported_ios: "Safari pe iOS nu este suportat. Te rugăm să instalezi aplicația de pe ecranul de start.",
+  Unsupported_android: "Browser-ele mobile pe Android nu sunt suportate. Te rugăm să instalezi aplicația de pe ecranul de start.",
+  Unsupported_windows: "Browser-ele pe Windows sub 1440px nu sunt suportate. Te rugăm să instalezi aplicația desktop.",
+  Unsupported_macos: "Safari pe macOS nu este suportat. Te rugăm să instalezi aplicația desktop sau să folosești Chrome/Firefox.",
+  Unsupported_linux: "Browser-ele Linux nu sunt complet suportate. Te rugăm să instalezi aplicația dacă este disponibilă.",
+  Unsupported_default: "Acest browser nu este suportat. Te rugăm să folosești aplicația instalată.",
+  Device_iphone_ipad: "iPhone/iPad",
+  Device_android: "Android",
+  Device_windows: "PC Windows",
+  Device_mac: "Mac",
+  Device_linux: "Linux",
+  Device_your_device: "dispozitivul tău",
+  Browser_safari: "Safari",
+  Browser_chrome: "Chrome",
+  Browser_edge_chrome_firefox: "Edge/Chrome/Firefox",
+  Browser_safari_chrome_firefox: "Safari/Chrome/Firefox",
+  Browser_firefox_chrome: "Firefox/Chrome",
+  Browser_your_browser: "browser-ul tău",
+  Preview_share: "Distribuie",
+  Preview_menu: "Meniu",
+  Preview_add_to_home: "Adaugă la Home",
+  Preview_install: "Instalează",
+  Select_Add_to_Dock_from_the_menu: 'Selectați „Adăugați la Dock” din meniu'
+};
 
 
 
