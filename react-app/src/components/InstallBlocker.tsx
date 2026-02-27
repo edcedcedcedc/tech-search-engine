@@ -333,6 +333,7 @@ export const InstallBlocker = () => {
             sx={{ display: "flex", alignItems: "center", mb: 1.5 }}
           >
             <Box
+              component="span"
               sx={{
                 bgcolor: "primary.main",
                 color: "white",
@@ -360,6 +361,7 @@ export const InstallBlocker = () => {
             sx={{ display: "flex", alignItems: "center", mb: 1.5 }}
           >
             <Box
+              component="span"
               sx={{
                 bgcolor: "primary.main",
                 color: "white",
@@ -386,6 +388,7 @@ export const InstallBlocker = () => {
             sx={{ display: "flex", alignItems: "center" }}
           >
             <Box
+              component="span"
               sx={{
                 bgcolor: "primary.main",
                 color: "white",

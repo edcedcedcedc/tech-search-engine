@@ -248,7 +248,7 @@ const Header: React.FC = () => {
               bottom: 0,
               left: 0,
               width: "100%",
-              zIndex: (theme) => theme.zIndex.appBar + 1,
+              zIndex: (theme) => theme.zIndex.appBar + 999999999,
             }}
           />
         </Fade>

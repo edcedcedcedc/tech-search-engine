@@ -1,8 +1,18 @@
-import React, { useEffect, useLayoutEffect, useRef, forwardRef } from "react";
+// components/ScrollContainer.tsx
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  forwardRef,
+  useCallback,
+} from "react";
 import { Box, useTheme } from "@mui/material";
 import { scrollableScrollbar } from "../styles/scrollbar";
 import { uiLog } from "../webhook/client/uiDebug";
 import { useScrollStore } from "../store/store";
+import { useStore } from "../store/store";
+import { useTranslation } from "react-i18next";
+import { PullToRefresh } from "./PullToRefresh";
 
 interface ScrollContainerProps {
   children: React.ReactNode;
@@ -22,6 +32,33 @@ export const ScrollContainer = forwardRef<
   const setCurrentScrollElement = useScrollStore(
     (s) => s.setCurrentScrollElement,
   );
+
+  const { searchProducts, query, currentPage } = useStore();
+  const { i18n } = useTranslation();
+
+  // Handle refresh based on route
+  const handleRefresh = useCallback(async () => {
+    uiLog(`[ScrollContainer][${route}] Refreshing data`);
+
+    switch (route) {
+      case "/":
+      case "/products":
+        await searchProducts(query, i18n.language, currentPage, false);
+        break;
+      case "/services":
+        // Add services refresh logic
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        break;
+      case "/faq":
+        // Add FAQ refresh logic
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        break;
+      default:
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    uiLog(`[ScrollContainer][${route}] Refresh completed`);
+  }, [route, searchProducts, query, i18n.language, currentPage]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -69,7 +106,7 @@ export const ScrollContainer = forwardRef<
     };
   }, [route]);
 
-  return (
+  const content = (
     <Box
       ref={containerRef}
       sx={{
@@ -79,7 +116,6 @@ export const ScrollContainer = forwardRef<
         overflowX: "hidden",
         ...scrollableScrollbar(theme),
         scrollBehavior: "auto",
-        // Add a pseudo-element to ensure minimum scroll height
         "&::after": {
           content: '""',
           display: "block",
@@ -90,9 +126,19 @@ export const ScrollContainer = forwardRef<
       }}
     >
       {children}
-      {/* Add invisible spacer div to ensure minimum scroll height */}
       <Box sx={{ height: "1px", opacity: 0 }} />
     </Box>
+  );
+
+  // Wrap with PullToRefresh
+  return (
+    <PullToRefresh
+      onRefresh={handleRefresh}
+      scrollElement={containerRef.current}
+      threshold={50}
+    >
+      {content}
+    </PullToRefresh>
   );
 });
 

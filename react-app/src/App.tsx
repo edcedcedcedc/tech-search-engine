@@ -29,6 +29,29 @@ function App() {
     "/faq": useRef<HTMLDivElement | null>(null),
   };
 
+  useEffect(() => {
+    // Disable native pull-to-refresh on all browsers
+    const preventPullToRefresh = () => {
+      // Apply to html and body
+      document.documentElement.style.overscrollBehaviorY = "none";
+      document.body.style.overscrollBehaviorY = "none";
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+
+      // Also apply to all scrollable elements
+      /* const scrollableElements = document.querySelectorAll(
+        '.scroll-container, [style*="overflow: auto"], [style*="overflow: scroll"]',
+      );
+      scrollableElements.forEach((el) => {
+        (el as HTMLElement).style.overscrollBehaviorY = "contain";
+      }); */
+
+      uiLog("[App] Native pull-to-refresh disabled");
+    };
+
+    preventPullToRefresh();
+  }, []);
+
   // Blocking logic
   useLayoutEffect(() => {
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
