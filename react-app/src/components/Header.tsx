@@ -230,9 +230,27 @@ const Header: React.FC = () => {
 
   const isLoading = useStore((s) => s.isLoading);
 
+  const [_isSafari, setIsSafari] = React.useState(false);
+
+  React.useEffect(() => {
+    const ua = navigator.userAgent.toLowerCase();
+    const isSafari =
+      /safari/.test(ua) &&
+      !/chrome|chromium|crios/.test(ua) &&
+      !/android/.test(ua);
+
+    const isiOS =
+      /iPad|iPhone|iPod/.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+    setIsSafari(isSafari || isiOS);
+    console.log("Safari/iOS detected:", isSafari || isiOS);
+  }, []);
+
   return (
     <>
       <AppBar
+        id="header"
         position="relative"
         elevation={0}
         sx={{
@@ -258,8 +276,8 @@ const Header: React.FC = () => {
             justifyContent: "flex-start",
             alignItems: "center",
             width: "100%",
-            height: `calc(60px + env(safe-area-inset-top))`, // header height + safe area
-            minHeight: `calc(60px + env(safe-area-inset-top))`,
+            height: `calc(66px + env(safe-area-inset-top))`, // header height + safe area
+            minHeight: `calc(66px + env(safe-area-inset-top))`,
             px: { xs: 2, sm: 2, md: 2 },
             py: 0,
           }}
@@ -328,6 +346,23 @@ const Header: React.FC = () => {
                 display: "flex",
                 flexDirection: "column",
                 bgcolor: theme.palette.background.paper,
+                py: {
+                  xs: _isSafari
+                    ? `calc(8px + env(safe-area-inset-top, 0px))`
+                    : 0, // mobile
+                  sm: _isSafari
+                    ? `calc(12px + env(safe-area-inset-top, 0px))`
+                    : 0, // small tablets
+                  md: _isSafari
+                    ? `calc(16px + env(safe-area-inset-top, 0px))`
+                    : 0, // medium tablets
+                  lg: _isSafari
+                    ? `calc(20px + env(safe-area-inset-top, 0px))`
+                    : 0, // desktop
+                  xl: _isSafari
+                    ? `calc(24px + env(safe-area-inset-top, 0px))`
+                    : 0, // large screens
+                },
               },
             }}
           >

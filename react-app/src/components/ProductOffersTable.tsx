@@ -293,6 +293,23 @@ export default function ProductOffersTable() {
     return tObj[lang] || fallback;
   };
 
+  const [_isSafari, setIsSafari] = React.useState(false);
+
+  React.useEffect(() => {
+    const ua = navigator.userAgent.toLowerCase();
+    const isSafari =
+      /safari/.test(ua) &&
+      !/chrome|chromium|crios/.test(ua) &&
+      !/android/.test(ua);
+
+    const isiOS =
+      /iPad|iPhone|iPod/.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+    setIsSafari(isSafari || isiOS);
+    console.log("Safari/iOS detected:", isSafari || isiOS);
+  }, []);
+
   return (
     <Drawer
       anchor="right"
@@ -309,6 +326,13 @@ export default function ProductOffersTable() {
           display: "flex",
           flexDirection: "column",
           bgcolor: theme.palette.background.paper,
+          py: {
+            xs: _isSafari ? `calc(8px + env(safe-area-inset-top, 0px))` : 0, // mobile
+            sm: _isSafari ? `calc(12px + env(safe-area-inset-top, 0px))` : 0, // small tablets
+            md: _isSafari ? `calc(16px + env(safe-area-inset-top, 0px))` : 0, // medium tablets
+            lg: _isSafari ? `calc(20px + env(safe-area-inset-top, 0px))` : 0, // desktop
+            xl: _isSafari ? `calc(24px + env(safe-area-inset-top, 0px))` : 0, // large screens
+          },
         },
       }}
       sx={{

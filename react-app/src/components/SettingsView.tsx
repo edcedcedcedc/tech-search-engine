@@ -157,7 +157,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             lineHeight: 1.2,
           }}
         >
-          {/*  {t("Settings")} */}
+          {t("Settings")}
         </Typography>
       </Box>
       {/* Settings content */}

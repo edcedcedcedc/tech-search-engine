@@ -130,7 +130,7 @@ const MobileBottomNav: React.FC = () => {
         right: 0,
         bottom: 0,
         zIndex: 999,
-        pb: isPWA ? "env(safe-area-inset-bottom)" : 0,
+
         fontWeight: 600,
         overflow: "hidden",
         color: theme.palette.mode === "dark" ? "white" : "black",
@@ -155,91 +155,85 @@ const MobileBottomNav: React.FC = () => {
         }}
       />
 
-      <Box
-        className="liquidGlass-text"
-        sx={{
-          position: "relative",
-          zIndex: 3,
-          width: "100%",
+      <BottomNavigation
+        value={location.pathname}
+        onChange={(_, newValue) => {
+          navigate(newValue);
         }}
-      >
-        <BottomNavigation
-          value={location.pathname}
-          onChange={(_, newValue) => {
-            navigate(newValue);
-          }}
-          showLabels
-          sx={{
-            height: isPWA ? 80 : 54, // 64px - 10px = 54px (15px smaller would be 49px, but 54px is 10px smaller)
-            background: "transparent",
-            "& .MuiBottomNavigationAction-root": {
-              minWidth: isPWA ? 80 : 54,
-              py: 0,
-              color: theme.palette.mode === "dark" ? "white" : "black",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "flex-start",
-              alignItems: "center",
-              pt: 1,
+        showLabels
+        sx={{
+          height:
+            _isSafari && isPWA
+              ? `calc(50px + env(safe-area-inset-bottom))`
+              : 80,
+          background: "transparent",
+          "& .MuiBottomNavigationAction-root": {
+            minWidth: isPWA ? 80 : 54,
+            py: 0,
+            color: theme.palette.mode === "dark" ? "white" : "black",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-start",
+            alignItems: "center",
+            pt: 1,
 
-              "&.Mui-selected": {
-                color: theme.palette.primary.main,
-                "& .MuiSvgIcon-root": {
-                  color: `${theme.palette.primary.main} !important`,
-                },
-                "& .MuiBottomNavigationAction-label": {
-                  color: `${
-                    theme.palette.mode === "dark" ? "white" : "black"
-                  } !important`,
-                  fontWeight: "500 !important",
-                },
-              },
-
-              "& .MuiTouchRipple-root": {
-                display: "none",
-              },
-
-              // Target all icons with these classes
-              "& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium": {
-                marginTop: "0 !important",
-                paddingTop: "0 !important",
-              },
-
-              // Even more specific with the hash class
-              "& .css-1umw9bq-MuiSvgIcon-root": {
-                marginTop: "0 !important",
-                paddingTop: "0 !important",
-              },
-
+            "&.Mui-selected": {
+              color: theme.palette.primary.main,
               "& .MuiSvgIcon-root": {
-                fontSize: isPWA ? 28 : 22, // Just a little smaller: 24 -> 22
-                mb: 0.25,
+                color: `${theme.palette.primary.main} !important`,
               },
-
               "& .MuiBottomNavigationAction-label": {
-                fontSize: isPWA ? "0.7rem" : "0.65rem", // Keep label same size
-                fontWeight: "500 !important",
-                mt: 0,
-                mb: 0,
-                lineHeight: 1.2,
                 color: `${
                   theme.palette.mode === "dark" ? "white" : "black"
                 } !important`,
-                transition: "none !important",
+                fontWeight: "500 !important",
               },
             },
-          }}
-        >
-          {navItems.map((item) => (
-            <BottomNavigationAction
-              key={item.value}
-              label={item.label}
-              value={item.value}
-              icon={item.icon}
-            />
-          ))}
-        </BottomNavigation>
-      </Box>
+
+            "& .MuiTouchRipple-root": {
+              display: "none",
+            },
+
+            // Target all icons with these classes
+            "& .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium": {
+              marginTop: "0 !important",
+              paddingTop: "0 !important",
+            },
+
+            // Even more specific with the hash class
+            "& .css-1umw9bq-MuiSvgIcon-root": {
+              marginTop: "0 !important",
+              paddingTop: "0 !important",
+            },
+
+            "& .MuiSvgIcon-root": {
+              fontSize: isPWA ? 28 : 22, // Just a little smaller: 24 -> 22
+              mb: 0.25,
+            },
+
+            "& .MuiBottomNavigationAction-label": {
+              fontSize: isPWA ? "0.7rem" : "0.65rem", // Keep label same size
+              fontWeight: "500 !important",
+              mt: 0,
+              mb: 0,
+              lineHeight: 1.2,
+              color: `${
+                theme.palette.mode === "dark" ? "white" : "black"
+              } !important`,
+              transition: "none !important",
+            },
+          },
+        }}
+      >
+        {navItems.map((item) => (
+          <BottomNavigationAction
+            key={item.value}
+            label={item.label}
+            value={item.value}
+            icon={item.icon}
+          />
+        ))}
+      </BottomNavigation>
     </Box>
   );
 };
