@@ -36,6 +36,35 @@ export const ScrollContainer = forwardRef<
   const { searchProducts, query, currentPage } = useStore();
   const { i18n } = useTranslation();
 
+  useEffect(() => {
+    // Block iOS swipe-back gesture while maintaining scroll
+    const container = containerRef.current;
+    if (!container) return;
+
+    const blockSwipeBack = (e: Event) => {
+      // Cast to TouchEvent since we know it's a touch event
+      const touchEvent = e as TouchEvent;
+      const touch = touchEvent.touches[0];
+
+      // Only block if it's an edge swipe (first 20px from left edge)
+      if (touch && touch.clientX < 20) {
+        touchEvent.preventDefault();
+      }
+    };
+
+    // Use type-safe event listener with proper typing
+    container.addEventListener("touchstart", blockSwipeBack as EventListener, {
+      passive: false,
+    });
+
+    return () => {
+      container.removeEventListener(
+        "touchstart",
+        blockSwipeBack as EventListener,
+      );
+    };
+  }, []); // Empty deps array since containerRef is stable
+
   // Handle refresh based on route
   const handleRefresh = useCallback(async () => {
     uiLog(`[ScrollContainer][${route}] Refreshing data`);

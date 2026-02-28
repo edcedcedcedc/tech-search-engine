@@ -30,6 +30,28 @@ function App() {
   };
 
   useEffect(() => {
+    // Block iOS swipe-back at the document level (where Safari captures it)
+    const blockEdgeSwipes = (e: TouchEvent) => {
+      const touch = e.touches[0];
+
+      // Block if it's a left edge swipe (iOS back gesture zone)
+      if (touch && touch.clientX < 20) {
+        e.preventDefault();
+        uiLog("[App] Blocked iOS edge swipe");
+      }
+    };
+
+    // Must use { passive: false } to allow preventDefault
+    document.addEventListener("touchstart", blockEdgeSwipes, {
+      passive: false,
+    });
+
+    return () => {
+      document.removeEventListener("touchstart", blockEdgeSwipes);
+    };
+  }, []);
+
+  useEffect(() => {
     // Disable native pull-to-refresh on all browsers
     const preventPullToRefresh = () => {
       // Apply to html and body
