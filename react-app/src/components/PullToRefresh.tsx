@@ -146,6 +146,7 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
               transform: `rotate(${Math.min(pullDistance / threshold, 1) * 180}deg)`,
               transition: "transform 0.2s ease",
               fontSize: "24px",
+              opacity: pullDistance > 0 || isRefreshing ? 1 : 0,
             }}
           >
             ↓
