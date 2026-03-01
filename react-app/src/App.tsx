@@ -16,7 +16,7 @@ import { InstallBlocker } from "./components/InstallBlocker";
 function App() {
   const theme = useTheme();
   // Use your custom breakpoint: xl = 1440px
-  const isBelow1440 = useMediaQuery(theme.breakpoints.down("xxl"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
   const location = useLocation();
   const currentScrollElement = useScrollStore((s) => s.currentScrollElement);
   const [blocker, setBlocker] = useState(false);
@@ -89,7 +89,7 @@ function App() {
     }
 
     // Rule 1: Block all browsers on screens <1440px (mobile, tablets, small laptops)
-    if (isBelow1440) {
+    if (isMobile) {
       setBlocker(true);
       uiLog("[App] Screen <1440px - showing install blocker");
       return;
@@ -105,7 +105,7 @@ function App() {
     // Otherwise allow (non-Safari desktop browsers on screens ≥1440px)
     setBlocker(false);
     uiLog("[App] Desktop browser (non-Safari) ≥1440px - showing web version");
-  }, [isBelow1440]);
+  }, [isMobile]);
 
   // Debug logs (unchanged)
   useEffect(() => {
@@ -117,7 +117,7 @@ function App() {
   }, []);
 
   uiLog(
-    `[App] Render cycle: route=${location.pathname}, isBelow1440=${isBelow1440}, hasScrollElement=${!!currentScrollElement}`,
+    `[App] Render cycle: route=${location.pathname}, isBelow1440=${isMobile}, hasScrollElement=${!!currentScrollElement}`,
   );
 
   const isHeaderVisible = useHideOnScroll({ threshold: 10 });
@@ -153,19 +153,19 @@ function App() {
             zIndex: theme.zIndex.appBar,
             flexShrink: 0,
             overflow: "hidden",
-            height: isBelow1440 ? (isHeaderVisible ? "auto" : 0) : "auto",
-            transform: isBelow1440
+            height: isMobile ? (isHeaderVisible ? "auto" : 0) : "auto",
+            transform: isMobile
               ? isHeaderVisible
                 ? "translateY(0)"
                 : "translateY(-100%)"
               : "none",
-            transition: isBelow1440
+            transition: isMobile
               ? theme.transitions.create(["transform", "height"], {
                   duration: 300,
                   easing: theme.transitions.easing.easeInOut,
                 })
               : "none",
-            willChange: isBelow1440 ? "transform, height" : "auto",
+            willChange: isMobile ? "transform, height" : "auto",
           }}
         >
           <Header />
@@ -181,17 +181,17 @@ function App() {
             minHeight: 0,
           }}
         >
-          {!isBelow1440 && <VerticalHeader />}
+          {!isMobile && <VerticalHeader />}
 
           <Container
             disableGutters
             maxWidth={false}
             sx={{
-              maxWidth: isBelow1440 ? "100%" : 800,
+              maxWidth: isMobile ? "100%" : 800,
               width: "100%",
               mx: "auto",
-              pt: isBelow1440 && !isHeaderVisible ? 0 : 1,
-              px: isBelow1440 ? 0 : 1,
+              pt: isMobile && !isHeaderVisible ? 0 : 1,
+              px: isMobile ? 0 : 1,
               height: "100%",
               display: "flex",
               flexDirection: "column",

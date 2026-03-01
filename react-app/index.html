@@ -131,8 +131,20 @@
       }
     </style>
 
-    <div id="safari-tint"></div>
-    <div id="safari-tint-bottom" class="browser-only"></div>
+    <!-- Replace the static tint divs with conditional ones -->
+    <script>
+      (function() {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS detection
+        
+        if (isIOS) {
+          document.write(`
+            <div id="safari-tint"></div>
+            <div id="safari-tint-bottom" class="browser-only"></div>
+          `);
+        }
+      })();
+    </script>
     <style>
       #safari-tint {
         position: fixed;

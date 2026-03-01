@@ -737,17 +737,29 @@ export default function ProductOffersTable() {
               labelDisplayedRows={({ from, to, count }) =>
                 `${from}-${to} ${t("of")} ${count}`
               }
+              slotProps={{
+                actions: {
+                  nextButton: {
+                    "aria-label": t("Next_page_Tooltip"),
+                    title: t("Next_page_Tooltip"),
+                  },
+                  previousButton: {
+                    "aria-label": t("Previous_page_Tooltip"),
+                    title: t("Previous_page_Tooltip"),
+                  },
+                },
+              }}
               sx={{
                 // HARD STOP horizontal sliding
                 maxWidth: "100%",
                 overflowX: "hidden",
-                overflowY: "hidden",
+                overflowY: "visible", // Changed to visible
 
                 // tiny-screen scale only
                 transform: isTinyScreen ? "scale(0.85)" : "none",
                 transformOrigin: "right top",
 
-                //  remove underline / divider forever
+                // remove underline / divider forever
                 borderTop: "none",
                 borderBottom: "none",
                 "&::before, &::after": {
@@ -762,13 +774,16 @@ export default function ProductOffersTable() {
                   paddingRight: 0,
                   justifyContent: "flex-start",
                   overflowX: "hidden",
+                  overflowY: "visible", // Changed to visible
                   borderTop: "none",
+                  position: "relative",
                 },
 
                 // prevent content from forcing width
                 "& .MuiTablePagination-actions": {
                   marginLeft: 0,
                   flexShrink: 0,
+                  position: "relative",
                 },
 
                 "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows":

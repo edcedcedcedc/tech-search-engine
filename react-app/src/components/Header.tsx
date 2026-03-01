@@ -19,6 +19,7 @@ import {
   Fade,
   Collapse,
   Link,
+  useMediaQuery,
 } from "@mui/material";
 import { Close as CloseIcon, ListAltOutlined } from "@mui/icons-material";
 import {
@@ -227,26 +228,18 @@ const Header: React.FC = () => {
     console.log("[Header] Opening drawer");
     setDrawerOpen(true);
   };
+  const ua = navigator.userAgent.toLowerCase();
+  const isSafari =
+    /safari/.test(ua) &&
+    !/chrome|chromium|crios/.test(ua) &&
+    !/android/.test(ua);
+
+  const isiOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
   const isLoading = useStore((s) => s.isLoading);
-
-  const [_isSafari, setIsSafari] = React.useState(false);
-
-  React.useEffect(() => {
-    const ua = navigator.userAgent.toLowerCase();
-    const isSafari =
-      /safari/.test(ua) &&
-      !/chrome|chromium|crios/.test(ua) &&
-      !/android/.test(ua);
-
-    const isiOS =
-      /iPad|iPhone|iPod/.test(ua) ||
-      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
-    setIsSafari(isSafari || isiOS);
-    console.log("Safari/iOS detected:", isSafari || isiOS);
-  }, []);
-
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
   return (
     <>
       <AppBar
@@ -258,18 +251,20 @@ const Header: React.FC = () => {
           bgcolor: theme.palette.background.default,
         }}
       >
-        <Fade in={isLoading} timeout={300} unmountOnExit={false}>
-          <LinearProgress
-            variant="query"
-            sx={{
-              position: "static",
-              bottom: 0,
-              left: 0,
-              width: "100%",
-              zIndex: (theme) => theme.zIndex.appBar + 999999999,
-            }}
-          />
-        </Fade>
+        {!isiOS && !isSafari && (
+          <Fade in={isLoading} timeout={300} unmountOnExit={false}>
+            <LinearProgress
+              variant="query"
+              sx={{
+                position: "static",
+                bottom: 0,
+                left: 0,
+                width: "100%",
+                zIndex: (theme) => theme.zIndex.appBar + 999999999,
+              }}
+            />
+          </Fade>
+        )}
         <Toolbar
           sx={{
             display: "flex",
@@ -283,7 +278,7 @@ const Header: React.FC = () => {
           }}
         >
           {/* Menu button */}
-          <Tooltip title={t("Menu_Tooltip")} enterDelay={500}>
+          <Tooltip title={t("Menu_Tooltip")} enterDelay={500} placement="right">
             <IconButton
               edge="start"
               sx={{
@@ -305,7 +300,7 @@ const Header: React.FC = () => {
 
           {/* Refresh icon - only in PWA mode */}
           {isPWA && (
-            <Tooltip title={t("Refresh")} enterDelay={500}>
+            <Tooltip title={t("Refresh")} enterDelay={500} placement="right">
               <IconButton
                 sx={{
                   height: 60,
@@ -347,21 +342,26 @@ const Header: React.FC = () => {
                 flexDirection: "column",
                 bgcolor: theme.palette.background.paper,
                 py: {
-                  xs: _isSafari
-                    ? `calc(8px + env(safe-area-inset-top, 0px))`
-                    : 0, // mobile
-                  sm: _isSafari
-                    ? `calc(12px + env(safe-area-inset-top, 0px))`
-                    : 0, // small tablets
-                  md: _isSafari
-                    ? `calc(16px + env(safe-area-inset-top, 0px))`
-                    : 0, // medium tablets
-                  lg: _isSafari
-                    ? `calc(20px + env(safe-area-inset-top, 0px))`
-                    : 0, // desktop
-                  xl: _isSafari
-                    ? `calc(24px + env(safe-area-inset-top, 0px))`
-                    : 0, // large screens
+                  xs:
+                    isiOS || isSafari
+                      ? `calc(8px + env(safe-area-inset-top, 0px))`
+                      : 0, // mobile
+                  sm:
+                    isiOS || isSafari
+                      ? `calc(12px + env(safe-area-inset-top, 0px))`
+                      : 0, // small tablets
+                  md:
+                    isiOS || isSafari
+                      ? `calc(16px + env(safe-area-inset-top, 0px))`
+                      : 0, // medium tablets
+                  lg:
+                    isiOS || isSafari
+                      ? `calc(20px + env(safe-area-inset-top, 0px))`
+                      : 0, // desktop
+                  xl:
+                    isiOS || isSafari
+                      ? `calc(24px + env(safe-area-inset-top, 0px))`
+                      : 0, // large screens
                 },
               },
             }}

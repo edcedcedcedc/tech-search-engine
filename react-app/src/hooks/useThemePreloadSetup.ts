@@ -26,6 +26,7 @@ const drawerColors = {
     }
   }
 };
+import { useTheme, useMediaQuery } from "@mui/material";
 
 export const useThemePreloadSetup = () => {
 /*   const theme = useTheme(); */
@@ -33,7 +34,9 @@ export const useThemePreloadSetup = () => {
   const leftDrawerOpen = useStore((s) => s.drawerOpen);
   const rightDrawerOpen = useStore((s) => s.rightDrawerOpen);
   const sessionExpiredBottomDrawer = useStore((s) => s.isSessionExpired);
+  const theme = useTheme();
   const drawerOpen = leftDrawerOpen || rightDrawerOpen || sessionExpiredBottomDrawer;
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       (window.navigator as any).standalone === true;
@@ -68,7 +71,7 @@ export const useThemePreloadSetup = () => {
 
     let metaColor: string;
 
-    if (activeDrawerType && effectiveMode) {
+    if (activeDrawerType && effectiveMode && isMobile) {
       metaColor =
         drawerColors[effectiveMode][activeDrawerType].open;
       console.log(

@@ -8,6 +8,7 @@ import {
   Divider,
   /*   IconButton, */
   Tooltip,
+  useTheme,
 } from "@mui/material";
 
 /* import NavigateNextOutlinedIcon from "@mui/icons-material/NavigateNextOutlined";
@@ -24,6 +25,7 @@ import { useTranslation } from "react-i18next";
 /* import { useLocation } from "react-router-dom"; */
 import { useStore /* useLastQueryStore */ } from "../store/store";
 import { NavIcon } from "./NavIcons";
+
 /* import { uiLog } from "../webhook/client/uiDebug"; */
 /* import { HeaderComparisonIcon } from "./ComparisonWidget"; */
 
@@ -45,7 +47,7 @@ const VerticalHeader: React.FC = () => {
   /*   const storeQuery = useStore((s) => s.query); */
 
   const isProductsDisabled = aggregatedProducts.length === 0;
-
+  const theme = useTheme();
   /*   const getQueryToUse = () => {
     const lastQuery = useLastQueryStore.getState().lastQuery;
     return lastQuery || storeQuery || "";
@@ -137,6 +139,20 @@ const VerticalHeader: React.FC = () => {
         bgcolor: "background.default",
         flexShrink: 0,
         overflowY: "auto",
+        "&::-webkit-scrollbar": { width: theme.spacing(1) },
+        "&::-webkit-scrollbar-thumb": {
+          backgroundColor: theme.palette.background.default,
+          borderRadius: theme.shape.borderRadius,
+        },
+        "&::-webkit-scrollbar-thumb:hover": {
+          backgroundColor: theme.palette.background.default,
+        },
+        "&::-webkit-scrollbar-track": { background: "transparent" },
+        scrollbarWidth: "thin", // Firefox
+        scrollbarColor:
+          theme.palette.mode === "dark"
+            ? "rgba(255,255,255,0.2) transparent"
+            : "rgba(0,0,0,0.3) transparent",
       }}
     >
       {/* Top buttons - Only show on products page */}

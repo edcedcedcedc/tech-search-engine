@@ -3,6 +3,9 @@ import {
   BottomNavigation,
   BottomNavigationAction,
   Box,
+  Fade,
+  LinearProgress,
+  useMediaQuery,
   useTheme,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -11,6 +14,7 @@ import { CategoryOutlined, SearchOutlined } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { BusinessCenterOutlined as ServicesOutlinedIcon } from "@mui/icons-material";
 import QuestionMarkOutlinedIcon from "@mui/icons-material/QuestionMarkOutlined";
+import { useStore } from "../../store/store";
 
 const MobileBottomNav: React.FC = () => {
   const navigate = useNavigate();
@@ -43,6 +47,16 @@ const MobileBottomNav: React.FC = () => {
   }, []);
 
   React.useEffect(() => {}, [t]);
+
+  const ua = navigator.userAgent.toLowerCase();
+  const isSafari =
+    /safari/.test(ua) &&
+    !/chrome|chromium|crios/.test(ua) &&
+    !/android/.test(ua);
+  const isLoading = useStore((s) => s.isLoading);
+  const isiOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
   // Create icon wrapper to ensure perfect alignment
   const IconWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -103,7 +117,7 @@ const MobileBottomNav: React.FC = () => {
       ),
     },
   ];
-
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   React.useEffect(() => {
     // Create a style element
     const style = document.createElement("style");
@@ -154,6 +168,20 @@ const MobileBottomNav: React.FC = () => {
           pointerEvents: "none",
         }}
       />
+      {(isiOS || isSafari) && (
+        <Fade in={isLoading} timeout={300} unmountOnExit={false}>
+          <LinearProgress
+            variant="query"
+            sx={{
+              position: "static",
+              bottom: 0,
+              left: 0,
+              width: "100%",
+              zIndex: (theme) => theme.zIndex.appBar + 999999999,
+            }}
+          />
+        </Fade>
+      )}
 
       <BottomNavigation
         value={location.pathname}

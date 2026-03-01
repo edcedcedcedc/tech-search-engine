@@ -7,6 +7,7 @@ import {
   Divider,
   CircularProgress,
   Chip,
+  Tooltip,
 } from "@mui/material";
 import { SearchAutocomplete } from "../../components/SearchAutocomplete";
 import SearchIcon from "@mui/icons-material/Search";
@@ -113,9 +114,11 @@ const HomeMobile: React.FC = () => {
             <SearchIcon sx={{ fontSize: 20, color: "primary.main" }} />
             <Typography variant="subtitle2">{t("Search_tips")}</Typography>
           </Box>
-          <IconButton size="small">
-            {showTips ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-          </IconButton>
+          <Tooltip title={t("More_Tooltip")} enterDelay={200}>
+            <IconButton size="small">
+              {showTips ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+            </IconButton>
+          </Tooltip>
         </Box>
 
         {showTips && (

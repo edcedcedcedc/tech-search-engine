@@ -462,7 +462,7 @@ Subscription_Description_3: "Poți alege între abonament sau plată unică pent
   Previous_page_Tooltip: "Vizarea Anterioară",
 
   //Random
-  More_Tooltip: "Mai multe",
+  More_Tooltip: "Mai mult",
   Search_tips: "Sugestii pentru căutare",
   Popular_Categories: "Categorii populare",
   Updated_at: "Ultima actualizare la",
