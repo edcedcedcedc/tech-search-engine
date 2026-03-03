@@ -121,7 +121,7 @@ Happy_searching:
   Sources: "Surse",
 
   // About us description
-  About_Us_description: "Această platformă este un web tech agregator care permite să descoperi și să compari oferte de la mai multe magazine online din Republica Moldova. Începând cu 1 februarie 2026, ne specializăm în computere, jocuri și tot ce ține de acestea, precum și telefoane mobile. Nu vindem produse și nu garantăm disponibilitatea sau acuratețea prețurilor",
+  About_Us_description: "Această platformă este un motor de căutare tehnologic, cu inteligență artificială, care permite, să descoperi și compari oferte de la mai multe magazine online din Republica Moldova. Începând cu 1 februarie 2026, ne specializăm în computere, jocuri și tot ce ține de acestea, precum și telefoane mobile. Nu vindem produse și nu garantăm disponibilitatea sau acuratețea prețurilor",
   About_Us_description_secondary: "Toate datele sunt preluate din surse publice și pot fi modificate de magazine fără notificare.",
 
   // Contact Page
@@ -280,7 +280,7 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
     Services_Title: "Servicii",
     Services_Intro: "Oferim înțelegere profundă și date pentru decizii de cumpărare mai inteligente.",
 
-    Services_FullPrice_Title: "Informații complete despre preț",
+    Services_FullPrice_Title: "Informații complete despre preț și disponibilitate.",
     Services_FullPrice_Intro: "Previzualizarea datelor proprietare de prețuri conține doar două puncte, primul și ultimul. Tendința completă a prețurilor și istoricul complet al prețurilor este disponibil prin abonament.",
     Services_FullPrice_Trend: "Tendință completă a prețurilor ce include: preț, în stoc, actualizat pe, cu grafice detaliate",
     Services_FullPrice_History: "Istoric complet al prețurilor pentru toate produsele ce include: preț, în stoc, actualizat pe",
@@ -297,6 +297,15 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
     Services_Data_Intro: "Accesați seturile complete de date istorice proprietare despre preț și stoc pentru propria analiză, disponibil prin abonament sau plată unică.",
     Services_Data_PriceHistory: "Seturi de date privind istoricul prețurilor în orice format pentru orice ofertă sau pachet de oferte la alegere",
    
+
+    Services_Notifications_Title: "Notificări Push pentru Scăderi de Preț",
+    Services_Notifications_Intro: "Activați notificările push pentru produsele preferate și fiți anunțat instant când prețul scade sau produsul revine în stoc.",
+
+    Services_Notifications_PriceDrop: "Alerte automate în timp real pentru scăderi de preț la produsele abonate",
+
+    Services_Notifications_Subscribe: "Abonare individuală la produse pentru monitorizare continuă",
+
+    Services_Notifications_Custom: "Setare prag de preț personalizat pentru notificări optimizate",
 
 
     // =======================
@@ -424,9 +433,13 @@ Subscription_Description_3: "Poți alege între abonament sau plată unică pent
   Email_Invalid: "Vă rugăm să introduceți o adresă de email validă",
   Email_Success: "Vă mulțumim pentru abonare! Vă vom anunța când lansăm.",
   Email_Error: "Abonarea a eșuat. Vă rugăm să încercați din nou.",
-  Subscribe: "Abonează-te",
+  Subscribe: "Abonare",
   Services_EarlyAccess_Title: "Obține Acces Early",
   Services_EarlyAccess_Text: "Fiți primii care află când lansăm. Abonați-vă pentru acces early și oferte speciale.",
+
+  Early_Access_Title: "Înscrie-te pentru acces anticipat la ",
+  Early_Acces_Services: "servicii premium",
+  Enter_email: "Adresa ta de email",
   
   
   Comparison_Results: "Rezultate Comparație",

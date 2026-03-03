@@ -59,15 +59,6 @@ function App() {
       document.body.style.overscrollBehaviorY = "none";
       document.body.style.overflow = "hidden";
       document.documentElement.style.overflow = "hidden";
-
-      // Also apply to all scrollable elements
-      /* const scrollableElements = document.querySelectorAll(
-        '.scroll-container, [style*="overflow: auto"], [style*="overflow: scroll"]',
-      );
-      scrollableElements.forEach((el) => {
-        (el as HTMLElement).style.overscrollBehaviorY = "contain";
-      }); */
-
       uiLog("[App] Native pull-to-refresh disabled");
     };
 
@@ -195,9 +186,11 @@ function App() {
               height: "100%",
               display: "flex",
               flexDirection: "column",
+              overflow: isMobile ? "hidden" : "visible", // Allow native scroll on desktop
               "& > *": {
                 flex: 1,
                 minHeight: 0,
+                overflow: isMobile ? "hidden" : "visible", // Allow native scroll
               },
             }}
           >

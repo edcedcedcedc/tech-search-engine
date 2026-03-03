@@ -22,6 +22,7 @@ import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import { useSystemStatusStore } from "../../store/store";
 import i18n from "../../i18n";
 import { t } from "i18next";
+import EarlyAccessCard from "../../components/EarlyAccessCard";
 
 const HomeMobile: React.FC = () => {
   const [showTips, setShowTips] = React.useState(false);
@@ -149,6 +150,7 @@ const HomeMobile: React.FC = () => {
             </Box>
           </Stack>
         )}
+        <EarlyAccessCard />
       </Box>
     </Box>
   );

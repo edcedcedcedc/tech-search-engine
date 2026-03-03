@@ -1,199 +1,132 @@
-import { Box, Typography } from "@mui/material";
+// views/mobile/Services.tsx
+import { Box, Typography, useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
-/* import { useEmailStore } from "../store/store";
-import { collectEmail } from "../api/searchApi"; */
-
-/* import validator from "validator"; */
 
 export default function Services() {
   const { t } = useTranslation();
-  /*   const { email, status, setStatus, setMessage, reset } =
-    useEmailStore(); */
-  /*  const [_emailError, setEmailError] = useState(""); */
-
-  // Auto-reset after success or error
-  /*   useEffect(() => {
-    if (status === "success" || status === "error") {
-      const timer = setTimeout(() => {
-        reset();
-      }, 3000); // Reset after 3 seconds
-      return () => clearTimeout(timer);
-    }
-  }, [status, reset]); */
-  /* 
-  const handleSubmit = async () => {
-    // Clear previous errors
-    setEmailError("");
-
-    // Validate email
-    if (!email) {
-      setEmailError(t("Email_Required"));
-      return;
-    }
-
-    if (!validator.isEmail(email)) {
-      setEmailError(t("Email_Invalid"));
-      return;
-    }
-
-    setStatus("loading");
-    const result = await collectEmail(email);
-
-    if (result.success) {
-      setStatus("success");
-      setMessage(t("Email_Success"));
-    } else {
-      setStatus("error");
-      setMessage(t("Email_Error"));
-    }
-  }; */
+  const theme = useTheme();
 
   return (
-    <Box>
-      {/* Main title — match Home's h5 weight */}
-      <Typography variant="h5" fontWeight={600} gutterBottom>
-        {t("Services_Title")}
-      </Typography>
-
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        {t("Services_Intro")}
-      </Typography>
-
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" fontWeight={600} gutterBottom>
-          {t("Services_FullPrice_Title")}
+    <Box
+      sx={{
+        height: "100%",
+        overflowY: "auto",
+        position: "relative",
+        "&::-webkit-scrollbar": { width: theme.spacing(1) },
+        "&::-webkit-scrollbar-thumb": {
+          backgroundColor: theme.palette.background.default,
+          borderRadius: theme.shape.borderRadius,
+        },
+        "&::-webkit-scrollbar-thumb:hover": {
+          backgroundColor: theme.palette.background.default,
+        },
+        "&::-webkit-scrollbar-track": { background: "transparent" },
+        scrollbarWidth: "thin",
+        scrollbarColor:
+          theme.palette.mode === "dark"
+            ? "rgba(255,255,255,0.2) transparent"
+            : "rgba(0,0,0,0.3) transparent",
+      }}
+    >
+      {/* Sticky Header */}
+      <Box
+        sx={{
+          position: "sticky",
+          top: 0,
+          bgcolor: "background.default",
+          zIndex: 10,
+          px: 2, // Add horizontal padding to match content
+          py: 1.5, // Consistent vertical padding
+        }}
+      >
+        <Typography variant="h5" fontWeight={600}>
+          {t("Services_Title")}
         </Typography>
-
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          {t("Services_FullPrice_Intro")}
-        </Typography>
-
-        <Box component="ul" sx={{ pl: 3 }}>
-          <Typography component="li" variant="body1">
-            {t("Services_FullPrice_Trend")}
-          </Typography>
-          <Typography component="li" variant="body1">
-            {t("Services_FullPrice_History")}
-          </Typography>
-        </Box>
       </Box>
 
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" fontWeight={600} gutterBottom>
-          {t("Services_Analytics_Title")}
+      {/* Content with padding */}
+      <Box sx={{ px: 2, pb: 8 }}>
+        {/* Intro text */}
+        <Typography variant="body1" color="text.primary" sx={{ mb: 3 }}>
+          {t("Services_Intro")}
         </Typography>
 
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          {t("Services_Analytics_Intro")}
-        </Typography>
-
-        <Box component="ul" sx={{ pl: 3 }}>
-          <Typography component="li" variant="body1">
-            {t("Services_Analytics_PriceTrend")}
+        {/* Full Price Section */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h6" fontWeight={600} gutterBottom>
+            {t("Services_FullPrice_Title")}
           </Typography>
-        </Box>
-      </Box>
 
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" fontWeight={600} gutterBottom>
-          {t("Services_Data_Title")}
-        </Typography>
-
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          {t("Services_Data_Intro")}
-        </Typography>
-
-        <Box component="ul" sx={{ pl: 3 }}>
-          <Typography component="li" variant="body1">
-            {t("Services_Data_PriceHistory")}
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            {t("Services_FullPrice_Intro")}
           </Typography>
-        </Box>
-      </Box>
 
-      {/* 
-      <Box sx={{ mb: 5 }}>
-
-        <Typography variant="h6" fontWeight={600} gutterBottom>
-          {t("Services_EarlyAccess_Title")}
-        </Typography>
-
-        <Typography variant="body1" sx={{ mb: 2 }}>
-          {t("Services_EarlyAccess_Text")}
-        </Typography>
-
-
-        {status === "success" ? (
-          <Alert severity="success" sx={{ mt: 2 }}>
-            {message}
-          </Alert>
-        ) : status === "error" ? (
-          <Alert severity="error" sx={{ mt: 2 }}>
-            {message}
-          </Alert>
-        ) : (
-          <Box
-            sx={{
-              display: "flex",
-              gap: 1,
-              flexDirection: { xs: "column", sm: "row" },
-            }}
-          >
-            <TextField
-              fullWidth
-              variant="outlined"
-              size="small"
-              placeholder={t("Email_Placeholder")}
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setEmailError("");
-              }}
-              error={!!emailError}
-              helperText={emailError}
-              disabled={status === "loading"}
-              sx={{
-                flex: 1,
-                "& .MuiOutlinedInput-root": {
-                  fontSize: {
-                    xs: "0.75rem",
-                    sm: "0.81rem",
-                    md: "0.855rem",
-                    lg: "0.9rem",
-                    xl: "0.945rem",
-                    xxl: "0.99rem",
-                  },
-                },
-              }}
-            />
-            <Button
-              variant="text"
-              onClick={handleSubmit}
-              disabled={status === "loading"}
-              sx={{
-                minWidth: {
-                  xs: "100%",
-                  sm: 100,
-                },
-                height: 40,
-                fontSize: {
-                  xs: "0.75rem",
-                  sm: "0.81rem",
-                  md: "0.855rem",
-                  lg: "0.9rem",
-                  xl: "0.945rem",
-                  xxl: "0.99rem",
-                },
-              }}
-            >
-              {status === "loading" ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : (
-                t("Subscribe")
-              )}
-            </Button>
+          <Box component="ul" sx={{ pl: 3 }}>
+            <Typography component="li" variant="body1">
+              {t("Services_FullPrice_Trend")}
+            </Typography>
+            <Typography component="li" variant="body1">
+              {t("Services_FullPrice_History")}
+            </Typography>
           </Box>
-        )}
-      </Box> */}
+        </Box>
+
+        {/* Analytics Section */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h6" fontWeight={600} gutterBottom>
+            {t("Services_Analytics_Title")}
+          </Typography>
+
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            {t("Services_Analytics_Intro")}
+          </Typography>
+
+          <Box component="ul" sx={{ pl: 3 }}>
+            <Typography component="li" variant="body1">
+              {t("Services_Analytics_PriceTrend")}
+            </Typography>
+          </Box>
+        </Box>
+        {/* Notifications Section */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h6" fontWeight={600} gutterBottom>
+            {t("Services_Notifications_Title")}
+          </Typography>
+
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            {t("Services_Notifications_Intro")}
+          </Typography>
+
+          <Box component="ul" sx={{ pl: 3 }}>
+            <Typography component="li" variant="body1">
+              {t("Services_Notifications_PriceDrop")}
+            </Typography>
+            <Typography component="li" variant="body1">
+              {t("Services_Notifications_Subscribe")}
+            </Typography>
+            <Typography component="li" variant="body1">
+              {t("Services_Notifications_Custom")}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Data Section */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h6" fontWeight={600} gutterBottom>
+            {t("Services_Data_Title")}
+          </Typography>
+
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            {t("Services_Data_Intro")}
+          </Typography>
+
+          <Box component="ul" sx={{ pl: 3 }}>
+            <Typography component="li" variant="body1">
+              {t("Services_Data_PriceHistory")}
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
     </Box>
   );
 }

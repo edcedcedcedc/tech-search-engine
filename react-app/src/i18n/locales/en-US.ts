@@ -88,7 +88,7 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Sources: "Sources",
 
   // About us description
- About_Us_description: "This platform is a web tech aggregator that allows you to discover and compare offers from multiple online stores in the Republic of Moldova. As of February 1, 2026, we specialize in computers, gaming, and everything related to them, as well as mobile phones. We do not sell products and do not guarantee the availability or accuracy of prices.",
+ About_Us_description: "This platform is an AI tech search engine that allows you to discover and compare offers from multiple online stores in the Republic of Moldova. As of February 1, 2026, we specialize in computers, gaming, and everything related to them, as well as mobile phones. We do not sell products and do not guarantee the availability or accuracy of prices.",
  About_Us_description_secondary: `All data is taken from public sources and may be modified by stores without notice.`,
 
   // Contact page
@@ -234,21 +234,26 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
 
   Services: "Services",
   Services_Title: "Services",
-  Services_Intro: "We offer deep insights and data to make smarter purchasing decisions.",
+  Services_Intro: "We provide deep insights and data to help you make smarter purchasing decisions.",
 
-  Services_FullPrice_Title: "Full Price Information",
-  Services_FullPrice_Intro: "Previewing proprietary price data contains only two points, the first and the last. Full price trends and complete price history are available via subscription.",
-  Services_FullPrice_Trend: "Full price trend including: price, in stock, updated on, with detailed charts",
-  Services_FullPrice_History: "Complete price history for all products including: price, in stock, updated on",
+  Services_FullPrice_Title: "Complete Price and Availability Information",
+  Services_FullPrice_Intro: "The preview of proprietary price data includes only two points — the first and the latest. Full price trends and complete price history are available through subscription.",
+  Services_FullPrice_Trend: "Complete price trend including: price, in stock status, last updated date, with detailed charts",
+  Services_FullPrice_History: "Complete price history for all products including: price, in stock status, last updated date",
 
   Services_Analytics_Title: "Analytics",
-  Services_Analytics_Intro: "Leverage proprietary price trends and history to make better purchasing decisions, available via subscription or one-time payment.",
-  Services_Analytics_PriceTrend: "Price trend analysis including: trend direction, price change, change percentage, volatility, momentum, best time to buy, availability analysis, risk level",
+  Services_Analytics_Intro: "Leverage proprietary price trends and historical data to make better purchasing decisions, available via subscription or one-time payment.",
+  Services_Analytics_PriceTrend: "Price trend analysis including: trend direction, price change, percentage change, volatility, momentum, optimal purchase timing, availability analysis, risk level",
 
   Services_Data_Title: "Data",
-  Services_Data_Intro: "Access full proprietary historical datasets on prices and stock for your own analysis, available via subscription or one-time payment.",
-  Services_Data_PriceHistory: "Datasets on price history in any format for any offers or bundle of offers of your choice",
+  Services_Data_Intro: "Access complete proprietary historical datasets on price and stock for your own analysis, available via subscription or one-time payment.",
+  Services_Data_PriceHistory: "Price history datasets in any format for any offer or custom offer bundle of your choice",
 
+  Services_Notifications_Title: "Push Notifications for Price Drops",
+  Services_Notifications_Intro: "Enable push notifications for your favorite products and get instantly notified when the price drops or the product is back in stock.",
+  Services_Notifications_PriceDrop: "Real-time automated alerts for price drops on subscribed products",
+  Services_Notifications_Subscribe: "Individual product subscriptions for continuous monitoring",
+  Services_Notifications_Custom: "Custom price threshold settings for optimized notifications",
   //error handling 
   Error_403: "Session expired(403)",
   Error_404: "Resource not found (404).",
@@ -355,8 +360,12 @@ Subscription_Description_3: "You can choose between subscription access or a one
   Email_Success: "Thanks for subscribing! We'll notify you when we launch.",
   Email_Error: "Failed to subscribe. Please try again.",
   Subscribe: "Subscribe",
-  Services_EarlyAccess_Title: "Get Early Access",
+  Services_EarlyAccess_Title: "Get Early Access on",
   Services_EarlyAccess_Text: "Be the first to know when we launch. Subscribe for early access and special offers.",
+
+  Early_Access_Title: "Get early access for ",
+  Early_Acces_Services: "premium services",
+  Enter_email: "Enter your email",
 
 
   //COMPARE

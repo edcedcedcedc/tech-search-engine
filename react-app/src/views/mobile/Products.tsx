@@ -1,15 +1,7 @@
 // views/mobile/ProductsMobile.tsx
-import React, { useRef } from "react";
-import {
-  Box,
-  Typography,
-  IconButton,
-  Tooltip,
-  useTheme,
-  useMediaQuery,
-} from "@mui/material";
-import NavigateNextOutlinedIcon from "@mui/icons-material/NavigateNextOutlined";
-import NavigateBeforeOutlinedIcon from "@mui/icons-material/NavigateBeforeOutlined";
+import React from "react";
+import { Box, useTheme, useMediaQuery } from "@mui/material";
+import { ProductsHeader } from "../../components/ProductsHeader";
 import ProductGrid from "../../components/ProductGrid";
 import EmptyState from "../../components/EmptyState";
 import { useStore, useLastQueryStore } from "../../store/store";
@@ -30,10 +22,8 @@ const ProductsMobile: React.FC = () => {
   const products = useStore((s) => s.aggregatedProducts);
   const hasSearched = useStore((s) => s.hasSearched);
   const searchError = useStore((s) => s.searchError);
-  const headerRef = useRef<HTMLDivElement | null>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
-  // Use the hook to control visibility of the product header
 
   const isHeaderVisible = useHideOnScroll({
     threshold: 10,
@@ -75,13 +65,11 @@ const ProductsMobile: React.FC = () => {
 
   const handleAction = () => {
     if (!hasSearched) {
-      // Focus search input
       const searchInput = document.querySelector('input[type="text"]');
       if (searchInput) {
         (searchInput as HTMLInputElement).focus();
       }
     } else {
-      // Retry search
       const query = getQueryToUse();
       if (query) {
         searchProducts(query, lang, 1);
@@ -91,11 +79,8 @@ const ProductsMobile: React.FC = () => {
   };
 
   const showPagination = totalPages > 1 && products && products.length > 0;
-
-  // Determine if we should show empty state
   const showEmptyState = !isLoading && (!products || products.length === 0);
 
-  // Determine empty state type
   let emptyStateType: "initial" | "noResults" | "error" = "initial";
   if (searchError) emptyStateType = "error";
   else if (hasSearched && (!products || products.length === 0))
@@ -107,81 +92,29 @@ const ProductsMobile: React.FC = () => {
         p: !isMobile ? 0 : 2,
         pb: 8,
         transition: theme.transitions.create(["padding"], {
-          duration: theme.transitions.duration.standard, // 300ms
+          duration: theme.transitions.duration.standard,
           easing: theme.transitions.easing.easeInOut,
         }),
         willChange: "padding",
       }}
     >
-      {/* Fixed header section */}
-
-      <Box
-        ref={headerRef}
+      <ProductsHeader
+        currentPage={currentPage}
+        totalPages={totalPages}
+        isLoading={isLoading}
+        onPrevPage={handlePrev}
+        onNextPage={handleNext}
+        showPagination={showPagination}
+        title={t("Products")}
+        sticky={true}
+        hideOnScroll={true}
+        isHeaderVisible={isHeaderVisible}
         sx={{
-          transform: isHeaderVisible ? "translateY(0)" : "translateY(-100%)",
-          transition: theme.transitions.create("transform"),
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
           mb: showEmptyState ? 0 : 4,
-          position: "sticky",
-          top: 0,
-          bgcolor: "background.default",
-          zIndex: 10,
           mt: -1,
         }}
-      >
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 600,
-          }}
-        >
-          {t("Products")}
-        </Typography>
+      />
 
-        {showPagination && (
-          <Box sx={{ display: "flex", gap: 0.5 }}>
-            <Tooltip title={t("Previous_page_Tooltip")} enterDelay={500}>
-              <IconButton
-                size="small"
-                onClick={handlePrev}
-                disabled={currentPage <= 1 || isLoading}
-                sx={{
-                  bgcolor: "background.paper",
-                  boxShadow: 1,
-                  "&:hover": {
-                    bgcolor: "action.hover",
-                  },
-                  /*   opacity: currentPage <= 1 || isLoading ? 0.5 : 1, */
-                }}
-              >
-                <NavigateBeforeOutlinedIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title={t("Next_page_Tooltip")} enterDelay={500}>
-              <IconButton
-                size="small"
-                onClick={handleNext}
-                disabled={currentPage >= totalPages || isLoading}
-                sx={{
-                  bgcolor: "background.paper",
-                  boxShadow: 1,
-                  "&:hover": {
-                    bgcolor: "action.hover",
-                  },
-                  /*   opacity: currentPage >= totalPages || isLoading ? 0.5 : 1, */
-                }}
-              >
-                <NavigateNextOutlinedIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        )}
-      </Box>
-
-      {/* Content */}
       {!isLoading && showEmptyState ? (
         <EmptyState
           type={emptyStateType}

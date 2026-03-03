@@ -103,6 +103,28 @@ export default function ServicesMobile() {
         </Box>
       </Box>
 
+      {/* Notifications Section */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" fontWeight={600} gutterBottom>
+          {t("Services_Notifications_Title")}
+        </Typography>
+
+        <Typography variant="body1" sx={{ mb: 1 }}>
+          {t("Services_Notifications_Intro")}
+        </Typography>
+
+        <Box component="ul" sx={{ pl: 3 }}>
+          <Typography component="li" variant="body1">
+            {t("Services_Notifications_PriceDrop")}
+          </Typography>
+          <Typography component="li" variant="body1">
+            {t("Services_Notifications_Subscribe")}
+          </Typography>
+          <Typography component="li" variant="body1">
+            {t("Services_Notifications_Custom")}
+          </Typography>
+        </Box>
+      </Box>
       {/* Data Section */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h6" fontWeight={600} gutterBottom>

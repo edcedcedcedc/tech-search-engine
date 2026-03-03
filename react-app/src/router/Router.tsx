@@ -17,7 +17,9 @@ import ProductsMobile from "../views/mobile/Products";
 import { ScrollContainer } from "../components/ScrollContainer";
 import { useTranslation } from "react-i18next";
 import { uiLog } from "../webhook/client/uiDebug"; // assuming you have this
-
+import Products from "../views/Products";
+import Qna from "../views/Qna";
+import Services from "../views/Services";
 interface AppRoutesProps {
   scrollRefs: Record<string, React.RefObject<HTMLDivElement | null>>;
 }
@@ -59,31 +61,43 @@ const AppRoutes: React.FC<AppRoutesProps> = ({ scrollRefs }) => {
               <Route
                 path="/products"
                 element={
-                  <ScrollContainer
-                    route="/products"
-                    ref={scrollRefs["/products"]}
-                  >
-                    <ProductsMobile key={i18n.language} />
-                  </ScrollContainer>
+                  isMobile ? (
+                    <ScrollContainer
+                      route="/products"
+                      ref={scrollRefs["/products"]}
+                    >
+                      <ProductsMobile key={i18n.language} />
+                    </ScrollContainer>
+                  ) : (
+                    <Products key={i18n.language} />
+                  )
                 }
               />
               <Route
                 path="/services"
                 element={
-                  <ScrollContainer
-                    route="/services"
-                    ref={scrollRefs["/services"]}
-                  >
-                    <ServicesMobile key={i18n.language} />
-                  </ScrollContainer>
+                  isMobile ? (
+                    <ScrollContainer
+                      route="/services"
+                      ref={scrollRefs["/services"]}
+                    >
+                      <ServicesMobile key={i18n.language} />
+                    </ScrollContainer>
+                  ) : (
+                    <Services key={i18n.language} />
+                  )
                 }
               />
               <Route
                 path="/faq"
                 element={
-                  <ScrollContainer route="/faq" ref={scrollRefs["/faq"]}>
-                    <QnaMobile key={i18n.language} />
-                  </ScrollContainer>
+                  isMobile ? (
+                    <ScrollContainer route="/faq" ref={scrollRefs["/faq"]}>
+                      <QnaMobile key={i18n.language} />
+                    </ScrollContainer>
+                  ) : (
+                    <Qna key={i18n.language} />
+                  )
                 }
               />
             </Routes>
