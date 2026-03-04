@@ -1,4 +1,3 @@
-// components/PullToRefresh.tsx
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Box, CircularProgress, useTheme } from "@mui/material";
 import { styled } from "@mui/material/styles";
@@ -54,6 +53,12 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
     (e: TouchEvent) => {
       if (isRefreshing) return;
 
+      // Ignore multi-touch gestures (zoom)
+      if (e.touches.length > 1) {
+        isPulling.current = false;
+        return;
+      }
+
       if (checkIfAtTop()) {
         startY.current = e.touches[0].clientY;
         isPulling.current = true;
@@ -66,6 +71,13 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
   const handleTouchMove = useCallback(
     (e: TouchEvent) => {
       if (isRefreshing || !isPulling.current || !checkIfAtTop()) return;
+
+      // Cancel if multi-touch detected during move (zoom)
+      if (e.touches.length > 1) {
+        isPulling.current = false;
+        setPullDistance(0);
+        return;
+      }
 
       const currentY = e.touches[0].clientY;
       const diff = currentY - startY.current;
