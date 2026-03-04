@@ -24,8 +24,8 @@ export default function Services() {
         scrollbarWidth: "thin",
         scrollbarColor:
           theme.palette.mode === "dark"
-            ? "rgba(255,255,255,0.2) transparent"
-            : "rgba(0,0,0,0.3) transparent",
+            ? "rgba(255, 255, 255, 0.02) transparent"
+            : "rgba(0, 0, 0, 0.04) transparent",
       }}
     >
       {/* Sticky Header */}

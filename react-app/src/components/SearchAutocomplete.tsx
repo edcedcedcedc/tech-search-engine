@@ -11,6 +11,8 @@ import {
   IconButton,
   Box,
   Tooltip,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import debounce from "lodash.debounce";
@@ -40,6 +42,8 @@ export const SearchAutocomplete: React.FC = () => {
   );
   const autocompleteResetToken = useStore((s) => s.autocompleteResetToken);
   const isLoading = useStore((state) => state.isLoading);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
   const isOffline = useStore((state) => state.isOffline);
   const russianRegex = /[А-Яа-яЁё]/;
   const closeSuggestions = () => {
@@ -285,13 +289,17 @@ export const SearchAutocomplete: React.FC = () => {
         open={suggestions.length > 0}
         anchorEl={anchorRef.current}
         placement="bottom-start"
+        modifiers={[
+          {
+            name: "offset",
+            options: {
+              offset: isMobile ? [-3, 4] : [-52, 4],
+            },
+          },
+        ]}
         sx={{
           zIndex: 1300,
-          width: containerRef.current
-            ? `${containerRef.current.offsetWidth}px`
-            : "auto",
-          maxWidth: "100%",
-          maxHeight: 20,
+          width: anchorRef.current?.clientWidth! + 50,
         }}
       >
         <ClickAwayListener onClickAway={closeSuggestions}>

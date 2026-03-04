@@ -168,7 +168,7 @@ function App() {
             display: "flex",
             flex: 1,
             position: "relative",
-            overflow: "hidden",
+            overflow: isMobile ? "hidden" : "visible",
             minHeight: 0,
           }}
         >

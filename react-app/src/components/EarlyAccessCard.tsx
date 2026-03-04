@@ -1,5 +1,11 @@
 import React from "react";
-import { Box, Typography, TextField, Button } from "@mui/material";
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  CircularProgress,
+} from "@mui/material";
 import validator from "validator";
 import { useTranslation } from "react-i18next";
 import { useEmailStore } from "../store/store";
@@ -13,6 +19,16 @@ const EarlyAccessCard: React.FC = () => {
     useEmailStore();
 
   const [emailError, setEmailError] = React.useState("");
+
+  React.useEffect(() => {
+    if (emailError) {
+      const timer = setTimeout(() => {
+        setEmailError("");
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [emailError]);
 
   const handleSubmit = async () => {
     setEmailError("");
@@ -28,9 +44,16 @@ const EarlyAccessCard: React.FC = () => {
     }
 
     setStatus("loading");
+    const startTime = Date.now();
 
     try {
       const result = await collectEmail(email);
+
+      // Ensure minimum loading time of 500ms so spinner is visible
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime < 500) {
+        await new Promise((resolve) => setTimeout(resolve, 500 - elapsedTime));
+      }
 
       if (result.success) {
         setStatus("success");
@@ -93,30 +116,50 @@ const EarlyAccessCard: React.FC = () => {
           InputProps={{
             disableUnderline: true,
           }}
+          inputProps={{
+            style: {
+              fontSize: "16px", // This prevents iOS zoom
+            },
+          }}
           sx={{
-            flex: 1, // 👈 THIS is the key
+            flex: 1,
             "& input": {
-              fontSize: 14,
+              fontSize: "16px", // Override the 14px with 16px
               padding: "6px 0",
             },
           }}
         />
-
-        <Button
-          onClick={handleSubmit}
-          disabled={status === "loading"}
-          sx={{
-            flexShrink: 0, // 👈 prevents shrinking
-            minWidth: "auto",
-            fontSize: 13,
-            fontWeight: 600,
-            textTransform: "none",
-            color: "text.primary",
-            whiteSpace: "nowrap", // 👈 prevents wrapping text
-          }}
-        >
-          {status === "loading" ? "…" : t("Subscribe")}
-        </Button>
+        {status === "loading" ? (
+          <Button
+            disabled
+            sx={{
+              flexShrink: 0,
+              minWidth: "auto",
+              fontSize: 13,
+              fontWeight: 600,
+              textTransform: "none",
+              color: "text.primary",
+              whiteSpace: "nowrap",
+            }}
+          >
+            <CircularProgress size={20} color="primary" />
+          </Button>
+        ) : (
+          <Button
+            onClick={handleSubmit}
+            sx={{
+              flexShrink: 0,
+              minWidth: "auto",
+              fontSize: 13,
+              fontWeight: 600,
+              textTransform: "none",
+              color: "text.primary",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {t("Subscribe")}
+          </Button>
+        )}
       </Box>
 
       {emailError && (
