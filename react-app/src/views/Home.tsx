@@ -33,8 +33,6 @@ export default function Home() {
         >
           {t("Mvp_stage")}
         </Typography>
-
-        {/* Categories in a row separated by dots */}
       </Stack>
     </Box>
   );

@@ -7,7 +7,6 @@ import { NetworkListener } from "./NetworkListener";
 import SessionExpiredDialog from "./SessionExpiredDialog";
 
 import ProductOffersTable from "../components/ProductOffersTable";
-import { PwaInstallPrompt } from "../components/PwaInstallPrompt";
 
 const AppOverlays: React.FC = () => {
   return (
@@ -20,7 +19,7 @@ const AppOverlays: React.FC = () => {
         zIndex: 1000,
       }}
     >
-      <PwaInstallPrompt />
+      {/*    <PwaInstallPrompt /> */}
       <SessionExpiredDialog />
       <Cookie />
       <NetworkListener />

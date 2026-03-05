@@ -77,27 +77,7 @@ const Products: React.FC = () => {
     emptyStateType = "noResults";
 
   return (
-    <Box
-      sx={{
-        height: "100%",
-        overflowY: "auto",
-
-        "&::-webkit-scrollbar": { width: theme.spacing(1) },
-        "&::-webkit-scrollbar-thumb": {
-          backgroundColor: theme.palette.background.default,
-          borderRadius: theme.shape.borderRadius,
-        },
-        "&::-webkit-scrollbar-thumb:hover": {
-          backgroundColor: theme.palette.background.default,
-        },
-        "&::-webkit-scrollbar-track": { background: "transparent" },
-        scrollbarWidth: "thin",
-        scrollbarColor:
-          theme.palette.mode === "dark"
-            ? "rgba(255, 255, 255, 0.02) transparent"
-            : "rgba(0, 0, 0, 0.04) transparent",
-      }}
-    >
+    <Box>
       <ProductsHeader
         currentPage={currentPage}
         totalPages={totalPages}

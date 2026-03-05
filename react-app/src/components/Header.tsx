@@ -341,6 +341,20 @@ const Header: React.FC = () => {
                 display: "flex",
                 flexDirection: "column",
                 bgcolor: theme.palette.background.paper,
+                "&::-webkit-scrollbar": { width: theme.spacing(1) },
+                "&::-webkit-scrollbar-thumb": {
+                  backgroundColor: theme.palette.background.default,
+                  borderRadius: theme.shape.borderRadius,
+                },
+                "&::-webkit-scrollbar-thumb:hover": {
+                  backgroundColor: theme.palette.background.default,
+                },
+                "&::-webkit-scrollbar-track": { background: "transparent" },
+                scrollbarWidth: "thin",
+                scrollbarColor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(255, 255, 255, 0.02) transparent"
+                    : "rgba(0, 0, 0, 0.04) transparent",
                 py: {
                   xs:
                     isiOS || isSafari

@@ -168,8 +168,22 @@ function App() {
             display: "flex",
             flex: 1,
             position: "relative",
-            overflow: isMobile ? "hidden" : "visible",
+            overflow: isMobile ? "hidden" : "auto",
             minHeight: 0,
+            "&::-webkit-scrollbar": { width: theme.spacing(1) },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: theme.palette.background.default,
+              borderRadius: theme.shape.borderRadius,
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+              backgroundColor: theme.palette.background.default,
+            },
+            "&::-webkit-scrollbar-track": { background: "transparent" },
+            scrollbarWidth: "thin",
+            scrollbarColor:
+              theme.palette.mode === "dark"
+                ? "rgba(255, 255, 255, 0.02) transparent"
+                : "rgba(0, 0, 0, 0.04) transparent",
           }}
         >
           {!isMobile && <VerticalHeader />}
@@ -186,7 +200,7 @@ function App() {
               height: "100%",
               display: "flex",
               flexDirection: "column",
-              overflow: isMobile ? "hidden" : "visible", // Allow native scroll on desktop
+              overflow: isMobile ? "hidden" : "visible",
               "& > *": {
                 flex: 1,
                 minHeight: 0,
@@ -197,8 +211,8 @@ function App() {
             <AppRoutes scrollRefs={scrollRefs} />
           </Container>
         </Box>
-
         <NotificationsContainer />
+
         <AppOverlays />
       </Box>
     </>

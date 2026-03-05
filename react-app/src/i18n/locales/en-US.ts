@@ -241,6 +241,36 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Services_FullPrice_Trend: "Complete price trend including: price, in stock status, last updated date, with detailed charts",
   Services_FullPrice_History: "Complete price history for all products including: price, in stock status, last updated date",
 
+  // PRICE TREND WHY
+  Price_Trend_Why_Title: "Why track price trends?",
+  Price_Trend_Why_Description: "Product prices aren't static — they fluctuate based on demand, supply, seasons, and promotions. Knowing the trend gives you a real advantage:",
+  Price_Trend_Benefit_1: "📉 Buy at the right time — see if the current price is high or low compared to historical data",
+  Price_Trend_Benefit_2: "📊 Avoid impulse purchases — make data-driven decisions, not emotional ones",
+  Price_Trend_Benefit_3: "💰 Save money — identify seasonal patterns and buy when prices are most favorable",
+  Price_Trend_Benefit_4: "🔮 Anticipate deals — recognize periods when products frequently go on sale",
+  Price_Trend_Conclusion: "With trend knowledge, you become an informed shopper, not just a reactive one. That's smart shopping.",
+
+
+  // STOCK TREND
+  Stock_Trend_Title: "What is Stock Trend?",
+  Stock_Trend_Description_1: "Shows the product's availability over time and how stock levels change.",
+  Stock_Trend_Description_2: "See whether the product has been in stock or out of stock in recent days/weeks.",
+  Stock_Trend_Description_3: "This helps you anticipate when to buy or when to look for alternatives.",
+  Stock_Trend_Description_4: "Information is updated daily to accurately reflect market availability.",
+  Stock_Trend_Benefit_1: "📦 Never miss desired products — see when they are back in stock",
+  Stock_Trend_Benefit_2: "⏰ Plan your purchase — anticipate periods of limited stock",
+  Stock_Trend_Benefit_3: "🔄 Avoid overlaps — buy smartly when sufficient quantity is available",
+  Stock_Trend_Conclusion: "By tracking stock trends, you become a proactive buyer, not just reactive to product shortages.",
+
+
+  // PUSH NOTIFICATIONS
+  Push_Notifications_Title: "Why Push Notifications?",
+  Push_Notifications_Intro: "Stay updated in real time about price changes, stock updates, and exclusive offers.",
+  Push_Notifications_Benefit_1: "📲 Instant alerts — receive notifications as soon as something changes",
+  Push_Notifications_Benefit_2: "💡 Never miss deals — get informed about discounts and limited stock",
+  Push_Notifications_Benefit_3: "⚡ Personalized updates — track only the products you care about",
+  Push_Notifications_Conclusion: "Enable push notifications to stay ahead and make smarter purchasing decisions.",
+
   Services_Analytics_Title: "Analytics",
   Services_Analytics_Intro: "Leverage proprietary price trends and historical data to make better purchasing decisions, available via subscription or one-time payment.",
   Services_Analytics_PriceTrend: "Price trend analysis including: trend direction, price change, percentage change, volatility, momentum, optimal purchase timing, availability analysis, risk level",

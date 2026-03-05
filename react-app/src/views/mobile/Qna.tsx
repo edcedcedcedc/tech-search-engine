@@ -11,11 +11,18 @@ export default function QnaMobile() {
 
   return (
     <Box sx={{ p: 2, pb: 8 }}>
-      {/* Main Title */}
-      <Typography variant="h5" fontWeight={600} sx={{ mb: 4 }} gutterBottom>
-        {t("How_To", "How PriceComp Works")}
-      </Typography>
-
+      <Box
+        sx={{
+          position: "sticky",
+          top: 0,
+          bgcolor: "background.default",
+          zIndex: 10,
+        }}
+      >
+        <Typography variant="h5" fontWeight={600}>
+          {t("How_To", "How PriceComp Works")}
+        </Typography>
+      </Box>
       {/* Intro */}
       <Typography variant="body1" color="text.primary" sx={{ mb: 3 }}>
         {t("How_To_Intro")}
@@ -23,7 +30,12 @@ export default function QnaMobile() {
 
       {/* SEARCH Section */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" fontWeight={600} gutterBottom>
+        <Typography
+          variant="h6"
+          fontWeight={600}
+          gutterBottom
+          sx={{ color: "primary.main" }}
+        >
           {t("How_To_Search_Title", "How to Search Smart")}
         </Typography>
 
@@ -46,7 +58,12 @@ export default function QnaMobile() {
 
       {/* PRICE ANALYTICS Section */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" fontWeight={600} gutterBottom>
+        <Typography
+          variant="h6"
+          fontWeight={600}
+          gutterBottom
+          sx={{ color: "primary.main" }}
+        >
           {t("Price_Trend_Title", "Price Analytics")}
         </Typography>
 
@@ -54,8 +71,7 @@ export default function QnaMobile() {
           {t("Price_Trend_Description_1")}
         </Typography>
 
-        {/* Sparkline Example - Clickable */}
-
+        {/* Sparkline Example */}
         <Sparklines data={samplePriceData} height={60} margin={5}>
           <SparklinesLine color="#4caf50" style={{ strokeWidth: 2 }} />
         </Sparklines>
@@ -85,9 +101,116 @@ export default function QnaMobile() {
         </Box>
       </Box>
 
+      <Box sx={{ mb: 4 }}>
+        {/* New Romanian explanation section */}
+        <Typography
+          variant="body1"
+          sx={{ mb: 1, fontWeight: 600, color: "primary.main" }}
+        >
+          {t("Price_Trend_Why_Title")}
+        </Typography>
+
+        <Typography variant="body1" sx={{ mb: 2 }}>
+          {t("Price_Trend_Why_Description")}
+        </Typography>
+
+        <Box component="ul" sx={{ pl: 3, mb: 2 }}>
+          <Typography component="li" variant="body1" sx={{ mb: 0.5 }}>
+            {t("Price_Trend_Benefit_1")}
+          </Typography>
+          <Typography component="li" variant="body1" sx={{ mb: 0.5 }}>
+            {t("Price_Trend_Benefit_2")}
+          </Typography>
+          <Typography component="li" variant="body1" sx={{ mb: 0.5 }}>
+            {t("Price_Trend_Benefit_3")}
+          </Typography>
+          <Typography component="li" variant="body1" sx={{ mb: 0.5 }}>
+            {t("Price_Trend_Benefit_4")}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Stock Trend Section */}
+      <Box sx={{ mb: 4 }}>
+        <Typography
+          variant="h6"
+          fontWeight={600}
+          gutterBottom
+          sx={{ color: "primary.main" }}
+        >
+          {t("Stock_Trend_Title")}
+        </Typography>
+
+        <Typography variant="body1" sx={{ mb: 1 }}>
+          {t("Stock_Trend_Description_1")}
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 1 }}>
+          {t("Stock_Trend_Description_2")}
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 1 }}>
+          {t("Stock_Trend_Description_3")}
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 1 }}>
+          {t("Stock_Trend_Description_4")}
+        </Typography>
+
+        <Box component="ul" sx={{ pl: 3 }}>
+          <Typography component="li" variant="body1">
+            {t("Stock_Trend_Benefit_1")}
+          </Typography>
+          <Typography component="li" variant="body1">
+            {t("Stock_Trend_Benefit_2")}
+          </Typography>
+          <Typography component="li" variant="body1">
+            {t("Stock_Trend_Benefit_3")}
+          </Typography>
+        </Box>
+
+        <Typography variant="body1" sx={{ mt: 1 }}>
+          {t("Stock_Trend_Conclusion")}
+        </Typography>
+      </Box>
+
+      {/* Push Notifications Section */}
+      <Box sx={{ mb: 4 }}>
+        <Typography
+          variant="h6"
+          fontWeight={600}
+          gutterBottom
+          sx={{ color: "primary.main" }}
+        >
+          {t("Push_Notifications_Title")}
+        </Typography>
+
+        <Typography variant="body1" sx={{ mb: 1 }}>
+          {t("Push_Notifications_Intro")}
+        </Typography>
+
+        <Box component="ul" sx={{ pl: 3 }}>
+          <Typography component="li" variant="body1">
+            {t("Push_Notifications_Benefit_1")}
+          </Typography>
+          <Typography component="li" variant="body1">
+            {t("Push_Notifications_Benefit_2")}
+          </Typography>
+          <Typography component="li" variant="body1">
+            {t("Push_Notifications_Benefit_3")}
+          </Typography>
+        </Box>
+
+        <Typography variant="body1" sx={{ mt: 1 }}>
+          {t("Push_Notifications_Conclusion")}
+        </Typography>
+      </Box>
+
       {/* DATA Section */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" fontWeight={600} gutterBottom>
+        <Typography
+          variant="h6"
+          fontWeight={600}
+          gutterBottom
+          sx={{ color: "primary.main" }}
+        >
           {t("Data_Title", "Daily Updated Data")}
         </Typography>
 

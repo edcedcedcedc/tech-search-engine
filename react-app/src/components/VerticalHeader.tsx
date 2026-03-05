@@ -82,6 +82,8 @@ const VerticalHeader: React.FC = () => {
         bgcolor: "background.default",
         flexShrink: 0,
         overflowY: "auto",
+        position: "sticky",
+        top: 0,
         "&::-webkit-scrollbar": { width: theme.spacing(1) },
         "&::-webkit-scrollbar-thumb": {
           backgroundColor: theme.palette.background.default,

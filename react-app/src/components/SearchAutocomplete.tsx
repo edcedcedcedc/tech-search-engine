@@ -267,7 +267,10 @@ export const SearchAutocomplete: React.FC = () => {
                       enterDelay={500}
                       leaveDelay={0}
                     >
-                      <SearchIcon fontSize="medium" />
+                      <SearchIcon
+                        fontSize="medium"
+                        sx={{ color: "text.primary" }}
+                      />
                     </Tooltip>
                   </IconButton>
                 )}

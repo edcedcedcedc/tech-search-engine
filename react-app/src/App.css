@@ -8,3 +8,7 @@ html, body {
   overscroll-behavior-y: contain;  /* Allows your custom pull-to-refresh */
   overscroll-behavior-x: none;     /* Blocks horizontal swipe nav */
 }
+
+html {
+  scrollbar-gutter: stable;
+}

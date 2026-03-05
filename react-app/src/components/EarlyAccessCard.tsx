@@ -124,8 +124,19 @@ const EarlyAccessCard: React.FC = () => {
           sx={{
             flex: 1,
             "& input": {
-              fontSize: "16px", // Override the 14px with 16px
+              fontSize: "16px",
               padding: "6px 0",
+
+              "&::placeholder": {
+                fontSize: {
+                  xs: "12px",
+                  sm: "12.5px",
+                  md: "13px",
+                  lg: "13.5px",
+                  xl: "14px",
+                },
+                opacity: 0.7,
+              },
             },
           }}
         />

@@ -89,7 +89,7 @@ const ProductsMobile: React.FC = () => {
   return (
     <Box
       sx={{
-        p: !isMobile ? 0 : 2,
+        p: 2,
         pb: 8,
         transition: theme.transitions.create(["padding"], {
           duration: theme.transitions.duration.standard,
@@ -109,10 +109,6 @@ const ProductsMobile: React.FC = () => {
         sticky={true}
         hideOnScroll={true}
         isHeaderVisible={isHeaderVisible}
-        sx={{
-          mb: showEmptyState ? 0 : 4,
-          mt: -1,
-        }}
       />
 
       {!isLoading && showEmptyState ? (

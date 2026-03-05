@@ -7,27 +7,7 @@ export default function Services() {
   const theme = useTheme();
 
   return (
-    <Box
-      sx={{
-        height: "100%",
-        overflowY: "auto",
-        position: "relative",
-        "&::-webkit-scrollbar": { width: theme.spacing(1) },
-        "&::-webkit-scrollbar-thumb": {
-          backgroundColor: theme.palette.background.default,
-          borderRadius: theme.shape.borderRadius,
-        },
-        "&::-webkit-scrollbar-thumb:hover": {
-          backgroundColor: theme.palette.background.default,
-        },
-        "&::-webkit-scrollbar-track": { background: "transparent" },
-        scrollbarWidth: "thin",
-        scrollbarColor:
-          theme.palette.mode === "dark"
-            ? "rgba(255, 255, 255, 0.02) transparent"
-            : "rgba(0, 0, 0, 0.04) transparent",
-      }}
-    >
+    <Box>
       {/* Sticky Header */}
       <Box
         sx={{
@@ -53,7 +33,12 @@ export default function Services() {
 
         {/* Full Price Section */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" fontWeight={600} gutterBottom>
+          <Typography
+            variant="h6"
+            fontWeight={600}
+            gutterBottom
+            sx={{ color: "primary.main" }}
+          >
             {t("Services_FullPrice_Title")}
           </Typography>
 
@@ -73,7 +58,12 @@ export default function Services() {
 
         {/* Analytics Section */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" fontWeight={600} gutterBottom>
+          <Typography
+            variant="h6"
+            fontWeight={600}
+            gutterBottom
+            sx={{ color: "primary.main" }}
+          >
             {t("Services_Analytics_Title")}
           </Typography>
 
@@ -89,7 +79,12 @@ export default function Services() {
         </Box>
         {/* Notifications Section */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" fontWeight={600} gutterBottom>
+          <Typography
+            variant="h6"
+            fontWeight={600}
+            gutterBottom
+            sx={{ color: "primary.main" }}
+          >
             {t("Services_Notifications_Title")}
           </Typography>
 
@@ -112,7 +107,12 @@ export default function Services() {
 
         {/* Data Section */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" fontWeight={600} gutterBottom>
+          <Typography
+            variant="h6"
+            fontWeight={600}
+            gutterBottom
+            sx={{ color: "primary.main" }}
+          >
             {t("Services_Data_Title")}
           </Typography>
 

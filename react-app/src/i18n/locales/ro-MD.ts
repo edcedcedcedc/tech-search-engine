@@ -373,7 +373,6 @@ Error_403_Message2: "Pentru a continua, trebuie să actualizezi produsele și of
 How_To: "Întrebări",
 How_To_Intro: "Strugure combină învățarea automată, modelele lingvistice mari, datele structurate despre produse și actualizările zilnice ale pieței pentru a vă ajuta să luați decizii de cumpărare mai inteligente.",
 
-// SEARCH
 How_To_Search_Title: "Cum să cauți inteligent?",
 How_To_Search_Description_1: "Poți copia numele exact și specificațiile produsului din orice magazin online și să le introduci în căutare sau poți începe simplu prin a tasta numele produsului.",
 How_To_Search_Description_2: "De exemplu, tastând 'iphone' vei obține rezultate mai generale. Tastând 'iphone 16' vei primi rezultate mult mai precise.",
@@ -388,6 +387,33 @@ Price_Trend_Description_1: "Reprezintă o vizualizare a evoluției prețului unu
 Price_Trend_Description_2: "În versiunea gratuită vezi două puncte importante: primul preț înregistrat și ultimul preț.",
 Price_Trend_Description_3: "Aceasta îți oferă o perspectivă rapidă asupra direcției prețului — creștere, scădere sau stabilitate.",
 Price_Trend_Description_4: "Pentru a-l vedea, apasă pe iconița de tip spark de lângă preț.",
+
+Price_Trend_Why_Title: "De ce să urmărești tendința prețului?",
+Price_Trend_Why_Description: "Prețurile produselor nu sunt statice — ele fluctuează în funcție de cerere, ofertă, sezon și promoții. Cunoștința tendinței îți oferă un avantaj real:",
+Price_Trend_Benefit_1: "📉 Cumperi la momentul potrivit — vezi dacă prețul actual este mare sau mic comparativ cu istoricul",
+Price_Trend_Benefit_2: "📊 Evită cumpărăturile impulsive — decizi bazate pe date, nu pe emoții de moment",
+Price_Trend_Benefit_3: "💰 Economisești bani — identifici modele sezoniere și cumperi când prețul este cel mai avantajos",
+Price_Trend_Benefit_4: "🔮 Anticipezi oferte — recunoști perioadele când produsele intră frecvent la reducere",
+Price_Trend_Conclusion: "Cu cunoștința tendinței, devii un cumpărător informat, nu doar unul reactiv. Asta înseamnă cumpărare inteligentă.",
+
+
+Stock_Trend_Title: "Ce este Tendința Stocului?",
+Stock_Trend_Description_1: "Arată disponibilitatea produsului în timp și cum variază stocurile.",
+Stock_Trend_Description_2: "Vezi dacă produsul este în stoc sau epuizat în ultimele zile/săptămâni.",
+Stock_Trend_Description_3: "Aceasta te ajută să anticipezi când să cumperi sau când să cauți alternative.",
+Stock_Trend_Description_4: "Informațiile sunt actualizate zilnic pentru a reflecta corect disponibilitatea pe piață.",
+Stock_Trend_Benefit_1: "📦 Nu ratezi produsele dorite — vezi când apar în stoc",
+Stock_Trend_Benefit_2: "⏰ Planifici cumpărarea — anticipezi perioadele cu stoc limitat",
+Stock_Trend_Benefit_3: "🔄 Eviti suprapuneri — cumperi inteligent când există cantitate suficientă",
+Stock_Trend_Conclusion: "Urmărind tendința stocului, devii un cumpărător proactiv și nu doar reactiv la epuizarea produselor.",
+
+
+Push_Notifications_Title: "Pentru ce Notificări Push?",
+Push_Notifications_Intro: "Fii la curent în timp real cu modificările de preț, actualizările stocurilor și ofertele exclusive.",
+Push_Notifications_Benefit_1: "📲 Alerte instantanee — primește notificări imediat ce apar schimbări",
+Push_Notifications_Benefit_2: "💡 Nu rata reduceri — fii informat despre promoții și stocuri limitate",
+Push_Notifications_Benefit_3: "⚡ Actualizări personalizate — urmărește doar produsele care te interesează",
+Push_Notifications_Conclusion: "Activează notificările push pentru a fi mereu cu un pas înainte și a cumpăra inteligent.",
 
 // FULL PRICE HISTORY
 Full_Price_History_Title: "Cum vezi istoricul complet al prețului?",

@@ -16,7 +16,7 @@ export function Cookie() {
   const [isPWA, setIsPWA] = useState(false);
 
   // Mobile: below lg (768px)
-  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   // Desktop: lg and above (768px+)
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
 
@@ -96,11 +96,6 @@ export function Cookie() {
         left: 0,
         right: 0,
         zIndex: 9999,
-        // This creates the 10% taller effect with matching background
-        ...(isPwaMobile && {
-          pb: "10%", // 10% padding-bottom with same background color
-          bgcolor: "background.paper", // Same bg color extends below
-        }),
       }}
     >
       <Box
@@ -117,21 +112,7 @@ export function Cookie() {
           borderTop: 1,
           borderColor: "divider",
           width: "100%",
-          // Desktop specific styles
-          ...(isDesktop && {
-            maxWidth: "600px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            bottom: 20,
-            borderRadius: 2,
-            boxShadow: 3,
-            border: 1,
-          }),
-          // PWA Mobile specific styles - make content taller
-          ...(isPwaMobile && {
-            height: "10%", // 10% taller content area
-            minHeight: "70px",
-          }),
+          height: 81,
         }}
       >
         <Typography
