@@ -31,6 +31,40 @@ export default function Services() {
           {t("Services_Intro")}
         </Typography>
 
+        {/* Subscription Plans Section */}
+        <Box sx={{ mb: 4 }}>
+          <Typography
+            variant="h6"
+            fontWeight={600}
+            gutterBottom
+            sx={{ color: "primary.main" }}
+          >
+            {t("Services_Plans_Title")}
+          </Typography>
+
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            {t("Services_Plans_Intro")}
+          </Typography>
+
+          <Box component="ul" sx={{ pl: 3 }}>
+            <Typography component="li" variant="body1">
+              {t("Services_Plans_Free")}
+            </Typography>
+            <Typography component="li" variant="body1">
+              {t("Services_Plans_Basic")}
+            </Typography>
+            <Typography component="li" variant="body1">
+              {t("Services_Plans_BasicPlus")}
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{ mt: 1, fontStyle: "italic", color: "text.secondary" }}
+            >
+              {t("Services_Plans_ExpansionInfo")}
+            </Typography>
+          </Box>
+        </Box>
+
         {/* Full Price Section */}
         <Box sx={{ mb: 4 }}>
           <Typography

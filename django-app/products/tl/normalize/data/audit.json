@@ -2489,6 +2489,17 @@
       "examples": [
         23841
       ]
+    },
+    "hub-uri usb": {
+      "normalized": {
+        "ro": "periferice pc",
+        "en": "PC peripherals",
+        "ru": "\u043f\u0435\u0440\u0438\u0444\u0435\u0440\u0438\u0439\u043d\u044b\u0435 \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u0430 \u0434\u043b\u044f \u041f\u041a"
+      },
+      "first_seen": "2026-03-04T18:58:53.491258+00:00",
+      "examples": [
+        24448
+      ]
     }
   }
 }

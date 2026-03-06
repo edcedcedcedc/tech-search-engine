@@ -244,10 +244,10 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   // PRICE TREND WHY
   Price_Trend_Why_Title: "Why track price trends?",
   Price_Trend_Why_Description: "Product prices aren't static — they fluctuate based on demand, supply, seasons, and promotions. Knowing the trend gives you a real advantage:",
-  Price_Trend_Benefit_1: "📉 Buy at the right time — see if the current price is high or low compared to historical data",
-  Price_Trend_Benefit_2: "📊 Avoid impulse purchases — make data-driven decisions, not emotional ones",
-  Price_Trend_Benefit_3: "💰 Save money — identify seasonal patterns and buy when prices are most favorable",
-  Price_Trend_Benefit_4: "🔮 Anticipate deals — recognize periods when products frequently go on sale",
+  Price_Trend_Benefit_1: "Buy at the right time — see if the current price is high or low compared to historical data",
+  Price_Trend_Benefit_2: "Avoid impulse purchases — make data-driven decisions, not emotional ones",
+  Price_Trend_Benefit_3: "Save money — identify seasonal patterns and buy when prices are most favorable",
+  Price_Trend_Benefit_4: "Anticipate deals — recognize periods when products frequently go on sale",
   Price_Trend_Conclusion: "With trend knowledge, you become an informed shopper, not just a reactive one. That's smart shopping.",
 
 
@@ -257,18 +257,18 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Stock_Trend_Description_2: "See whether the product has been in stock or out of stock in recent days/weeks.",
   Stock_Trend_Description_3: "This helps you anticipate when to buy or when to look for alternatives.",
   Stock_Trend_Description_4: "Information is updated daily to accurately reflect market availability.",
-  Stock_Trend_Benefit_1: "📦 Never miss desired products — see when they are back in stock",
-  Stock_Trend_Benefit_2: "⏰ Plan your purchase — anticipate periods of limited stock",
-  Stock_Trend_Benefit_3: "🔄 Avoid overlaps — buy smartly when sufficient quantity is available",
+  Stock_Trend_Benefit_1: "Never miss desired products — see when they are back in stock",
+  Stock_Trend_Benefit_2: "Plan your purchase — anticipate periods of limited stock",
+  Stock_Trend_Benefit_3: "Avoid overlaps — buy smartly when sufficient quantity is available",
   Stock_Trend_Conclusion: "By tracking stock trends, you become a proactive buyer, not just reactive to product shortages.",
 
 
   // PUSH NOTIFICATIONS
   Push_Notifications_Title: "Why Push Notifications?",
   Push_Notifications_Intro: "Stay updated in real time about price changes, stock updates, and exclusive offers.",
-  Push_Notifications_Benefit_1: "📲 Instant alerts — receive notifications as soon as something changes",
-  Push_Notifications_Benefit_2: "💡 Never miss deals — get informed about discounts and limited stock",
-  Push_Notifications_Benefit_3: "⚡ Personalized updates — track only the products you care about",
+  Push_Notifications_Benefit_1: "Instant alerts — receive notifications as soon as something changes",
+  Push_Notifications_Benefit_2: "Never miss deals — get informed about discounts and limited stock",
+  Push_Notifications_Benefit_3: "Personalized updates — track only the products you care about",
   Push_Notifications_Conclusion: "Enable push notifications to stay ahead and make smarter purchasing decisions.",
 
   Services_Analytics_Title: "Analytics",
@@ -284,6 +284,19 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Services_Notifications_PriceDrop: "Real-time automated alerts for price drops on subscribed products",
   Services_Notifications_Subscribe: "Individual product subscriptions for continuous monitoring",
   Services_Notifications_Custom: "Custom price threshold settings for optimized notifications",
+
+  // English
+  Services_Plans_Title: "Subscription Plans",
+  Services_Plans_Intro: "Choose a plan that fits your shopping needs and get access to price trends, alerts, and historical data.",
+  Services_Plans_Free: "Free — 2 points of price history and stock, price trend preview, basic search(ML)",
+  Services_Plans_Basic: "Basic — Full price + full stock trends, alerts for up to 10 products — 100–150 MDL / $5–7 per month",
+  Services_Plans_BasicPlus: "Basic+ — Everything in Basic, plus AI assistant for instant same-product matching across offers — 180–220 MDL / $9–11 per month",
+  Services_Plans_Pro: "Pro — Full trend analytics, momentum, volatility, alerts, 50 products max — 250–350 MDL / $12–15 per month",
+
+  Services_Plans_ExpansionInfo_en: "No Google search or any AI can give you a relevant search engine like ours, which groups and compares identical products accurately. Your subscription will help enable the addition of new shops, make our search engine more efficient, and support continuous optimization and enhancement; currently there are only 3 shops, but this could grow to 4, 5, 10, 20, or 30. Even with just 3 shops, the data is already unique — when we expand to 4+ shops, the value and demand for these insights will increase exponentially!",
+
+
+
   //error handling 
   Error_403: "Session expired(403)",
   Error_404: "Resource not found (404).",

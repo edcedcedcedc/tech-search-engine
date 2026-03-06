@@ -280,7 +280,7 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
     Services_Title: "Servicii",
     Services_Intro: "Oferim înțelegere profundă și date pentru decizii de cumpărare mai inteligente.",
 
-    Services_FullPrice_Title: "Informații complete despre preț și disponibilitate.",
+    Services_FullPrice_Title: "Informații complete despre preț și disponibilitate",
     Services_FullPrice_Intro: "Previzualizarea datelor proprietare de prețuri conține doar două puncte, primul și ultimul. Tendința completă a prețurilor și istoricul complet al prețurilor este disponibil prin abonament.",
     Services_FullPrice_Trend: "Tendință completă a prețurilor ce include: preț, în stoc, actualizat pe, cu grafice detaliate",
     Services_FullPrice_History: "Istoric complet al prețurilor pentru toate produsele ce include: preț, în stoc, actualizat pe",
@@ -306,6 +306,18 @@ Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această of
     Services_Notifications_Subscribe: "Abonare individuală la produse pentru monitorizare continuă",
 
     Services_Notifications_Custom: "Setare prag de preț personalizat pentru notificări optimizate",
+
+
+
+    // Romanian
+    Services_Plans_Title: "Planuri de abonament",
+    Services_Plans_Intro: "Alegeți un plan care se potrivește nevoilor dvs. de cumpărături și obțineți acces la tendințe de preț, alerte și date istorice.",
+    Services_Plans_Free: "Gratuit — 2 puncte din istoricul prețurilor și stocului, previzualizare a tendinței prețurilor, căutare de bază(ML)",
+    Services_Plans_Basic: "Basic — Preț complet + tendințe stoc complet, alerte pentru maxim 10 produse — 100–150 MDL / 5–7$ pe lună",
+    Services_Plans_BasicPlus: "Basic+ — Tot ce include Basic, plus asistent AI pentru potrivirea instantanee a produselor identice între oferte — 180–220 MDL / 9–11$ pe lună",
+    Services_Plans_Pro: "Pro — Analiză completă a tendințelor, momentum, volatilitate, alerte, maxim 50 produse — 250–350 MDL / 12–15$ pe lună",
+    // Romanian
+    Services_Plans_ExpansionInfo: "Nici o căutare Google sau orice alt AI nu vă poate oferi un motor de căutare relevant ca al nostru, care grupează și compară produsele identice cu precizie. Abonarea dumneavoastră va ușura introducerea noilor magazine, va face motorul nostru de căutare mai eficient și va sprijini optimizarea și îmbunătățirea continuă a acestuia; momentan sunt doar 3 magazine, dar pot fi 4, 5, 10, 20 sau 30. Chiar și cu doar 3 magazine, datele sunt unice și relevante — atunci când vom ajunge la 4+ magazine, valoarea și cererea pentru aceste informații vor crește exponențial!",
 
 
     // =======================
@@ -390,10 +402,10 @@ Price_Trend_Description_4: "Pentru a-l vedea, apasă pe iconița de tip spark de
 
 Price_Trend_Why_Title: "De ce să urmărești tendința prețului?",
 Price_Trend_Why_Description: "Prețurile produselor nu sunt statice — ele fluctuează în funcție de cerere, ofertă, sezon și promoții. Cunoștința tendinței îți oferă un avantaj real:",
-Price_Trend_Benefit_1: "📉 Cumperi la momentul potrivit — vezi dacă prețul actual este mare sau mic comparativ cu istoricul",
-Price_Trend_Benefit_2: "📊 Evită cumpărăturile impulsive — decizi bazate pe date, nu pe emoții de moment",
-Price_Trend_Benefit_3: "💰 Economisești bani — identifici modele sezoniere și cumperi când prețul este cel mai avantajos",
-Price_Trend_Benefit_4: "🔮 Anticipezi oferte — recunoști perioadele când produsele intră frecvent la reducere",
+Price_Trend_Benefit_1: "Cumperi la momentul potrivit — vezi dacă prețul actual este mare sau mic comparativ cu istoricul",
+Price_Trend_Benefit_2: "Evită cumpărăturile impulsive — decizi bazate pe date, nu pe emoții de moment",
+Price_Trend_Benefit_3: "Economisești bani — identifici modele sezoniere și cumperi când prețul este cel mai avantajos",
+Price_Trend_Benefit_4: "Anticipezi oferte — recunoști perioadele când produsele intră frecvent la reducere",
 Price_Trend_Conclusion: "Cu cunoștința tendinței, devii un cumpărător informat, nu doar unul reactiv. Asta înseamnă cumpărare inteligentă.",
 
 
@@ -402,17 +414,17 @@ Stock_Trend_Description_1: "Arată disponibilitatea produsului în timp și cum 
 Stock_Trend_Description_2: "Vezi dacă produsul este în stoc sau epuizat în ultimele zile/săptămâni.",
 Stock_Trend_Description_3: "Aceasta te ajută să anticipezi când să cumperi sau când să cauți alternative.",
 Stock_Trend_Description_4: "Informațiile sunt actualizate zilnic pentru a reflecta corect disponibilitatea pe piață.",
-Stock_Trend_Benefit_1: "📦 Nu ratezi produsele dorite — vezi când apar în stoc",
-Stock_Trend_Benefit_2: "⏰ Planifici cumpărarea — anticipezi perioadele cu stoc limitat",
-Stock_Trend_Benefit_3: "🔄 Eviti suprapuneri — cumperi inteligent când există cantitate suficientă",
+Stock_Trend_Benefit_1: "Nu ratezi produsele dorite — vezi când apar în stoc",
+Stock_Trend_Benefit_2: "Planifici cumpărarea — anticipezi perioadele cu stoc limitat",
+Stock_Trend_Benefit_3: "Eviti suprapuneri — cumperi inteligent când există cantitate suficientă",
 Stock_Trend_Conclusion: "Urmărind tendința stocului, devii un cumpărător proactiv și nu doar reactiv la epuizarea produselor.",
 
 
 Push_Notifications_Title: "Pentru ce Notificări Push?",
 Push_Notifications_Intro: "Fii la curent în timp real cu modificările de preț, actualizările stocurilor și ofertele exclusive.",
-Push_Notifications_Benefit_1: "📲 Alerte instantanee — primește notificări imediat ce apar schimbări",
-Push_Notifications_Benefit_2: "💡 Nu rata reduceri — fii informat despre promoții și stocuri limitate",
-Push_Notifications_Benefit_3: "⚡ Actualizări personalizate — urmărește doar produsele care te interesează",
+Push_Notifications_Benefit_1: "Alerte instantanee — primește notificări imediat ce apar schimbări",
+Push_Notifications_Benefit_2: "Nu rata reduceri — fii informat despre promoții și stocuri limitate",
+Push_Notifications_Benefit_3: "Actualizări personalizate — urmărește doar produsele care te interesează",
 Push_Notifications_Conclusion: "Activează notificările push pentru a fi mereu cu un pas înainte și a cumpăra inteligent.",
 
 // FULL PRICE HISTORY
