@@ -71,7 +71,6 @@ def build_aggregated_product(cluster_id, offers, query=None, query_embedding=Non
                 f"[OFFER_EMBED_MISSING] Offer '{o.name}' has no embedding field"
             )
 
-        MAX_HISTORY_TREND = 10
         try:
             price_history_list = [
                 {
@@ -80,7 +79,7 @@ def build_aggregated_product(cluster_id, offers, query=None, query_embedding=Non
                     "recorded_at": ph.recorded_at.isoformat(),
                 }
                 for ph in getattr(o, "price_history_ordered", [])
-            ][:MAX_HISTORY_TREND]
+            ]
 
             most_recent = price_history_list[:1]
             most_oldest = price_history_list[len(price_history_list) - 1 :]

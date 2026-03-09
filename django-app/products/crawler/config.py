@@ -1,5 +1,4 @@
 from .fetch import Fetch
-from celery import chain, shared_task
 
 shop_crawler = Fetch()
 
@@ -63,97 +62,6 @@ PROD_DB = "default"
 UPDATE_DB = "update"
 
 MAX_DB_WORKERS_AT_NORMALIZE = 3
-
-# --- Configurable switches ---
-PIPELINE_STEPS_ENABLED = {
-    "log": True,
-    "crawler": True,
-    "normalize": True,
-    "translation": True,
-    "embeddings": True,
-    "merge_to_stage": True,
-    "similar_ids_stage": True,
-    "merge_to_prod": True,
-    "price_history_prod": True,
-    "load_embeddings_cache": True,
-    "es_autocomplete_index": True,
-    "bump_search_version": True,
-}
-
-
-@shared_task(name="run_full_pipeline")
-def run_full_pipeline():
-    """
-    Full shop crawler + processing pipeline with configurable steps.
-
-    Steps (configurable via PIPELINE_STEPS_ENABLED):
-        1. Run crawler
-        2. Normalize recent products
-        3. Run translation
-        4. Generate embeddings
-        5. Merge all crawler DBs into Stage
-        6. Generate similar IDs in Stage
-        7. Merge Stage into Prod (finalize)
-    """
-    from products.tasks import (
-        reset_logs,
-        run_crawler,
-        run_normalize,
-        run_translation,
-        run_embeddings,
-        run_merge_pipeline_to_stage,
-        run_similar_ids_stage,
-        run_merge_pipeline_to_default,
-        run_price_history_default,
-        run_load_embeddings_cache,
-        run_build_autocomplete_index,
-        run_bump_search_version,
-    )
-
-    workflow_steps = []
-
-    if PIPELINE_STEPS_ENABLED.get("log"):
-        workflow_steps.append(reset_logs.si())
-
-    if PIPELINE_STEPS_ENABLED.get("crawler"):
-        workflow_steps.append(run_crawler.si())
-
-    if PIPELINE_STEPS_ENABLED.get("normalize"):
-        workflow_steps.append(run_normalize.si())
-
-    if PIPELINE_STEPS_ENABLED.get("translation"):
-        workflow_steps.append(run_translation.si())
-
-    if PIPELINE_STEPS_ENABLED.get("embeddings"):
-        workflow_steps.append(run_embeddings.si())
-
-    if PIPELINE_STEPS_ENABLED.get("merge_to_stage"):
-        workflow_steps.append(run_merge_pipeline_to_stage.si())
-
-    if PIPELINE_STEPS_ENABLED.get("similar_ids_stage"):
-        workflow_steps.append(run_similar_ids_stage.si())
-
-    if PIPELINE_STEPS_ENABLED.get("merge_to_prod"):
-        workflow_steps.append(run_merge_pipeline_to_default.si())
-
-    if PIPELINE_STEPS_ENABLED.get("price_history_prod"):
-        workflow_steps.append(run_price_history_default.si())
-
-    if PIPELINE_STEPS_ENABLED.get("load_embeddings_cache"):
-        workflow_steps.append(run_load_embeddings_cache.si())
-
-    if PIPELINE_STEPS_ENABLED.get("es_autocomplete_index"):
-        workflow_steps.append(run_build_autocomplete_index.si())
-
-    if PIPELINE_STEPS_ENABLED.get("bump_search_version"):
-        workflow_steps.append(run_bump_search_version.si())
-
-    if not workflow_steps:
-        return "No pipeline steps enabled. Nothing queued."
-
-    workflow = chain(*workflow_steps)
-    result = workflow.apply()
-    return f"Full pipeline queued with ID: {result.id}"
 
 
 SHOPS = {
