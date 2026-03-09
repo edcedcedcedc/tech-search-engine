@@ -21,6 +21,8 @@ django.setup()
 # Auto-discover tasks in installed apps (looks for tasks.py)
 app.autodiscover_tasks()
 
+import products.celery_signals
+
 
 @app.task(bind=True, name="aggregator.celery.debug_task")
 def debug_task(self):
