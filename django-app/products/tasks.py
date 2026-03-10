@@ -789,3 +789,20 @@ def run_normalize_in_venv1(*args, **kwargs):
 
     print("Running command:", " ".join(cmd))
     subprocess.run(cmd, check=True, env=env)
+
+
+@shared_task(name="test_failure_task")
+def test_failure_task():
+    """
+    Task designed to fail randomly for testing signals and email alerts.
+    """
+    from celery import shared_task
+    import random
+    import time
+
+    print("[TEST TASK] Starting test_failure_task...")
+
+    time.sleep(random.uniform(0.5, 1.5))
+
+    # Intentionally fail
+    raise RuntimeError("[TEST TASK] Intentional failure to test signals and emails")
