@@ -1,4 +1,4 @@
-# Moldova Tech Price Aggregator
+# A Moldova-Based Machine Learning Tech Search Engine with Price Aggregation and Comparison
 
 Build a **centralized price-comparison platform** that aggregates tech products from major Moldovan online stores (e.g. Darwin.md, Enter.online, Xstore.md, 999.md tech listings) and displays them in **one unified interface**, allowing users to easily compare prices, availability, and sellers.
 
