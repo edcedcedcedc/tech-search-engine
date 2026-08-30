@@ -1,17 +1,17 @@
 const roMD = {
   // Nav
   Home: "Acasă",
-  About: "Despre",
+  About: "Despre noi",
   Contact: "Contact",
   Select_Language: "Selectați limba",
-  Manage_Products: "Gestionează produsele",
+  Manage_Products: "Gestionează",
 
   // Hero
   Explore_tech_in_Moldova: 
-  "Strugure, explorează produsele tech",
+  "Strugure AI, exploră produse tech",
 
   Discover_the_best_offers_for_your_favorite_products:
-  "Descoperă cele mai bune oferte, într-un singur loc",
+  "Descoperă și compară oferte, într-un singur loc",
 
   Home_subject: "Calculatoare",
   
@@ -121,13 +121,13 @@ Happy_searching:
   Sources: "Surse",
 
   // About us description
-  About_Us_description: "Această platformă este un web tech agregator care permite să descoperi și să compari oferte de la mai multe magazine online din Republica Moldova. Începând cu 1 februarie 2026, ne specializăm în computere, jocuri și tot ce ține de acestea, precum și telefoane mobile. Nu vindem produse și nu garantăm disponibilitatea sau acuratețea prețurilor",
+  About_Us_description: "Această platformă este un motor de căutare tehnologic, cu inteligență artificială, care permite, să descoperi și compari oferte de la mai multe magazine online din Republica Moldova. Începând cu 1 februarie 2026, ne specializăm în computere, jocuri și tot ce ține de acestea, precum și telefoane mobile. Nu vindem produse și nu garantăm disponibilitatea sau acuratețea prețurilor",
   About_Us_description_secondary: "Toate datele sunt preluate din surse publice și pot fi modificate de magazine fără notificare.",
 
   // Contact Page
   Contact_Title: "Contact",
   Contact_Intro:
-    "Pentru întrebări, sugestii, feedback sau pentru informații privind posibilitatea de a plasa publicitate pe platformă, vă rugăm să ne contactați folosind datele de mai jos.",
+    "Pentru întrebări, sugestii, feedback sau pentru informații privind posibilitatea plasării de reclame pe platformă, abonament, plată unică, vă rugăm să ne contactați folosind datele de mai jos.",
   Contact_Email_Label: "Email:",
   Contact_Platform_Info: "Platforma: agregator de prețuri (informativ)",
   Contact_Disclaimer:
@@ -205,46 +205,385 @@ Happy_searching:
   Cookie_Reject_Button: "Respinge",
 
   //Meta 
-  Meta_Title: "Compară prețurile tech în Moldova",
+  Meta_Title: "Descoperire de produse tech prin inteligență artificială",
 
   Meta_Description: "Găsește cele mai bune oferte din magazinele din Moldova și compară prețurile rapid.",
 
-  Meta_Keywords: "electronice, compara preturi, Moldova, laptop, telefon",
+  Meta_Keywords: "electronice, compara preturi, Moldova, laptop, calculator, telefon",
 
   //Offers 
   Offers: "Oferte",
   Shop: "Retailer",
   Price: "Preț",
-  InStock: "În stoc",
+  In: "În",
+  Stock: "stoc",
   Name: "Nume",
   Variant: "Variantă",
   Yes: "Da",
   No: "Nu",
   rows_per_view: "Rânduri per vizare",
   of: "din",
-
-
+  Actions: "Link",
+  Selection: "Comparare",
+  No_Offers_Available: "Nu s-au găsit oferte, vă rugăm să încercați din nou mai târziu",
   //Drawer+Modal
 Close: "Închide",
 Settings: "Setări",
 Theme: "Temă",
 Dark_mode: "Mod întunecat",
 Light_mode: "Mod luminos",
+System_theme: "Mod sistem",
 Language: "Limba",
+Disable_notifications: "Dezactivează notificările",
+View_columns_tooltip: "Vizualizează coloanele",
+
 
 No_Products_Found: "Nu s-au găsit produse",
 
 //Tooltip
 
-Search_Tooltip: "Caută",
+Search_Tooltip: "Căutare",
 Menu_Tooltip: "Meniu",
 Offers_Tooltip: "Oferte",
-
+Comparation_Tooltip: "Compară tendințele prețurilor și specificațiile ofertelor",
 
 Search_For_Products_Empty: "Caută produse",
 Try_Typing_Product_Or_Brand_Empty: "Încearcă să tastezi un produs sau un brand",
 No_Products_Found_Empty: "Nu au fost găsite produse",
 No_Results_For_Empty: "Niciun rezultat pentru",
+
+
+//Trends   
+Price_Trend: "Tendința Prețului",
+Price_Trend1: "Tendința",
+Price_Trend2: "Prețului",
+In_Stock_Trend: "În stoc",
+Time_Trend: "Actualizat pe",
+Tooltip_Main_Icon_Trend: "Compară tendințele de preț și specificațiile dintre oferte",
+Price_Trend_Summary: "Rezumatul tendinței prețurilor",
+
+Tooltip_Trend: "Previzualizarea tendinței prețurilor se bazează doar pe primul și ultimul punct de preț",
+Tooltip_Trend1: "In total sunt inregistrate",
+Tooltip_Trend1_1: "puncte a istoricului pretului. ",
+Tooltip_Trend2: "puncte de istoric al prețurilor disponibile pentru această ofertă",
+
+"comparison": {
+    "title": "Compară Oferte",
+    "close": "Închide",
+    "open_tooltip": "Compară ofertele selectate",
+    "select_more_tooltip": "Selectează încă {{count}} ofertă(e) pentru a compara",
+    "offer_selected": "{{count}} ofertă selectată",
+    "offer_selected_plural": "{{count}} oferte selectate"
+  },
+
+   Services: "Servicii",
+    Services_Title: "Servicii",
+    Services_Intro: "Oferim înțelegere profundă și date pentru decizii de cumpărare mai inteligente.",
+
+    Services_FullPrice_Title: "Informații complete despre preț și disponibilitate",
+    Services_FullPrice_Intro: "Previzualizarea datelor proprietare de prețuri conține doar două puncte, primul și ultimul. Tendința completă a prețurilor și istoricul complet al prețurilor este disponibil prin abonament.",
+    Services_FullPrice_Trend: "Tendință completă a prețurilor ce include: preț, în stoc, actualizat pe, cu grafice detaliate",
+    Services_FullPrice_History: "Istoric complet al prețurilor pentru toate produsele ce include: preț, în stoc, actualizat pe",
+
+
+
+    Services_Analytics_Title: "Analizare",
+    Services_Analytics_Intro: "Profitați de tendința de preț și istoricul de pret proprietar pentru a lua decizii mai bune de cumpărare, disponibil prin abonament sau plată unică.",
+    Services_Analytics_PriceTrend: "Analiza tendinței prețurilor ce include: direcția trendului, schimbarea prețului, procentul schimbării, volatilitatea, momentum-ul, cel mai bun moment pentru achiziție, analiza disponibilității, nivelul de risc",
+
+
+
+    Services_Data_Title: "Date",
+    Services_Data_Intro: "Accesați seturile complete de date istorice proprietare despre preț și stoc pentru propria analiză, disponibil prin abonament sau plată unică.",
+    Services_Data_PriceHistory: "Seturi de date privind istoricul prețurilor în orice format pentru orice ofertă sau pachet de oferte la alegere",
+   
+
+    Services_Notifications_Title: "Notificări Push pentru Scăderi de Preț",
+    Services_Notifications_Intro: "Activați notificările push pentru produsele preferate și fiți anunțat instant când prețul scade sau produsul revine în stoc.",
+
+    Services_Notifications_PriceDrop: "Alerte automate în timp real pentru scăderi de preț la produsele abonate",
+
+    Services_Notifications_Subscribe: "Abonare individuală la produse pentru monitorizare continuă",
+
+    Services_Notifications_Custom: "Setare prag de preț personalizat pentru notificări optimizate",
+
+
+
+    // Romanian
+    Services_Plans_Title: "Planuri de abonament",
+    Services_Plans_Intro: "Alegeți un plan care se potrivește nevoilor dvs. de cumpărături și obțineți acces la tendințe de preț, alerte și date istorice.",
+    Services_Plans_Free: "Gratuit — 2 puncte din istoricul prețurilor și stocului, previzualizare a tendinței prețurilor, căutare de bază(ML)",
+    Services_Plans_Basic: "Basic — Preț complet + tendințe stoc complet, alerte pentru maxim 10 produse — 100–150 MDL / 5–7$ pe lună",
+    Services_Plans_BasicPlus: "Basic+ — Tot ce include Basic, plus asistent AI pentru potrivirea instantanee a produselor identice între oferte — 180–220 MDL / 9–11$ pe lună",
+    Services_Plans_Pro: "Pro — Analiză completă a tendințelor, momentum, volatilitate, alerte, maxim 50 produse — 250–350 MDL / 12–15$ pe lună",
+    // Romanian
+    Services_Plans_ExpansionInfo: "Nici o căutare Google sau orice alt AI nu vă poate oferi un motor de căutare relevant ca al nostru, care grupează și compară produsele identice cu precizie. Abonarea dumneavoastră va ușura introducerea noilor magazine, va face motorul nostru de căutare mai eficient și va sprijini optimizarea și îmbunătățirea continuă a acestuia; momentan sunt doar 3 magazine, dar pot fi 4, 5, 10, 20 sau 30. Chiar și cu doar 3 magazine, datele sunt unice și relevante — atunci când vom ajunge la 4+ magazine, valoarea și cererea pentru aceste informații vor crește exponențial!",
+
+
+    // =======================
+    // NOTIFICATIONS & DISTRIBUTION
+    // =======================
+
+   /*  Services_Notifications_Title: "Notificări și distribuire (în curând)", */
+   /*  Services_Notifications_Intro:
+      "Rămâi informat în timp real prin alerte inteligente și actualizări personalizate.",
+    Services_Notifications_PriceDrop:
+      "Notificări push pentru scăderi de preț la produsele urmărite",
+    Services_Notifications_BackInStock:
+      "Alerte când produsele revin în stoc",
+    Services_Notifications_Volatility:
+      "Notificări când este detectată volatilitate neobișnuită a prețului",
+    Services_Notifications_MarketShift:
+      "Alerte privind mișcările pieței pentru categorii selectate",
+    Services_Notifications_EmailTelegramSMS:
+      "Alerte premium prin email, Telegram sau SMS",
+    Services_Notifications_Sponsored:
+      "Oferte sponsorizate în newslettere și canale de notificare", */
+
+
+  Services_Disclaimer: "Toate serviciile depind de abonamente active și de seturile de date disponibile. Unele funcționalități pot suferi modificări",
+
+  // error handling
+  Error_403: "Sesiunea a expirat (403).",
+  Error_404: "Resursa nu a fost găsită (404).",
+  Error_429: "Prea multe cereri. Vă rugăm să încercați din nou mai târziu (429).",
+  Error_500: "Eroare internă de server (500).",
+  Error_0: "Anulat(0).",
+  Error_Generic: "A apărut o eroare neașteptată (GENERIC).",
+  Error_Network: "Eroare de rețea (NET ERR).",
+  Error_Network_error1: "Nu există conexiune la internet. Vă rugăm să verificați rețeaua.",
+  Generic_Drawer_Error_Message: "Îmi pare rău, închide sertarul și încearcă din nou.",
+  Retry_Count: "Număr de reîncercări",
+  Retrying_in: "Reîncercare în",
+  Max_Retry_Exceeded: "Numărul maxim de reîncercări a fost depășit",
+
+
+  
+
+  Offline_Title: "Ești offline",
+  Offline_Message1: "Se pare că conexiunea ta la internet a fost pierdută.",
+  Offline_Message2: "Încercă din nou după ce conexiunea este restabilită.",
+
+  Oops: "Oops! Ceva nu a mers bine",
+  Go_Back_To_Home: "Înapoi acasă",
+
+//Session expired
+Cancel: "Anulează",
+Reset: "Reseteză",
+Refresh: "Actualizează",
+Refreshing: "Actualizare",
+Done: "Finalizat",
+Error_403_Title: "Sesiunea a expirat",
+Error_403_Title2: "Sesiunea a fost reînnoită",
+Error_403_Message1: "Sesiunea ta nu mai este validă în timpul încărcării produselor sau ofertelor.",
+Error_403_Message2: "Pentru a continua, trebuie să actualizezi produsele și ofertele. Dacă resetezi toate căutările, acestea vor fi șterse, iar următoarele încărcări vor dura mai mult timp.",
+
+  // =======================
+// HOW TO PAGE
+// =======================
+
+How_To: "Întrebări",
+How_To_Intro: "Strugure combină învățarea automată, modelele lingvistice mari, datele structurate despre produse și actualizările zilnice ale pieței pentru a vă ajuta să luați decizii de cumpărare mai inteligente.",
+
+How_To_Search_Title: "Cum să cauți inteligent?",
+How_To_Search_Description_1: "Poți copia numele exact și specificațiile produsului din orice magazin online și să le introduci în căutare sau poți începe simplu prin a tasta numele produsului.",
+How_To_Search_Description_2: "De exemplu, tastând 'iphone' vei obține rezultate mai generale. Tastând 'iphone 16' vei primi rezultate mult mai precise.",
+How_To_Search_Description_3: "Cu cât căutarea este mai specifică, cu atât rezultatele vor fi mai apropiate de produsul identic. Cu cât este mai generală, cu atât vei descoperi alternative similare.",
+How_To_Search_Description_4: "Motorul nostru de căutare utilizează machine learning și potrivire semantică, ceea ce înseamnă că înțelege structura produselor, nu doar cuvintele cheie.",
+How_To_Search_Description_5: "Rezultatele în română și engleză sunt similare în proporție de aproximativ 90%, în funcție de limba sistemului și variațiile de denumire.",
+How_To_Search_Description_6: "Pe scurt: căutarea generală ajută la descoperire. Căutarea specifică oferă precizie.",
+
+// PRICE TREND
+Price_Trend_Title: "Ce este Tendința Prețului?",
+Price_Trend_Description_1: "Reprezintă o vizualizare a evoluției prețului unui produs în timp.",
+Price_Trend_Description_2: "În versiunea gratuită vezi două puncte importante: primul preț înregistrat și ultimul preț.",
+Price_Trend_Description_3: "Aceasta îți oferă o perspectivă rapidă asupra direcției prețului — creștere, scădere sau stabilitate.",
+Price_Trend_Description_4: "Pentru a-l vedea, apasă pe iconița de tip spark de lângă preț.",
+
+Price_Trend_Why_Title: "De ce să urmărești tendința prețului?",
+Price_Trend_Why_Description: "Prețurile produselor nu sunt statice — ele fluctuează în funcție de cerere, ofertă, sezon și promoții. Cunoștința tendinței îți oferă un avantaj real:",
+Price_Trend_Benefit_1: "Cumperi la momentul potrivit — vezi dacă prețul actual este mare sau mic comparativ cu istoricul",
+Price_Trend_Benefit_2: "Evită cumpărăturile impulsive — decizi bazate pe date, nu pe emoții de moment",
+Price_Trend_Benefit_3: "Economisești bani — identifici modele sezoniere și cumperi când prețul este cel mai avantajos",
+Price_Trend_Benefit_4: "Anticipezi oferte — recunoști perioadele când produsele intră frecvent la reducere",
+Price_Trend_Conclusion: "Cu cunoștința tendinței, devii un cumpărător informat, nu doar unul reactiv. Asta înseamnă cumpărare inteligentă.",
+
+
+Stock_Trend_Title: "Ce este Tendința Stocului?",
+Stock_Trend_Description_1: "Arată disponibilitatea produsului în timp și cum variază stocurile.",
+Stock_Trend_Description_2: "Vezi dacă produsul este în stoc sau epuizat în ultimele zile/săptămâni.",
+Stock_Trend_Description_3: "Aceasta te ajută să anticipezi când să cumperi sau când să cauți alternative.",
+Stock_Trend_Description_4: "Informațiile sunt actualizate zilnic pentru a reflecta corect disponibilitatea pe piață.",
+Stock_Trend_Benefit_1: "Nu ratezi produsele dorite — vezi când apar în stoc",
+Stock_Trend_Benefit_2: "Planifici cumpărarea — anticipezi perioadele cu stoc limitat",
+Stock_Trend_Benefit_3: "Eviti suprapuneri — cumperi inteligent când există cantitate suficientă",
+Stock_Trend_Conclusion: "Urmărind tendința stocului, devii un cumpărător proactiv și nu doar reactiv la epuizarea produselor.",
+
+
+Push_Notifications_Title: "Pentru ce Notificări Push?",
+Push_Notifications_Intro: "Fii la curent în timp real cu modificările de preț, actualizările stocurilor și ofertele exclusive.",
+Push_Notifications_Benefit_1: "Alerte instantanee — primește notificări imediat ce apar schimbări",
+Push_Notifications_Benefit_2: "Nu rata reduceri — fii informat despre promoții și stocuri limitate",
+Push_Notifications_Benefit_3: "Actualizări personalizate — urmărește doar produsele care te interesează",
+Push_Notifications_Conclusion: "Activează notificările push pentru a fi mereu cu un pas înainte și a cumpăra inteligent.",
+
+// FULL PRICE HISTORY
+Full_Price_History_Title: "Cum vezi istoricul complet al prețului?",
+Full_Price_History_Description_1: "Istoricul complet al prețului îți oferă toate punctele istorice, nu doar primul și ultimul.",
+Full_Price_History_Description_2: "Poți observa scăderi, creșteri, volatilitate și stabilitate în timp.",
+Full_Price_History_Description_3: "Această funcționalitate este disponibilă prin abonament sau plată unică.",
+Full_Price_History_Description_4: "Activează accesul pentru a lua decizii de cumpărare mai informate.",
+
+// CUSTOMIZATION
+Customization_Title: "Personalizează interfața",
+Customization_Description_1: "Poți selecta ce coloane dorești să fie vizibile.",
+Customization_Description_2: "Folosește butonul de setări din colțul dreapta sus al tabelului.",
+Customization_Description_3: "Concentrează-te doar pe informațiile importante pentru tine — preț, specificații, trend sau disponibilitate.",
+
+// COMPARATION
+Comparation_Title: "Comparare bazată pe AI",
+Comparation_Description_1: "Funcția de comparare îți permite să analizezi produse alăturat folosind trendul de preț, istoricul complet și specificațiile tehnice.",
+Comparation_Description_2: "Această funcționalitate utilizează analiză asistată de inteligență artificială pentru a alinia specificațiile și a evidenția diferențele relevante.",
+Comparation_Description_3: "Te ajută să înțelegi nu doar care produs este mai ieftin, ci care oferă valoare mai bună.",
+Comparation_Description_4: "Disponibil prin abonament.",
+
+// DATA
+Data_Title: "Cât de des sunt actualizate datele?",
+Data_Description_1: "Strugure colectează și procesează continuu date despre produse din mai mulți retaileri.",
+Data_Description_2: "Informațiile despre preț și disponibilitate sunt actualizate zilnic pentru a asigura acuratețea.",
+Data_Description_3: "Modelele de machine learning normalizează denumirile și specificațiile produselor între diferite magazine.",
+Data_Description_4: "Astfel vezi date structurate, comparabile și de încredere — nu simple listări brute.",
+Data_Description_5: "Deși prețurile pot varia pe parcursul zilei, actualizările zilnice oferă o imagine corectă a pieței.",
+
+// SUBSCRIPTION
+Subscription_Title: "Cum obțin abonament sau acces prin plată unică?",
+Subscription_Description_1: "Înscrie-te pentru early access și introdu adresa ta de email.",
+Subscription_Description_2: "După înregistrare vei primi instrucțiuni pentru activare și plată.",
+Subscription_Description_3: "Poți alege între abonament sau plată unică pentru funcțiile avansate.",
+
+
+
+
+//EMAIL
+
+  Email_Placeholder: "Introduceți email-ul",
+  Email_Required: "Email-ul este obligatoriu",
+  Email_Invalid: "Vă rugăm să introduceți o adresă de email validă",
+  Email_Success: "Vă mulțumim pentru abonare! Vă vom anunța când lansăm.",
+  Email_Error: "Abonarea a eșuat. Vă rugăm să încercați din nou.",
+  Subscribe: "Abonare",
+  Services_EarlyAccess_Title: "Obține Acces Early",
+  Services_EarlyAccess_Text: "Fiți primii care află când lansăm. Abonați-vă pentru acces early și oferte speciale.",
+
+  Early_Access_Title: "Înscrie-te pentru acces anticipat la ",
+  Early_Acces_Services: "servicii premium",
+  Enter_email: "Adresa ta de email",
+  
+  
+  Comparison_Results: "Rezultate Comparație",
+  Compare_Offers: "Compară Ofertele",
+  Comparison_Error: "Comparație Eșuată",
+  Recommendation: "Recomandare",
+  Trend_Analysis: "Analiza Tendințelor",
+  Spec_Comparison: "Comparație Specificații",
+  Specification: "Specificație",
+  Volatility: "Volatilitate",
+  Momentum: "Momentum",
+  Best_time: "Moment optim",
+  Compare_offers_request: "Compară aceste produse pentru mine",
+  Clear_all: "Ștergeți tot",
+  Ask_about_products: "Întreabă ceva despre aceste produse...",
+  characters: "caractere",
+  Best_Choice: "Cea Mai Bună Alegere",
+  Analyzed: "Analizat",
+  Cached: "În Cache",
+  Expert_Consensus: "Consensul Experților",
+  Known_Issues: "Probleme Cunoscute",
+  Alternatives_To_Consider: "Alternative de Luat în Considerare",
+  Expert_Reviews: "Recenzii ale Experților",
+  Pros: "Avantaje",
+  Cons: "Dezavantaje",
+  reviews: "recenzii",
+  Note: "Notă",
+
+  Manage_Products_Tooltip: "Gestionare Produse",
+  How_to_Tooltip: "Cum Funcționează",
+  Services_Tooltip: "Servicii",
+  Next_page_Tooltip: "Vizarea Următoare",
+  Previous_page_Tooltip: "Vizarea Anterioară",
+
+  //Random
+  More_Tooltip: "Mai mult",
+  Search_tips: "Sugestii pentru căutare",
+  Popular_Categories: "Categorii populare",
+  Updated_at: "Ultima actualizare la",
+  Refreshed_total: "actualizate",
+  Total: "total",
+  Products: "Produse",
+  Phones: "Celulare",
+  Tablets: "Tablete",
+  Laptops: "Laptopuri",
+  Gadgets: "Gadgeturi",
+  Copy_and_past_from_your_shops: "Copiați nume din orice magazin, darwin, enter sau xstore",
+  Diversity: "Introduceți câteva cuvinte pentru o căutare mai diversă",
+  Compare: "Comparați oferte cu același nume si variantă din magazine diferite",
+  Visibility_off: "Chiar dacă nu a fost găsită nicio sugestie, oricum căutați",
+  Preparing_data: "Pregătirea datelor",
+
+  Clickable_Sparkline: "Apasă pe orice grafic pentru a vedea istoricul prețului, disponibilitatea și ultima actualizare",
+  In_Stock: "În stoc",
+  Updated: "Actualizat",
+
+  //search 
+  Search: "Căutare",
+  No_results_for_this_search: "Niciun rezultat pentru această căutare",
+  Your_products_will_appear_here: "Produsele dvs. vor apărea aici",
+  No_products: "Niciun produs",
+  
+  
+  // Install Blocker
+  Install_our_app: "Instalează Aplicația",
+  Select_your_device: "Selectează dispozitivul tău pentru a vedea instrucțiunile de instalare:",
+  For_best_experience: "Pentru cea mai bună experiență, te rugăm să instalezi aplicația pe {{device}}.",
+  Step_1_tap_share: "Atinge butonul Distribuie",
+  Step_1_tap_menu: "Atinge butonul de meniu (⋮)",
+  Step_1_click_browser_menu: "Dă click pe meniul browserului (⋮ sau ☰)",
+  Step_1_click_share: "Dă click pe butonul Distribuie în Safari",
+  Step_1_open_menu: "Deschide meniul browserului",
+  Step_2_ios: "Derulează în jos și selectează \"Adaugă la Ecranul de start\"",
+  Step_2_android: "Selectează \"Instalează aplicația\" sau \"Adaugă la Ecranul de start\"",
+  Step_2_desktop: "Selectează \"Instalează\" sau \"Adaugă la Ecranul de start\" din meniu",
+  Step_2_default: "Caută opțiunea de instalare în meniu",
+  Step_3_ios: "Atinge \"Adaugă\" în colțul din dreapta sus",
+  Step_3_android: "Atinge \"Instalează\" în fereastra popup",
+  Step_3_desktop: "Dă click pe \"Instalează\" în dialog",
+  Step_3_default: "Confirmă instalarea",
+  Once_installed: "Odată instalată, deschide aplicația de pe ecranul de start / desktop pentru cea mai bună experiență.",
+  Unsupported_ios: "Safari pe iOS nu este suportat. Te rugăm să instalezi aplicația de pe ecranul de start.",
+  Unsupported_android: "Browser-ele mobile pe Android nu sunt suportate. Te rugăm să instalezi aplicația de pe ecranul de start.",
+  Unsupported_windows: "Browser-ele pe Windows sub 1440px nu sunt suportate. Te rugăm să instalezi aplicația desktop.",
+  Unsupported_macos: "Safari pe macOS nu este suportat. Te rugăm să instalezi aplicația desktop sau să folosești Chrome/Firefox.",
+  Unsupported_linux: "Browser-ele Linux nu sunt complet suportate. Te rugăm să instalezi aplicația dacă este disponibilă.",
+  Unsupported_default: "Acest browser nu este suportat. Te rugăm să folosești aplicația instalată.",
+  Device_iphone_ipad: "iPhone/iPad",
+  Device_android: "Android",
+  Device_windows: "PC Windows",
+  Device_mac: "Mac",
+  Device_linux: "Linux",
+  Device_your_device: "dispozitivul tău",
+  Browser_safari: "Safari",
+  Browser_chrome: "Chrome",
+  Browser_edge_chrome_firefox: "Edge/Chrome/Firefox",
+  Browser_safari_chrome_firefox: "Safari/Chrome/Firefox",
+  Browser_firefox_chrome: "Firefox/Chrome",
+  Browser_your_browser: "browser-ul tău",
+  Preview_share: "Distribuie",
+  Preview_menu: "Meniu",
+  Preview_add_to_home: "Adaugă la Home",
+  Preview_install: "Instalează",
+  Select_Add_to_Dock_from_the_menu: 'Selectați „Adăugați la Dock” din meniu'
 };
+
+
 
 export default roMD;

@@ -13,8 +13,9 @@ from products.search.aggregator import aggregate_products
 from products.search.embeddings import semantic_filter_products, get_query_embedding
 from products.search.utils import apply_relevance_cutoff_sigmoid
 from products.search.identity import identity_resolution
-from products.search.config import LAYER1_LIMIT, CACHE_TTL_LAYER1
+from products.search.config import LAYER1_LIMIT, CACHE_TTL_LAYER1, LAYER2_LIMIT
 from products.serializers import AggregatedProductSerializer
+from products.system_state.version import get_global_system_version
 
 
 def get_layer1_cache_key(query: str) -> str:
@@ -28,6 +29,10 @@ class SearchAPIView(APIView):
 
     def get(self, request):
         try:
+            current_version = get_global_system_version()
+            request.session["search_version"] = current_version
+            request.session.modified = True
+
             raw_query = request.GET.get("q", "").strip()
             limit = min(int(request.GET.get("limit", LAYER1_LIMIT)), LAYER1_LIMIT)
             cursor = request.GET.get("cursor")
@@ -94,12 +99,14 @@ class SearchAPIView(APIView):
             try:
                 serializer = AggregatedProductSerializer(aggregated, many=True)
                 request.session["aggregated_cache"] = serializer.data
+                request.session.modified = True
             except Exception as e:
                 search_engine_log(f"Error serializing aggregated clusters: {e}")
                 request.session["aggregated_cache"] = aggregated
 
             # ================= RESPONSE =================
             aggregated_slice = aggregated[offset : offset + limit]
+
             total_count = len(aggregated)
 
             probabilistic_clusters = [
@@ -109,9 +116,12 @@ class SearchAPIView(APIView):
                     "brand": p["brand"],
                     "variant": p.get("variant"),
                     "lowest_price": p.get("lowest_price"),
-                    "offers": len(p.get("offers", [])),
-                    "relevance": p.get("relevance"),
-                    "product_score": p.get("product_score"),
+                    "highest_price": p.get("highest_price"),
+                    "average_price": p.get("average_price"),
+                    "offers_count": len(p.get("offers")[:LAYER2_LIMIT]),
+                    "offers": [],
+                    # "relevance": p.get("relevance"),
+                    # "product_score": p.get("product_score"),
                     "image": p.get("image"),
                     "t_name": p.get("t_name", {}),
                     "t_variant": p.get("t_variant", {}),

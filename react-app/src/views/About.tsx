@@ -1,5 +1,5 @@
 // src/views/About.tsx
-import { Box, Fade, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
 export default function About() {

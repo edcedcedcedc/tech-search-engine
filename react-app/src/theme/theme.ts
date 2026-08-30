@@ -23,21 +23,21 @@ const getTheme = (mode: "light" | "dark") => {
         contrastText: "#ffffff",
       },
       warning: {
-        light: "#fbbf24",
-        main: "#f59e0b",
+        light: "#fbbe24",
+        main: "#f59f0b",
         dark: "#b45309",
         contrastText: "#000",
       },
       info: {
-        light: "#65c7f8",
-        main: "#38bdf8",
-        dark: "#0369a1",
+        light: "rgba(40, 123, 247, 0.8)",
+        main: "hsla(216, 83%, 53%, 0.83)",
+        dark: "#1a3a8ad2",
         contrastText: "#ffffff",
       },
       success: {
-        light: "#86efac",
+        light: "#86efadd2",
         main: "#22c55e",
-        dark: "#15803d",
+        dark: "#15803c",
         contrastText: "#ffffff",
       },
       background: {
@@ -59,6 +59,18 @@ const getTheme = (mode: "light" | "dark") => {
 
     breakpoints: {
       values: { xs: 0, sm: 375, md: 425, lg: 768, xl: 1024, xxl: 1440 },
+    },
+
+    // ADD THIS Z-INDEX SECTION
+    zIndex: {
+      mobileStepper: 1000,
+      fab: 1050,
+      speedDial: 1050,
+      appBar: 1100,
+      drawer: 1200,
+      modal: 1300,
+      snackbar: 1400,
+      tooltip: 1500,
     },
 
     typography: {

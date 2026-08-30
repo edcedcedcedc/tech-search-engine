@@ -1,37 +1,54 @@
+// components/Footer.tsx
 import React from "react";
 import { Box, useTheme, useMediaQuery } from "@mui/material";
-import { Link as RouterLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-const Footer: React.FC = () => {
+interface FooterProps {
+  onItemClick?: () => void;
+  onPrivacyClick?: () => void;
+  onTermsClick?: () => void;
+  onDisclaimerClick?: () => void;
+  fullWidthUntilLg?: boolean;
+}
+
+const Footer: React.FC<FooterProps> = ({
+  onItemClick,
+  onPrivacyClick,
+  onTermsClick,
+  onDisclaimerClick,
+  fullWidthUntilLg,
+}) => {
   const theme = useTheme();
   const { t } = useTranslation();
 
-  const isExtraSmall = useMediaQuery("(max-width:375px)"); // custom 375px breakpoint
+  const isExtraSmall = useMediaQuery("(max-width:375px)");
   const fontSize = isExtraSmall ? "0.65rem" : theme.typography.body2.fontSize;
 
-  const navLinks = [
-    { path: "/privacy-policy", label: `${t("Privacy_Policy")}` },
-    { path: "/source", label: t("Sources") },
-    { path: "/terms-of-use", label: t("Terms_and_conditions") },
-    { path: "/disclaimer", label: t("Responsibility_Statement") },
-
-    // static text as last item
-    {
-      path: null,
-      label: `© ${new Date().getFullYear()} Strugure™. ${t("All_rights_reserved")}`,
-    },
-  ];
+  const handleClick = (handler?: () => void) => {
+    if (handler) {
+      handler();
+    }
+    if (onItemClick) {
+      onItemClick();
+    }
+  };
 
   return (
     <Box
       component="footer"
       sx={{
+        width: fullWidthUntilLg
+          ? {
+              xs: "100%",
+              sm: "100%",
+              md: "100%",
+              lg: "auto", // or your desired width for lg and up
+            }
+          : "auto",
         py: 1,
         px: 2,
       }}
     >
-      {/* Links container with dots, wrapping into rows */}
       <Box
         sx={{
           display: "flex",
@@ -45,43 +62,79 @@ const Footer: React.FC = () => {
           color: theme.palette.text.primary,
         }}
       >
-        {navLinks.map((link, index) => (
-          <React.Fragment key={index}>
-            {link.path ? (
-              <Box
-                component={RouterLink}
-                to={link.path}
-                sx={{
-                  textDecoration: "none",
-                  color: "text.primary",
-                  opacity: 0.8,
-                  "&:hover": { opacity: 1 },
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {link.label}
-              </Box>
-            ) : (
-              <Box
-                sx={{
-                  whiteSpace: "nowrap",
-                  color: theme.palette.text.primary,
-                }}
-              >
-                {link.label}
-              </Box>
-            )}
+        {/* Privacy Policy */}
+        <Box
+          onClick={() => handleClick(onPrivacyClick)}
+          sx={{
+            textDecoration: "none",
+            color: "text.primary",
+            opacity: 0.8,
+            cursor: "pointer",
+            "&:hover": { opacity: 1 },
+            whiteSpace: "nowrap",
+          }}
+        >
+          {t("Privacy_Policy")}
+        </Box>
 
-            {index < navLinks.length - 1 && (
-              <Box
-                component="span"
-                sx={{ mx: 0, color: "text.primary", opacity: 0.8 }}
-              >
-                •
-              </Box>
-            )}
-          </React.Fragment>
-        ))}
+        <Box
+          component="span"
+          sx={{ mx: 0, color: "text.primary", opacity: 0.8 }}
+        >
+          •
+        </Box>
+
+        {/* Terms of Use */}
+        <Box
+          onClick={() => handleClick(onTermsClick)}
+          sx={{
+            textDecoration: "none",
+            color: "text.primary",
+            opacity: 0.8,
+            cursor: "pointer",
+            "&:hover": { opacity: 1 },
+            whiteSpace: "nowrap",
+          }}
+        >
+          {t("Terms_and_conditions")}
+        </Box>
+
+        <Box
+          component="span"
+          sx={{ mx: 0, color: "text.primary", opacity: 0.8 }}
+        >
+          •
+        </Box>
+
+        {/* Disclaimer */}
+        <Box
+          onClick={() => handleClick(onDisclaimerClick)}
+          sx={{
+            textDecoration: "none",
+            color: "text.primary",
+            opacity: 0.8,
+            cursor: "pointer",
+            "&:hover": { opacity: 1 },
+            whiteSpace: "nowrap",
+          }}
+        >
+          {t("Responsibility_Statement")}
+        </Box>
+
+        <Box
+          component="span"
+          sx={{ mx: 0, color: "text.primary", opacity: 0.8 }}
+        ></Box>
+
+        {/* Copyright */}
+        <Box
+          sx={{
+            whiteSpace: "nowrap",
+            color: theme.palette.text.primary,
+          }}
+        >
+          {`© ${new Date().getFullYear()} Strugure™. ${t("All_rights_reserved")}`}
+        </Box>
       </Box>
     </Box>
   );

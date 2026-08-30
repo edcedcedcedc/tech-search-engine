@@ -6,6 +6,7 @@ export DJANGO_ENV=development  # Linux/Mac
 from pathlib import Path
 import environ
 import os
+from products.search.config import CACHE_TTL_LAYER1
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -18,6 +19,18 @@ environ.Env.read_env(os.path.join(BASE_DIR, env_file))
 
 DEBUG = env("DEBUG")
 SECRET_KEY = env("SECRET_KEY")
+
+
+# ------------------------
+# Session / Cookies
+# ------------------------
+SESSION_ENGINE = "django.contrib.sessions.backends.db"  # store sessions in DB
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # keep sessions after browser closes
+
+SESSION_COOKIE_AGE = 2147483647  # huge age (max int), basically persistent
+SESSION_COOKIE_SAMESITE = "Lax"  # prevents CSRF in cross-site requests
+SESSION_COOKIE_SECURE = False  # True if using HTTPS in production
+SESSION_COOKIE_HTTPONLY = True  # JS cannot read the cookie
 
 if not SECRET_KEY:
     raise RuntimeError(
@@ -102,8 +115,10 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "layer1": "20/min",  # Layer1 clusters
         "layer2_preview": "20/min",  # Layer2 full=false
-        "layer2_full": "20/min",  # Layer2 full=true
-        "autocomplete": "120/min",
+        "layer2_full": "1000/min",  # Layer2 full=true
+        "autocomplete": "240/min",
+        "anon": "60/min",
+        "user": "600/min",
     },
 }
 
@@ -147,17 +162,12 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-SESSION_ENGINE = "django.contrib.sessions.backends.db"
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-SESSION_COOKIE_AGE = 3600  # 1 hour
-SESSION_COOKIE_SAMESITE = "Lax"
-SESSION_COOKIE_SECURE = False
-SESSION_COOKIE_HTTPONLY = True
-
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://strugure.app",
+    "http://192.168.1.x:5173",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -198,3 +208,32 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
     "fanout_patterns": True,
     "queue_order_strategy": "priority",
 }
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "django_cache_table",
+        "TIMEOUT": CACHE_TTL_LAYER1,  # Uses your 24h setting
+        "OPTIONS": {
+            "MAX_ENTRIES": 10000,  # Prevent unlimited growth
+            "CULL_FREQUENCY": 3,  # Remove 1/3 entries when max reached
+        },
+    }
+}
+
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+ADMINS = [
+    ("Strugure Alerts", env("ADMIN_EMAIL")),
+]

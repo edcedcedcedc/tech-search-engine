@@ -1,10 +1,32 @@
-import { Box, Button, Typography, useMediaQuery } from "@mui/material";
+import {
+  Box,
+  Button,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { useStore } from "../store/store";
+import { useCookieStore } from "../store/store";
+import { useEffect, useState } from "react";
 
 export function Cookie() {
   const { t } = useTranslation();
-  const cookie = useStore((state) => state.cookie);
+  const cookie = useCookieStore((state) => state);
+  const theme = useTheme();
+  const [isPWA, setIsPWA] = useState(false);
+
+  // Mobile: below lg (768px)
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  // Desktop: lg and above (768px+)
+  const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
+
+  // Detect PWA mode
+  useEffect(() => {
+    setIsPWA(
+      window.matchMedia("(display-mode: standalone)").matches ||
+        (window.navigator as any).standalone === true,
+    );
+  }, []);
 
   const isVerySmall = useMediaQuery("(max-width:320px)");
   const isSmall = useMediaQuery("(min-width:321px) and (max-width:375px)");
@@ -50,24 +72,25 @@ export function Cookie() {
     gapSize = 1;
   }
 
+  // Desktop styles (lg and above)
+  if (isDesktop) {
+    fontSize = "0.9rem";
+    padding = 2.5;
+    buttonPadding = "8px 20px";
+    flexDirection = "row";
+    buttonWidth = undefined;
+    gapSize = 2;
+  }
+
+  // If PWA and mobile, increase height by 10% and add padding-bottom with same bg color
+  const isPwaMobile = isPWA && isMobile;
+
   // Only show if consent is null (user hasn't answered yet)
   if (cookie.consent !== null) return null;
 
   return (
     <Box
       sx={{
-        bgcolor: "background.paper",
-        color: "text.primary",
-        p: padding,
-        display: "flex",
-        flexDirection,
-        justifyContent: "space-between",
-        alignItems: "center",
-        flexWrap: "wrap",
-        gap: gapSize,
-        borderTop: 1,
-        borderColor: "divider",
-        width: "100%",
         position: "fixed",
         bottom: 0,
         left: 0,
@@ -75,65 +98,108 @@ export function Cookie() {
         zIndex: 9999,
       }}
     >
-      <Typography
-        variant="body2"
-        sx={{
-          flex: flexDirection === "row" ? 1 : "unset",
-          textAlign: flexDirection === "column" ? "center" : "left",
-          color: "text.secondary",
-          fontSize,
-          lineHeight: 1.4,
-          width: flexDirection === "column" ? "100%" : "auto",
-        }}
-      >
-        {t("Cookie_Statement")}
-      </Typography>
-
       <Box
         sx={{
+          bgcolor: "background.paper",
+          color: "text.primary",
+          p: padding,
           display: "flex",
-          gap: gapSize,
           flexDirection,
-          width: flexDirection === "column" ? "100%" : "auto",
-          justifyContent: flexDirection === "column" ? "center" : "flex-end",
+          justifyContent: "space-between",
           alignItems: "center",
+          flexWrap: "wrap",
+          gap: gapSize,
+          borderTop: 1,
+          borderColor: "divider",
+          width: "100%",
+          height: 81,
         }}
       >
-        <Button
-          variant="outlined"
+        <Typography
+          variant="body2"
           sx={{
+            flex: flexDirection === "row" ? 1 : "unset",
+            textAlign: flexDirection === "column" ? "center" : "left",
             color: "text.secondary",
-            borderColor: "divider",
             fontSize,
-            padding: buttonPadding,
-            width: buttonWidth,
-            minWidth: flexDirection === "column" ? "100%" : "auto",
-            flex: flexDirection === "column" ? 1 : "unset",
-            "&:hover": {
-              backgroundColor: "action.selected",
-              borderColor: "divider",
-            },
+            lineHeight: 1.4,
+            width: flexDirection === "column" ? "100%" : "auto",
+            ...(isPwaMobile && {
+              fontSize: "0.9rem",
+            }),
+            ...(isDesktop && {
+              fontSize: "0.95rem",
+            }),
           }}
-          onClick={() => cookie.decline()}
         >
-          {t("Cookie_Reject_Button")}
-        </Button>
+          {t("Cookie_Statement")}
+        </Typography>
 
-        <Button
-          variant="contained"
+        <Box
           sx={{
-            backgroundColor: "primary.main",
-            fontSize,
-            padding: buttonPadding,
-            width: buttonWidth,
-            minWidth: flexDirection === "column" ? "100%" : "auto",
-            flex: flexDirection === "column" ? 1 : "unset",
-            "&:hover": { backgroundColor: "primary.light" },
+            display: "flex",
+            gap: gapSize,
+            flexDirection,
+            width: flexDirection === "column" ? "100%" : "auto",
+            justifyContent: flexDirection === "column" ? "center" : "flex-end",
+            alignItems: "center",
+            ...(isPwaMobile && {
+              gap: 1.5,
+            }),
           }}
-          onClick={() => cookie.accept()}
         >
-          {t("Cookie_Accept_Button")}
-        </Button>
+          <Button
+            variant="outlined"
+            sx={{
+              color: "text.secondary",
+              borderColor: "divider",
+              fontSize,
+              padding: buttonPadding,
+              width: buttonWidth,
+              minWidth: flexDirection === "column" ? "100%" : "auto",
+              flex: flexDirection === "column" ? 1 : "unset",
+              "&:hover": {
+                backgroundColor: "action.selected",
+                borderColor: "divider",
+              },
+              ...(isPwaMobile && {
+                fontSize: "0.8rem",
+                padding: "8px 16px",
+              }),
+              ...(isDesktop && {
+                fontSize: "0.9rem",
+                padding: "6px 16px",
+              }),
+            }}
+            onClick={() => cookie.decline()}
+          >
+            {t("Cookie_Reject_Button")}
+          </Button>
+
+          <Button
+            variant="contained"
+            sx={{
+              backgroundColor: "primary.main",
+              fontSize,
+              padding: buttonPadding,
+              width: buttonWidth,
+              minWidth: flexDirection === "column" ? "100%" : "auto",
+              flex: flexDirection === "column" ? 1 : "unset",
+              "&:hover": { backgroundColor: "primary.light" },
+              ...(isPwaMobile && {
+                fontSize: "0.8rem",
+                padding: "8px 16px",
+              }),
+              ...(isDesktop && {
+                fontSize: "0.9rem",
+                padding: "6px 16px",
+              }),
+            }}
+            onClick={() => cookie.accept()}
+          >
+            {t("Cookie_Accept_Button")}
+          </Button>
+        </Box>
       </Box>
     </Box>
   );

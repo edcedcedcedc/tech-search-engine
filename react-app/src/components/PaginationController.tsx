@@ -1,6 +1,7 @@
 // PaginationController.tsx
 import React from "react";
 import { Pagination, Stack, Box, Typography } from "@mui/material";
+import { uiLog } from "../webhook/client/uiDebug";
 
 interface PaginationControllerProps {
   currentPage: number;
@@ -19,8 +20,18 @@ const PaginationController: React.FC<PaginationControllerProps> = ({
   onPageChange,
   disabled = false,
 }) => {
+  // Log props on every render
+  uiLog(
+    `[PaginationController] Render - currentPage: ${currentPage}, totalPages: ${totalPages}, totalResults: ${totalResults}, disabled: ${disabled}`,
+  );
+
   // Don't show pagination if only one page
-  if (totalPages <= 1 || totalResults === 0) return null;
+  if (totalPages <= 1 || totalResults === 0) {
+    uiLog(
+      `[PaginationController] Hiding - totalPages: ${totalPages}, totalResults: ${totalResults}`,
+    );
+    return null;
+  }
 
   const startItem = Math.min(
     (currentPage - 1) * itemsPerPage + 1,
@@ -28,9 +39,21 @@ const PaginationController: React.FC<PaginationControllerProps> = ({
   );
   const endItem = Math.min(currentPage * itemsPerPage, totalResults);
 
-  const handleChange = (event: React.ChangeEvent<unknown>, page: number) => {
+  uiLog(
+    `[PaginationController] Showing items ${startItem}-${endItem} of ${totalResults}`,
+  );
+
+  const handleChange = (_event: React.ChangeEvent<unknown>, page: number) => {
+    uiLog(
+      `[PaginationController] Page change requested - from ${currentPage} to ${page}, disabled: ${disabled}`,
+    );
     if (page !== currentPage && !disabled) {
+      uiLog(`[PaginationController] Executing onPageChange for page ${page}`);
       onPageChange(page);
+    } else {
+      uiLog(
+        `[PaginationController] Page change blocked - same page or disabled`,
+      );
     }
   };
 

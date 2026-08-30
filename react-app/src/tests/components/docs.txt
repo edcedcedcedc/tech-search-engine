@@ -1,0 +1,33 @@
+IIFE to reset all cache levels 
+
+(async () => {
+  console.log('🧹 RESETTING ALL CACHES...');
+  
+  // Clear IndexedDB
+  if (window.indexedDbService) {
+    await window.indexedDbService.clearAll();
+    console.log('✅ IndexedDB cleared');
+  }
+  
+  // Clear Zustand from window if exposed
+  if (window.useStore) {
+    window.useStore.getState().clearCache();
+    window.useStore.getState().closeProduct();
+    window.useStore.getState().clearSelectedOffers();
+    window.useStore.getState().setQuery('');
+    console.log('✅ Zustand memory cleared');
+  }
+  
+  // Clear storage
+  sessionStorage.clear();
+  localStorage.clear();
+  console.log('✅ sessionStorage & localStorage cleared');
+  
+  // Try to clear via testCache if available
+  if (window.testCache) {
+    await window.testCache.resetEverything();
+    console.log('✅ testCache reset complete');
+  }
+  
+  console.log('✨ ALL CACHES RESET! Refresh the page now.');
+})();

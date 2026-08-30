@@ -1,16 +1,16 @@
 const enUS = {
   // Nav
   Home: "Home",
-  About: "About",
+  About: "About us",
   Contact: "Contact",
   Select_Language: "Select Language",
 
   // Hero
 Explore_tech_in_Moldova: 
- "Strugure, explore tech products",
+ "Strugure AI, explore tech products",
 
 Discover_the_best_offers_for_your_favorite_products:
-  "Discover the best deals in one place",
+  "Discover and compare the best deals in one place",
 
 // Landing
 Welcome_to: "Welcome to Strugure",
@@ -88,13 +88,13 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Sources: "Sources",
 
   // About us description
- About_Us_description: "This platform is a web tech aggregator that allows you to discover and compare offers from multiple online stores in the Republic of Moldova. As of February 1, 2026, we specialize in computers, gaming, and everything related to them, as well as mobile phones. We do not sell products and do not guarantee the availability or accuracy of prices.",
+ About_Us_description: "This platform is an AI tech search engine that allows you to discover and compare offers from multiple online stores in the Republic of Moldova. As of February 1, 2026, we specialize in computers, gaming, and everything related to them, as well as mobile phones. We do not sell products and do not guarantee the availability or accuracy of prices.",
  About_Us_description_secondary: `All data is taken from public sources and may be modified by stores without notice.`,
 
   // Contact page
   Contact_Title: "Contact",
   Contact_Intro:
-    "If you have questions, suggestions, feedback, or are interested in placing an advertisement on the platform, you can contact us using the information below.",
+    "For questions, suggestions, feedback or for information regarding the possibility of placing advertisements on the platform, subscription, one-time payment, please contact us using the details below.",
   Contact_Email_Label: "Email:",
   Contact_Platform_Info: "Platform: price aggregator (informational)",
   Contact_Disclaimer:
@@ -153,6 +153,13 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Privacy_Contact_Body:
     "For privacy-related questions, you can contact us via the contact page.",
 
+    //Meta
+    Meta_Title: "Discovering tech products through artificial intelligence",
+
+    Meta_Description: "Find the best deals in Moldovan stores and compare prices quickly.",
+
+    Meta_Keywords: "electronics, compare prices, Moldova, laptop, computer, phone",
+
   // Product
   See_product: "See product",
 
@@ -176,16 +183,18 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Offers: "Offers",
   Shop: "Retailer",
   Price: "Price",
-  InStock: "In Stock",
+  In: "In",
+  Stock: "stock",
   Name: "Name",
   Variant: "Variant",
   Yes: "Yes",
   No: "No",
   rows_per_view: "Rows per view",
   of: "of",
-
-
-  Manage_Products: "Manage Products",
+  Actions: "Link",
+  Selection: "Compare",
+  No_Offers_Available: "No offers found, please try again later",
+  Manage_Products: "Manage",
 
   //Drawer+Modal
   Close: "Close",
@@ -193,19 +202,323 @@ Categories: "Computers • Laptops • Monitors • Graphics Cards • PC Compon
   Theme: "Theme",
   Dark_mode: "Dark mode",
   Light_mode: "Light mode",
+  System_theme: "System mode",
   Language: "Language",
- 
+  Disable_notifications: "Disable notifications",
+  View_columns_tooltip: "View columns",
 
   //Tooltip
   Search_Tooltip: "Search",
   Menu_Tooltip: "Menu",
   Offers_Tooltip: "Offers",
+  Comparation_Tooltip: "Compare price trends and offer specifications",
 
   //Empty Search State
   Search_For_Products_Empty: "Search for products",
   Try_Typing_Product_Or_Brand_Empty: "Try typing a product name or brand",
   No_Products_Found_Empty: "No products found",
   No_Results_For_Empty: "No results for",
+
+
+  //Trends
+  Price_Trend: "Price Trend",
+  Price_Trend1: "Price",
+  Price_Trend2: "Trend",
+  In_Stock_Trend: "In Stock",
+  Time_Trend: "Updated on",
+  Price_Trend_Summary: "Price trend summary",
+  Tooltip_Trend: "Price trend preview is based only on the first and last price points",
+  Tooltip_Trend1: "A total of",
+  Tooltip_Trend1_1: "price history points are recorded.",
+  Tooltip_Trend2: "price history points available for this offer",
+
+  Services: "Services",
+  Services_Title: "Services",
+  Services_Intro: "We provide deep insights and data to help you make smarter purchasing decisions.",
+
+  Services_FullPrice_Title: "Complete Price and Availability Information",
+  Services_FullPrice_Intro: "The preview of proprietary price data includes only two points — the first and the latest. Full price trends and complete price history are available through subscription.",
+  Services_FullPrice_Trend: "Complete price trend including: price, in stock status, last updated date, with detailed charts",
+  Services_FullPrice_History: "Complete price history for all products including: price, in stock status, last updated date",
+
+  // PRICE TREND WHY
+  Price_Trend_Why_Title: "Why track price trends?",
+  Price_Trend_Why_Description: "Product prices aren't static — they fluctuate based on demand, supply, seasons, and promotions. Knowing the trend gives you a real advantage:",
+  Price_Trend_Benefit_1: "Buy at the right time — see if the current price is high or low compared to historical data",
+  Price_Trend_Benefit_2: "Avoid impulse purchases — make data-driven decisions, not emotional ones",
+  Price_Trend_Benefit_3: "Save money — identify seasonal patterns and buy when prices are most favorable",
+  Price_Trend_Benefit_4: "Anticipate deals — recognize periods when products frequently go on sale",
+  Price_Trend_Conclusion: "With trend knowledge, you become an informed shopper, not just a reactive one. That's smart shopping.",
+
+
+  // STOCK TREND
+  Stock_Trend_Title: "What is Stock Trend?",
+  Stock_Trend_Description_1: "Shows the product's availability over time and how stock levels change.",
+  Stock_Trend_Description_2: "See whether the product has been in stock or out of stock in recent days/weeks.",
+  Stock_Trend_Description_3: "This helps you anticipate when to buy or when to look for alternatives.",
+  Stock_Trend_Description_4: "Information is updated daily to accurately reflect market availability.",
+  Stock_Trend_Benefit_1: "Never miss desired products — see when they are back in stock",
+  Stock_Trend_Benefit_2: "Plan your purchase — anticipate periods of limited stock",
+  Stock_Trend_Benefit_3: "Avoid overlaps — buy smartly when sufficient quantity is available",
+  Stock_Trend_Conclusion: "By tracking stock trends, you become a proactive buyer, not just reactive to product shortages.",
+
+
+  // PUSH NOTIFICATIONS
+  Push_Notifications_Title: "Why Push Notifications?",
+  Push_Notifications_Intro: "Stay updated in real time about price changes, stock updates, and exclusive offers.",
+  Push_Notifications_Benefit_1: "Instant alerts — receive notifications as soon as something changes",
+  Push_Notifications_Benefit_2: "Never miss deals — get informed about discounts and limited stock",
+  Push_Notifications_Benefit_3: "Personalized updates — track only the products you care about",
+  Push_Notifications_Conclusion: "Enable push notifications to stay ahead and make smarter purchasing decisions.",
+
+  Services_Analytics_Title: "Analytics",
+  Services_Analytics_Intro: "Leverage proprietary price trends and historical data to make better purchasing decisions, available via subscription or one-time payment.",
+  Services_Analytics_PriceTrend: "Price trend analysis including: trend direction, price change, percentage change, volatility, momentum, optimal purchase timing, availability analysis, risk level",
+
+  Services_Data_Title: "Data",
+  Services_Data_Intro: "Access complete proprietary historical datasets on price and stock for your own analysis, available via subscription or one-time payment.",
+  Services_Data_PriceHistory: "Price history datasets in any format for any offer or custom offer bundle of your choice",
+
+  Services_Notifications_Title: "Push Notifications for Price Drops",
+  Services_Notifications_Intro: "Enable push notifications for your favorite products and get instantly notified when the price drops or the product is back in stock.",
+  Services_Notifications_PriceDrop: "Real-time automated alerts for price drops on subscribed products",
+  Services_Notifications_Subscribe: "Individual product subscriptions for continuous monitoring",
+  Services_Notifications_Custom: "Custom price threshold settings for optimized notifications",
+
+  // English
+  Services_Plans_Title: "Subscription Plans",
+  Services_Plans_Intro: "Choose a plan that fits your shopping needs and get access to price trends, alerts, and historical data.",
+  Services_Plans_Free: "Free — 2 points of price history and stock, price trend preview, basic search(ML)",
+  Services_Plans_Basic: "Basic — Full price + full stock trends, alerts for up to 10 products — 100–150 MDL / $5–7 per month",
+  Services_Plans_BasicPlus: "Basic+ — Everything in Basic, plus AI assistant for instant same-product matching across offers — 180–220 MDL / $9–11 per month",
+  Services_Plans_Pro: "Pro — Full trend analytics, momentum, volatility, alerts, 50 products max — 250–350 MDL / $12–15 per month",
+
+  Services_Plans_ExpansionInfo_en: "No Google search or any AI can give you a relevant search engine like ours, which groups and compares identical products accurately. Your subscription will help enable the addition of new shops, make our search engine more efficient, and support continuous optimization and enhancement; currently there are only 3 shops, but this could grow to 4, 5, 10, 20, or 30. Even with just 3 shops, the data is already unique — when we expand to 4+ shops, the value and demand for these insights will increase exponentially!",
+
+
+
+  //error handling 
+  Error_403: "Session expired(403)",
+  Error_404: "Resource not found (404).",
+  Error_429: "Too many requests. Close )",
+  Error_500: "Internal server error (500).",
+  Error_0: "Aborted(0).",
+  Error_Generic: "An unexpected error occurred(GENERIC).",
+  Error_Network: "Network error occured(NET ERR)",
+  Error_Network_error1: "No internet connection. Please check your network.",
+  Generic_Drawer_Error_Message: "Sorry about that, close the drawer and try again.",
+
+  Retry_Count: "Retry count",
+  Retrying_in: "Retrying in",
+  Max_Retry_Exceeded: "Max retry exceeded",
+
+
+  
+
+
+  Offline_Title: "You are offline",
+  Offline_Message1: "It looks like your internet connection is lost.",
+  Offline_Message2: "Please try again when the connection is restored.",
+
+
+  Oops: "Oops! Something went wrong",
+  Go_Back_To_Home: "Go back to home",
+
+  //session expired 
+  Cancel: "Cancel",
+  Reset: "Reset",
+  Refresh: "Refresh",
+  Refreshing: "Refreshing",
+  Done: "Done",
+  Error_403_Title: "Session expired",
+  Error_403_Title2: "The session was renewed",
+  Error_403_Message1: "Your session is no longer valid while loading product offers.",
+  Error_403_Message2: "To continue, you need to refresh the products and offers. If you reset all your searches, they will be deleted, and the next loads will take longer.",
+ 
+
+  // =======================
+// HOW TO PAGE
+// =======================
+
+How_To: "Questions",
+How_To_Intro: "Strugure combines machine learning, large language models, structured product data, and daily market updates to help you make smarter buying decisions.",
+
+// SEARCH
+How_To_Search_Title: "How to Search Smart?",
+How_To_Search_Description_1: "You can copy the exact product name and specifications from any online store and paste them into search, or simply start typing the product name and explore.",
+How_To_Search_Description_2: "For example, typing 'iphone' will give you broader discovery results. Typing 'iphone 16' will return much more precise matches.",
+How_To_Search_Description_3: "The more specific your query, the closer you get to identical products. The more general it is, the more similar alternatives you’ll discover.",
+How_To_Search_Description_4: "Our search engine uses machine learning and semantic matching, meaning it understands product structure — not just keywords.",
+How_To_Search_Description_5: "Search results in Romanian and English are about 90% similar, depending on your system language and retailer naming differences.",
+How_To_Search_Description_6: "In short: broad search helps discovery. Specific search delivers precision.",
+
+// PRICE TREND
+Price_Trend_Title: "What Is Price Trend?",
+Price_Trend_Description_1: "Price Trend is a visual overview of how a product's price evolves over time.",
+Price_Trend_Description_2: "In the free version, you see two key points: the initial recorded price and the most recent price.",
+Price_Trend_Description_3: "This gives you a quick linear understanding of whether the price is increasing, decreasing, or stable.",
+Price_Trend_Description_4: "To access it, simply click the price trend spark icon next to any product.",
+
+// FULL PRICE HISTORY
+Full_Price_History_Title: "How to View Full Price History?",
+Full_Price_History_Description_1: "Full price history unlocks all historical price points — not just the first and last value.",
+Full_Price_History_Description_2: "You can see real price movements: drops, peaks, volatility, and stability patterns.",
+Full_Price_History_Description_3: "This feature is available via subscription or one-time payment access.",
+Full_Price_History_Description_4: "Upgrade to gain deeper market insight before making important purchase decisions.",
+
+// CUSTOMIZATION
+Customization_Title: "Customize Your Workspace",
+Customization_Description_1: "You can personalize your table view by selecting which columns are visible.",
+Customization_Description_2: "Use the settings button in the top-right corner of the product table.",
+Customization_Description_3: "Focus only on what matters to you — price, specifications, trends, or availability.",
+
+// COMPARATION
+Comparation_Title: "AI-Powered Comparation",
+Comparation_Description_1: "Comparation allows you to analyze products side-by-side using price trends, full price history, and technical specifications.",
+Comparation_Description_2: "This feature is powered by AI-based analysis that intelligently aligns specifications and highlights meaningful differences.",
+Comparation_Description_3: "It helps you understand not just which product is cheaper — but which one offers better value.",
+Comparation_Description_4: "Available with subscription access.",
+
+// DATA
+Data_Title: "How Often Is Data Updated?",
+Data_Description_1: "Strugure continuously collects and processes product data from multiple retailers.",
+Data_Description_2: "Pricing and availability information is updated daily to ensure accuracy.",
+Data_Description_3: "Machine learning models normalize product names and specifications across different stores.",
+Data_Description_4: "This means you see structured, comparable, and reliable data — not raw store listings.",
+Data_Description_5: "While prices may change during the day at individual shops, our daily updates provide a trustworthy market overview.",
+
+// SUBSCRIPTION
+Subscription_Title: "How to Get Subscription or One-Time Access?",
+Subscription_Description_1: "Subscribe to early access and provide your email address.",
+Subscription_Description_2: "After registration, you will receive activation details and payment instructions.",
+Subscription_Description_3: "You can choose between subscription access or a one-time payment for advanced features.",
+
+
+
+//EMAIL
+
+  Email_Placeholder: "Enter your email",
+  Email_Required: "Email is required",
+  Email_Invalid: "Please enter a valid email address",
+  Email_Success: "Thanks for subscribing! We'll notify you when we launch.",
+  Email_Error: "Failed to subscribe. Please try again.",
+  Subscribe: "Subscribe",
+  Services_EarlyAccess_Title: "Get Early Access on",
+  Services_EarlyAccess_Text: "Be the first to know when we launch. Subscribe for early access and special offers.",
+
+  Early_Access_Title: "Get early access for ",
+  Early_Acces_Services: "premium services",
+  Enter_email: "Enter your email",
+
+
+  //COMPARE
+  Comparison_Results: "Comparison Results",
+  Compare_Offers: "Compare Offers",
+  Comparison_Error: "Comparison Failed",
+  Recommendation: "Recommendation",
+  Trend_Analysis: "Trend Analysis",
+  Spec_Comparison: "Specification Comparison",
+  Specification: "Specification",
+  Volatility: "Volatility",
+  Momentum: "Momentum",
+  Best_time: "Best time",
+  Compare_offers_request: "Compare these products for me",
+  Clear_all: "Clear all",
+  Ask_about_products: "Ask something about these products...",
+  characters: "characters",
+
+  Best_Choice: "Best Choice",
+  Analyzed: "Analyzed",
+  Cached: "Cached",
+  Expert_Consensus: "Expert Consensus",
+  Known_Issues: "Known Issues",
+  Alternatives_To_Consider: "Alternatives to Consider",
+  Expert_Reviews: "Expert Reviews",
+  Pros: "Pros",
+  Cons: "Cons",
+  reviews: "reviews",
+  Note: "Note",
+  
+
+  //Vertical Header 
+  Manage_Products_Tooltip: "Manage Products", 
+  How_to_Tooltip: "How It Works",
+  Services_Tooltip: "Services",
+  Next_page_Tooltip: "Next View",
+  Previous_page_Tooltip: "Previous View",
+
+  //Random
+  More_Tooltip: "More",
+  Search_tips: "Search Tips",
+  Popular_Categories: "Popular categories",
+  Updated_at: "Last updated at",
+  Refreshed_total: "refreshed",
+  Total: "total",
+  Products: "Products",
+  Phones: "Phones",
+  Tablets: "Tablets",
+  Laptops: "Laptops",
+  Gadgets: "Gadgeturi",
+  Preparing_data: "Preparing data",
+ 
+  Copy_and_past_from_your_shops: "Copy names from any store, darwin, enter or xstore",
+  Compare: "Compare offers with the same name and variant from different stores",
+  Diversity: "Enter some words for a more diverse search",
+  Visibility_off: "Even if no suggestion was found, search anyway",
+
+  Clickable_Sparkline: "Click on any sparkline to see price history, stock status, and last update time",
+  In_Stock: "In stock",
+  Updated: "Updated",
+
+  //Empty state 
+  Search: "Search",
+  No_results_for_this_search: "No results for this search",
+  Your_products_will_appear_here: "Your products will appear here",
+  No_products: "No products",
+
+
+
+  // Install Blocker
+  Install_our_app: "Install App",
+  Select_your_device: "Select your device to see installation instructions:",
+  For_best_experience: "For the best experience, please install our app on {{device}}.",
+  Step_1_tap_share: "Tap the Share button",
+  Step_1_tap_menu: "Tap the menu button (⋮)",
+  Step_1_click_browser_menu: "Click the browser menu (⋮ or ☰)",
+  Step_1_click_share: "Click the Share button in Safari",
+  Step_1_open_menu: "Open the browser menu",
+  Step_2_ios: "Scroll down and select \"Add to Home Screen\"",
+  Step_2_android: "Select \"Install app\" or \"Add to Home screen\"",
+  Step_2_desktop: "Select \"Install\" or \"Add to Home screen\" from the menu",
+  Step_2_default: "Look for the install option in the menu",
+  Step_3_ios: "Tap \"Add\" in the top right corner",
+  Step_3_android: "Tap \"Install\" in the popup",
+  Step_3_desktop: "Click \"Install\" in the dialog",
+  Step_3_default: "Confirm the installation",
+  Once_installed: "Once installed, open from your home screen / desktop for the best experience.",
+  Unsupported_ios: "Safari on iOS is not supported. Please install the app from the home screen.",
+  Unsupported_android: "Mobile browsers on Android are not supported. Please install the app from your home screen.",
+  Unsupported_windows: "Browsers on Windows below 1440px are not supported. Please install the desktop app.",
+  Unsupported_macos: "Safari on macOS is not supported. Please install the desktop app or use Chrome/Firefox.",
+  Unsupported_linux: "Linux browsers are not fully supported. Please install the app if available.",
+  Unsupported_default: "This browser is not supported. Please use the installed app.",
+  Device_iphone_ipad: "iPhone/iPad",
+  Device_android: "Android",
+  Device_windows: "Windows PC",
+  Device_mac: "Mac",
+  Device_linux: "Linux",
+  Device_your_device: "your device",
+  Browser_safari: "Safari",
+  Browser_chrome: "Chrome",
+  Browser_edge_chrome_firefox: "Edge/Chrome/Firefox",
+  Browser_safari_chrome_firefox: "Safari/Chrome/Firefox",
+  Browser_firefox_chrome: "Firefox/Chrome",
+  Browser_your_browser: "your browser",
+  Preview_share: "Share",
+  Preview_menu: "Menu",
+  Preview_add_to_home: "Add to Home",
+  Preview_install: "Install",
+  Select_Add_to_Dock_from_the_menu: 'Select "Add to Dock" from the menu'
 
 };
 

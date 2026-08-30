@@ -2,48 +2,90 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Strugure" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0d1117" id="theme-color-meta">
+    <link rel="icon" type="image/png" href="/icons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
+    <link rel="shortcut icon" href="/icons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="Strugure" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Inject theme color before paint -->
-   <script>
+    <!-- Inject theme color before paint - WITH SYSTEM THEME SUPPORT -->
+    <script>
     (function() {
-      const savedTheme = localStorage.getItem('theme');
-      let theme = 'light';
-      if (savedTheme === 'dark' || savedTheme === 'light') {
-        theme = savedTheme;
-      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        theme = 'dark';
+      // Determine effective theme based on saved preference or system
+      let effectiveTheme = 'light';
+      let savedMode = 'system';
+
+      try {
+        const saved = localStorage.getItem('theme');
+        if (saved) {
+          // Check if it's our new format (just a string)
+          if (saved === 'light' || saved === 'dark' || saved === 'system') {
+            savedMode = saved;
+          } else {
+            // Try to parse old format
+            try {
+              const parsed = JSON.parse(saved);
+              if (parsed?.state?.mode) {
+                savedMode = parsed.state.mode;
+              }
+            } catch {
+              // Ignore parse errors
+            }
+          }
+        }
+
+        // Calculate effective theme
+        if (savedMode === 'system') {
+          effectiveTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        } else {
+          effectiveTheme = savedMode;
+        }
+      } catch (e) {
+        console.warn('Failed to parse theme from localStorage', e);
+        // Default to system preference on error
+        effectiveTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       }
 
       const colors = { light: '#fafafa', dark: '#0d1117' };
-      const bg = colors[theme] || '#0d1117';
+      const bg = colors[effectiveTheme] || '#0d1117';
 
-      // Inject a <style> for html and #preloader immediately
+      // Set theme-color meta tag immediately
+      const metaThemeColor = document.getElementById('theme-color-meta');
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', bg);
+      }
+
+      // Apply minimal styles - NO overflow restrictions
       const style = document.createElement('style');
       style.innerHTML = `
         html, #preloader {
           background-color: ${bg} !important;
         }
+        body {
+          background-color: ${bg} !important;
+          min-height: 100vh;
+          min-height: -webkit-fill-available;
+        }
       `;
       document.head.appendChild(style);
 
-      // Set data-theme on html only
-      document.documentElement.setAttribute('data-theme', theme);
+      // Set data-theme on html (using effective theme for CSS)
+      document.documentElement.setAttribute('data-theme', effectiveTheme);
     })();
-  </script>
+    </script>
 
     <style>
+      /* Reset only essential styles */
       html, body {
         margin: 0;
         padding: 0;
         width: 100%;
         height: 100%;
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
       }
 
       #preloader {
@@ -70,8 +112,16 @@
         width: 100%;
         height: 100%;
         object-fit: contain;
-        filter: brightness(0) saturate(100%) invert(38%) sepia(82%) saturate(1736%) hue-rotate(200deg) brightness(97%) contrast(101%);
-        animation: pulse 1s ease-in-out infinite;
+        /* Blue color for the icon - fully opaque */
+        filter: 
+          brightness(0) 
+          saturate(100%) 
+          invert(28%) 
+          sepia(85%) 
+          saturate(2400%) 
+          hue-rotate(196deg) 
+          brightness(94%) 
+          contrast(102%);
       }
 
       @keyframes pulse {
@@ -80,9 +130,52 @@
         100% { transform: scale(1); }
       }
     </style>
+
+    <!-- Replace the static tint divs with conditional ones -->
+    <script>
+      (function() {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS detection
+        
+        if (isIOS) {
+          document.write(`
+            <div id="safari-tint"></div>
+            <div id="safari-tint-bottom" class="browser-only"></div>
+          `);
+        }
+      })();
+    </script>
+    <style>
+      #safari-tint {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: max(env(safe-area-inset-top), 11px); /* >= 3px required */
+        z-index: 2147483647; /* VERY HIGH */
+        pointer-events: none;
+      }
+      #safari-tint-bottom {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: max(env(safe-area-inset-bottom), 11px);
+        z-index: 2147483647;
+        pointer-events: none;
+        background-color: transparent;
+      }
+      @media all and (display-mode: standalone) {
+      #safari-tint-bottom {
+        display: none;
+      }
+    }
+    </style>
   </head>
 
   <body>
+    <!-- SVG filter MUST be in body, right at the top -->
+
     <div id="preloader">
       <div id="preloader-icon">
         <img src="src/assets/icon.png" alt="Strugure Icon" />
@@ -90,6 +183,83 @@
     </div>
 
     <div id="root"></div>
+    
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Add system theme change listener -->
+    <script>
+    (function() {
+      // Listen for system theme changes
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      
+      const handleSystemThemeChange = (e) => {
+        try {
+          const saved = localStorage.getItem('theme');
+          let savedMode = 'system';
+          
+          if (saved === 'light' || saved === 'dark' || saved === 'system') {
+            savedMode = saved;
+          } else if (saved) {
+            try {
+              const parsed = JSON.parse(saved);
+              if (parsed?.state?.mode) {
+                savedMode = parsed.state.mode;
+              }
+            } catch {
+              // Ignore parse errors
+            }
+          }
+          
+          // Only update if mode is 'system'
+          if (savedMode === 'system') {
+            const effectiveTheme = e.matches ? 'dark' : 'light';
+            const colors = { light: '#fafafa', dark: '#0d1117' };
+            const bg = colors[effectiveTheme];
+            
+            // Update meta tag
+            const metaThemeColor = document.getElementById('theme-color-meta');
+            if (metaThemeColor) {
+              metaThemeColor.setAttribute('content', bg);
+            }
+            
+            // Update styles
+            const style = document.querySelector('style:first-of-type');
+            if (style) {
+              style.innerHTML = `
+                html, #preloader {
+                  background-color: ${bg} !important;
+                }
+                body {
+                  background-color: ${bg} !important;
+                  min-height: 100vh;
+                  min-height: -webkit-fill-available;
+                }
+              `;
+            }
+            
+            // Update data-theme and inline styles
+            document.documentElement.setAttribute('data-theme', effectiveTheme);
+            document.documentElement.style.backgroundColor = bg;
+            document.body.style.backgroundColor = bg;
+          }
+        } catch (e) {
+          console.warn('Failed to update theme on system change', e);
+        }
+      };
+      
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', handleSystemThemeChange);
+      } else {
+        mediaQuery.addListener(handleSystemThemeChange);
+      }
+
+      // Verify filter is loaded
+      setTimeout(() => {
+        const filter = document.getElementById('glass-distortion');
+        console.log('SVG Filter loaded:', !!filter);
+      }, 100);
+    })();
+    </script>
   </body>
+
 </html>

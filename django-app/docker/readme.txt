@@ -1,6 +1,6 @@
 # Start all services
 cd server/docker
-docker-compose -f docker-compose-redis.yml up
+docker-compose -f docker-compose-elastic.yml up -d
 
 
 

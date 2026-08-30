@@ -5,15 +5,13 @@ import {
   CardContent,
   CardActions,
   Typography,
-  useMediaQuery,
-  IconButton,
-  Tooltip,
+  /*   useMediaQuery, */
+  CardActionArea,
 } from "@mui/material";
 
 import { useTranslation } from "react-i18next";
 import type { AggregatedProduct } from "../types/AggregatedProduct";
 import { useStore } from "../store/store";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 
 interface Props {}
 
@@ -33,12 +31,16 @@ const bull = (
 
 const ProductGrid: React.FC<Props> = () => {
   const { i18n } = useTranslation();
-  const isVerySmall = useMediaQuery("(max-width:320px)");
+  /*   const isSmallScreen = useMediaQuery("(max-width:768px)");
+  const isVerySmallScreen = useMediaQuery("(max-width:425px)");
+  const isTinyScreen = useMediaQuery("(max-width:320px)"); */
   const aggregated_products = useStore((state) => state.aggregatedProducts);
   const currentPage = useStore((state) => state.currentPage);
   const isLoading = useStore((state) => state.isLoading);
   const onOpenProduct = useStore((state) => state.openProduct);
-  const { t } = useTranslation();
+  /* 
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null); */
+
   useLayoutEffect(() => {
     const main = document.querySelector("main");
     if (!main) return;
@@ -58,55 +60,51 @@ const ProductGrid: React.FC<Props> = () => {
   };
 
   return (
-    <>
-      {" "}
-      {/* Open fragment */}
-      {/* Product Grid - Keep exact same structure */}
-      <Box
-        sx={{
-          mt: 0,
-          display: "grid",
-          gap: 3,
-          gridTemplateColumns: {
-            xs: "1fr", // 0+
-            sm: "1fr ", // 375+
-            md: "1fr", // 425+ keep 2 columns
-            lg: "1fr 1fr 1fr", // 768+ 3 columns
-            xl: "1fr 1fr 1fr ", // 1024+ 4 columns
-            xxl: "1fr 1fr 1fr ", // 1440+ 5 columns
-          },
-        }}
-      >
-        {aggregated_products.map((product: AggregatedProduct) => {
-          const displayName = getTranslated(product.t_name, product.name);
-          const displayVariant = getTranslated(product.t_variant, "");
+    <Box
+      sx={{
+        mt: 0,
+        display: "grid",
+        gap: 3,
+        gridTemplateColumns: {
+          xs: "1fr",
+          sm: "1fr",
+          md: "1fr",
+          lg: "1fr 1fr 1fr",
+          xl: "1fr 1fr 1fr",
+          xxl: "1fr 1fr 1fr",
+        },
+      }}
+    >
+      {aggregated_products.map((product: AggregatedProduct) => {
+        const displayName = getTranslated(product.t_name, product.name);
+        const displayVariant = getTranslated(product.t_variant, "");
 
-          return (
-            <Card
-              key={product.id}
+        return (
+          <Card
+            key={product.id}
+            elevation={1}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+              border: (theme) => `1px solid ${theme.palette.divider}`,
+              transition: "border-color 0.25s ease",
+              cursor: isLoading ? "default" : "pointer",
+            }}
+          >
+            <CardActionArea
+              disabled={isLoading}
+              onClick={() => !isLoading && onOpenProduct(product.id)}
               sx={{
+                height: "100%",
                 display: "flex",
                 flexDirection: "column",
-                height: "100%",
-                ...(isVerySmall && {
-                  "& .MuiCardContent-root": { padding: "8px 10px" },
-                  "& .MuiCardActions-root": { padding: "6px 10px" },
-                  "& .MuiTypography-root": {
-                    fontSize: "0.7rem",
-                    lineHeight: 1.15,
-                    mb: 0.4,
-                  },
-                  "& .MuiButton-root": {
-                    minHeight: 30,
-                    fontSize: "0.7rem",
-                    padding: "3px 8px",
-                  },
-                }),
+                alignItems: "stretch",
               }}
             >
               <CardContent sx={{ flexGrow: 1 }}>
                 <Typography gutterBottom sx={{ color: "text.secondary" }}>
-                  {product.offers.toLocaleString()}
+                  {product.offers_count}
                 </Typography>
                 <Typography
                   variant="h5"
@@ -123,30 +121,24 @@ const ProductGrid: React.FC<Props> = () => {
                 <Typography sx={{ color: "text.secondary" }}>
                   {product.brand} {displayVariant ? `— ${displayVariant}` : ""}
                 </Typography>
+
                 <Typography variant="body2" sx={{ color: "text.primary" }}>
-                  {product.lowest_price.toLocaleString()} MDL
+                  {product.lowest_price.toLocaleString()}{" "}
+                  {product.offers_count > 1 ? bull : ""}{" "}
+                  {product.offers_count > 1 ? product.highest_price : ""} MDL
                 </Typography>
+
                 <Typography variant="body2" sx={{ color: "text.primary" }}>
                   {product.shops.map((s) => ` ${s}`)}
                 </Typography>
               </CardContent>
 
-              <CardActions sx={{ mt: "auto" }}>
-                <Tooltip title={t("Offers_Tooltip")} enterDelay={1}>
-                  <IconButton
-                    onClick={() => onOpenProduct(product.id)}
-                    size="small"
-                    disabled={isLoading}
-                  >
-                    <VisibilityOutlinedIcon />
-                  </IconButton>
-                </Tooltip>
-              </CardActions>
-            </Card>
-          );
-        })}
-      </Box>
-    </> // Close the fragment
+              <CardActions sx={{ mt: 0, pt: 0 }} />
+            </CardActionArea>
+          </Card>
+        );
+      })}
+    </Box>
   );
 };
 

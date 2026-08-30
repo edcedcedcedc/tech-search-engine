@@ -5,7 +5,7 @@ from django.db import transaction
 from products.models import Product
 from products.utils.log.db_merge_log import db_merge_log
 from products.crawler.config import (
-    ALLOWED_FIELDS_TO_WRITE_AND_TRACK,
+    ALLOWED_FIELDS_TO_WRITE,
 )
 
 BATCH_SIZE = 2000
@@ -102,7 +102,7 @@ class Command(BaseCommand):
             # Existing product → compare allowed fields
             changed_fields = [
                 f
-                for f in ALLOWED_FIELDS_TO_WRITE_AND_TRACK
+                for f in ALLOWED_FIELDS_TO_WRITE
                 if getattr(src, f) != getattr(dest, f)
             ]
             if changed_fields:

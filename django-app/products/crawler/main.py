@@ -1,18 +1,23 @@
+import json
 import time
 import random
 import traceback
 from threading import Thread
 from queue import Queue, Empty
-from collections import defaultdict
+
+from products.models import Product
 from products.crawler.manager import DatabaseManager
 from products.crawler.settings import FetchSettings
 from products.utils.log.shop_crawler_engine_log import shop_crawler_log
 from products.crawler.config import (
-    ALLOWED_FIELDS_TO_WRITE_AND_TRACK,
+    ALLOWED_FIELDS_TO_TRACK,
+    PROD_DB,
     SHOPS_TO_CRAWL,
     SHOPS,
+    UPDATE_DB,
 )
 from products.crawler.utils import interleave_tasks
+from collections import defaultdict
 
 
 class ShopCrawlerEngine:
@@ -36,11 +41,13 @@ class ShopCrawlerEngine:
         pages: int = 999,
         track_fields: list[str] | None = None,
     ):
+        self.crawled_ids = defaultdict(set)
+
         try:
             crawl_shops = [shop] if shop else SHOPS_TO_CRAWL
             filter_category = category
             max_pages = pages
-            track_fields = track_fields or ALLOWED_FIELDS_TO_WRITE_AND_TRACK
+            track_fields = track_fields or ALLOWED_FIELDS_TO_TRACK
 
             shop_crawler_log("START shop_crawler_engine orchestrator")
 
@@ -119,6 +126,12 @@ class ShopCrawlerEngine:
             # Wait for consumer to finish
             consumer_thread.join()
 
+            # Xstore exception handler for products out of stock, they delete them from the site
+            if "xstore" in crawl_shops and not filter_category and max_pages == 999:
+                self.handle_xstore_missing_products()
+
+            self.finalize_crawl()
+
             shop_crawler_log(
                 "Saved all created/updated records for downstream processing"
             )
@@ -141,9 +154,16 @@ class ShopCrawlerEngine:
         )
 
         for item_data in batch:
+
+            if shop == "xstore":
+                external_id = item_data.get("external_id")
+                if external_id:
+                    self.crawled_ids["xstore"].add(external_id)
+
             product, created, change_info = DatabaseManager.state_machine(
                 item_data, track_fields
             )
+
             if product:
                 if created:
                     saved_count += 1
@@ -204,3 +224,33 @@ class ShopCrawlerEngine:
             shop_crawler_log(
                 f"[WORKER] ERROR shop={shop_name} category={category_name}: {e}"
             )
+
+    def handle_xstore_missing_products(self):
+        """
+        For XSTORE:
+        DB active products MINUS crawled products
+        => mark as in_stock=False and save to UPDATE_DB
+        """
+
+        shop_crawler_log("XSTORE missing detection started")
+
+        crawled_ids = self.crawled_ids.get("xstore", set())
+
+        # Get all ACTIVE products from PROD_DB
+        db_products = Product.objects.using(PROD_DB).filter(
+            shop="xstore", in_stock=True
+        )
+
+        db_ids = set(db_products.values_list("external_id", flat=True))
+
+        missing_ids = db_ids - crawled_ids
+
+        shop_crawler_log(f"XSTORE missing products detected: {len(missing_ids)}")
+
+        for product in db_products.filter(external_id__in=missing_ids):
+            product.in_stock = False
+            product.dirty = True
+            product.updated_at = timezone.now()
+            product.save(using=UPDATE_DB)
+
+        shop_crawler_log("XSTORE missing detection finished")

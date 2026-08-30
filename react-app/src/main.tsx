@@ -1,36 +1,41 @@
-// ✅ main.tsx for Vite
-import { StrictMode, useMemo } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 
 import getTheme from "./theme/theme";
-import { useStore } from "./store/store";
+import { useThemeStore } from "./store/store";
 import App from "./App";
 import "./i18n";
+import { indexedDbService } from "./services/indexedDb";
+import { uiLog } from "./webhook/client/uiDebug";
+import { usePrefetch } from "./hooks/usePrefetch";
+import { useThemePreloadSetup } from "./hooks/useThemePreloadSetup";
+import { useHydrateLastQuery } from "./hooks/useHydrateLastQuery";
+import { useSyncDb } from "./hooks/useSyncDb";
+import React from "react";
+import { BrowserRouter } from "react-router-dom";
+import { usePipelineStatusPoll } from "./hooks/usePipelineStatusPoll";
 
 const Root = () => {
-  const mode = useStore((state) => state.mode);
-  const theme = useMemo(() => getTheme(mode), [mode]);
+  const effectiveMode = useThemeStore((state) => state.effectiveMode);
+  const theme = React.useMemo(() => getTheme(effectiveMode), [effectiveMode]);
+  usePrefetch();
+  useSyncDb();
+  usePipelineStatusPoll();
+  /*  useBackgroundSyncDb(); */
+  useHydrateLastQuery();
+  useThemePreloadSetup();
+  indexedDbService.init().catch((error) => {
+    uiLog(`Failed to initialize IndexedDB: ${error}`);
+  });
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <App />
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
     </ThemeProvider>
   );
 };
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <Root />
-  </StrictMode>,
-);
-
-const preloader = document.getElementById("preloader");
-if (preloader) {
-  preloader.style.transition = "opacity 0.3s ease";
-  preloader.style.opacity = "0";
-  setTimeout(() => {
-    preloader.style.display = "none";
-  }, 300);
-}
+createRoot(document.getElementById("root")!).render(<Root />);

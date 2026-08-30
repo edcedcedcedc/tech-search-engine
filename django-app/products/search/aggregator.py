@@ -1,5 +1,7 @@
 from products.utils.log.search_engine_log import search_engine_log
 import json
+from products.search.config import MAX_PRODUCTS_TO_AGGREGATE
+from products.search.config import LAYER1_LIMIT, CACHE_TTL_LAYER1, LAYER2_LIMIT
 
 
 def aggregate_products(qs, query=None, query_embedding=None):
@@ -7,14 +9,20 @@ def aggregate_products(qs, query=None, query_embedding=None):
     Aggregate products into clusters, attach embeddings and query info.
     """
     product_dict = {}
-
+    product_count = 0
     for p in qs:
+        if product_count >= MAX_PRODUCTS_TO_AGGREGATE:
+            search_engine_log(
+                f"Stopping aggregation early - reached max products ({MAX_PRODUCTS_TO_AGGREGATE})"
+            )
+            break
+
         cluster_key = p.similar_id
         product_dict.setdefault(cluster_key, []).append(p)
         search_engine_log(
             f"Adding product '{p.name} / {p.variant}' to cluster {cluster_key}"
         )
-
+        product_count += 1
     return [
         build_aggregated_product(cluster_id, offers, query, query_embedding)
         for cluster_id, offers in product_dict.items()
@@ -23,8 +31,7 @@ def aggregate_products(qs, query=None, query_embedding=None):
 
 def build_aggregated_product(cluster_id, offers, query=None, query_embedding=None):
     rep = offers[0]
-    unique_shops = sorted({o.shop for o in offers})
-
+    unique_shops = sorted({o.shop for o in offers if hasattr(o, "shop") and o.shop})
     # --- Product embedding as string ---
     cluster_embedding = ""
     if rep.embedding:
@@ -64,7 +71,6 @@ def build_aggregated_product(cluster_id, offers, query=None, query_embedding=Non
                 f"[OFFER_EMBED_MISSING] Offer '{o.name}' has no embedding field"
             )
 
-        # Price history
         try:
             price_history_list = [
                 {
@@ -74,8 +80,15 @@ def build_aggregated_product(cluster_id, offers, query=None, query_embedding=Non
                 }
                 for ph in getattr(o, "price_history_ordered", [])
             ]
+
+            most_recent = price_history_list[:1]
+            most_oldest = price_history_list[len(price_history_list) - 1 :]
+            free_price_trend = most_recent + most_oldest
+            hidden_price_trend_count = len(price_history_list)
         except Exception:
             price_history_list = []
+            free_price_trend = []
+            hidden_price_trend_count = 0
 
         serialized_offers.append(
             {
@@ -91,10 +104,12 @@ def build_aggregated_product(cluster_id, offers, query=None, query_embedding=Non
                 "url": o.url or "",
                 "external_id": o.external_id or "",
                 "in_stock": o.in_stock,
-                # Fallback to cluster embedding if offer embedding missing
                 "embedding": offer_embedding,
                 "price_history": price_history_list,
-                # Attach query info
+                "price_trend_preview": {
+                    "free_price_trend": free_price_trend,
+                    "hidden_price_trend_count": hidden_price_trend_count,
+                },
                 "query": query,
                 "query_embedding": (
                     json.dumps(query_embedding.tolist())
@@ -109,7 +124,11 @@ def build_aggregated_product(cluster_id, offers, query=None, query_embedding=Non
         "name": rep.name,
         "variant": rep.variant or "",
         "brand": rep.brand or "",
-        "lowest_price": float(min(o.price for o in offers)),
+        "lowest_price": int(min(o.price for o in offers[:LAYER2_LIMIT])),
+        "highest_price": int(max(o.price for o in offers[:LAYER2_LIMIT])),
+        "average_price": int(
+            sum(o.price for o in offers[:LAYER2_LIMIT]) / len(offers[:LAYER2_LIMIT])
+        ),
         "t_name": rep.t_name or {},
         "t_variant": rep.t_variant or {},
         "t_category": rep.t_category or {},
@@ -117,7 +136,6 @@ def build_aggregated_product(cluster_id, offers, query=None, query_embedding=Non
         "shops": unique_shops,
         "embedding": cluster_embedding,
         "image": rep.image or "",
-        # Attach query info at cluster level too
         "query": query,
         "query_embedding": (
             json.dumps(query_embedding.tolist())

@@ -2,6 +2,7 @@ import random
 import threading
 import time
 from celery import shared_task
+from products.system_state.versioning import bump_global_system_version
 
 
 @shared_task(name="reset_logs")
@@ -31,12 +32,10 @@ def run_crawler():
     from products.crawler.main import ShopCrawlerEngine
 
     try:
-        if DRY_RUN:
-            call_command("reset")
+        call_command("reset")
         engine = ShopCrawlerEngine()
         engine.run(pages=PAGES_TO_CRAWL)
         shop_crawler_log("[TASK] Crawler finished successfully")
-
         call_command("count", in_stock=True)
         call_command("count")
 
@@ -78,6 +77,40 @@ def run_normalize():
     category_log("[TASK] Finished normalization for all DBs")
     call_command("normalize_test")
     category_log("[TESTING] Finished normalization for all DBs")
+
+
+""" @shared_task(name="run_tag_generation")
+def run_tag_generation():
+   
+    from products.tl.tags.tag_generator import TagGenerator
+    from products.utils.log.tag_log import tag_log
+    from products.crawler.config import CRAWLER_DBS
+
+    try:
+        generator = TagGenerator()
+        generator.set_client_from_env()
+
+        tag_log(f"Starting tag generation for {len(CRAWLER_DBS)} databases")
+
+        # PRODUCTION SETTINGS:
+        stats = generator.process_multiple_databases(
+            databases=CRAWLER_DBS,
+            max_tags=8,
+            lang="ro",
+            use_cache=True,
+            force_regenerate=False,  # Skip products with existing tags (save $$$)
+            max_workers=5,  # Adjust based on your API limits
+            batch_size=50,  # Reasonable batch size
+            test_mode=False,
+        )
+
+        tag_log(f"[TASK] Tag generation completed: {stats}")
+        return stats
+
+    except Exception as e:
+        tag_log(f"[TASK] Error in tag generation: {str(e)}", "error")
+        raise
+"""
 
 
 @shared_task(name="run_translation")
@@ -414,7 +447,7 @@ def run_price_history_default():
     from products.analytics.price_history import PriceHistoryBuilder
 
     history = PriceHistoryBuilder(
-        db=PROD_DB, include_archived=True, include_broken=True
+        db=PROD_DB, include_archived=True, include_broken=True, force_daily=True
     )
     history.run()
     call_command("price_history_test")
@@ -443,6 +476,37 @@ def run_build_autocomplete_index():
     indexer = AutocompleteIndexBuilder()
     indexer.build_index()
     autocomplete_log("[TASK] Autocomplete index rebuild finished.")
+
+
+@shared_task(name="run_bump_search_version")
+def run_bump_search_version():
+    """
+    Bump the global search version and save last pipeline run time in DB.
+    """
+    from django.utils import timezone
+    import json
+    from products.models import SystemState
+    from products.utils.log.versioning_log import versioning_log
+    from products.system_state.versioning import bump_global_system_version
+
+    # 1️⃣ Bump version
+    new_version = bump_global_system_version()
+
+    # 2️⃣ Update pipeline_last_run timestamp
+    try:
+        state, _ = SystemState.objects.get_or_create(
+            key="pipeline_last_run", defaults={"value": json.dumps({})}
+        )
+        payload = json.loads(state.value or "{}")
+        payload["finished_at"] = timezone.now().isoformat()
+        state.value = json.dumps(payload)
+        state.save()  # literally just save, no need for update_fields
+        versioning_log(f"[TASK] pipeline_last_run updated: {state.value}")
+    except Exception as e:
+        versioning_log(f"[TASK] ERROR updating pipeline_last_run: {e}")
+
+    versioning_log(f"[TASK] Global search version bumped to {new_version}")
+    return new_version
 
 
 @shared_task(name="debug_test_task")
@@ -725,3 +789,20 @@ def run_normalize_in_venv1(*args, **kwargs):
 
     print("Running command:", " ".join(cmd))
     subprocess.run(cmd, check=True, env=env)
+
+
+@shared_task(name="test_failure_task")
+def test_failure_task():
+    """
+    Task designed to fail randomly for testing signals and email alerts.
+    """
+    from celery import shared_task
+    import random
+    import time
+
+    print("[TEST TASK] Starting test_failure_task...")
+
+    time.sleep(random.uniform(0.5, 1.5))
+
+    # Intentionally fail
+    raise RuntimeError("[TEST TASK] Intentional failure to test signals and emails")

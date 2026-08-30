@@ -1,333 +1,784 @@
 import React from "react";
+import ContactPageOutlinedIcon from "@mui/icons-material/ContactPageOutlined";
 import {
   AppBar,
   Toolbar,
   Box,
   IconButton,
-  Menu,
-  MenuItem,
   Drawer,
   List,
   ListItem,
   ListItemButton,
   ListItemText,
   ListItemIcon,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  FormControl,
-  Select,
   useTheme,
   Divider,
-  useMediaQuery,
   Tooltip,
+  Typography,
+  LinearProgress,
+  Fade,
+  Collapse,
+  Link,
+  useMediaQuery,
 } from "@mui/material";
+import { Close as CloseIcon, ListAltOutlined } from "@mui/icons-material";
 import {
-  ManageSearchOutlined as ManageSearchOutlinedIcon,
-  InfoOutlined as InfoOutlinedIcon,
-  ContactMail as ContactMailIcon,
   MenuOutlined as MenuOutlinedIcon,
-  TranslateOutlined as TranslateOutlinedIcon,
-  LightModeOutlined as LightModeOutlinedIcon,
-  DarkModeOutlined as DarkModeOutlinedIcon,
   SettingsOutlined as SettingsOutlinedIcon,
+  InfoOutline,
 } from "@mui/icons-material";
-import { Link as RouterLink } from "react-router-dom";
+/* import { Link as RouterLink } from "react-router-dom"; */
 import { useTranslation } from "react-i18next";
-import { LANGAUGES, type LanguagesCodes } from "../i18n/languages";
+import RefreshOutlinedIcon from "@mui/icons-material/RefreshOutlined";
 import { useStore } from "../store/store";
-import GrapeIcon from "../components/Icon";
+import GrapeIcon from "./GrapeIcon";
 import Footer from "./Footer";
+import { NavIcon } from "./NavIcons";
+import SettingsView from "./SettingsView";
+import PrivacyPolicyMobile from "../views/mobile/PrivacyPolicy";
+import TermsOfUseMobile from "../views/mobile/TermsOfUse";
+import DisclaimerMobile from "../views/mobile/Disclaimer";
 
 const ICON_SIZE = 22;
 const iconSx = { fontSize: ICON_SIZE };
 
 const Header: React.FC = () => {
   const theme = useTheme();
-  const mode = useStore((s) => s.mode);
-  const toggleMode = useStore((s) => s.toggleMode);
-  const { t, i18n } = useTranslation();
+  const drawerOpen = useStore((s) => s.drawerOpen);
+  const setDrawerOpen = useStore((s) => s.setDrawerOpen);
+  const settingsOpen = useStore((s) => s.settingsOpen);
+  const setSettingsOpen = useStore((s) => s.setSettingsOpen);
+  const [sourcesExpanded, setSourcesExpanded] = React.useState(false);
+  const [aboutExpanded, setAboutExpanded] = React.useState(false);
+  const [contactExpanded, setContactExpanded] = React.useState(false);
+  const [privacyOpen, setPrivacyOpen] = React.useState(false);
+  const [termsOpen, setTermsOpen] = React.useState(false);
+  const [disclaimerOpen, setDisclaimerOpen] = React.useState(false);
+  const { t /* i18n */ } = useTranslation(); // Make sure to get i18n
+  /*   const aggregatedProducts = useStore((s) => s.aggregatedProducts); */
+  /*   const isProductsDisabled = aggregatedProducts.length === 0; */
 
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const [langMenuAnchor, setLangMenuAnchor] =
-    React.useState<null | HTMLElement>(null);
-  const [settingsOpen, setSettingsOpen] = React.useState(false);
+  console.log(
+    "[Header] Render - drawerOpen:",
+    drawerOpen,
+    "settingsOpen:",
+    settingsOpen,
+    "sourcesExpanded:",
+    sourcesExpanded,
+    "aboutExpanded:",
+    aboutExpanded,
+    "contactExpanded:",
+    contactExpanded,
+    "privacyOpen:",
+    privacyOpen,
+    "termsOpen:",
+    termsOpen,
+    "disclaimerOpen:",
+    disclaimerOpen,
+  );
 
-  const aggregatedProducts = useStore((s) => s.aggregatedProducts);
-  const isProductsDisabled = aggregatedProducts.length === 0;
+  // Add PWA detection
+  const isPWA = React.useMemo(
+    () =>
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true,
+    [],
+  );
 
-  const navLinks = [
-    {
-      path: "/products",
-      label: t("Manage_Products"),
-      icon: <ManageSearchOutlinedIcon sx={iconSx} />,
-    },
-    {
-      path: "/about",
-      label: t("About"),
-      icon: <InfoOutlinedIcon sx={iconSx} />,
-    },
-    {
-      path: "/contact",
-      label: t("Contact"),
-      icon: <ContactMailIcon sx={iconSx} />,
-    },
-  ];
-
-  const handleLangMenuOpen = (event: React.MouseEvent<HTMLElement>) =>
-    setLangMenuAnchor(event.currentTarget);
-  const handleLangMenuClose = () => setLangMenuAnchor(null);
-  const handleLangChange = (lang: LanguagesCodes) => {
-    i18n.changeLanguage(lang);
-    handleLangMenuClose();
+  const handleSettingsToggle = () => {
+    console.log(
+      "[Header] Toggling settings from",
+      settingsOpen,
+      "to",
+      !settingsOpen,
+    );
+    setSettingsOpen(!settingsOpen);
+    // Close all expanded sections and views when opening settings
+    setSourcesExpanded(false);
+    setAboutExpanded(false);
+    setContactExpanded(false);
+    setPrivacyOpen(false);
+    setTermsOpen(false);
+    setDisclaimerOpen(false);
   };
 
-  const handleSettingsOpen = () => setSettingsOpen(true);
-  const handleSettingsClose = () => setSettingsOpen(false);
+  const handleSettingsClose = () => {
+    console.log("[Header] Closing settings");
+    setSettingsOpen(false);
+  };
 
-  const isTiny = useMediaQuery("(max-width:320px)");
-  const iconButtonSx = { color: "text.secondary" };
+  const handleSourcesToggle = () => {
+    console.log(
+      "[Header] Toggling sources from",
+      sourcesExpanded,
+      "to",
+      !sourcesExpanded,
+    );
+    // Close other expanded menus first
+    setAboutExpanded(false);
+    setContactExpanded(false);
+    // Then toggle sources
+    setSourcesExpanded(!sourcesExpanded);
+    // Close settings and other views
+    setSettingsOpen(false);
+    setPrivacyOpen(false);
+    setTermsOpen(false);
+    setDisclaimerOpen(false);
+  };
 
+  const handleAboutToggle = () => {
+    console.log(
+      "[Header] Toggling about from",
+      aboutExpanded,
+      "to",
+      !aboutExpanded,
+    );
+    // Close other expanded menus first
+    setSourcesExpanded(false);
+    setContactExpanded(false);
+    // Then toggle about
+    setAboutExpanded(!aboutExpanded);
+    // Close settings and other views
+    setSettingsOpen(false);
+    setPrivacyOpen(false);
+    setTermsOpen(false);
+    setDisclaimerOpen(false);
+  };
+
+  const handleContactToggle = () => {
+    console.log(
+      "[Header] Toggling contact from",
+      contactExpanded,
+      "to",
+      !contactExpanded,
+    );
+    // Close other expanded menus first
+    setSourcesExpanded(false);
+    setAboutExpanded(false);
+    // Then toggle contact
+    setContactExpanded(!contactExpanded);
+    // Close settings and other views
+    setSettingsOpen(false);
+    setPrivacyOpen(false);
+    setTermsOpen(false);
+    setDisclaimerOpen(false);
+  };
+
+  const handlePrivacyToggle = () => {
+    console.log("[Header] Opening privacy policy");
+    setPrivacyOpen(true);
+    setTermsOpen(false);
+    setDisclaimerOpen(false);
+    setSettingsOpen(false);
+    setSourcesExpanded(false);
+    setAboutExpanded(false);
+    setContactExpanded(false);
+  };
+
+  const handlePrivacyClose = () => {
+    console.log("[Header] Closing privacy policy");
+    setPrivacyOpen(false);
+  };
+
+  const handleTermsToggle = () => {
+    console.log("[Header] Opening terms of use");
+    setTermsOpen(true);
+    setPrivacyOpen(false);
+    setDisclaimerOpen(false);
+    setSettingsOpen(false);
+    setSourcesExpanded(false);
+    setAboutExpanded(false);
+    setContactExpanded(false);
+  };
+
+  const handleTermsClose = () => {
+    console.log("[Header] Closing terms of use");
+    setTermsOpen(false);
+  };
+
+  const handleDisclaimerToggle = () => {
+    console.log("[Header] Opening disclaimer");
+    setDisclaimerOpen(true);
+    setPrivacyOpen(false);
+    setTermsOpen(false);
+    setSettingsOpen(false);
+    setSourcesExpanded(false);
+    setAboutExpanded(false);
+    setContactExpanded(false);
+  };
+
+  const handleDisclaimerClose = () => {
+    console.log("[Header] Closing disclaimer");
+    setDisclaimerOpen(false);
+  };
+
+  const handleDrawerClose = () => {
+    console.log("[Header] Closing drawer and all views");
+    setDrawerOpen(false);
+    setSettingsOpen(false);
+    setSourcesExpanded(false);
+    setAboutExpanded(false);
+    setContactExpanded(false);
+    setPrivacyOpen(false);
+    setTermsOpen(false);
+    setDisclaimerOpen(false);
+  };
+
+  const handleDrawerOpen = () => {
+    console.log("[Header] Opening drawer");
+    setDrawerOpen(true);
+  };
+  const ua = navigator.userAgent.toLowerCase();
+  const isSafari =
+    /safari/.test(ua) &&
+    !/chrome|chromium|crios/.test(ua) &&
+    !/android/.test(ua);
+
+  const isiOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  const isLoading = useStore((s) => s.isLoading);
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
   return (
     <>
       <AppBar
-        position="static"
+        id="header"
+        position="relative"
         elevation={0}
-        sx={{ width: "100%", bgcolor: theme.palette.background.paper }}
+        sx={{
+          width: "100%",
+          bgcolor: theme.palette.background.default,
+        }}
       >
+        {!isiOS && !isSafari && (
+          <Fade in={isLoading} timeout={300} unmountOnExit={false}>
+            <LinearProgress
+              variant="query"
+              sx={{
+                position: "static",
+                bottom: 0,
+                left: 0,
+                width: "100%",
+                zIndex: (theme) => theme.zIndex.appBar + 999999999,
+              }}
+            />
+          </Fade>
+        )}
         <Toolbar
           sx={{
             display: "flex",
-            justifyContent: "space-between",
+            justifyContent: "flex-start",
+            alignItems: "center",
             width: "100%",
-            borderBottom: 1,
-            borderColor: "divider",
-            px: { xs: 2, sm: 3, md: 4 },
+            height: `calc(66px + env(safe-area-inset-top))`, // header height + safe area
+            minHeight: `calc(66px + env(safe-area-inset-top))`,
+            px: { xs: 2, sm: 2, md: 2 },
+            py: 0,
           }}
         >
-          {/* Logo */}
-          <Tooltip title="Strugure" enterDelay={500} leaveDelay={0}>
-            <Box
-              component={RouterLink}
-              to="/"
+          {/* Menu button */}
+          <Tooltip title={t("Menu_Tooltip")} enterDelay={500} placement="right">
+            <IconButton
+              edge="start"
               sx={{
-                display: "inline-flex",
+                height: 60,
+                width: 60,
+                display: "flex",
+                justifyContent: "center",
                 alignItems: "center",
-                cursor: "pointer",
-                color: "inherit",
-                textDecoration: "none",
+                borderRadius: 0,
+                color: "text.primary",
               }}
+              onClick={handleDrawerOpen}
             >
-              <GrapeIcon size={27} color="primary" variant="logo" />
-            </Box>
+              <NavIcon>
+                <MenuOutlinedIcon sx={iconSx} />
+              </NavIcon>
+            </IconButton>
           </Tooltip>
 
-          {/* Right controls */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {isTiny && (
-              <>
-                <IconButton onClick={toggleMode} sx={iconButtonSx}>
-                  {mode === "dark" ? (
-                    <LightModeOutlinedIcon sx={iconSx} />
-                  ) : (
-                    <DarkModeOutlinedIcon sx={iconSx} />
-                  )}
-                </IconButton>
-
-                <IconButton onClick={handleLangMenuOpen} sx={iconButtonSx}>
-                  <TranslateOutlinedIcon sx={iconSx} />
-                </IconButton>
-
-                <Menu
-                  anchorEl={langMenuAnchor}
-                  open={Boolean(langMenuAnchor)}
-                  onClose={handleLangMenuClose}
-                >
-                  {(Object.keys(LANGAUGES) as LanguagesCodes[]).map((lang) => (
-                    <MenuItem key={lang} onClick={() => handleLangChange(lang)}>
-                      {LANGAUGES[lang].label}
-                    </MenuItem>
-                  ))}
-                </Menu>
-              </>
-            )}
-
-            <Tooltip title={t("Menu_Tooltip")} enterDelay={500} leaveDelay={0}>
+          {/* Refresh icon - only in PWA mode */}
+          {isPWA && (
+            <Tooltip title={t("Refresh")} enterDelay={500} placement="right">
               <IconButton
-                edge="end"
-                sx={iconButtonSx}
-                onClick={() => setDrawerOpen(true)}
+                sx={{
+                  height: 60,
+                  width: 60,
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  borderRadius: 0,
+                  ml: -2,
+                  color: "text.primary",
+                }}
+                onClick={() => window.location.reload()}
               >
-                <MenuOutlinedIcon sx={iconSx} />
+                <NavIcon>
+                  <RefreshOutlinedIcon sx={iconSx} />
+                </NavIcon>
               </IconButton>
             </Tooltip>
-          </Box>
+          )}
 
           {/* Drawer */}
           <Drawer
-            anchor="right"
+            anchor="left"
             open={drawerOpen}
-            onClose={() => setDrawerOpen(false)}
+            elevation={0}
+            onClose={handleDrawerClose}
             PaperProps={{
               sx: {
-                width: 260,
+                width: {
+                  xs: "100%",
+                  sm: "100%",
+                  md: "100%",
+                  lg: 360,
+                  xl: 360,
+                },
                 zIndex: 1600,
                 height: "100%",
                 display: "flex",
                 flexDirection: "column",
+                bgcolor: theme.palette.background.paper,
+                "&::-webkit-scrollbar": { width: theme.spacing(1) },
+                "&::-webkit-scrollbar-thumb": {
+                  backgroundColor: theme.palette.background.default,
+                  borderRadius: theme.shape.borderRadius,
+                },
+                "&::-webkit-scrollbar-thumb:hover": {
+                  backgroundColor: theme.palette.background.default,
+                },
+                "&::-webkit-scrollbar-track": { background: "transparent" },
+                scrollbarWidth: "thin",
+                scrollbarColor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(255, 255, 255, 0.02) transparent"
+                    : "rgba(0, 0, 0, 0.04) transparent",
+                py: {
+                  xs:
+                    isiOS || isSafari
+                      ? `calc(8px + env(safe-area-inset-top, 0px))`
+                      : 0, // mobile
+                  sm:
+                    isiOS || isSafari
+                      ? `calc(12px + env(safe-area-inset-top, 0px))`
+                      : 0, // small tablets
+                  md:
+                    isiOS || isSafari
+                      ? `calc(16px + env(safe-area-inset-top, 0px))`
+                      : 0, // medium tablets
+                  lg:
+                    isiOS || isSafari
+                      ? `calc(20px + env(safe-area-inset-top, 0px))`
+                      : 0, // desktop
+                  xl:
+                    isiOS || isSafari
+                      ? `calc(24px + env(safe-area-inset-top, 0px))`
+                      : 0, // large screens
+                },
               },
             }}
           >
             <Box
               sx={{
-                width: 260,
+                width: {
+                  xs: "100%",
+                  sm: "100%",
+                  md: "100%", // Changed from 260 to 100% for md and below
+                  lg: 360,
+                  xl: 360,
+                },
                 height: "100%",
                 display: "flex",
                 flexDirection: "column",
+                position: "relative",
               }}
             >
-              <List disablePadding>
-                {navLinks.map((link) => {
-                  const disabled =
-                    link.path === "/products" && isProductsDisabled;
+              {/* Close button - only visible on mobile/tablet */}
+              <IconButton
+                onClick={handleDrawerClose}
+                sx={{
+                  position: "absolute",
+                  right: 8,
+                  top: 8,
+                  zIndex: 1700,
+                  color: "text.secondary",
+                  display: {
+                    xs: "flex",
+                    sm: "flex",
+                    md: "flex", // Show on md as well since drawer is full width
+                    lg: "none",
+                  },
+                  "&:hover": {
+                    bgcolor: "action.hover",
+                  },
+                }}
+                size="small"
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
 
-                  return (
-                    <React.Fragment key={link.path}>
-                      <ListItem disablePadding>
-                        <ListItemButton
-                          component={!disabled ? RouterLink : "div"}
-                          to={!disabled ? link.path : undefined}
-                          disabled={disabled}
-                          onClick={() => !disabled && setDrawerOpen(false)}
-                          sx={{ py: 1.2, px: 2 }}
-                        >
-                          <ListItemIcon
-                            sx={{
-                              minWidth: 40,
-                              display: "flex",
-                              justifyContent: "center",
-                              color: disabled
-                                ? "text.disabled"
-                                : "text.secondary",
-                            }}
-                          >
-                            {link.icon}
-                          </ListItemIcon>
+              {/* Conditional content */}
+              {!settingsOpen &&
+              !privacyOpen &&
+              !termsOpen &&
+              !disclaimerOpen ? (
+                /* Main Navigation View */
+                <>
+                  {/* Logo */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "flex-start",
+                      px: { xs: 1.5, sm: 1.5, md: 2 },
+                      py: 0,
+                      height: { xs: 44, sm: 44, md: 48, lg: 48, xl: 52 },
+                      gap: 1,
+                      textDecoration: "none",
+                      color: "inherit",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minWidth: { xs: 36, sm: 36, md: 40, lg: 40, xl: 44 },
+                      }}
+                    >
+                      <GrapeIcon color="primary" />
+                    </Box>
+                  </Box>
 
-                          <ListItemText
-                            primary={link.label}
-                            primaryTypographyProps={{
-                              fontSize: "0.95rem",
-                              fontWeight: 500,
-                            }}
-                          />
-                        </ListItemButton>
-                      </ListItem>
-
-                      {link.path === "/products" && (
-                        <Divider sx={{ my: 0.5 }} />
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-
-                {!isTiny && (
-                  <>
-                    <Divider sx={{ my: 0.5 }} />
+                  {/* Navigation links */}
+                  <List
+                    disablePadding
+                    sx={{
+                      flex: 1, // Allow list to take available space
+                    }}
+                  >
+                    {/* Contact button without arrow */}
                     <ListItem disablePadding>
                       <ListItemButton
-                        onClick={() => {
-                          setDrawerOpen(false);
-                          handleSettingsOpen();
+                        onClick={handleContactToggle}
+                        sx={{
+                          py: 0,
+                          px: { xs: 1.5, sm: 1.5, md: 2 },
+                          display: "flex",
+                          alignItems: "center",
+                          height: { xs: 44, sm: 44, md: 48, lg: 48, xl: 52 },
+                          bgcolor: contactExpanded
+                            ? "action.selected"
+                            : "transparent",
                         }}
-                        sx={{ py: 1.2, px: 2 }}
                       >
                         <ListItemIcon
                           sx={{
-                            minWidth: 40,
+                            minWidth: {
+                              xs: 36,
+                              sm: 36,
+                              md: 40,
+                              lg: 40,
+                              xl: 44,
+                            },
                             display: "flex",
                             justifyContent: "center",
+                            alignItems: "center",
                             color: "text.secondary",
                           }}
                         >
-                          <SettingsOutlinedIcon sx={iconSx} />
+                          <NavIcon>
+                            <ContactPageOutlinedIcon />
+                          </NavIcon>
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={t("Contact")}
+                          primaryTypographyProps={{
+                            fontSize: {
+                              xs: "0.85rem",
+                              sm: "0.9rem",
+                              md: "0.95rem",
+                              lg: "1rem",
+                            },
+                            fontWeight: 500,
+                          }}
+                          sx={{ m: 0, display: "flex", alignItems: "center" }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+
+                    {/* Expanded Contact Info */}
+                    <Collapse in={contactExpanded} timeout="auto" unmountOnExit>
+                      <List component="div" disablePadding>
+                        <ListItem sx={{ pl: 8, py: 1.5 }}>
+                          <Box sx={{ width: "100%" }}>
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                              {t("Contact_Intro")}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mb: 0.5 }}>
+                              {t("Contact_Email_Label")}{" "}
+                              <Link
+                                href="mailto:contact@price-aggregator.md"
+                                sx={{
+                                  color: "primary.main",
+                                  textDecoration: "none",
+                                  "&:hover": {
+                                    textDecoration: "underline",
+                                  },
+                                }}
+                              >
+                                contact@price-aggregator.md
+                              </Link>
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {t("Contact_Platform_Info")}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{
+                                mt: 1,
+                                display: "block",
+                                fontStyle: "italic",
+                              }}
+                            >
+                              {t("Contact_Disclaimer")}
+                            </Typography>
+                          </Box>
+                        </ListItem>
+                        <Divider sx={{ mx: 2 }} />
+                      </List>
+                    </Collapse>
+
+                    {/* About button without arrow */}
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        onClick={handleAboutToggle}
+                        sx={{
+                          py: 0,
+                          px: { xs: 1.5, sm: 1.5, md: 2 },
+                          display: "flex",
+                          alignItems: "center",
+                          height: { xs: 44, sm: 44, md: 48, lg: 48, xl: 52 },
+                          bgcolor: aboutExpanded
+                            ? "action.selected"
+                            : "transparent",
+                        }}
+                      >
+                        <ListItemIcon
+                          sx={{
+                            minWidth: {
+                              xs: 36,
+                              sm: 36,
+                              md: 40,
+                              lg: 40,
+                              xl: 44,
+                            },
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            color: "text.secondary",
+                          }}
+                        >
+                          <NavIcon>
+                            <InfoOutline sx={iconSx} />
+                          </NavIcon>
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={t("About")}
+                          primaryTypographyProps={{
+                            fontSize: {
+                              xs: "0.85rem",
+                              sm: "0.9rem",
+                              md: "0.95rem",
+                              lg: "1rem",
+                            },
+                            fontWeight: 500,
+                          }}
+                          sx={{ m: 0, display: "flex", alignItems: "center" }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+
+                    {/* Expanded About Info */}
+                    <Collapse in={aboutExpanded} timeout="auto" unmountOnExit>
+                      <List component="div" disablePadding>
+                        <ListItem sx={{ pl: 8, py: 1.5 }}>
+                          <Box sx={{ width: "100%" }}>
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                              {t("About_Us_description")}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ fontStyle: "italic" }}
+                            >
+                              {t("About_Us_description_secondary")}
+                            </Typography>
+                          </Box>
+                        </ListItem>
+                        <Divider sx={{ mx: 2 }} />
+                      </List>
+                    </Collapse>
+
+                    {/* Sources button without arrow */}
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        onClick={handleSourcesToggle}
+                        sx={{
+                          py: 0,
+                          px: { xs: 1.5, sm: 1.5, md: 2 },
+                          display: "flex",
+                          alignItems: "center",
+                          height: { xs: 44, sm: 44, md: 48, lg: 48, xl: 52 },
+                          bgcolor: sourcesExpanded
+                            ? "action.selected"
+                            : "transparent",
+                        }}
+                      >
+                        <ListItemIcon
+                          sx={{
+                            minWidth: {
+                              xs: 36,
+                              sm: 36,
+                              md: 40,
+                              lg: 40,
+                              xl: 44,
+                            },
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            color: "text.secondary",
+                          }}
+                        >
+                          <NavIcon>
+                            <ListAltOutlined />
+                          </NavIcon>
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={t("Sources")}
+                          primaryTypographyProps={{
+                            fontSize: {
+                              xs: "0.85rem",
+                              sm: "0.9rem",
+                              md: "0.95rem",
+                              lg: "1rem",
+                            },
+                            fontWeight: 500,
+                          }}
+                          sx={{ m: 0, display: "flex", alignItems: "center" }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+
+                    {/* Expanded Sources Info */}
+                    <Collapse in={sourcesExpanded} timeout="auto" unmountOnExit>
+                      <List component="div" disablePadding>
+                        <ListItem sx={{ pl: 8, py: 1.5 }}>
+                          <Box sx={{ width: "100%" }}>
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                              {t("Source_Intro")}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                              {t("Source_Example")}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ display: "block", fontStyle: "italic" }}
+                            >
+                              {t("Source_Disclaimer")}
+                            </Typography>
+                          </Box>
+                        </ListItem>
+                      </List>
+                    </Collapse>
+
+                    {/* Divider after Sources */}
+                    <Divider sx={{ mx: 2, my: 1 }} />
+
+                    {/* Settings button */}
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        onClick={handleSettingsToggle}
+                        sx={{
+                          py: 0,
+                          px: { xs: 1.5, sm: 1.5, md: 2 },
+                          display: "flex",
+                          alignItems: "center",
+                          height: { xs: 44, sm: 44, md: 48, lg: 48, xl: 52 },
+                          bgcolor: settingsOpen
+                            ? "action.selected"
+                            : "transparent",
+                        }}
+                      >
+                        <ListItemIcon
+                          sx={{
+                            minWidth: {
+                              xs: 36,
+                              sm: 36,
+                              md: 40,
+                              lg: 40,
+                              xl: 44,
+                            },
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            color: "text.secondary",
+                          }}
+                        >
+                          <NavIcon>
+                            <SettingsOutlinedIcon />
+                          </NavIcon>
                         </ListItemIcon>
                         <ListItemText
                           primary={t("Settings")}
                           primaryTypographyProps={{
-                            fontSize: "0.95rem",
+                            fontSize: {
+                              xs: "0.85rem",
+                              sm: "0.9rem",
+                              md: "0.95rem",
+                              lg: "1rem",
+                            },
                             fontWeight: 500,
                           }}
+                          sx={{ m: 0, display: "flex", alignItems: "center" }}
                         />
                       </ListItemButton>
                     </ListItem>
-                  </>
-                )}
-              </List>
+                  </List>
 
-              <Box sx={{ mt: "auto" }}>
-                <Footer />
-              </Box>
+                  {/* Footer - full width until lg */}
+                  <Box
+                    sx={{
+                      mt: "auto",
+                      width: "100%", // Ensure full width
+                    }}
+                  >
+                    <Footer
+                      onPrivacyClick={handlePrivacyToggle}
+                      onTermsClick={handleTermsToggle}
+                      onDisclaimerClick={handleDisclaimerToggle}
+                      // Add prop to make footer full width until lg
+                      fullWidthUntilLg={true}
+                    />
+                  </Box>
+                </>
+              ) : settingsOpen ? (
+                <SettingsView onClose={handleSettingsClose} />
+              ) : privacyOpen ? (
+                <PrivacyPolicyMobile onClose={handlePrivacyClose} />
+              ) : termsOpen ? (
+                <TermsOfUseMobile onClose={handleTermsClose} />
+              ) : disclaimerOpen ? (
+                <DisclaimerMobile onClose={handleDisclaimerClose} />
+              ) : null}
             </Box>
           </Drawer>
         </Toolbar>
       </AppBar>
-
-      {/* Settings Modal */}
-      <Dialog
-        open={settingsOpen}
-        onClose={handleSettingsClose}
-        fullWidth
-        maxWidth="xs"
-      >
-        <DialogTitle sx={{ fontWeight: 600, fontSize: "0.9rem" }}>
-          {t("Settings")}
-        </DialogTitle>
-
-        <DialogContent>
-          <List disablePadding>
-            <ListItem sx={{ justifyContent: "space-between" }}>
-              <ListItemText
-                primary={t("Theme")}
-                secondary={mode === "dark" ? t("Dark_mode") : t("Light_mode")}
-              />
-              <IconButton size="small" onClick={toggleMode}>
-                {mode === "dark" ? (
-                  <LightModeOutlinedIcon sx={iconSx} />
-                ) : (
-                  <DarkModeOutlinedIcon sx={iconSx} />
-                )}
-              </IconButton>
-            </ListItem>
-
-            <Divider />
-
-            <ListItem sx={{ justifyContent: "space-between" }}>
-              <ListItemText primary={t("Language")} />
-              <FormControl size="small">
-                <Select
-                  value={i18n.language}
-                  onChange={(e) =>
-                    handleLangChange(e.target.value as LanguagesCodes)
-                  }
-                >
-                  {(Object.keys(LANGAUGES) as LanguagesCodes[]).map((lang) => (
-                    <MenuItem key={lang} value={lang}>
-                      {LANGAUGES[lang].label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </ListItem>
-          </List>
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={handleSettingsClose}>{t("Close")}</Button>
-        </DialogActions>
-      </Dialog>
     </>
   );
 };

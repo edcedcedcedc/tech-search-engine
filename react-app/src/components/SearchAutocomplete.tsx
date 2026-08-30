@@ -11,6 +11,8 @@ import {
   IconButton,
   Box,
   Tooltip,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import debounce from "lodash.debounce";
@@ -21,7 +23,7 @@ import { useStore } from "../store/store";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import type { Suggestion } from "../types/Suggestion";
-import { uiLog } from "../webhook/client/sender";
+import { uiLog } from "../webhook/client/uiDebug";
 
 export const SearchAutocomplete: React.FC = () => {
   const setQuery = useStore((s) => s.setQuery);
@@ -29,7 +31,7 @@ export const SearchAutocomplete: React.FC = () => {
 
   const [value, setValue] = React.useState("");
   const [suggestions, setSuggestions] = React.useState<Suggestion[]>([]);
-  const [loading, setLoading] = React.useState(false);
+  const [_loading, setLoading] = React.useState(false);
   const anchorRef = React.useRef<HTMLInputElement | null>(null);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const { t, i18n } = useTranslation();
@@ -38,7 +40,12 @@ export const SearchAutocomplete: React.FC = () => {
   const loadingTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
-
+  const autocompleteResetToken = useStore((s) => s.autocompleteResetToken);
+  const isLoading = useStore((state) => state.isLoading);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+  const isOffline = useStore((state) => state.isOffline);
+  const russianRegex = /[А-Яа-яЁё]/;
   const closeSuggestions = () => {
     uiLog(`autocomplete | closeSuggestions`);
     setSuggestions([]);
@@ -49,6 +56,13 @@ export const SearchAutocomplete: React.FC = () => {
   const fetchSuggestions = React.useCallback(
     debounce(async (q: string) => {
       uiLog(`autocomplete | fetchSuggestions | start | query=${q}`);
+
+      if (isOffline) {
+        uiLog(`autocomplete | offline detected, skipping autocomplete`);
+        setSuggestions([]);
+        setLoading(false);
+        return;
+      }
       if (q.length === 0) {
         uiLog(`autocomplete | fetchSuggestions | empty query`);
         setSuggestions([]);
@@ -60,35 +74,50 @@ export const SearchAutocomplete: React.FC = () => {
       if (!loadingTimerRef.current) {
         loadingTimerRef.current = setTimeout(() => {
           setDelayedLoading(true);
-          uiLog(
-            `autocomplete | fetchSuggestions | delayed loading=true | query=${q}`,
-          );
+          uiLog(`autocomplete | delayed loading=true | query=${q}`);
         }, 100);
       }
 
-      try {
-        const res = await autocomplete(q, lang);
-        setSuggestions(res.suggestions);
-        uiLog(
-          `autocomplete | fetchSuggestions | success | query=${q} | results=${res.suggestions.length}`,
-        );
-      } catch (err) {
-        uiLog(
-          `autocomplete | fetchSuggestions | error | query=${q} | err=${(err as any)?.message}`,
-        );
-      } finally {
-        setLoading(false);
-        setTimeout(() => {
-          setDelayedLoading(false);
+      const attemptFetch = async (): Promise<void> => {
+        try {
+          const res = await autocomplete(q, lang);
+          setSuggestions(res.suggestions);
           uiLog(
-            `autocomplete | fetchSuggestions | delayed loading=false | query=${q}`,
+            `autocomplete | fetchSuggestions | success | query=${q} | results=${res.suggestions.length}`,
           );
-          if (loadingTimerRef.current) {
-            clearTimeout(loadingTimerRef.current);
-            loadingTimerRef.current = null;
+        } catch (err: any) {
+          const status = err?.response?.status || err?.code;
+
+          // Network offline / unreachable
+          if (
+            !navigator.onLine ||
+            status === "ERR_NETWORK" ||
+            err.message === "Network Error"
+          ) {
+            uiLog(`autocomplete | network offline detected`);
+            useStore.getState().setOffline(true); // trigger OfflineDialog
+            setSuggestions([]); // hide dropdown
+            return; // stop retries
           }
-        }, 300);
-      }
+
+          // Unknown error
+          uiLog(
+            `autocomplete | fetchSuggestions | error | query=${q} | err=${err?.message}`,
+          );
+          setSuggestions([]);
+        } finally {
+          setLoading(false);
+          setTimeout(() => {
+            setDelayedLoading(false);
+            if (loadingTimerRef.current) {
+              clearTimeout(loadingTimerRef.current);
+              loadingTimerRef.current = null;
+            }
+          }, 300);
+        }
+      };
+
+      await attemptFetch();
     }, 500),
     [lang],
   );
@@ -100,11 +129,40 @@ export const SearchAutocomplete: React.FC = () => {
     };
   }, [fetchSuggestions]);
 
-  const submitSearch = (q: string) => {
+  React.useEffect(() => {
+    uiLog("autocomplete | reset via store");
+
+    setValue("");
+    setSuggestions([]);
+    setLoading(false);
+    setDelayedLoading(false);
+
+    fetchSuggestions.cancel();
+
+    if (loadingTimerRef.current) {
+      clearTimeout(loadingTimerRef.current);
+      loadingTimerRef.current = null;
+    }
+  }, [autocompleteResetToken, fetchSuggestions]);
+
+  const submitSearch = async (q: string) => {
+    if (!navigator.onLine) {
+      uiLog(`autocomplete | search icon clicked | offline detected`);
+      useStore.getState().setOffline(true); // trigger OfflineDialog
+      setSuggestions([]); // hide dropdown
+      return;
+    }
+
     uiLog(`autocomplete | submitSearch | query=${q}`);
     setQuery(q);
-    searchProducts(q, lang);
-    navigate("/products");
+
+    await searchProducts(q, lang);
+
+    // Navigate only after search is complete
+    if (q) {
+      navigate("/products");
+    }
+
     setSuggestions([]);
     setLoading(false);
     setDelayedLoading(false);
@@ -112,6 +170,12 @@ export const SearchAutocomplete: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const q = e.target.value;
+    if (russianRegex.test(q)) {
+      // Option 1: block input and show warning
+      setValue(""); // clear input
+      fetchSuggestions("");
+      return;
+    }
     uiLog(`autocomplete | handleChange | value=${q}`);
     setValue(q);
     fetchSuggestions(q);
@@ -133,6 +197,16 @@ export const SearchAutocomplete: React.FC = () => {
     setSuggestions([]); // close dropdown
   };
 
+  const handleFocus = () => {
+    // Small delay to allow keyboard to open first
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }, 300);
+  };
+
   return (
     <Box ref={containerRef} sx={{ width: "100%", position: "relative" }}>
       <TextField
@@ -140,11 +214,18 @@ export const SearchAutocomplete: React.FC = () => {
         variant="outlined"
         inputRef={anchorRef}
         value={value}
+        onFocus={handleFocus}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         placeholder={`${t("Search_product")}`}
+        inputProps={{
+          style: {
+            fontSize: "16px", // Prevents iOS zoom on focus
+            WebkitTextSizeAdjust: "100%", // Prevents text size adjustment
+          },
+        }}
         InputProps={{
-          endAdornment: (
+          startAdornment: (
             <InputAdornment position="end">
               <div
                 style={{
@@ -154,19 +235,23 @@ export const SearchAutocomplete: React.FC = () => {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  minHeight: 48,
                 }}
               >
-                <CircularProgress
-                  size={24}
-                  style={{
-                    opacity: delayedLoading ? 1 : 0,
-                    transition: "opacity 0.5s ease",
-                    position: "absolute",
-                  }}
-                />
+                {
+                  <CircularProgress
+                    size={24}
+                    style={{
+                      opacity: delayedLoading ? 1 : 0,
+                      transition: "opacity 0.5s ease",
+                      position: "absolute",
+                    }}
+                  />
+                }
                 {!delayedLoading && (
                   <IconButton
                     size="medium"
+                    disabled={isLoading || isOffline}
                     onClick={() => {
                       uiLog(
                         `autocomplete | search icon clicked | value=${value}`,
@@ -182,7 +267,10 @@ export const SearchAutocomplete: React.FC = () => {
                       enterDelay={500}
                       leaveDelay={0}
                     >
-                      <SearchIcon fontSize="medium" />
+                      <SearchIcon
+                        fontSize="medium"
+                        sx={{ color: "text.primary" }}
+                      />
                     </Tooltip>
                   </IconButton>
                 )}
@@ -192,7 +280,10 @@ export const SearchAutocomplete: React.FC = () => {
         }}
         sx={{
           "& .MuiOutlinedInput-root": {
-            paddingRight: "4px", // Adjust this if needed
+            paddingLeft: 0, // removes left padding of the root
+          },
+          "& .MuiOutlinedInput-input": {
+            paddingLeft: 0, // removes left padding inside the input
           },
         }}
       />
@@ -201,21 +292,18 @@ export const SearchAutocomplete: React.FC = () => {
         open={suggestions.length > 0}
         anchorEl={anchorRef.current}
         placement="bottom-start"
-        sx={{
-          zIndex: 1300,
-          width: containerRef.current
-            ? `${containerRef.current.offsetWidth}px`
-            : "auto",
-          maxWidth: "100%",
-        }}
         modifiers={[
           {
             name: "offset",
             options: {
-              offset: [0, 8], // 8px gap between input and dropdown
+              offset: isMobile ? [-3, 4] : [-52, 4],
             },
           },
         ]}
+        sx={{
+          zIndex: 1300,
+          width: anchorRef.current?.clientWidth! + 50,
+        }}
       >
         <ClickAwayListener onClickAway={closeSuggestions}>
           <Paper

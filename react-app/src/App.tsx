@@ -1,161 +1,220 @@
-import {
-  Box,
-  Container,
-  Typography,
-  useTheme,
-  useMediaQuery,
-} from "@mui/material";
-import { BrowserRouter } from "react-router-dom";
-
+// App.tsx
+import { Box, Container, useTheme, useMediaQuery } from "@mui/material";
 import Header from "./components/Header";
-import Footer from "./components/Footer";
+import VerticalHeader from "./components/VerticalHeader";
 import AppRoutes from "./router/Router";
-import { Cookie } from "./components/Cookie";
 import { Meta } from "./components/Meta";
-import ResetCookieButton from "./tests/components/ResetCookieButton";
-import { SearchAutocomplete } from "./components/SearchAutocomplete";
-import { useTranslation } from "react-i18next";
-import Bottom from "./components/Bottom";
+import AppOverlays from "./components/Overlays";
+import NotificationsContainer from "./components/NotificationContainer";
+import { useHideOnScroll } from "./hooks/useHideOnScroll";
+import { useRef, useEffect, useState, useLayoutEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { uiLog } from "./webhook/client/uiDebug";
+import { useScrollStore } from "./store/store";
+import { InstallBlocker } from "./components/InstallBlocker";
 
 function App() {
   const theme = useTheme();
-  const { t } = useTranslation();
+  // Use your custom breakpoint: xl = 1440px
+  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+  const location = useLocation();
+  const currentScrollElement = useScrollStore((s) => s.currentScrollElement);
+  const [blocker, setBlocker] = useState(false);
+
+  // Per-route scroll refs
+  const scrollRefs: Record<string, React.RefObject<HTMLDivElement | null>> = {
+    "/": useRef<HTMLDivElement | null>(null),
+    "/products": useRef<HTMLDivElement | null>(null),
+    "/services": useRef<HTMLDivElement | null>(null),
+    "/faq": useRef<HTMLDivElement | null>(null),
+  };
+
+  useEffect(() => {
+    // Block iOS swipe-back at the document level (where Safari captures it)
+    const blockEdgeSwipes = (e: TouchEvent) => {
+      const touch = e.touches[0];
+
+      // Block if it's a left edge swipe (iOS back gesture zone)
+      if (touch && touch.clientX < 20) {
+        e.preventDefault();
+        uiLog("[App] Blocked iOS edge swipe");
+      }
+    };
+
+    // Must use { passive: false } to allow preventDefault
+    document.addEventListener("touchstart", blockEdgeSwipes, {
+      passive: false,
+    });
+
+    return () => {
+      document.removeEventListener("touchstart", blockEdgeSwipes);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Disable native pull-to-refresh on all browsers
+    const preventPullToRefresh = () => {
+      // Apply to html and body
+      document.documentElement.style.overscrollBehaviorY = "none";
+      document.body.style.overscrollBehaviorY = "none";
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+      uiLog("[App] Native pull-to-refresh disabled");
+    };
+
+    preventPullToRefresh();
+  }, []);
+
+  // Blocking logic
+  useLayoutEffect(() => {
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+
+    // Always allow installed PWA
+    if (isStandalone) {
+      setBlocker(false);
+      uiLog("[App] PWA mode - showing app");
+      return;
+    }
+
+    // Rule 1: Block all browsers on screens <1440px (mobile, tablets, small laptops)
+    if (isMobile) {
+      setBlocker(true);
+      uiLog("[App] Screen <1440px - showing install blocker");
+      return;
+    }
+
+    // Rule 2: Block Safari on any screen (including desktop)
+    if (isSafari) {
+      setBlocker(true);
+      uiLog("[App] Safari detected (desktop) - showing install blocker");
+      return;
+    }
+
+    // Otherwise allow (non-Safari desktop browsers on screens ≥1440px)
+    setBlocker(false);
+    uiLog("[App] Desktop browser (non-Safari) ≥1440px - showing web version");
+  }, [isMobile]);
+
+  // Debug logs (unchanged)
+  useEffect(() => {
+    uiLog(
+      `[App] ScrollRefs initialized: ${Object.keys(scrollRefs)
+        .map((k) => `${k}: ${!!scrollRefs[k].current}`)
+        .join(", ")}`,
+    );
+  }, []);
+
+  uiLog(
+    `[App] Render cycle: route=${location.pathname}, isBelow1440=${isMobile}, hasScrollElement=${!!currentScrollElement}`,
+  );
+
+  const isHeaderVisible = useHideOnScroll({ threshold: 10 });
+
+  useEffect(() => {
+    uiLog(`[App] Header visibility updated: ${isHeaderVisible}`);
+  }, [isHeaderVisible]);
+
+  // Show blocker if conditions met
+  if (blocker) {
+    return <InstallBlocker />;
+  }
 
   return (
     <>
       <Meta />
-      <BrowserRouter>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100vh",
+          fontFamily: theme.typography.fontFamily,
+          fontSize: theme.typography.body1.fontSize,
+          bgcolor: "background.default",
+        }}
+      >
+        {/* HEADER */}
+        <Box
+          id="app-header"
+          sx={{
+            position: "sticky",
+            top: 0,
+            zIndex: theme.zIndex.appBar,
+            flexShrink: 0,
+            overflow: "hidden",
+            height: isMobile ? (isHeaderVisible ? "auto" : 0) : "auto",
+            transform: isMobile
+              ? isHeaderVisible
+                ? "translateY(0)"
+                : "translateY(-100%)"
+              : "none",
+            transition: isMobile
+              ? theme.transitions.create(["transform", "height"], {
+                  duration: 300,
+                  easing: theme.transitions.easing.easeInOut,
+                })
+              : "none",
+            willChange: isMobile ? "transform, height" : "auto",
+          }}
+        >
+          <Header />
+        </Box>
+
+        {/* Main layout */}
         <Box
           sx={{
             display: "flex",
-            flexDirection: "column",
-            height: "100vh",
-            fontFamily: theme.typography.fontFamily,
-            fontSize: theme.typography.body1.fontSize,
-            bgcolor: "background.default",
+            flex: 1,
+            position: "relative",
+            overflow: isMobile ? "hidden" : "auto",
+            minHeight: 0,
+            "&::-webkit-scrollbar": { width: theme.spacing(1) },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: theme.palette.background.default,
+              borderRadius: theme.shape.borderRadius,
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+              backgroundColor: theme.palette.background.default,
+            },
+            "&::-webkit-scrollbar-track": { background: "transparent" },
+            scrollbarWidth: "thin",
+            scrollbarColor:
+              theme.palette.mode === "dark"
+                ? "rgba(255, 255, 255, 0.02) transparent"
+                : "rgba(0, 0, 0, 0.04) transparent",
           }}
         >
-          {/* HEADER + HERO */}
-          <Box sx={{ flexShrink: 0 }}>
-            <Header />
-            <Box
-              sx={{
-                py: 4,
-                textAlign: "center",
-                backgroundColor: theme.palette.background.default,
-                px: { xs: 2, sm: 3, md: 4 },
-              }}
-            >
-              <Typography
-                variant="h3"
-                component="h1"
-                gutterBottom
-                sx={(theme) => ({
-                  fontWeight: 600,
-                  lineHeight: 1.3,
-                  textAlign: "center",
+          {!isMobile && <VerticalHeader />}
 
-                  // Proportional scaling across breakpoints
-                  fontSize: "0.9rem", // 320px
-                  [theme.breakpoints.up("sm")]: { fontSize: "1.1rem" }, // 375px
-                  [theme.breakpoints.up("md")]: { fontSize: "1.2rem" }, // 425px
-                  [theme.breakpoints.up("lg")]: { fontSize: "1.4rem" }, // 768px
-                  [theme.breakpoints.up("xl")]: { fontSize: "1.8rem" }, // 1024px
-                  [theme.breakpoints.up("xxl")]: { fontSize: "2rem" }, // 1440px
-                })}
-              >
-                {t("Explore_tech_in_Moldova")}
-              </Typography>
-
-              <Typography
-                variant="h6"
-                color="text.secondary"
-                gutterBottom
-                sx={(theme) => ({
-                  lineHeight: 1.4,
-                  textAlign: "center",
-
-                  // Proportional scaling across breakpoints
-                  fontSize: "0.65rem", // 320px
-                  [theme.breakpoints.up("sm")]: { fontSize: "0.8rem" }, // 375px
-                  [theme.breakpoints.up("md")]: { fontSize: "0.85rem" }, // 425px
-                  [theme.breakpoints.up("lg")]: { fontSize: "0.95rem" }, // 768px
-                  [theme.breakpoints.up("xl")]: { fontSize: "1rem" }, // 1024px
-                  [theme.breakpoints.up("xxl")]: { fontSize: "1.1rem" }, // 1440px
-                })}
-              >
-                {t("Discover_the_best_offers_for_your_favorite_products")}
-              </Typography>
-
-              <Box
-                sx={{
-                  mt: 2,
-                  maxWidth: 600,
-                  mx: "auto",
-                  py: 2,
-                  fontSize: "1.05rem",
-                }}
-              >
-                <SearchAutocomplete />
-              </Box>
-            </Box>
-          </Box>
-
-          {/* MAIN CONTENT */}
-          <Box
-            component="main"
+          <Container
+            disableGutters
+            maxWidth={false}
             sx={{
-              flex: 1,
-              overflowY: "scroll",
-              pb: theme.spacing(12.5), // 100px equivalent
-              position: "relative",
-
-              // Scrollbar styles
-              "&::-webkit-scrollbar": { width: theme.spacing(1) },
-              "&::-webkit-scrollbar-thumb": {
-                backgroundColor: theme.palette.background.default,
-                borderRadius: theme.shape.borderRadius,
-              },
-              "&::-webkit-scrollbar-thumb:hover": {
-                backgroundColor: theme.palette.background.default,
-              },
-              "&::-webkit-scrollbar-track": { background: "transparent" },
-              scrollbarWidth: "thin", // Firefox
-              scrollbarColor:
-                theme.palette.mode === "dark"
-                  ? "rgba(255,255,255,0.2) transparent"
-                  : "rgba(0,0,0,0.3) transparent",
-            }}
-          >
-            <Container
-              disableGutters
-              maxWidth={false} // <-- ignore default breakpoints
-              sx={{
-                maxWidth: 800, // container stays 800px on large screens
-                width: "100%", // takes full width on smaller screens
-                mx: "auto", // centers container
-                pt: 0, // remove top padding
-              }}
-            >
-              <AppRoutes />
-            </Container>
-          </Box>
-
-          {/* FOOTER + COOKIE */}
-          <Box
-            sx={{
-              position: "fixed",
-              bottom: 0,
-              left: 0,
+              maxWidth: isMobile ? "100%" : 800,
               width: "100%",
-              zIndex: 1000,
+              mx: "auto",
+              pt: isMobile && !isHeaderVisible ? 0 : 1,
+              px: isMobile ? 0 : 1,
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              overflow: isMobile ? "hidden" : "visible",
+              "& > *": {
+                flex: 1,
+                minHeight: 0,
+                overflow: isMobile ? "hidden" : "visible", // Allow native scroll
+              },
             }}
           >
-            <Cookie />
-            <Bottom />
-          </Box>
+            <AppRoutes scrollRefs={scrollRefs} />
+          </Container>
         </Box>
-      </BrowserRouter>
+        <NotificationsContainer />
+
+        <AppOverlays />
+      </Box>
     </>
   );
 }

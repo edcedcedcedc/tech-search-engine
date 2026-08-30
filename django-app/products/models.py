@@ -56,7 +56,7 @@ class Product(models.Model):
     image = models.URLField(blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(default=timezone.now)
     shop = models.CharField(max_length=50, default="")
     in_stock = models.BooleanField(default=True)
     t_name = models.JSONField(default=dict, null=True, blank=True)
@@ -600,3 +600,12 @@ class Email(models.Model):
 
     def __str__(self):
         return self.email
+
+
+class SystemState(models.Model):
+    key = models.CharField(max_length=100, unique=True)
+    value = models.CharField(max_length=255)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.key} = {self.value}"

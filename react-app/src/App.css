@@ -1,0 +1,14 @@
+html, body {
+  overscroll-behavior-x: none;  /* Prevents swipe navigation in Chrome */
+  overscroll-behavior-y: none;  /* Prevents pull-to-refresh (but you want your custom one) */
+}
+
+/* Keep your scroll container's vertical overscroll for pull-to-refresh */
+.scroll-container {
+  overscroll-behavior-y: contain;  /* Allows your custom pull-to-refresh */
+  overscroll-behavior-x: none;     /* Blocks horizontal swipe nav */
+}
+
+html {
+  scrollbar-gutter: stable;
+}

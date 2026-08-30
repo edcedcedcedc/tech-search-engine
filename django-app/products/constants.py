@@ -355,6 +355,11 @@ categories = [
         "ru": "клавиатуры и периферия ПК",
     },
     {
+        "ro": "aparat de birou",
+        "en": "Office equipment",
+        "ru": "офисная техника",
+    },
+    {
         "ro": "telefon fix, dect, birou",
         "en": "Landline phones and office",
         "ru": "стационарные телефоны и офис",
@@ -394,6 +399,11 @@ categories = [
         "ro": "curele smartwatch, brățări wearable",
         "en": "Smartwatch straps and wearable bands",
         "ru": "ремни для умных часов и носимые браслеты",
+    },
+    {
+        "ro": "servicii streaming, platforme online",
+        "en": "Streaming services, online platforms",
+        "ru": "стриминговые сервисы, онлайн платформы",
     },
 ]
 

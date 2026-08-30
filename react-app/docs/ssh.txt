@@ -1,0 +1,2 @@
+ssh -i C:\Users\ranog\.ssh\id_ed25519 root@185.177.59.152 first auth 
+ssh root@185.177.59.152 rest auth
