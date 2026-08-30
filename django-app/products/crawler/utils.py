@@ -35,7 +35,7 @@ def normalize_text(value: str | None) -> str:
     """
     Normalize product text for comparison:
     - Convert None → empty string
-    - Replace escaped slashes \/ with /
+    - Replace escaped slashes
     - Replace multiple whitespace/newlines with single space
     - Strip leading/trailing spaces
     """

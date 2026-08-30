@@ -15,50 +15,62 @@ npm run dev
 
 ## Server (Django)
 
-* There are lots of not project related packs in requirements.txt but, that doesn't bother me, might be fixed later
 ```bash
-cd server
+cd djangoapp
 python -m venv venv
-python manage.py migrate
+python -m venv venv_translate
+
 ```
 * Run your venv 
+* Run your venv_translate
 
 ```bash
-pip install -r requirements.txt 
+pip install -r requirements-venv.txt 
 ```
-* You can optionally **use** `run.py`, it should use your **venv**
+
 ```bash
-python run.py runserver
-python run.py migrate
+pip install -r requirements-venv-translate.txt 
 ```
+
 
 ---
 
-## Environment variables
-
-Create a `.env` file in `server/` with:
+Create a `.env` file in `djangoapp/` with:
 
 ```
 SECRET_KEY=your-dev-secret-key
 DATABASE_URL=sqlite:///db.sqlite3
+OPENAI_API_KEY=your-api-key
 API_URL=http://localhost:8000/api
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=
+ADMIN_EMAIL=
 ```
-
-* `.env` should **not** be committed
-* `.env.example` can be committed without real secrets
 
 * Generate a dev `secret key`
 ```bash
 python -c "from django.core.management.utils import get_random_secret_key; print(__import__('django').core.management.utils.get_random_secret_key())"
 
 ```
+* Migrate `djangoapp`
+```bash
+python manage.py migrations
+```
+---
 
-* Run `server`
+* Run `djangoapp`
 ```bash
 python manage.py runserver
 ```
 * Runs backend on [http://localhost:8000](http://localhost:8000)
 * Your local DB is `db.sqlite3` by default
+---
+
+* Run `docker`
+```bash
+docker-compose -f docker-compose-elastic.yml up -d
+docker-compose -f docker-compose-redis.yml down
+```
 ---
 
 ## Working with models / migrations
@@ -76,7 +88,10 @@ python manage.py makemigrations
 ```bash
 python manage.py migrate
 ```
-
+or to apply to all local DBs
+```bash
+python manage.py migrations
+```
 3. **Commit migration files** with your PR
 
 * Other developers **pull** and then run `migrate` to sync DB
